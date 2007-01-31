@@ -254,21 +254,6 @@ class AkActionController extends AkObject
     }
 
 
-    function _validateGeneratedXhtml()
-    {
-        require_once(AK_LIB_DIR.DS.'AkXhtmlValidator.php');
-        $XhtmlValidator = new AkXhtmlValidator();
-        if($XhtmlValidator->validate($this->Response->body) === false){
-            $this->Response->sendHeaders();
-            echo '<h1>'.Ak::t('Ooops! There are some errors on current XHTML page').'</h1>';
-            echo '<small>'.Ak::t('In order to disable XHTML validation, set the <b>AK_ENABLE_STRICT_XHTML_VALIDATION</b> constant to false on your config/development.php file')."</small><hr />\n";
-            $XhtmlValidator->showErrors();
-            echo "<hr /><h2>".Ak::t('Showing XHTML code')."</h2><hr /><div style='border:5px solid red;margin:5px;padding:15px;'>".$this->Response->body."</pre>";
-            die();
-        }
-    }
-
-
     /**
      * Methods for loading desired models into this controller
      */
@@ -2493,12 +2478,13 @@ class AkActionController extends AkObject
                 $Server->addService($web_service);
             }
             $Server->init();
-            $Server->serve(); 
+            $Server->serve();
             exit;
         }else{
             die(Ak::t('There is not any webservice configured at this endpoint'));
         }
     }
+
 }
 
 

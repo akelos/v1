@@ -36,7 +36,8 @@ class MailHelper
         foreach ((array)$paragraphs as $paragraph){
             $formatted .= TextHelper::format($paragraph, array('columns' => 72, 'first_indent' => 2, 'body_indent' => 2));
         }
-        return preg_replace("/[ ]*([*]+) ([^*]*)/"," $1 $2\n", preg_replace("/[ ]*([ ]+)([^*]*)/"," $1$2",$formatted));
+        // Make list points stand on their own line
+        return preg_replace("/[ ]*([*]+) ([^*]*)/"," $1 $2\n", preg_replace("/[ ]*([#]+) ([^#]*)/"," $1 $2\n",$formatted));
     }
     
 }

@@ -1,1 +1,1 @@
-Hello, <?= $person_name ?>. Thanks for registering!
+Hello, <?= $mailer_helper->person_name() ?>. Thanks for registering!

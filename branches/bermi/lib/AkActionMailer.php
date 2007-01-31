@@ -261,7 +261,7 @@ class AkActionMailer extends AkBaseModel
     var $default_content_type = 'text/plain';
     var $default_mime_version = '1.0';
     var $default_implicit_parts_order = array('text/html', 'text/enriched', 'text/plain');
-
+    var $helpers = array('mail');
 
     function setBcc($bcc)
     {
@@ -479,7 +479,6 @@ class AkActionMailer extends AkBaseModel
     function &create($method_name, $parameters)
     {
         $this->_initializeDefaults($method_name);
-        
         if(method_exists($this, $method_name)){
             $this->$method_name($parameters);
         }else{
@@ -579,6 +578,8 @@ class AkActionMailer extends AkBaseModel
         $body = $options['body'];
         unset($options['body']);
         $Template =& $this->_initializeTemplateClass($body);
+        $options['locals'] = array_merge((array)@$options['locals'], $this->getHelpers());
+        $options['locals'] = array_merge($options['locals'], array('mailer'=>&$this));
         return $Template->render($options);
     }
 
@@ -994,6 +995,64 @@ class AkActionMailer extends AkBaseModel
             $lines[$k] =& $line;
         }
         return implode(AK_MAIL_HEADER_EOL,$lines);
+    }
+
+    /**
+     * Alias for getModelName
+     */
+    function getMailerName()
+    {
+        return $this->getModelName();
+    }
+
+
+    /**
+     * Creates an instance of each available helper and links it into into current mailer.
+     * 
+     * Mailer helpers work as Controller helpers but without the Request context
+     */
+    function &getHelpers()
+    {
+        static $helpers = array();
+        require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkActionViewHelper.php');
+
+        $mailer_helpers = array_merge(Ak::toArray($this->helpers), array(substr($this->getModelName(),-6)));
+        $mailer_helpers = array_unique(array_map(array('AkInflector','underscore'), $mailer_helpers));
+
+        foreach ($mailer_helpers as $file => $mailer_helper){
+            $full_path = preg_match('/[\\\\\/]+/',$file);
+            $helper_class_name = AkInflector::camelize($mailer_helper).'Helper';
+            $attribute_name = (!$full_path ? AkInflector::underscore($helper_class_name) : substr($file,0,-4));
+            if(empty($helpers[$attribute_name])){
+                if($full_path){
+                    include_once($file);
+                }else{
+                    $helper_file_name = $mailer_helper.'_helper.php';
+                    if(file_exists(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.$helper_file_name)){
+                        include_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.$helper_file_name);
+                    }elseif (file_exists(AK_HELPERS_DIR.DS.$helper_file_name)){
+                        include_once(AK_HELPERS_DIR.DS.$helper_file_name);
+                    }
+                }
+
+                if(class_exists($helper_class_name)){
+                    if(empty($helpers[$attribute_name])){
+                        $helpers[$attribute_name] =& new $helper_class_name(&$this);
+                        if(method_exists($helpers[$attribute_name],'setController')){
+                            $helpers[$attribute_name]->setController(&$this);
+                        }
+                        if(method_exists($helpers[$attribute_name],'setMailer')){
+                            $helpers[$attribute_name]->setMailer(&$this);
+                        }
+                        if(method_exists($helpers[$attribute_name],'init')){
+                            $helpers[$attribute_name]->init();
+                        }
+                    }
+                }
+            }
+        }
+
+        return $helpers;
     }
 
 }

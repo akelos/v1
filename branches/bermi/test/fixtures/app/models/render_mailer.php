@@ -8,7 +8,6 @@ class RenderMailer extends AkActionMailer
         $this->setSubject("using helpers");
         $this->setFrom("tester@example.com");
         $this->setBody($this->render(array('inline' => 'Hello, <?=$who?>', 'body' => array('who' => "World"))));
-
     }
 
     function file_template($recipient)
