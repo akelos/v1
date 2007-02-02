@@ -456,9 +456,17 @@ class AkCharset
 	*/
     function _PhpStringRecode($string, $target_charset, $origin_charset)
     {
+        $this->_originCharset = $origin_charset;
+        $this->_error = false;
+        
         $target_charset = $this->_GetCharset($target_charset,false);
         $origin_charset = $this->_GetCharset($origin_charset,false);
-
+        
+        if(empty($origin_charset)){
+            $this->_error = true;
+            return $string;
+        }
+        
         if((!$this->_ConversionIsNeeded($origin_charset, $target_charset)|!$this->usePhpRecoding) && !$this->isUtf8($string)){
             return $string;
         }
@@ -477,7 +485,7 @@ class AkCharset
                 return $string;
             }
         }elseif($target_charset=='utf8'){
-            include_once(AK_LIB_DIR.DS.'AkCharset'.DS.'utf8_mappings'.DS.$origin_charset.'.php');
+            @include_once(AK_LIB_DIR.DS.'AkCharset'.DS.'utf8_mappings'.DS.Ak::sanitize_include($origin_charset, 'paranoid').'.php');
             if(class_exists($origin_charset)){
                 $mappingObject =& Ak::singleton($origin_charset, $origin_charset);
                 if(method_exists($mappingObject,'_Utf8StringEncode')){
@@ -592,6 +600,7 @@ class AkCharset
         'macromania'=>'macromania','macthai'=>'macthai','macturkish'=>'macturkish','macukraine'=>'macukraine',
         'mulelao1'=>'mulelao_1','nextstep'=>'nextstep','riscoslatin1'=>'riscos_latin1','shiftjis'=>'shift_jis',
         'shiftjisx0213'=>'shift_jisx0213','tcvn'=>'tcvn','tds565'=>'tds565','tis620'=>'tis_620','viscii'=>'viscii'
+        ,'iso885911'=>'iso_8859_11'
         );
         $procesed_charset = isset($alias_xref[$procesed_charset]) ? $alias_xref[$procesed_charset] : $procesed_charset;
         $memory[$charset] = isset($alias[$procesed_charset]) ? $alias[$procesed_charset] : FALSE;//$this->defaultCharset;

@@ -1413,12 +1413,17 @@ Options are:
         return $Charset->RecodeString($text,'UTF-8',$input_string_encoding);
     }
 
-    function recode($text, $output_string_encoding = null, $input_string_encoding = null)
+    function recode($text, $output_string_encoding = null, $input_string_encoding = null, $html_charset_on_fail = false)
     {
         $input_string_encoding = empty($input_string_encoding) ? Ak::encoding() : $input_string_encoding;
         require_once(AK_LIB_DIR.DS.'AkCharset.php');
         $Charset =& Ak::singleton('AkCharset',$text);
-        return $Charset->RecodeString($text,$output_string_encoding,$input_string_encoding);
+        $Charset->_error= false;
+        $recoded = $Charset->RecodeString($text,$output_string_encoding,$input_string_encoding);
+        if($html_charset_on_fail && !empty($Charset->_error)){
+            return "<span charset='$input_string_encoding'>$text</span>";
+        }
+        return $recoded;
     }
 
     function encoding()

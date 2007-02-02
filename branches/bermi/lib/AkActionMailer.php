@@ -17,6 +17,10 @@
  */
 
 require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
+require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
+
+ak_define('MAIL_HEADER_EOL', "\n");
+ak_define('EMAIL_REGULAR_EXPRESSION', "/^([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-z0-9\-]+\.)+))([a-z]{2,4}|[0-9]{1,3})(\]?)$/i");
 
 /**
 * AkActionMailer allows you to send email from your application using a mailer model and views.
@@ -447,6 +451,7 @@ class AkActionMailer extends AkBaseModel
         */
     }
 
+    
     /**
      * Deliver the given mail object directly. This can be used to deliver
      * a preconstructed mail object, like:
@@ -997,6 +1002,7 @@ class AkActionMailer extends AkBaseModel
         return implode(AK_MAIL_HEADER_EOL,$lines);
     }
 
+    
     /**
      * Alias for getModelName
      */
