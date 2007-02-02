@@ -31,14 +31,14 @@ class AkMail extends AkObject
     'bcc' => 'bcc',
     'subject' => 'subject',
     'date' => 'date',
-    'content-transfer-encoding' => 'contentTransferEncoding',
     'content-type' => 'contentType',
     'mime-version' => 'mimeVersion',
     'message-id' => 'messageId',
     'return-path' => 'returnPath',
-    'received' => 'received'
     );
     var $rawMessage = '';
+    var $charset = 'UTF-8';
+    var $contentType = 'text/plain';
     
     function __construct()
     {
@@ -58,20 +58,198 @@ class AkMail extends AkObject
         return new AkMail((array)$Parser->decode());
     }
     
+    function load($email_file)
+    {
+        $Parser =& new AkMailEncoding(file_get_contents($email_file));
+        return new AkMail((array)$Parser->decode());
+    }
+
+    
+
+
     function setBody($body)
     {
-        $this->body = $body;    
+        $this->body = $body;
     }
-    
-    function setHeaders($headers)
+
+    /**
+    * Specify the CC addresses for the message.
+    */
+    function setCc($cc)
     {
-        $this->headers = $headers;    
+        $this->cc = $cc;
     }
     
+    /**
+    * Specify the BCC addresses for the message.
+    */
+    function setBcc($bcc)
+    {
+        $this->bcc = $bcc;
+    }
+    
+    /**
+     * Specify the charset to use for the message. 
+     */
+    function setCharset($charset)
+    {
+        $this->charset = $charset;
+    }
+
+    /**
+     * Specify the content type for the message. This defaults to <tt>text/plain</tt>
+     * in most cases, but can be automatically set in some situations.
+     */
     function setContentType($content_type)
     {
-        $this->content_type = $content_type;    
+        $this->contentType = $content_type;
     }
+
+    /**
+     * Specify the from address for the message.
+     */
+    function setFrom($from)
+    {
+        $this->from = $from;
+    }
+    
+    function setTo($to)
+    {
+        //$this->to = $to;
+        $this->setRecipients($to);
+    }
+
+    /**
+     * Specify additional headers to be added to the message.
+     */
+    function setHeaders($headers)
+    {
+        $this->headers = $headers;
+    }
+
+    function setHeader($name, $value)
+    {
+        $this->headers[$name] = $value;    
+    }
+    
+
+    function setParts($parts)
+    {
+        $this->parts = $parts;
+    }
+    
+    function setDate($date)
+    {
+        $this->date = $date;
+    }
+    
+    function setMessageId($id)
+    {
+        $this->messageId = $id;
+    }
+
+    function setReturnPath($return_path)
+    {
+        $this->returnPath = $return_path;
+    }
+    
+
+    /**
+    * Specify the order in which parts should be sorted, based on content-type.
+    * This defaults to the value for the +default_implicitPartsOrder+.
+    */
+    function setImplicitPartsOrder($implicitPartsOrder)
+    {
+        $this->implicitPartsOrder = $implicitPartsOrder;
+    }
+    
+    /**
+     * Defaults to "1.0", but may be explicitly given if needed.
+     */
+    function setMimeVersion($mime_version)
+    {
+        $this->mimeVersion = $mime_version;
+    }
+
+    /**
+     * The recipient addresses for the message, either as a string (for a single
+     * address) or an array (for multiple addresses).
+     */
+    function setRecipients($recipients)
+    {
+        $this->recipients = $recipients;
+    }
+
+    /**
+    * The date on which the message was sent. If not set (the default), the
+    * header will be set by the delivery agent.
+    */
+    function setSentOn($date)
+    {
+        $this->sentOn = $date;
+    }
+
+
+    /**
+     * Specify the subject of the message.
+     */
+    function setSubject($subject)
+    {
+        $this->subject = $subject;
+    }
+
+
+    /**
+     * Generic setter
+     * 
+     * Calling $this->set(array('body'=>'Hello World', 'subject' => 'First subject'));
+     * is the same as calling $this->setBody('Hello World'); and $this->setSubject('First Subject');
+     * 
+     * This simplifies creating mail objects from datasources.
+     * 
+     * If the method does not exists the parameter will be added to the header.
+     */
+    function set($attributes = array())
+    {
+        if(!empty($attributes['body'])){
+            $this->setBody($attributes['body']);
+        }
+        unset($attributes['body']);
+        foreach ((array)$attributes as $key=>$value){
+            if($key[0] != '_'){
+                $method = 'set'.AkInflector::camelize($key);
+                if(method_exists($this, $method)){
+                    $this->$method($value);
+                }else{
+                    $this->headers[$key] = $value;
+                }
+            }
+        }
+    }
+
+    
+    function sortParts($parts, $order = array())
+    {
+        $this->_parts_order = array_map('strtolower', empty($order) ? $this->implicitPartsOrder : $order);
+        rsort($parts);
+        usort($parts, array($this,'_contentTypeComparison'));
+        return $parts;
+    }
+
+    function _contentTypeComparison($a, $b)
+    {
+        $a_ct = strtolower($a['content_type']);
+        $b_ct = strtolower($b['content_type']);
+        $a_in = in_array($a_ct, $this->_parts_order);
+        $b_in = in_array($b_ct, $this->_parts_order);
+        if($a_in && $b_in){
+            $a_pos = array_search($a_ct, $this->_parts_order);
+            $b_pos = array_search($b_ct, $this->_parts_order);
+            return (($a_pos == $b_pos) ? 0 : (($a_pos < $b_pos) ? -1 : 1));
+        }
+        return $a_in ? -1 : ($b_in ? 1 : (($a_ct == $b_ct) ? 0 : (($a_ct < $b_ct) ? -1 : 1)));
+    }
+    
     
     function _importStructure($structure = array())
     {
@@ -85,7 +263,8 @@ class AkMail extends AkObject
     {
         foreach ($this->_commonHeaders as $header_key=>$attribute_name){
             if(isset($this->headers[$header_key])){
-                $this->$attribute_name = $this->headers[$header_key];
+                $method_name = 'set'.ucfirst($attribute_name);
+                $this->$method_name($this->headers[$header_key]);
                 unset($this->headers[$header_key]);
             }
         }

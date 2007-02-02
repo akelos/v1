@@ -88,7 +88,7 @@ class Tests_for_Mailers extends  AkUnitTest
     function test_quote_multibyte_chars()
     {
         $original = "\303\246 \303\270 and \303\245";
-        $result = AkActionMailer::_convertQuotedPrintableTo8Bit($original);
+        $result = AkMailEncoding::_convertQuotedPrintableTo8Bit($original);
         $unquoted = quoted_printable_decode($result);
         $this->assertEqual($unquoted, $original);
     }
@@ -130,6 +130,8 @@ class Tests_for_Mailers extends  AkUnitTest
         $Mail = AkMail::parse(file_get_contents(AK_TEST_DIR.'/fixtures/data/raw_email_with_partially_quoted_subject'));
         $this->assertEqual("Re: Test: \"\346\274\242\345\255\227\" mid \"\346\274\242\345\255\227\" tail", $Mail->subject);
     }
+    
+    
 }
 
 

@@ -19,6 +19,7 @@
 require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
 
+ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', true);
 ak_define('MAIL_HEADER_EOL', "\n");
 ak_define('EMAIL_REGULAR_EXPRESSION', "/^([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-z0-9\-]+\.)+))([a-z]{2,4}|[0-9]{1,3})(\]?)$/i");
 
@@ -240,11 +241,11 @@ ak_define('EMAIL_REGULAR_EXPRESSION', "/^([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{
 *   can also pick a different content type from inside a method with <tt>$this->content_type</tt>. 
 * * <tt>default_mime_version</tt> - The default mime version used for the message. Defaults to "1.0". You
 *   can also pick a different value from inside a method with <tt>$this->mime_version</tt>.
-* * <tt>default_implicit_parts_order</tt> - When a message is built implicitly (i.e. multiple parts are assembled from templates
+* * <tt>default_implicitPartsOrder</tt> - When a message is built implicitly (i.e. multiple parts are assembled from templates
 *   which specify the content type in their filenames) this variable controls how the parts are ordered. Defaults to
 *   array("text/html", "text/enriched", "text/plain"). Items that appear first in the array have higher priority in the mail client
 *   and appear last in the mime encoded message. You can also pick a different order from inside a method with
-*   <tt>$this->implicit_parts_order</tt>.
+*   <tt>$this->implicitPartsOrder</tt>.
 */
 class AkActionMailer extends AkBaseModel
 {
@@ -264,13 +265,43 @@ class AkActionMailer extends AkBaseModel
     var $default_charset = 'utf-8';
     var $default_content_type = 'text/plain';
     var $default_mime_version = '1.0';
-    var $default_implicit_parts_order = array('text/html', 'text/enriched', 'text/plain');
+    var $default_implicitPartsOrder = array('text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
-
-    function setBcc($bcc)
+    var $_MailDriver;
+    var $_defaultMailDriverName = 'AkMail';
+    
+    function __construct($Driver = null)
     {
-        $this->bcc = $bcc;
+        if(empty($Driver)){
+            $this->_MailDriver =& new $this->_defaultMailDriverName();
+        }else{
+            $this->_MailDriver =& $Driver;
+        }
     }
+    
+
+    /**
+    * Specify the template name to use for current message. This is the "base"
+    * template name, without the extension or directory, and may be used to
+    * have multiple mailer methods share the same template.
+    */
+    function setTemplate($template_name)
+    {
+        $this->template = $template_name;
+    }
+
+    /**
+    * Override the mailer name, which defaults to an inflected version of the
+    * mailer's class name. If you want to use a template in a non-standard
+    * location, you can use this to specify that location.
+    */
+    function setMailerName($mailerName)
+    {
+        $this->mailerName = $mailerName;
+    }
+    
+    // Mail object specific setters
+
 
     /**
     * Define the body of the message. This is either an array (in which case it
@@ -282,7 +313,7 @@ class AkActionMailer extends AkBaseModel
         if(is_array($body) && count($body) == 1 && array_key_exists(0,$body)){
             $body = $body[0];
         }
-        $this->body = $body;
+        $this->_MailDriver->setBody($body);
     }
 
     /**
@@ -290,16 +321,23 @@ class AkActionMailer extends AkBaseModel
     */
     function setCc($cc)
     {
-        $this->cc = $cc;
+        $this->_MailDriver->setCc($cc);
     }
-
+    
+    /**
+    * Specify the BCC addresses for the message.
+    */    
+    function setBcc($bcc)
+    {
+        $this->_MailDriver->setBcc($bcc);
+    }
     /**
      * Specify the charset to use for the message. This defaults to the
      *  +default_charset+ specified for AkActionMailer.
      */
     function setCharset($charset)
     {
-        $this->charset = $charset;
+        $this->_MailDriver->setCharset($charset);
     }
 
     /**
@@ -308,7 +346,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setContentType($content_type)
     {
-        $this->content_type = $content_type;
+        $this->_MailDriver->setContentType($content_type);
     }
 
     /**
@@ -316,7 +354,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setFrom($from)
     {
-        $this->from = $from;
+        $this->_MailDriver->setFrom($from);
     }
 
     /**
@@ -324,34 +362,25 @@ class AkActionMailer extends AkBaseModel
      */
     function setHeaders($headers)
     {
-        $this->headers = $headers;
+        $this->_MailDriver->setHeaders($headers);
     }
 
     /**
     * Specify the order in which parts should be sorted, based on content-type.
-    * This defaults to the value for the +default_implicit_parts_order+.
+    * This defaults to the value for the +default_implicitPartsOrder+.
     */
-    function setImplicitPartsOrder($implicit_parts_order)
+    function setImplicitPartsOrder($implicitPartsOrder)
     {
-        $this->implicit_parts_order = $implicit_parts_order;
+        $this->_MailDriver->setImplicitPartsOrder($implicitPartsOrder);
     }
 
-    /**
-    * Override the mailer name, which defaults to an inflected version of the
-    * mailer's class name. If you want to use a template in a non-standard
-    * location, you can use this to specify that location.
-    */
-    function setMailerName($mailer_name)
-    {
-        $this->mailer_name = $mailer_name;
-    }
 
     /**
      * Defaults to "1.0", but may be explicitly given if needed.
      */
     function setMimeVersion($mime_version)
     {
-        $this->mime_version = $mime_version;
+        $this->_MailDriver->setMimeVersion($mime_version);
     }
 
     /**
@@ -360,7 +389,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setRecipients($recipients)
     {
-        $this->recipients = $recipients;
+        $this->_MailDriver->setRecipients($recipients);
     }
 
     /**
@@ -369,7 +398,7 @@ class AkActionMailer extends AkBaseModel
     */
     function setSentOn($date)
     {
-        $this->sent_on = $date;
+        $this->_MailDriver->setSentOn($date);
     }
 
 
@@ -378,17 +407,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setSubject($subject)
     {
-        $this->subject = $subject;
-    }
-
-    /**
-    * Specify the template name to use for current message. This is the "base"
-    * template name, without the extension or directory, and may be used to
-    * have multiple mailer methods share the same template.
-    */
-    function setTemplate($template_name)
-    {
-        $this->template = $template_name;
+        $this->_MailDriver->setSubject($subject);
     }
 
     /**
@@ -403,29 +422,15 @@ class AkActionMailer extends AkBaseModel
      */
     function set($attributes = array())
     {
-        $body = (array)@$attributes['body'];
-        unset($attributes['body']);
-        foreach ((array)$attributes as $key=>$value){
-            if($key[0] != '_'){
-                $method = 'set'.AkInflector::camelize($key);
-                if(method_exists($this, $method)){
-                    $this->$method($value);
-                }else{
-                    $body[$key] = $value;
-                }
-            }
-        }
-        if(!empty($body)){
-            $this->setBody($body);
-        }
+        $this->_MailDriver->set($attributes);
     }
 
     /**
      * The mail object instance referenced by this mailer.
      */
-    function getMail()
+    function &getMail()
     {
-        return $this;
+        return $this->_MailDriver;
     }
 
 
@@ -434,21 +439,20 @@ class AkActionMailer extends AkBaseModel
      * instantiates a new mailer, and passes the email object to the mailer
      * object's #receive method. If you want your mailer to be able to
      * process incoming messages, you'll need to implement a #receive
-     * method that accepts the email object as a parameter:
+     * method that accepts the email object as a parameter and then call
+     * the AkActionMailer::recieve method using "parent::recieve($Mail);"
+     * 
      *
      *   class MyMailer extends AkActionMailer{
-     *     function receive($Mail)
+     *     function receive($Mail){
+     *          parent::recieve($Mail);
      *       ...
      *     }
      *   }
      */
-    function receive($raw_email)
+    function receive(&$Mail)
     {
-        /*
-        mail = TMail::Mail.parse(raw_email)
-        mail.base64_decode
-        new.receive(mail)
-        */
+        $Mail =& AkMail::parse($raw_email);
     }
 
     
@@ -462,8 +466,8 @@ class AkActionMailer extends AkBaseModel
      */
     function deliverDirectly(&$Mail)
     {
+        $Mail =& new AkMail($Mail);
         $Mail->send();
-        // new.deliver!(mail)
     }
 
     /**
@@ -479,7 +483,7 @@ class AkActionMailer extends AkBaseModel
 
     /**
      * Initialize the mailer via the given +method_name+. The body will be
-     * rendered and a new PEAR Mail object created.
+     * rendered and a new AkMail object created.
      */
     function &create($method_name, $parameters)
     {
@@ -489,30 +493,30 @@ class AkActionMailer extends AkBaseModel
         }else{
             trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
         }
-
-        if(!is_string($this->body)){
-            if(empty($this->parts)){
+        $Mail =& $this->_MailDriver;
+        if(!is_string($Mail->body)){
+            if(empty($Mail->parts)){
                 $templates = array_map('basename', Ak::dir($this->getTemplatePath().DS, array('dirs'=>false)));
 
                 foreach ($templates as $template_name){
                     if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
                         if($this->template == $match[1]){
                             $content_type = str_replace('.','/', $match[2]);
-                            $this->addPart(array(
+                            $Mail->addPart(array(
                             'content_type' => $content_type,
                             'disposition' => 'inline',
-                            'charset' => $this->charset,
-                            'body' => $this->renderMessage($template_name, $this->body)));
+                            'charset' => $Mail->charset,
+                            'body' => $this->renderMessage($template_name, $Mail->body)));
                         }
                     }
                 }
                 if(!empty($this->parts)){
-                    $this->content_type = 'multipart/alternative';
-                    $this->parts = $this->sortParts($this->parts, $this->implicit_parts_order);
+                    $Mail->content_type = 'multipart/alternative';
+                    $Mail->setParts($Mail->sortParts($Mail->parts, $Mail->implicitPartsOrder));
                 }
             }
 
-            $template_exists = !empty($this->parts);
+            $template_exists = !empty($Mail->parts);
             if(!$template_exists){
                 $templates = array_map('basename', Ak::dir($this->getTemplatePath(), array('dirs'=>false)));
                 foreach ($templates as $template){
@@ -524,20 +528,18 @@ class AkActionMailer extends AkBaseModel
             }
 
             if($template_exists){
-                $this->body = $this->renderMessage($this->template, $this->body);
+                $Mail->setBody($this->renderMessage($this->template, $Mail->body));
             }
 
-            if (!empty($this->parts) && is_string($this->body)){
-                array_unshift($this->parts, array('charset' => $this->charset, 'body' => $this->body));
+            if (!empty($Mail->parts) && is_string($Mail->body)){
+                array_unshift($Mail->parts, array('charset' => $Mail->charset, 'body' => $Mail->body));
                 $this->body = null;
             }
         }
 
-        $this->mime_version = (empty($this->mime_version) && !empty($this->parts)) ? '1.0' : $this->mime_version;
+        $Mail->setMimeVersion((empty($Mail->mimeVersion) && !empty($Mail->parts)) ? '1.0' : $Mail->mimeVersion);
 
-        $this->Mail =& $this->createMail();
-
-        return $this->Mail;
+        return $Mail;
     }
 
     /**
@@ -562,15 +564,18 @@ class AkActionMailer extends AkBaseModel
     */
     function _initializeDefaults($method_name)
     {
-        foreach (array('charset','content_type','implicit_parts_order', 'mime_version') as $attribute) {
-            $this->$attribute = empty($this->$attribute) ? $this->{'default_'.$attribute} : $this->$attribute;
+        $Mail =& $this->_MailDriver;
+        foreach (array('charset','content_type','implicitPartsOrder', 'mime_version') as $attribute) {
+            $method = 'set'.AkInflector::camelize($attribute);
+            $Mail->$method(empty($this->$attribute) ? $this->{'default_'.$attribute} : $this->$attribute);
         }
         foreach (array('parts','headers','body') as $attribute) {
-            $this->$attribute = empty($this->$attribute) ? array() : $this->$attribute;
+            $method = 'set'.AkInflector::camelize($attribute);
+            $Mail->$method(empty($this->$attribute) ? array() : $this->$attribute);
         }
         $this->template_root = empty($this->template_root) ? AK_APP_DIR.DS.'views' : $this->template_root;
         $this->template = empty($this->template) ? $method_name : $this->template;
-        $this->mailer_name = empty($this->mailer_name) ? AkInflector::underscore($this->getModelName()) : $this->mailer_name;
+        $this->mailerName = empty($this->mailerName) ? AkInflector::underscore($this->getModelName()) : $this->mailerName;
     }
 
     function renderMessage($method_name, $body)
@@ -590,7 +595,7 @@ class AkActionMailer extends AkBaseModel
 
     function getTemplatePath()
     {
-        return $this->template_root.DS.$this->mailer_name;
+        return $this->template_root.DS.$this->mailerName;
     }
 
     function &_initializeTemplateClass($assigns)
@@ -602,32 +607,8 @@ class AkActionMailer extends AkBaseModel
         return $TemplateInstance;
     }
 
-    function sortParts($parts, $order = array())
-    {
-        $this->_parts_order = array_map('strtolower', empty($order) ? $this->implicit_parts_order : $order);
-        rsort($parts);
-        usort($parts, array($this,'_contentTypeComparison'));
-        return $parts;
-    }
 
-    function _contentTypeComparison($a, $b)
-    {
-        $a_ct = strtolower($a['content_type']);
-        $b_ct = strtolower($b['content_type']);
-        $a_in = in_array($a_ct, $this->_parts_order);
-        $b_in = in_array($b_ct, $this->_parts_order);
-        if($a_in && $b_in){
-            $a_pos = array_search($a_ct, $this->_parts_order);
-            $b_pos = array_search($b_ct, $this->_parts_order);
-            return (($a_pos == $b_pos) ? 0 : (($a_pos < $b_pos) ? -1 : 1));
-        }
-        return $a_in ? -1 : ($b_in ? 1 : (($a_ct == $b_ct) ? 0 : (($a_ct < $b_ct) ? -1 : 1)));
-    }
 
-    function &createMail()
-    {
-        return $this;
-    }
 
     /**
           function createMail()
@@ -900,13 +881,35 @@ class AkActionMailer extends AkBaseModel
         $default_options = array(
         'html' => TextHelper::textilize($this->body),
         'text' => $this->body,
-        'attachments' => array()
+        'attachments' => array(),
+        'embed_referenced_images' => AK_MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS
         );
 
         $options = array_merge($default_options, $options);
 
-        //AssetTagHelper::_compute_public_path()
-        $images = TextHelper::get_image_urls_from_html($options['html']);
+        if($options['embed_referenced_images']){
+            list($html_images, $options['html']) = $this->_embedReferencedImages($options['html']);
+        }
+        
+        require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail'.DS.'mime.php');
+        $this->Mime =& new Mail_mime();
+
+        $this->Mime->_build_params['text_encoding'] = '8bit';
+        $this->Mime->_build_params['html_charset'] = $this->Mime->_build_params['text_charset'] = $this->Mime->_build_params['head_charset'] = Ak::locale('charset');
+
+        $this->Mime->setTxtBody($options['text']);
+        $this->Mime->setHtmlBody($options['html']);
+        foreach ($html_images as $html_image){
+            $this->Mime->addHTMLImage(AK_CACHE_DIR.DS.'tmp'.DS.$html_image, 'image/png');
+        }
+        foreach ((array)$options['attachments'] as $attachment){
+            $this->Mime->addAttachment($attachment);
+        }
+    }
+    
+    function _embedReferencedImages($html)
+    {
+        $images = TextHelper::get_image_urls_from_html($html);
         $html_images = array();
         if(!empty($images)){
             require_once(AK_LIB_DIR.DS.'AkImage.php');
@@ -923,83 +926,9 @@ class AkActionMailer extends AkBaseModel
                 $html_images[$image] = $image_name.'.png';
                 Ak::file_delete(AK_CACHE_DIR.DS.'tmp'.DS.$image_name);
             }
-            $options['html'] = str_replace(array_keys($html_images),array_values($html_images), $options['html']);
+            $html = str_replace(array_keys($html_images),array_values($html_images), $html);
         }
-
-        require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail'.DS.'mime.php');
-        $this->Mime =& new Mail_mime();
-
-        $this->Mime->_build_params['text_encoding'] = '8bit';
-        $this->Mime->_build_params['html_charset'] = $this->Mime->_build_params['text_charset'] = $this->Mime->_build_params['head_charset'] = Ak::locale('charset');
-
-        $this->Mime->setTxtBody($options['text']);
-        $this->Mime->setHtmlBody($options['html']);
-        foreach ($html_images as $html_image){
-            $this->Mime->addHTMLImage(AK_CACHE_DIR.DS.'tmp'.DS.$html_image, 'image/png');
-        }
-        foreach ((array)$options['attachments'] as $attachment){
-            $this->Mime->addAttachment($attachment);
-        }
-    }
-
-    function _encodeAddress($address_string, $header_name = '', $names = true)
-    {
-        $headers = '';
-        $addresses = Ak::toArray($address_string);
-        $addresses = array_map('trim', $addresses);
-        foreach ($addresses as $address){
-            $address_description = '';
-            if(preg_match('#(.*?)<(.*?)>#', $address, $matches)){
-                $address_description = trim($matches[1]);
-                $address = $matches[2];
-            }
-
-            if(empty($address) || !$this->_isAscii($address) || !$this->_isValidAddress($address)){
-                continue;
-            }
-            if($names && !empty($address_description)){
-                $address = "<$address>";
-                if(!$this->_isAscii($address_description)){
-                    $address_description = '=?UTF-8?Q?'.$this->_convertQuotedPrintableTo8Bit($address_description, 0).'?=';
-                }
-            }
-            $headers .= (!empty($headers)?','.AK_MAIL_HEADER_EOL.' ':'').$address_description.$address;
-        }
-
-        return empty($headers) ? false : (!empty($header_name) ? $header_name.': '.$headers.AK_MAIL_HEADER_EOL : $headers);
-    }
-
-    function _isValidAddress($email)
-    {
-        return preg_match(AK_EMAIL_REGULAR_EXPRESSION, $email);
-    }
-
-    function _convertQuotedPrintableTo8Bit($quoted_string, $max_length = 74, $emulate_imap_8bit = true)
-    {
-        $lines= preg_split("/(?:\r\n|\r|\n)/", $quoted_string);
-        $search_pattern = $emulate_imap_8bit ? '/[^\x20\x21-\x3C\x3E-\x7E]/e' : '/[^\x09\x20\x21-\x3C\x3E-\x7E]/e';
-        $match_replacement = 'sprintf( "=%02X", ord ( "$0" ) ) ;';
-        foreach ((array)$lines as $k=>$line){
-            $length = strlen($line);
-            if ($length == 0){
-                continue;
-            }
-            $line = preg_replace($search_pattern, $match_replacement, $line );
-            $is_last_char = ord($line[$length-1]);
-            if (!($emulate_imap_8bit && ($k==count($lines)-1)) && ($is_last_char==0x09) || ($is_last_char==0x20)) {
-                $line[$length-1] = '=';
-                $line .= ($is_last_char==0x09) ? '09' : '20';
-            }
-            if ($emulate_imap_8bit) {
-                $line = str_replace(' =0D', '=20=0D', $line);
-            }
-            if($max_length){
-                preg_match_all( '/.{1,'.($max_length - 2).'}([^=]{0,2})?/', $line, $match );
-                $line = implode( '=' . AK_MAIL_HEADER_EOL, $match[0] );
-            }
-            $lines[$k] =& $line;
-        }
-        return implode(AK_MAIL_HEADER_EOL,$lines);
+        return array($html_images, $html);
     }
 
     
