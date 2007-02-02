@@ -212,9 +212,9 @@ ak_define('EMAIL_REGULAR_EXPRESSION', "/^([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{
 *
 * = Configuration options
 *
-* These options are specified on the class level, as class attriibutes <tt>$AkActionMailerInstance->template_root = "/my/templates";</tt>
+* These options are specified on the class level, as class attriibutes <tt>$AkActionMailerInstance->templateRoot = "/my/templates";</tt>
 *
-* * <tt>template_root</tt> - template root determines the base from which template references will be made.
+* * <tt>templateRoot</tt> - template root determines the base from which template references will be made.
 *
 * * <tt>server_settings</tt> -  Allows detailed configuration of the server:
 *   * <tt>address</tt> Allows you to use a remote mail server. Just change it from its default "localhost" setting.
@@ -249,7 +249,7 @@ ak_define('EMAIL_REGULAR_EXPRESSION', "/^([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{
 */
 class AkActionMailer extends AkBaseModel
 {
-    var $template_root;
+    var $templateRoot;
     var $server_settings = array(
     'address'        => 'localhost',
     'port'           => 25,
@@ -573,7 +573,7 @@ class AkActionMailer extends AkBaseModel
             $method = 'set'.AkInflector::camelize($attribute);
             $Mail->$method(empty($this->$attribute) ? array() : $this->$attribute);
         }
-        $this->template_root = empty($this->template_root) ? AK_APP_DIR.DS.'views' : $this->template_root;
+        $this->templateRoot = empty($this->templateRoot) ? AK_APP_DIR.DS.'views' : $this->templateRoot;
         $this->template = empty($this->template) ? $method_name : $this->template;
         $this->mailerName = empty($this->mailerName) ? AkInflector::underscore($this->getModelName()) : $this->mailerName;
     }
@@ -595,7 +595,7 @@ class AkActionMailer extends AkBaseModel
 
     function getTemplatePath()
     {
-        return $this->template_root.DS.$this->mailerName;
+        return $this->templateRoot.DS.$this->mailerName;
     }
 
     function &_initializeTemplateClass($assigns)

@@ -130,8 +130,6 @@ class Tests_for_Mailers extends  AkUnitTest
         $Mail = AkMail::parse(file_get_contents(AK_TEST_DIR.'/fixtures/data/raw_email_with_partially_quoted_subject'));
         $this->assertEqual("Re: Test: \"\346\274\242\345\255\227\" mid \"\346\274\242\345\255\227\" tail", $Mail->subject);
     }
-    
-    
 }
 
 
