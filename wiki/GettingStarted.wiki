@@ -1,0 +1,14 @@
+= Getting Started =
+
+If you want to get started quickly read the file *README.txt* after checking out the source
+
+=== First steps on *NIX systems: ===
+
+  # Check if 'env php' works for you /usr/bin/env php -v If you don't see the output you would expect from php -v (e.g. PHP 5.1.2 (cli) (built: Sep 6 2006 22:04:21)...), you will have to customize the path to PHP in the first lines of script/console, script/generate, script/migrate, script/setup and script/test.
+  # Create your project (at least public within the destionation path has to be in your docroot) ./script/setup /your/project/destination/path
+  # Make sure, your project directory is writable to the webserver user (e.g.:) chgrp www-data /your/project/destination/path -R && chmod g+w /your/project/destination/path -R.
+  # Point your browser to whatever URL points to the destination path and configure Akelos or alternatively cp config/DEFAULT-config.php config/config.php and edit it according to your needs
+  # Generate some models, controllers and tables and get going! (e.g.:) ./script/generate model Article ./script/generate controller Blog
+
+
+
