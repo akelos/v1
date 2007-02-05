@@ -1,0 +1,65 @@
+#summary Akelos Framework Features
+
+= Framework Features =
+
+== Active Record (Model) ==
+
+    * Associations
+          * belongs_to
+          * has_one
+          * has_many
+          * has_and_belongs_to_many
+    * Finders (not so cool as Ruby on Rails but you can still do $Project->findFirstBy('language AND start_year:greater', 'PHP', '2004'); )
+    * Acts as
+          * nested_set
+          * nested tree
+          * list
+    * Callbacks
+    * Transactions
+    * Validators
+    * Locking
+    * Observer
+    * Versioning
+    * Scaffolds
+    * Support for MySQL, PostgreSQL and SQLite (might work with other databases supported by ADOdb)
+
+== Action Controller ==
+
+    * Filters
+    * Pagination
+    * Helpers
+    * Mime Type
+    * Mime Response
+    * Code Generation
+    * Flash messages
+    * URL Routing
+    * Response handler
+    * Url rewriter
+
+== Action View ==
+
+    * Templates (using Sintags)
+    * Web 2.0 javascript using prototype and script.aculo.us
+    * Helpers
+    * Partials
+    * Template Compilers
+
+
+= Other Akelos Framework Features =
+
+    * Multilingual Models and Views
+    * Locale alias integrated on URLS (example.com/spanish will load the es_ES locale)
+    * Database migrations using DB Designer files
+    * Pure PHP support for Unicode (no extensions required)
+    * Unit Tested source code
+    * Code Generators
+    * Built in XHTML validator
+    * Automated locale management
+    * Clean separation from HTML and Javascript using CSS event selectors.
+    * Ajax file uploads.
+    * Format converters.
+    * File handling using SFTP for shared host running Apache as user nobody (as most CPanel server do).
+    * Distributed sessions using databases.
+
+
+
