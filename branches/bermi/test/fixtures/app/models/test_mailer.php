@@ -2,7 +2,8 @@
 
 class TestMailer extends AkActionMailer
 {
-
+    var $delivery_method = 'test';
+    
     function signed_up($recipient)
     {
         $this->set(array(

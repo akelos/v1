@@ -6,7 +6,7 @@ require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
 require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
 
-Ak::import('render_mailer,first_mailer,second_mailer,helper_mailer');
+Ak::import('render_mailer,first_mailer,second_mailer,helper_mailer,test_mailer');
 
 class Tests_for_Mailers extends  AkUnitTest
 {
@@ -26,7 +26,7 @@ class Tests_for_Mailers extends  AkUnitTest
         $Mail = $RenderMailer->create('inline_template', $this->recipient);
         $this->assertEqual("Hello, World", $Mail->body);
     }
-    
+
     function test_file_template()
     {
         $RenderMailer =& new RenderMailer();
@@ -40,16 +40,16 @@ class Tests_for_Mailers extends  AkUnitTest
         $FirstMailer =& new FirstMailer();
         $Mail = $FirstMailer->create('share', $this->recipient);
         $this->assertEqual('first mail', trim($Mail->body));
-        
+
         $SecondMailer =& new SecondMailer();
         $Mail = $SecondMailer->create('share', $this->recipient);
         $this->assertEqual('second mail', trim($Mail->body));
-        
-        
+
+
         $FirstMailer =& new FirstMailer();
         $Mail = $FirstMailer->create('share', $this->recipient);
         $this->assertEqual('first mail', trim($Mail->body));
-        
+
         $SecondMailer =& new SecondMailer();
         $Mail = $SecondMailer->create('share', $this->recipient);
         $this->assertEqual('second mail', trim($Mail->body));
@@ -84,11 +84,11 @@ class Tests_for_Mailers extends  AkUnitTest
         $this->assertPattern("/east,\n  and Juliet/", trim($Mail->body));
     }
 
-    
+
     function test_quote_multibyte_chars()
     {
         $original = "\303\246 \303\270 and \303\245";
-        $result = AkMailEncoding::_convertQuotedPrintableTo8Bit($original);
+        $result = AkActionMailerQuoting::quotedPrintableEncode($original);
         $unquoted = quoted_printable_decode($result);
         $this->assertEqual($unquoted, $original);
     }
@@ -111,12 +111,12 @@ class Tests_for_Mailers extends  AkUnitTest
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?=\n =?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]'
         );
 
-        
+
         foreach ($headers as $encoded_header=>$expected){
             $this->assertEqual(AkMailEncoding::_decodeHeader($encoded_header), $expected);
         }
     }
-    
+
     // test an email that has been created using \r\n newlines, instead of
     // \n newlines.
     function test_email_quoted_with_0d0a()
@@ -133,10 +133,58 @@ class Tests_for_Mailers extends  AkUnitTest
 }
 
 
+class Tests_for_AkActionMailer extends  AkUnitTest
+{
+    function encode($text, $charset = 'utf-8')
+    {
+        return AkActionMailerQuoting::quotedPrintable($text, $charset);
+    }
+
+    function new_mail($charset = 'utf-8')
+    {
+        $Mail =& new AkMail();
+        $Mail->setMimeVersion('1.0');
+        $Mail->setContentType('text/plain; charset:'.$charset);
+        return $Mail;
+
+    }
+
+    function setup()
+    {
+        $this->Mailer =& new AkActionMailer();
+        $this->Mailer->delivery_method = 'test';
+        $this->Mailer->perform_deliveries = true;
+        $this->Mailer->deliveries = array();
+        $this->recipient = 'test@localhost';
+    }
 
 
+    function test_nested_parts()
+    {
+        $HelperMailer =& new TestMailer();
+        $Created = $HelperMailer->create('nested_multipart', $this->recipient);
+        $this->assertEqual(2, count($Created->parts));
+        $this->assertEqual(2, count($Created->parts[0]->parts));
+        $this->assertEqual( "multipart/mixed", $Created->contentType );
+        $this->assertEqual( "multipart/alternative", $Created->parts[0]->contentType );
+        $this->assertEqual( "bar", $Created->parts[0]->header['foo'] );
+        $this->assertEqual( "text/plain", $Created->parts[0]->parts[0]->contentType );
+        $this->assertEqual( "text/html", $Created->parts[0]->parts[1]->contentType );
+        $this->assertEqual( "application/octet-stream", $Created->parts[1]->contentType );
+    }
+    
 
-Ak::test('Tests_for_Mailers');
+    function test_attachment_with_custom_header()
+    {
+        $HelperMailer =& new TestMailer();
+        $Created = $HelperMailer->create('attachment_with_custom_header', $this->recipient);
+        $this->assertEqual( "<test@test.com>", $Created->parts[1]->header['content-id']);
+    }
+
+
+}
+    Ak::test('Tests_for_Mailers');
+    Ak::test('Tests_for_AkActionMailer');
 
 
 ?>

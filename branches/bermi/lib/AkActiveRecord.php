@@ -3446,7 +3446,7 @@ Examples for find all:
     function validatesConfirmationOf($attribute_names, $message = 'confirmation')
     {
         $message = isset($this->_defaultErrorMessages[$message]) ? $this->t($this->_defaultErrorMessages[$message]) : $message;
-        $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
+        $attribute_names = Ak::toArray($attribute_names);
         foreach ($attribute_names as $attribute_name){
             $attribute_accessor = $attribute_name.'_confirmation';
             if(isset($this->$attribute_accessor) && @$this->$attribute_accessor != @$this->$attribute_name){
@@ -3478,7 +3478,7 @@ Examples for find all:
     {
         $message = isset($this->_defaultErrorMessages[$message]) ? $this->t($this->_defaultErrorMessages[$message]) : $message;
 
-        $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
+        $attribute_names = Ak::toArray($attribute_names);
         foreach ($attribute_names as $attribute_name){
             if(@$this->$attribute_name != $accept){
                 $this->addError($attribute_name, $message);
@@ -3498,7 +3498,7 @@ Examples for find all:
     {
         $message = isset($this->_defaultErrorMessages[$message]) ? $this->t($this->_defaultErrorMessages[$message]) : $message;
 
-        $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
+        $attribute_names = Ak::toArray($attribute_names);
         foreach ($attribute_names as $attribute_name){
             $this->addErrorOnBlank($attribute_name, $message);
         }

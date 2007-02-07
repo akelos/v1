@@ -18,6 +18,7 @@
 
 require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
+require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkActionMailerQuoting.php');
 
 ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', true);
 ak_define('MAIL_HEADER_EOL', "\n");
@@ -424,6 +425,14 @@ class AkActionMailer extends AkBaseModel
     {
         $this->_MailDriver->set($attributes);
     }
+    
+    /**
+     * Gets a well formed mail in plain text
+     */
+    function getEncodedMail()
+    {
+        $this->_MailDriver->getEncodedMail();
+    }
 
     /**
      * The mail object instance referenced by this mailer.
@@ -452,7 +461,8 @@ class AkActionMailer extends AkBaseModel
      */
     function receive(&$Mail)
     {
-        $Mail =& AkMail::parse($raw_email);
+        $this->_MailDriver =& AkMail::parse($raw_email);
+        return $this->_MailDriver;
     }
 
     
@@ -493,7 +503,9 @@ class AkActionMailer extends AkBaseModel
         }else{
             trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
         }
+
         $Mail =& $this->_MailDriver;
+
         if(!is_string($Mail->body)){
             if(empty($Mail->parts)){
                 $templates = array_map('basename', Ak::dir($this->getTemplatePath().DS, array('dirs'=>false)));
@@ -516,7 +528,7 @@ class AkActionMailer extends AkBaseModel
                 }
             }
 
-            $template_exists = !empty($Mail->parts);
+            $template_exists = empty($Mail->parts);
             if(!$template_exists){
                 $templates = array_map('basename', Ak::dir($this->getTemplatePath(), array('dirs'=>false)));
                 foreach ($templates as $template){
@@ -543,8 +555,8 @@ class AkActionMailer extends AkBaseModel
     }
 
     /**
-        * Delivers a Pear::Mail object. By default, it delivers the cached mail
-        * object (from the create#create! method). If no cached mail object exists, and
+        * Delivers an AMail object. By default, it delivers the cached mail
+        * object (from the AkActionMailer::create method). If no cached mail object exists, and
         * no alternate has been given as the parameter, this will fail.
         */
     function deliver($Mail = null)
@@ -552,7 +564,7 @@ class AkActionMailer extends AkBaseModel
         $this->Mail = empty($this->Mail) ? $this->Mail : $Mail;
         !empty($this->Mail) or trigger_error(Ak::t('No mail object available for delivery!'), E_USER_ERROR);
         if(!empty($this->perform_deliveries)){
-            $this->{"performDelivery".ucfirst(strtolower($this->delivery_method))}();
+            $this->{"perform".ucfirst(strtolower($this->delivery_method))."Delivery"}();
         }
         return $this->Mail;
     }
@@ -608,248 +620,6 @@ class AkActionMailer extends AkBaseModel
     }
 
 
-
-
-    /**
-          function createMail()
-          {
-              require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail.php');
-            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'text_helper.php');
-            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'asset_tag_helper.php');
-
-        $default_options = array(
-        'html' => TextHelper::textilize($this->body),
-        'text' => $this->body,
-        'attachments' => array()
-        );
-
-        $options = array_merge($default_options, $options);
-
-        //AssetTagHelper::_compute_public_path()
-        $images = TextHelper::get_image_urls_from_html($options['html']);
-        $html_images = array();
-        if(!empty($images)){
-            require_once(AK_LIB_DIR.DS.'AkImage.php');
-            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'asset_tag_helper.php');
-            
-            foreach ($images as $image){
-                $image = AssetTagHelper::_compute_public_path($image);
-                $extenssion = substr($image, strrpos('.'.$image,'.'));
-
-                $image_name = Ak::uuid();
-                Ak::file_put_contents(AK_CACHE_DIR.DS.'tmp'.DS.$image_name.$extenssion, file_get_contents($image));
-                $NewImage =& new AkImage(AK_CACHE_DIR.DS.'tmp'.DS.$image_name.$extenssion);
-                $NewImage->save(AK_CACHE_DIR.DS.'tmp'.DS.$image_name.'.png');
-                $html_images[$image] = $image_name.'.png';
-                Ak::file_delete(AK_CACHE_DIR.DS.'tmp'.DS.$image_name);
-            }
-            $options['html'] = str_replace(array_keys($html_images),array_values($html_images), $options['html']);
-        }
-
-        require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail'.DS.'mime.php');
-        $this->Mime =& new Mail_mime();
-        
-        $this->Mime->_build_params['text_encoding'] = '8bit';
-        $this->Mime->_build_params['html_charset'] = $this->Mime->_build_params['text_charset'] = $this->Mime->_build_params['head_charset'] = Ak::locale('charset');
-        
-        $this->Mime->setTxtBody($options['text']);
-        $this->Mime->setHtmlBody($options['html']);
-        foreach ($html_images as $html_image){
-            $this->Mime->addHTMLImage(AK_CACHE_DIR.DS.'tmp'.DS.$html_image, 'image/png');
-        }
-        foreach ((array)$options['attachments'] as $attachment){
-            $this->Mime->addAttachment($attachment);
-        }
-              
-              
-              
-              
-            if(!$this->_isAscii($this->subject)){
-                $this->subject = '=?UTF-8?Q?'.$this->_convertQuotedPrintableTo8Bit($this->subject, false).'?=';
-            }
-
-            $this->recipients = $this->_encodeAddress($this->recipients, '' , AK_OS == 'WINDOWS');
-            $this->from = $this->_encodeAddress($this->from, 'From');
-            $this->bcc = $this->_encodeAddress($this->bcc, 'Bcc');
-            $this->cc = $this->_encodeAddress($this->cc, 'Cc');
-            
-            $this->mime_version = !empty($this->mime_version) ? 'MIME-Version: '.$this->mime_version.AK_MAIL_HEADER_EOL : '';
-            
-            
-            $Mail->mime_version = mime_version unless mime_version.null?
-            $Mail->date = sent_on.to_time rescue sent_on if sent_on
-            
-            
-            
-            
-
-    $header .= 'Content-Type: text/plain; charset=UTF-8'.AK_MAIL_HEADER_EOL;
-    $header .= 'Content-Transfer-Encoding: quoted-printable'.AK_MAIL_HEADER_EOL;
-    $header .= $headers;
-    $header  = trim($header);
-
-    $body = $this->_convertQuotedPrintableTo8Bit($body);
-            
-            headers.each { |k, v| m[k] = v }
-    
-            real_content_type, ctype_attrs = parse_content_type
-    
-            if $this->parts.empty?
-              $Mail->set_content_type(real_content_type, null, ctype_attrs)
-              $Mail->body = Utils.normalize_new_lines(body)
-            else
-              if String === body
-                part = TMail::Mail.new
-                part.body = Utils.normalize_new_lines(body)
-                part.set_content_type(real_content_type, null, ctype_attrs)
-                part.set_content_disposition "inline"
-                $Mail->parts << part
-              }
-    
-              $this->parts.each do |p|
-                part = (TMail::Mail === p ? p : p.to_mail(self))
-                $Mail->parts << part
-              }
-              
-              if real_content_type =~ /multipart/
-                ctype_attrs.delete "charset"
-                $Mail->set_content_type(real_content_type, null, ctype_attrs)
-              }
-            }
-            
-
-
-        $success = true;
-        if(empty($EmailAccount)){
-        }
-
-        if($this->notifyObservers('beforeSend')){
-            $this->save();
-            $this->recipient->load(true);
-            $this->email_account->assign($EmailAccount);
-            if(!empty($this->recipients)){
-                $this->_loadMailConnector($EmailAccount->getAttributes());
-                foreach (array_keys($this->recipients) as $k){
-                    $success = $this->_send(trim($this->recipients[$k]->name.' <'.$this->recipients[$k]->email.'>')) ? $success : false;
-                }
-            }
-            $this->notifyObservers('afterSend');
-        }
-        if($success){
-            $this->draft = false;
-            $this->sent = true;
-            $this->headers = serialize($this->_getHeaders());
-            $this->save();
-            return $this;
-        }
-        return $success;
-          }
-    * /
-    function performDeliverySmtp(&$Mail)
-    {
-        $body = $Mail->get();
-        $headers = $this->Mime->headers($headers);
-    $mail = &Mail::factory('mail');
-    $mail->send($to, $hdrs, $body);
-    
-        $destinations = mail.destinations
-        $Mail->ready_to_send()
-    
-            Net::SMTP.start(server_settings[:address], server_settings[:port], server_settings[:domain], 
-                server_settings[:user_name], server_settings[:password], server_settings[:authentication]) do |smtp|
-              smtp.sendmail(mail.encoded, mail.from, destinations)
-            }
-          }
-    
-          function performDeliveryPhp(mail)
-            IO.popen("/usr/sbin/sendmail -i -t","w+") do |sm|
-              sm.print(mail.encoded.gsub(/\r/, ''))
-              sm.flush
-            }
-          }
-    
-          function performDeliveryTest($Mail)
-          {
-            $this->deliveries[] = $Mail;
-          }
-      }
-      */
-
-
-
-    function send($EmailAccount = null)
-    {
-        require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail.php');
-
-        $success = true;
-        if(empty($EmailAccount)){
-        }
-
-        if($this->notifyObservers('beforeSend')){
-            $this->save();
-            $this->recipient->load(true);
-            $this->email_account->assign($EmailAccount);
-            if(!empty($this->recipients)){
-                $this->_loadMailConnector($EmailAccount->getAttributes());
-                foreach (array_keys($this->recipients) as $k){
-                    $success = $this->_send(trim($this->recipients[$k]->name.' <'.$this->recipients[$k]->email.'>')) ? $success : false;
-                }
-            }
-            $this->notifyObservers('afterSend');
-        }
-        if($success){
-            $this->draft = false;
-            $this->sent = true;
-            $this->headers = serialize($this->_getHeaders());
-            $this->save();
-            return $this;
-        }
-        return $success;
-    }
-
-    function _send($to)
-    {
-        $headers = $this->_getHeaders($to);
-        if(empty($this->Mime)){
-            $body = $this->body;
-            $headers['Content-Type'] = 'text/plain; charset='.Ak::locale('charset').'; format=flowed';
-        }else{
-            $body = $this->Mime->get();
-            $headers = $this->Mime->headers($headers);
-        }
-
-        return $this->Connector->send(
-        array(
-        'To'=>$to
-        ), $headers, $body);
-    }
-
-    function _getHeaders($to = null)
-    {
-        return array(
-        'From' => trim($this->email_account->sender_name.' <'.$this->email_account->reply_to.'>'),
-        'Return-path' => trim($this->email_account->sender_name.' <'.$this->email_account->reply_to.'>'),
-        'Subject' => $this->subject,
-        'To' => $to,
-        'Message-Id' => '<'.$this->id.'.'.Ak::uuid().substr('bermi@akelos.com', strpos('bermi@akelos.com','@')).'>',
-        'Date' => strftime("%a, %d %b %Y %H:%M:%S %z",Ak::getTimestamp()));
-    }
-    /*
-    require_once('Mail.php');      // These two files are part of Pear,
-    require_once('Mail/Mime.php'); // and are required for the Mail_Mime class
-    $mime = new Mail_Mime();
-    $mime->setTxtBody($textMessage);
-    $mime->setHtmlBody($htmlMessage);
-    $mime->addAttachment($attachment);
-
-    $this->Mime
-
-    $body = $this->Mime->get();
-    $hdrs = $this->Mime->headers($headers);
-    $mail = &Mail::factory('mail');
-    $mail->send($to, $hdrs, $body);
-    */
-
     function _loadMailConnector($options)
     {
         if(empty($this->Connector)){
@@ -873,65 +643,6 @@ class AkActionMailer extends AkBaseModel
         }
     }
 
-    function setMimeContents($options = array())
-    {
-        require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'text_helper.php');
-        require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'asset_tag_helper.php');
-
-        $default_options = array(
-        'html' => TextHelper::textilize($this->body),
-        'text' => $this->body,
-        'attachments' => array(),
-        'embed_referenced_images' => AK_MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS
-        );
-
-        $options = array_merge($default_options, $options);
-
-        if($options['embed_referenced_images']){
-            list($html_images, $options['html']) = $this->_embedReferencedImages($options['html']);
-        }
-        
-        require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail'.DS.'mime.php');
-        $this->Mime =& new Mail_mime();
-
-        $this->Mime->_build_params['text_encoding'] = '8bit';
-        $this->Mime->_build_params['html_charset'] = $this->Mime->_build_params['text_charset'] = $this->Mime->_build_params['head_charset'] = Ak::locale('charset');
-
-        $this->Mime->setTxtBody($options['text']);
-        $this->Mime->setHtmlBody($options['html']);
-        foreach ($html_images as $html_image){
-            $this->Mime->addHTMLImage(AK_CACHE_DIR.DS.'tmp'.DS.$html_image, 'image/png');
-        }
-        foreach ((array)$options['attachments'] as $attachment){
-            $this->Mime->addAttachment($attachment);
-        }
-    }
-    
-    function _embedReferencedImages($html)
-    {
-        $images = TextHelper::get_image_urls_from_html($html);
-        $html_images = array();
-        if(!empty($images)){
-            require_once(AK_LIB_DIR.DS.'AkImage.php');
-            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'asset_tag_helper.php');
-
-            foreach ($images as $image){
-                $image = AssetTagHelper::_compute_public_path($image);
-                $extenssion = substr($image, strrpos('.'.$image,'.'));
-
-                $image_name = Ak::uuid();
-                Ak::file_put_contents(AK_CACHE_DIR.DS.'tmp'.DS.$image_name.$extenssion, file_get_contents($image));
-                $NewImage =& new AkImage(AK_CACHE_DIR.DS.'tmp'.DS.$image_name.$extenssion);
-                $NewImage->save(AK_CACHE_DIR.DS.'tmp'.DS.$image_name.'.png');
-                $html_images[$image] = $image_name.'.png';
-                Ak::file_delete(AK_CACHE_DIR.DS.'tmp'.DS.$image_name);
-            }
-            $html = str_replace(array_keys($html_images),array_values($html_images), $html);
-        }
-        return array($html_images, $html);
-    }
-
-    
     /**
      * Alias for getModelName
      */

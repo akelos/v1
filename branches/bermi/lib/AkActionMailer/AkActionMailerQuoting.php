@@ -1,4 +1,20 @@
 <?php
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
+
+// +----------------------------------------------------------------------+
+// | Akelos Framework - http://www.akelos.org                             |
+// +----------------------------------------------------------------------+
+// | Copyright (c) 2002-2006, Akelos Media, S.L.  & Bermi Ferrer Martinez |
+// | Released under the GNU Lesser General Public License, see LICENSE.txt|
+// +----------------------------------------------------------------------+
+
+/**
+ * @package AkelosFramework
+ * @subpackage AkActionMailer
+ * @author Bermi Ferrer <bermi a.t akelos c.om>
+ * @copyright Copyright (c) 2002-2006, Akelos Media, S.L. http://www.akelos.org
+ * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
+ */
 
 defined('AK_ACTION_MAILER_CHARS_NEEDING_QUOTING_REGEX') ? null :
 define('AK_ACTION_MAILER_CHARS_NEEDING_QUOTING_REGEX', "/[\\000-\\011\\013\\014\\016-\\037\\177-\\377]/");
@@ -13,7 +29,7 @@ class AkActionMailerQuoting
      */
     function quotedPrintable($text, $charset = 'utf-8')
     {
-        $text = str_replace(' ','_', preg_replace('/[^a-z ]/ie', 'AkActionMailerQuoting::quotedPrintableEncode($0)', $text));
+        $text = str_replace(' ','_', preg_replace('/[^a-z ]/ie', 'AkActionMailerQuoting::quotedPrintableEncode("$0")', $text));
         return "=?$charset?Q?$text?=";
     }
 
@@ -30,7 +46,8 @@ class AkActionMailerQuoting
         }
         return $result;
     }
-
+    
+    
     /**
     * Quote the given text if it contains any "illegal" characters
     */
@@ -82,6 +99,24 @@ class AkActionMailerQuoting
             $address[$k] = AkActionMailerQuoting::quoteAddressIfNecessary($charset, $v);
         }
         return $address;
+    }
+
+    function chunkQuoted($quoted_string, $max_length = 74)
+    {
+        if(empty($max_length)){
+            return $quoted_string;
+        }
+        $lines= preg_split("/(?:\r\n|\r|\n)/", $quoted_string);
+        foreach ((array)$lines as $k=>$line){
+            if (empty($line)){
+                continue;
+            }
+            preg_match_all( '/.{1,'.($max_length - 2).'}([^=]{0,2})?/', $line, $match );
+            $line = implode( "=\n", $match[0] );
+
+            $lines[$k] =& $line;
+        }
+        return implode("\n",$lines);
     }
 }
 
