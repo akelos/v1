@@ -21,8 +21,10 @@ require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkActionMailerQuoting.php');
 
 ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', false);
+ak_define('ACTION_MAILER_DEFAULT_CHARSET', AK_CHARSET);
 ak_define('ACTION_MAILER_EOL', "\r\n");
 ak_define('ACTION_MAILER_EMAIL_REGULAR_EXPRESSION', "([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-z0-9\-]+\.)+))([a-z]{2,4}|[0-9]{1,3})(\]?)");
+ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun), )?(\d\d?) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d\d\d) (\d{2}:\d{2}(?::\d\d)) (UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[A-Z]|(?:\+|\-)\d{4})");
 
 /**
 * AkActionMailer allows you to send email from your application using a mailer model and views.
@@ -263,7 +265,7 @@ class AkActionMailer extends AkBaseModel
     var $delivery_method = 'php';
     var $perform_deliveries = true;
     var $deliveries = array();
-    var $default_charset = 'UTF-8';
+    var $default_charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
     var $default_content_type = 'text/plain';
     var $default_mime_version = '1.0';
     var $default_implicitPartsOrder = array('text/html', 'text/enriched', 'text/plain');
@@ -423,15 +425,19 @@ class AkActionMailer extends AkBaseModel
      */
     function set($attributes = array())
     {
+        if(!empty($attributes['template'])){
+            $this->setTemplate($attributes['template']);
+            unset($attributes['template']);
+        }
         $this->_MailDriver->set($attributes);
     }
 
     /**
      * Gets a well formed mail in plain text
      */
-    function getEncodedMail()
+    function getEncoded()
     {
-        $this->_MailDriver->getEncodedMail();
+        $this->_MailDriver->getEncoded();
     }
 
     /**
@@ -585,7 +591,7 @@ class AkActionMailer extends AkBaseModel
 
     function performTestDelivery(&$Mail)
     {
-        $this->deliveries[] =& $Mail->getEncodedMail();
+        $this->deliveries[] =& $Mail->getEncoded();
     }
 
 

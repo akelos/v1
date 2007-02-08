@@ -19,10 +19,10 @@ class TestMailer extends AkActionMailer
     {
         $this->set(array(
         'recipients' => $recipient,
-        'subject' => "[Cancelled] Goodbye {recipient}",
+        'subject' => "[Cancelled] Goodbye $recipient",
         'from' => "system@example.com",
         'sent_on' => Ak::getDate(strtotime('2004-12-12')),
-        'body' => "Goodbye, Mr. {recipient}"
+        'body' => "Goodbye, Mr. $recipient"
         ));
     }
 
@@ -43,13 +43,13 @@ class TestMailer extends AkActionMailer
     {
         $this->set(array(
         'recipients' => $recipient,
-        'subject' => "testing isø charsets",
+        'subject' => Ak::recode('testing isø charsets','ISO-8859-1', 'UTF-8'),
         'from' => "system@example.com",
         'sent_on' => Ak::getDate(strtotime('2004-12-12')),
         'cc' => "nobody@example.com",
         'bcc' => "root@example.com",
         'body' => "Nothing to see here.",
-        'charset' => "iso-8859-1"
+        'charset' => "ISO-8859-1"
         ));
     }
 
@@ -195,8 +195,8 @@ class TestMailer extends AkActionMailer
     {
         $this->set(array(
         'recipients' => $recipient,
-        'subject' => "[Signed up] Welcome {recipient}",
-        'from' => "test@example.com",
+        'subject' => "[Signed up] Welcome $recipient",
+        'from' => "system@example.com",
         'body' => array('recipient' => $recipient),
         'template' => 'signed_up'
         ));

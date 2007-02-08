@@ -27,7 +27,7 @@ class AkActionMailerQuoting
      * Convert the given text into quoted printable format, with an instruction
      * that the text be eventually interpreted in the given charset.
      */
-    function quotedPrintable($text, $charset = 'UTF-8')
+    function quotedPrintable($text, $charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
         $text = str_replace(' ','_', preg_replace('/[^a-z ]/ie', 'AkActionMailerQuoting::quotedPrintableEncode("$0")', $text));
         return "=?$charset?Q?$text?=";
@@ -51,7 +51,7 @@ class AkActionMailerQuoting
     /**
     * Quote the given text if it contains any "illegal" characters
     */
-    function quoteIfNecessary($text, $charset = 'UTF-8')
+    function quoteIfNecessary($text, $charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
         return preg_match(AK_ACTION_MAILER_CHARS_NEEDING_QUOTING_REGEX,$text) ? AkActionMailerQuoting::quotedPrintable($text,$charset) : $text;
     }
@@ -59,7 +59,7 @@ class AkActionMailerQuoting
     /**
     * Quote any of the given strings if they contain any "illegal" characters
     */
-    function quoteAnyIfNecessary($strings = array(), $charset = 'UTF-8')
+    function quoteAnyIfNecessary($strings = array(), $charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
         foreach ($strings as $k=>$v){
             $strings[$k] = AkActionMailerQuoting::quoteIfNecessary($charset, $v);
@@ -74,7 +74,7 @@ class AkActionMailerQuoting
      * it needs to be. This allows extended characters to be used in the
      * "to", "from", "cc", and "bcc" headers.
      */
-    function quoteAddressIfNecessary($address, $charset = 'UTF-8')
+    function quoteAddressIfNecessary($address, $charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
         if(is_array($address)){
             return join(";".AK_ACTION_MAILER_EOL."     ",AkActionMailerQuoting::quoteAnyAddressIfNecessary($address, $charset));
@@ -90,7 +90,7 @@ class AkActionMailerQuoting
     /**
      *  Quote any of the given addresses, if they need to be.
      */
-    function quoteAnyAddressIfNecessary($address = array(), $charset = 'UTF-8')
+    function quoteAnyAddressIfNecessary($address = array(), $charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
         foreach ($address as $k=>$v){
             $address[$k] = AkActionMailerQuoting::quoteAddressIfNecessary($v,$charset);

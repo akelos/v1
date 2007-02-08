@@ -35,7 +35,7 @@ class AkMailEncoding extends Mail_mimeDecode
             foreach ($match[0] as $k=>$encoded){
                 $charset = strtoupper($match[2][$k]);
                 $decode_function = strtolower($match[3][$k]) == 'q' ? 'quoted_printable_decode' : 'base64_decode';
-                $decoded_part = trim(Ak::recode($decode_function($match[4][$k]),'UTF-8', $charset, true));
+                $decoded_part = trim(Ak::recode($decode_function($match[4][$k]), AK_ACTION_MAILER_DEFAULT_CHARSET, $charset, true));
 
                 $decoded = str_replace(trim($match[0][$k]), $decoded_part, $decoded);
             }
@@ -76,7 +76,7 @@ class AkMailEncoding extends Mail_mimeDecode
             if($names && !empty($address_description)){
                 $address = "<$address>";
                 if(!$this->_isAscii($address_description)){
-                    $address_description = '=?UTF-8?Q?'.$this->quoted_printable_encode($address_description, 0).'?=';
+                    $address_description = '=?'.AK_ACTION_MAILER_DEFAULT_CHARSET.'?Q?'.$this->quoted_printable_encode($address_description, 0).'?=';
                 }
             }
             $headers .= (!empty($headers)?','.AK_MAIL_HEADER_EOL.' ':'').$address_description.$address;

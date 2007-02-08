@@ -163,7 +163,7 @@ class Tests_for_AkActionMailer extends  AkUnitTest
     {
         $HelperMailer =& new TestMailer();
         $Created = $HelperMailer->create('nested_multipart', $this->recipient);
-        
+
         $this->assertEqual(2, count($Created->parts));
         $this->assertEqual(2, count($Created->parts[0]->parts));
         $this->assertEqual( "multipart/mixed", $Created->contentType );
@@ -173,7 +173,7 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->assertEqual( "text/html", $Created->parts[0]->parts[1]->contentType );
         $this->assertEqual( "application/octet-stream", $Created->parts[1]->contentType );
     }
-    
+
 
     function test_attachment_with_custom_header()
     {
@@ -189,22 +189,126 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $Expected->setSubject("[Signed up] Welcome $this->recipient");
         $Expected->setBody("Hello there,\n\nMr. $this->recipient");
         $Expected->setFrom("system@example.com");
-        $Expected->setDate(Ak::getDate(Ak::getTimestamp("2004-12-12")));
+        $Expected->setDate(Ak::getTimestamp("2004-12-12"));
 
 
         $TestMailer =& new TestMailer();
         $this->assertTrue($Created = $TestMailer->create('signed_up', $this->recipient));
-        $this->assertEqual($Expected->getEncodedMail(), $Created->getEncodedMail());
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
         $this->assertTrue($TestMailer->deliver('signed_up', $this->recipient));
         $this->assertTrue(!empty($TestMailer->deliveries[0]));
-        $this->assertEqual($Expected->getEncodedMail(), $TestMailer->deliveries[0]);
+        $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
+    }
+
+    function test_custom_template()
+    {
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setSubject("[Signed up] Welcome $this->recipient");
+        $Expected->setBody("Hello there,\n\nMr. $this->recipient");
+        $Expected->setFrom("system@example.com");
+
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('custom_template', $this->recipient));
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
+    }
+
+    function test_cancelled_account()
+    {
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setSubject("[Cancelled] Goodbye $this->recipient");
+        $Expected->setBody("Goodbye, Mr. $this->recipient");
+        $Expected->setFrom("system@example.com");
+        $Expected->setDate("2004-12-12");
+
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('cancelled_account', $this->recipient));
+
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
+
+        $this->assertTrue($TestMailer->deliver('cancelled_account', $this->recipient));
+        $this->assertTrue(!empty($TestMailer->deliveries[0]));
+        $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
+    }
+
+
+    function test_cc_bcc()
+    {
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setSubject("testing bcc/cc");
+        $Expected->setBody("Nothing to see here.");
+        $Expected->setFrom("system@example.com");
+        $Expected->setDate("2004-12-12");
+        $Expected->setCc("nobody@example.com");
+        $Expected->setBcc("root@example.com");
+
+
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('cc_bcc', $this->recipient));
+
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
+
+        $this->assertTrue($TestMailer->deliver('cc_bcc', $this->recipient));
+        $this->assertTrue(!empty($TestMailer->deliveries[0]));
+        $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
+    }
+
+    
+
+
+  function test_iso_charset()
+  {
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setCharset("ISO-8859-1");
+        $Expected->setSubject(Ak::recode('testing isø charsets','ISO-8859-1', 'UTF-8'));
+        $Expected->setBody("Nothing to see here.");
+        $Expected->setFrom("system@example.com");
+        $Expected->setDate("2004-12-12");
+        $Expected->setCc("nobody@example.com");
+        $Expected->setBcc("root@example.com");
+
+        $TestMailer =& new TestMailer();
+
+        $this->assertTrue($Created = $TestMailer->create('iso_charset', $this->recipient));
+        
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
+
+        $this->assertTrue($TestMailer->deliver('iso_charset', $this->recipient));
+        $this->assertTrue(!empty($TestMailer->deliveries[0]));
+        $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
     }
     
     
 
+  function test_unencoded_subject()
+  {
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setSubject("testing unencoded subject");
+        $Expected->setBody("Nothing to see here.");
+        $Expected->setFrom("system@example.com");
+        $Expected->setDate("2004-12-12");
+        $Expected->setCc("nobody@example.com");
+        $Expected->setBcc("root@example.com");
+
+        $TestMailer =& new TestMailer();
+
+        $this->assertTrue($Created = $TestMailer->create('unencoded_subject', $this->recipient));
+        
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
+
+        $this->assertTrue($TestMailer->deliver('unencoded_subject', $this->recipient));
+        $this->assertTrue(!empty($TestMailer->deliveries[0]));
+        $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
+  }
+ 
+
 }
-    Ak::test('Tests_for_Mailers');
-    Ak::test('Tests_for_AkActionMailer');
+Ak::test('Tests_for_Mailers');
+Ak::test('Tests_for_AkActionMailer');
 
 
 ?>

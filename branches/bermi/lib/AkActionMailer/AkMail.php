@@ -23,7 +23,7 @@ require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMimeMail.php');
 class AkMail extends Mail
 {
     var $rawMessage = '';
-    var $charset = 'UTF-8';
+    var $charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
     var $contentType = 'text/plain';
 
     function AkMail()
@@ -77,9 +77,12 @@ class AkMail extends Mail
     /**
      * Specify the charset to use for the message. 
      */
-    function setCharset($charset)
+    function setCharset($charset, $append_to_content_type_as_attribute = true)
     {
-        $this->charset = $charset;
+        $this->_charset = $charset;
+        if($append_to_content_type_as_attribute){
+            $this->setContenttypeAttributes(array('charset'=>$charset));
+        }
     }
 
     /**
@@ -89,7 +92,34 @@ class AkMail extends Mail
     function setContentType($content_type)
     {
         list($this->contentType, $ctype_attrs) = $this->_getContentTypeAndAttributes($content_type);
-        $this->set($ctype_attrs);
+        $this->setContenttypeAttributes($ctype_attrs);
+    }
+
+
+    function getContentType()
+    {
+        return $this->contentType.$this->getContenttypeAttributes();
+    }
+
+    function setContenttypeAttributes($attributes = array())
+    {
+        foreach ($attributes as $key=>$value){
+            if(strtolower($key) == 'charset'){
+                $this->setCharset($value, false);
+            }
+            $this->content_type_attributes[$key] = $value;
+        }
+    }
+
+    function getContenttypeAttributes()
+    {
+        $attributes = '';
+        if(!empty($this->content_type_attributes)){
+            foreach ((array)$this->content_type_attributes as $key=>$value){
+                $attributes .= ";$key=$value";
+            }
+        }
+        return $attributes;
     }
 
     /**
@@ -121,30 +151,30 @@ class AkMail extends Mail
     {
         return AkActionMailerQuoting::quoteAddressIfNecessary(Ak::toArray($address_header_field));
     }
-    
+
     function getFrom()
     {
         return $this->_getAddressHeaderFieldFormated($this->from);
     }
-    
-    
+
+
     function getTo()
     {
         return $this->_getAddressHeaderFieldFormated($this->recipients);
     }
-    
+
     function getBcc()
     {
         return $this->_getAddressHeaderFieldFormated($this->bcc);
     }
-    
+
     function getCc()
     {
-        return $this->_getAddressHeaderFieldFormated($this->Cc);
+        return $this->_getAddressHeaderFieldFormated($this->cc);
     }
-    
-    
-    
+
+
+
     function setTo($to)
     {
         //$this->to = $to;
@@ -164,7 +194,7 @@ class AkMail extends Mail
     function setHeader($name, $value, $options = array())
     {
         if(is_array($value)){
-            $this->setHeaders($headers, $options);
+            $this->setHeaders($value, $options);
         }else{
             $this->header[$this->_getFormatedHeaderAttribute($name)] = $value;
         }
@@ -222,8 +252,16 @@ class AkMail extends Mail
 
 
 
-    function setDate($date)
+    function setDate($date = null, $validate = true)
     {
+        $date = trim($date);
+        $is_valid =  preg_match("/^".AK_ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION."$/",$date);
+        $date = !$is_valid ? date('r', (empty($date) ? Ak::time() : (!is_numeric($date) ? strtotime($date) : $date))) : $date;
+
+        if($validate && !$is_valid  && !preg_match("/^".AK_ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION."$/",$date)){
+            trigger_error(Ak::t('You need to supply a valid RFC 2822 date. You can just leave the date field blank or pass a timestamp and Akelos will automatically format the date for you'), E_USER_ERROR);
+        }
+
         $this->date = $date;
     }
 
@@ -277,6 +315,11 @@ class AkMail extends Mail
     function setSubject($subject)
     {
         $this->subject = $subject;
+    }
+
+    function getSubject()
+    {
+        return AkActionMailerQuoting::quoteIfNecessary($this->subject, empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset);
     }
 
 
@@ -381,10 +424,14 @@ class AkMail extends Mail
         return !in_array(strtolower($attribute),array('body','recipients','part','parts','rawmessage','sep','implicitpartsorder','header','headers'));
     }
 
-    function getEncodedMail()
+    function getEncoded()
     {
+        if(empty($this->date)){
+            $this->setDate();
+        }
         $this->_moveMailInstanceAttributesToHeaders();
         $headers = array_map(array('AkActionMailerQuoting','chunkQuoted'),$this->header);
+        unset($headers['Charset']);
         $this->_sanitizeHeaders($headers);
         list(,$text_headers) = Mail::prepareHeaders($headers);
         return $text_headers.AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.trim(AkActionMailerQuoting::quoteIfNecessary($this->body));
@@ -474,7 +521,7 @@ class AkMail extends Mail
     {
         $field = AkInflector::variablize($field);
         $defaults = array(
-        'charset' => 'UTF-8',
+        'charset' => AK_ACTION_MAILER_DEFAULT_CHARSET,
         'contentType' => 'text/plain',
         );
         return isset($defaults[$field]) ? $defaults[$field] : null;
@@ -500,7 +547,7 @@ class AkMail extends Mail
             }
         }
 
-        $attributes = array_diff(array_merge(array('charset'=> (empty($this->charset)?$this->getDefault('charset'):$this->charset)),$attributes), array(''));
+        $attributes = array_diff(array_merge(array('charset'=> (empty($this->_charset)?$this->getDefault('charset'):$this->_charset)),$attributes), array(''));
         return array(trim($content_type), $attributes);
     }
 
