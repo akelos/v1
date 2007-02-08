@@ -163,11 +163,12 @@ class Tests_for_AkActionMailer extends  AkUnitTest
     {
         $HelperMailer =& new TestMailer();
         $Created = $HelperMailer->create('nested_multipart', $this->recipient);
+        
         $this->assertEqual(2, count($Created->parts));
         $this->assertEqual(2, count($Created->parts[0]->parts));
         $this->assertEqual( "multipart/mixed", $Created->contentType );
         $this->assertEqual( "multipart/alternative", $Created->parts[0]->contentType );
-        $this->assertEqual( "bar", $Created->parts[0]->header['foo'] );
+        $this->assertEqual( "bar", $Created->parts[0]->header['Foo'] );
         $this->assertEqual( "text/plain", $Created->parts[0]->parts[0]->contentType );
         $this->assertEqual( "text/html", $Created->parts[0]->parts[1]->contentType );
         $this->assertEqual( "application/octet-stream", $Created->parts[1]->contentType );
@@ -178,9 +179,28 @@ class Tests_for_AkActionMailer extends  AkUnitTest
     {
         $HelperMailer =& new TestMailer();
         $Created = $HelperMailer->create('attachment_with_custom_header', $this->recipient);
-        $this->assertEqual( "<test@test.com>", $Created->parts[1]->header['content-id']);
+        $this->assertEqual( "<test@test.com>", $Created->parts[1]->header['Content-ID']);
     }
 
+    function test_signed_up()
+    {
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setSubject("[Signed up] Welcome $this->recipient");
+        $Expected->setBody("Hello there,\n\nMr. $this->recipient");
+        $Expected->setFrom("system@example.com");
+        $Expected->setDate(Ak::getDate(Ak::getTimestamp("2004-12-12")));
+
+
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('signed_up', $this->recipient));
+        $this->assertEqual($Expected->getEncodedMail(), $Created->getEncodedMail());
+        $this->assertTrue($TestMailer->deliver('signed_up', $this->recipient));
+        $this->assertTrue(!empty($TestMailer->deliveries[0]));
+        $this->assertEqual($Expected->getEncodedMail(), $TestMailer->deliveries[0]);
+    }
+    
+    
 
 }
     Ak::test('Tests_for_Mailers');

@@ -16,15 +16,17 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
+include_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailEncoding.php');
+require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMimeMail.php');
 
-class AkMail extends AkObject
+class AkMail extends Mail
 {
     var $rawMessage = '';
     var $charset = 'UTF-8';
     var $contentType = 'text/plain';
 
-    function __construct()
+    function AkMail()
     {
         $args = func_get_args();
         if(isset($args[0])){
@@ -86,15 +88,24 @@ class AkMail extends AkObject
      */
     function setContentType($content_type)
     {
-        $this->contentType = $content_type;
+        list($this->contentType, $ctype_attrs) = $this->_getContentTypeAndAttributes($content_type);
+        $this->set($ctype_attrs);
     }
-    
+
     /**
      * Specify the content disposition for the message. 
      */
     function setContentDisposition($content_disposition)
     {
         $this->contentDisposition = $content_disposition;
+    }
+
+    /**
+     * Specify the content transfer encoding for the message. 
+     */
+    function setContentTransferEncoding($content_transfer_encoding)
+    {
+        $this->contentTransferEncoding = $content_transfer_encoding;
     }
 
     /**
@@ -105,6 +116,35 @@ class AkMail extends AkObject
         $this->from = $from;
     }
 
+
+    function _getAddressHeaderFieldFormated($address_header_field)
+    {
+        return AkActionMailerQuoting::quoteAddressIfNecessary(Ak::toArray($address_header_field));
+    }
+    
+    function getFrom()
+    {
+        return $this->_getAddressHeaderFieldFormated($this->from);
+    }
+    
+    
+    function getTo()
+    {
+        return $this->_getAddressHeaderFieldFormated($this->recipients);
+    }
+    
+    function getBcc()
+    {
+        return $this->_getAddressHeaderFieldFormated($this->bcc);
+    }
+    
+    function getCc()
+    {
+        return $this->_getAddressHeaderFieldFormated($this->Cc);
+    }
+    
+    
+    
     function setTo($to)
     {
         //$this->to = $to;
@@ -114,16 +154,20 @@ class AkMail extends AkObject
     /**
      * Specify additional headers to be added to the message.
      */
-    function setHeaders($headers)
+    function setHeaders($headers, $options = array())
     {
         foreach ((array)$headers as $name=>$value){
-            $this->setHeader($name, $value);
+            $this->setHeader($name, $value, $options);
         }
     }
 
-    function setHeader($name, $value)
+    function setHeader($name, $value, $options = array())
     {
-        $this->header[strtolower($name)] = $value;
+        if(is_array($value)){
+            $this->setHeaders($headers, $options);
+        }else{
+            $this->header[$this->_getFormatedHeaderAttribute($name)] = $value;
+        }
     }
 
 
@@ -150,14 +194,14 @@ class AkMail extends AkObject
         $args = func_get_args();
         $options = count($args) >= 1 ? array_shift($args) : array();
         $options['content_type'] = empty($options['content_type']) && count($args) == 1 ? array_shift($args) : (empty($options['content_type'])?null:$options['content_type']);
-        $options = array_merge(array('content_disposition' => 'inline', 'transfer_encoding' => 'quoted-printable'), $options);
-        
+        $options = array_merge(array('content_disposition' => 'inline', 'content_transfer_encoding' => 'quoted-printable'), $options);
+
         $Part =& new AkMail();
         $Part->_isPart = true;
         $Part->set($options);
         $this->parts[] =& $Part;
     }
-      
+
     /**
      * Add an attachment to a multipart message. This is simply a part with the
      * content-disposition set to "attachment".
@@ -172,15 +216,20 @@ class AkMail extends AkObject
         $args = func_get_args();
         $options = count($args) >= 1 ? array_shift($args) : array();
         $options['content_type'] = empty($options['content_type']) && count($args) == 1 ? array_shift($args) : (empty($options['content_type'])?null:$options['content_type']);
-        $options = array_merge(array('disposition' => 'attachment', 'transfer_encoding' => 'base64'), $options);
+        $options = array_merge(array('content_disposition' => 'attachment', 'content_transfer_encoding' => 'base64'), $options);
         $this->setPart($options);
     }
-    
+
 
 
     function setDate($date)
     {
         $this->date = $date;
+    }
+
+    function setSentOn($date)
+    {
+        $this->setDate($date);
     }
 
     function setMessageId($id)
@@ -218,15 +267,7 @@ class AkMail extends AkObject
     function setRecipients($recipients)
     {
         $this->recipients = $recipients;
-    }
-
-    /**
-    * The date on which the message was sent. If not set (the default), the
-    * header will be set by the delivery agent.
-    */
-    function setSentOn($date)
-    {
-        $this->sentOn = $date;
+        $this->setHeader('to',$recipients);
     }
 
 
@@ -299,47 +340,85 @@ class AkMail extends AkObject
         $this->_propagateComonHeaders();
     }
 
+    /**
+     * Moves attributes passed to the header to be used as intance attributes
+     * if they have an setter available
+     */
     function _propagateComonHeaders()
     {
-        foreach ($this->getCommonHeaders() as $header_key=>$attribute_name){
-            if(isset($this->header[$header_key])){
-                $method_name = 'set'.ucfirst($attribute_name);
-                $this->$method_name($this->header[$header_key]);
-                unset($this->header[$header_key]);
+        foreach (array_merge((array)$this->header, (array)$this) as $k=>$v){
+            if($k[0] != '_' && $this->_belongsToHeaders($k)){
+                $attribute_name = $this->_getFormatedHeaderAttribute($k);
+                if(isset($this->header[$attribute_name])){
+                    $attribute_setter = 'set'.ucfirst($k);
+                    if(method_exists($this, $attribute_setter)){
+                        $this->$attribute_setter($this->header[$attribute_name]);
+                        unset($this->header[$attribute_name]);
+                    }
+                }
             }
         }
     }
 
-    function getCommonHeaders()
+    function _moveMailInstanceAttributesToHeaders()
     {
-        return array(
-        'from'=>'from',
-        'to' => 'to',
-        'cc' => 'cc',
-        'bcc' => 'bcc',
-        'subject' => 'subject',
-        'date' => 'date',
-        'content-type' => 'contentType',
-        'mime-version' => 'mimeVersion',
-        'message-id' => 'messageId',
-        'return-path' => 'returnPath',
-        );
+        foreach ((array)$this as $k=>$v){
+            if($k[0] != '_' && $this->_belongsToHeaders($k)){
+                $attribute_getter = 'get'.ucfirst($k);
+                $attribute_name = $this->_getFormatedHeaderAttribute(AkInflector::underscore($k));
+                $this->setHeader($attribute_name, method_exists($this,$attribute_getter) ? $this->$attribute_getter() : $v);
+            }
+        }
     }
-    
+
+    function _getFormatedHeaderAttribute($attribute_name)
+    {
+        return trim(join("-",(array_map('ucwords',explode(" ",str_replace(array('_','-','  '),' ',$attribute_name)." "))))," -:");
+    }
+
+    function _belongsToHeaders($attribute)
+    {
+        return !in_array(strtolower($attribute),array('body','recipients','part','parts','rawmessage','sep','implicitpartsorder','header','headers'));
+    }
+
     function getEncodedMail()
     {
-        
+        $this->_moveMailInstanceAttributesToHeaders();
+        $headers = array_map(array('AkActionMailerQuoting','chunkQuoted'),$this->header);
+        $this->_sanitizeHeaders($headers);
+        list(,$text_headers) = Mail::prepareHeaders($headers);
+        return $text_headers.AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.trim(AkActionMailerQuoting::quoteIfNecessary($this->body));
+        /*
+
+
+        $Mail =& new AkMimeMail();
+
+
+        $this->Mime->_build_params['text_encoding'] = '8bit';
+        $this->Mime->_build_params['html_charset'] = $this->Mime->_build_params['text_charset'] = $this->Mime->_build_params['head_charset'] = Ak::locale('charset');
+
+        $this->Mime->setTxtBody($options['text']);
+        $this->Mime->setHtmlBody($options['html']);
+        foreach ($html_images as $html_image){
+        $this->Mime->addHTMLImage(AK_CACHE_DIR.DS.'tmp'.DS.$html_image, 'image/png');
+        }
+        foreach ((array)$options['attachments'] as $attachment){
+        $this->Mime->addAttachment($attachment);
+        }
+        return '';
+        /**
         require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail'.DS.'mime.php');
         $Mime =& new Mail_mime();
         //$Mime->getMessage
         echo "<pre>".print_r($this,true)."</pre>";
         die();
+        */
     }
-    
-    function toMail($defaults)
+
+    function toMail($defaults = array())
     {
         $Part =& new AkMail();
-        list($real_content_type, $ctype_attrs) = $this->_parseContentType($defaults);
+        list($real_content_type, $ctype_attrs) = $this->_getContentTypeAndAttributes();
 
         if(empty($this->parts)){
 
@@ -389,27 +468,43 @@ class AkMail extends AkObject
         $Part->addHeaders($this->header);
         return $Part;
     }
-    
-    function _parseContentType($defaults=null)
+
+
+    function getDefault($field)
     {
-        if(empty($this->content_type)){
-            return array((!empty($defaults) && !empty($defaults['content_type']))?$defaults['content_type']:null, array());
+        $field = AkInflector::variablize($field);
+        $defaults = array(
+        'charset' => 'UTF-8',
+        'contentType' => 'text/plain',
+        );
+        return isset($defaults[$field]) ? $defaults[$field] : null;
+    }
+
+    function _getContentTypeAndAttributes($content_type)
+    {
+        if(empty($content_type)){
+            return array($this->getDefault('contentType'), array());
         }
-        list($ctype, $attrs) = split(";\\s*",$this->content_type);
-        if(!empty($attrs)){
-            $attributes = array();
-            foreach ((array)$attrs as $h=>$s){
-                list($k,$v) = array_map('trim',split("=", $s, 2));
-                $attributes[$k] = $v;
+        $attributes = array();
+        if(strstr($content_type,';')){
+            list($content_type, $attrs) = split(";\\s*",$content_type);
+            if(!empty($attrs)){
+                foreach ((array)$attrs as $h=>$s){
+                    if(strstr($s,'=')){
+                        list($k,$v) = array_map('trim',split("=", $s, 2));
+                        if(!empty($v)){
+                            $attributes[$k] = $v;
+                        }
+                    }
+                }
             }
-            $attrs = $attributes;
         }
 
-        $attributes = array_diff(array_merge(array('charset'=>
-        (!empty($this->charset) ? $this->charset : (!empty($defaults) && !empty($defaults['charset']) ? $defaults['charset'] : null))
-        ),$attrs), array(''));
-        return array($ctype, $attributes);
+        $attributes = array_diff(array_merge(array('charset'=> (empty($this->charset)?$this->getDefault('charset'):$this->charset)),$attributes), array(''));
+        return array(trim($content_type), $attributes);
     }
+
+
 
 }
 

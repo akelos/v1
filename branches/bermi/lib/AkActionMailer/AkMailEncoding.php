@@ -92,7 +92,7 @@ class AkMailEncoding extends Mail_mimeDecode
 
     function quoted_printable_encode($quoted_string, $max_length = 74, $emulate_imap_8bit = true)
     {
-        $lines= preg_split("/(?:\r\n|\r|\n)/", $quoted_string);
+        $lines = preg_split("/(?:\r\n|\r|\n)/", $quoted_string);
         $search_pattern = $emulate_imap_8bit ? '/[^\x20\x21-\x3C\x3E-\x7E]/e' : '/[^\x09\x20\x21-\x3C\x3E-\x7E]/e';
         foreach ((array)$lines as $k=>$line){
             $length = strlen($line);
@@ -100,21 +100,21 @@ class AkMailEncoding extends Mail_mimeDecode
                 continue;
             }
             $line = preg_replace($search_pattern, 'sprintf( "=%02X", ord ( "$0" ) ) ;', $line );
-            $is_last_char = ord($line[$length-1]);
-            if (!($emulate_imap_8bit && ($k==count($lines)-1)) && ($is_last_char==0x09) || ($is_last_char==0x20)) {
+            $last_char = ord($line[$length-1]);
+            if (!($emulate_imap_8bit && ($k==count($lines)-1)) && ($last_char==0x09) || ($last_char==0x20)) {
                 $line[$length-1] = '=';
-                $line .= ($is_last_char==0x09) ? '09' : '20';
+                $line .= ($last_char==0x09) ? '09' : '20';
             }
             if ($emulate_imap_8bit) {
                 $line = str_replace(' =0D', '=20=0D', $line);
             }
             if($max_length){
                 preg_match_all( '/.{1,'.($max_length - 2).'}([^=]{0,2})?/', $line, $match );
-                $line = implode( '=' . AK_MAIL_HEADER_EOL, $match[0] );
+                $line = implode( '=' .AK_ACTION_MAILER_EOL, $match[0] );
             }
-            $lines[$k] =& $line;
+            $lines[$k] = $line;
         }
-        return implode(AK_MAIL_HEADER_EOL,$lines);
+        return implode(AK_ACTION_MAILER_EOL,$lines);
     }
     
     
@@ -317,34 +317,7 @@ class AkMailEncoding extends Mail_mimeDecode
         return $success;
           }
     * /
-    function performDeliverySmtp(&$Mail)
-    {
-        $body = $Mail->get();
-        $headers = $this->Mime->headers($headers);
-    $mail = &Mail::factory('mail');
-    $mail->send($to, $hdrs, $body);
-    
-        $destinations = mail.destinations
-        $Mail->ready_to_send()
-    
-            Net::SMTP.start(server_settings[:address], server_settings[:port], server_settings[:domain], 
-                server_settings[:user_name], server_settings[:password], server_settings[:authentication]) do |smtp|
-              smtp.sendmail(mail.encoded, mail.from, destinations)
-            }
-          }
-    
-          function performDeliveryPhp(mail)
-            IO.popen("/usr/sbin/sendmail -i -t","w+") do |sm|
-              sm.print(mail.encoded.gsub(/\r/, ''))
-              sm.flush
-            }
-          }
-    
-          function performDeliveryTest($Mail)
-          {
-            $this->deliveries[] = $Mail;
-          }
-      }
+
       */
 
 
@@ -403,7 +376,7 @@ class AkMailEncoding extends Mail_mimeDecode
         'Return-path' => trim($this->email_account->sender_name.' <'.$this->email_account->reply_to.'>'),
         'Subject' => $this->subject,
         'To' => $to,
-        'Message-Id' => '<'.$this->id.'.'.Ak::uuid().substr('bermi@akelos.com', strpos('bermi@akelos.com','@')).'>',
+        'Message-Id' => '<'.$this->id.'.'.Ak::uuid().substr('bermi@example.com', strpos('bermi@example.com','@')).'>',
         'Date' => strftime("%a, %d %b %Y %H:%M:%S %z",Ak::getTimestamp()));
     }
     /*

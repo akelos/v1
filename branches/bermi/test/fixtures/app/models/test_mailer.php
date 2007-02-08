@@ -8,7 +8,7 @@ class TestMailer extends AkActionMailer
     {
         $this->set(array(
         'recipients' => $recipient,
-        'subject' => "[Signed up] Welcome {recipient}",
+        'subject' => "[Signed up] Welcome $recipient",
         'from' => "system@example.com",
         'sent_on' => Ak::getDate(strtotime('2004-12-12')),
         'body' => array('recipient' => $recipient)

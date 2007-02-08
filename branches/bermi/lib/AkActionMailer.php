@@ -20,9 +20,9 @@ require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkActionMailerQuoting.php');
 
-ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', true);
-ak_define('MAIL_HEADER_EOL', "\n");
-ak_define('EMAIL_REGULAR_EXPRESSION', "/^([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-z0-9\-]+\.)+))([a-z]{2,4}|[0-9]{1,3})(\]?)$/i");
+ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', false);
+ak_define('ACTION_MAILER_EOL', "\r\n");
+ak_define('ACTION_MAILER_EMAIL_REGULAR_EXPRESSION', "([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-z0-9\-]+\.)+))([a-z]{2,4}|[0-9]{1,3})(\]?)");
 
 /**
 * AkActionMailer allows you to send email from your application using a mailer model and views.
@@ -263,14 +263,14 @@ class AkActionMailer extends AkBaseModel
     var $delivery_method = 'php';
     var $perform_deliveries = true;
     var $deliveries = array();
-    var $default_charset = 'utf-8';
+    var $default_charset = 'UTF-8';
     var $default_content_type = 'text/plain';
     var $default_mime_version = '1.0';
     var $default_implicitPartsOrder = array('text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
     var $_MailDriver;
     var $_defaultMailDriverName = 'AkMail';
-    
+
     function __construct($Driver = null)
     {
         if(empty($Driver)){
@@ -279,7 +279,7 @@ class AkActionMailer extends AkBaseModel
             $this->_MailDriver =& $Driver;
         }
     }
-    
+
 
     /**
     * Specify the template name to use for current message. This is the "base"
@@ -300,7 +300,7 @@ class AkActionMailer extends AkBaseModel
     {
         $this->mailerName = $mailerName;
     }
-    
+
     // Mail object specific setters
 
 
@@ -324,7 +324,7 @@ class AkActionMailer extends AkBaseModel
     {
         $this->_MailDriver->setCc($cc);
     }
-    
+
     /**
     * Specify the BCC addresses for the message.
     */    
@@ -425,7 +425,7 @@ class AkActionMailer extends AkBaseModel
     {
         $this->_MailDriver->set($attributes);
     }
-    
+
     /**
      * Gets a well formed mail in plain text
      */
@@ -465,7 +465,7 @@ class AkActionMailer extends AkBaseModel
         return $this->_MailDriver;
     }
 
-    
+
     /**
      * Deliver the given mail object directly. This can be used to deliver
      * a preconstructed mail object, like:
@@ -551,23 +551,43 @@ class AkActionMailer extends AkBaseModel
 
         $Mail->setMimeVersion((empty($Mail->mimeVersion) && !empty($Mail->parts)) ? '1.0' : $Mail->mimeVersion);
 
+        $this->Mail =& $Mail;
         return $Mail;
     }
 
     /**
-        * Delivers an AMail object. By default, it delivers the cached mail
-        * object (from the AkActionMailer::create method). If no cached mail object exists, and
-        * no alternate has been given as the parameter, this will fail.
-        */
-    function deliver($Mail = null)
+    * Delivers an AMail object. By default, it delivers the cached mail
+    * object (from the AkActionMailer::create method). If no cached mail object exists, and
+    * no alternate has been given as the parameter, this will fail.
+    */
+    function deliver($method_name, $parameters = null, $Mail = null)
     {
-        $this->Mail = empty($this->Mail) ? $this->Mail : $Mail;
+        if(empty($Mail) && empty($this->Mail)){
+            $this->create($method_name, $parameters);
+        }elseif(!empty($Mail)){
+            $this->Mail =& $Mail;
+        }
+
         !empty($this->Mail) or trigger_error(Ak::t('No mail object available for delivery!'), E_USER_ERROR);
         if(!empty($this->perform_deliveries)){
-            $this->{"perform".ucfirst(strtolower($this->delivery_method))."Delivery"}();
+            $this->{"perform".ucfirst(strtolower($this->delivery_method))."Delivery"}($this->Mail);
         }
         return $this->Mail;
     }
+
+    function performSmtpDelivery()
+    {
+    }
+
+    function performPhpDelivery()
+    {
+    }
+
+    function performTestDelivery(&$Mail)
+    {
+        $this->deliveries[] =& $Mail->getEncodedMail();
+    }
+
 
     /**
     * Set up the default values for the various instance variables of this
