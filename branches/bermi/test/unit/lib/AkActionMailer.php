@@ -19,7 +19,7 @@ class Tests_for_Mailers extends  AkUnitTest
         $this->recipient = 'test@localhost';
     }
 
-    /**/
+
     function test_inline_template()
     {
         $RenderMailer =& new RenderMailer();
@@ -354,7 +354,7 @@ EOF;
 
     }
 
-    
+
     function test_unquote_7bit_body()
     {
         $msg = <<<EOF
@@ -371,8 +371,8 @@ EOF;
         $this->assertEqual("The=3Dbody", $Mail->getBody());
 
     }
-    
-    
+
+
     function test_unquote_quoted_printable_body()
     {
         $msg = <<<EOF
@@ -390,7 +390,74 @@ EOF;
 
     }
 
+    function test_unquote_base64_body()
+    {
+        $msg = <<<EOF
+From: me@example.com
+Subject: subject
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: base64
 
+VGhlIGJvZHk=
+EOF;
+
+        $Mail = AkMail::parse($msg);
+        $this->assertEqual("The body", $Mail->body);
+        $this->assertEqual("VGhlIGJvZHk=", $Mail->getBody());
+
+    }
+
+
+
+    function test_extended_headers()
+    {
+        $this->recipient = "Grytøyr <test@localhost>";
+        $Expected =& $this->new_mail();
+        $Expected->setTo($this->recipient);
+        $Expected->setCharset("ISO-8859-1");
+        $Expected->setSubject("testing extended headers");
+        $Expected->setBody("Nothing to see here.");
+        $Expected->setFrom("Grytøyr <stian1@example.com>");
+        $Expected->setDate("2004-12-12");
+        $Expected->setCc("Grytøyr <stian2@example.com>");
+        $Expected->setBcc("Grytøyr <stian3@example.com>");
+
+        $TestMailer =& new TestMailer();
+
+        $this->assertTrue($Created = $TestMailer->create('extended_headers', $this->recipient));
+
+        $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
+
+        $this->assertTrue($TestMailer->deliver('extended_headers', $this->recipient));
+        $this->assertTrue(!empty($TestMailer->deliveries[0]));
+        $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
+    }
+    
+    
+
+    function test_utf8_body_is_not_quoted()
+    {
+
+        $TestMailer =& new TestMailer();
+
+        $this->assertTrue($Created = $TestMailer->create('utf8_body', $this->recipient));
+
+        $this->assertPattern('/åœö blah/', $Created->getBody());
+    }
+    
+   
+
+    function test_multiple_utf8_recipients()
+    {
+        $this->recipient = array("\"Foo áëô îü\" <extended@example.com>", "\"Example Recipient\" <me@example.com>");
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('utf8_body', $this->recipient));
+        
+        $this->assertPattern("/\nFrom: =\?UTF-8\?Q\?Foo_.*?\?= <extended@example.com>\r/", $Created->getEncoded());
+        $this->assertPattern("/To: =\?UTF-8\?Q\?Foo_.*?\?= <extended@example.com>, Ex=\r\n ample Recipient <me/", $Created->getEncoded());
+    }
+    
+    
 
 }
 Ak::test('Tests_for_Mailers');

@@ -77,7 +77,7 @@ class TestMailer extends AkActionMailer
         'cc' => "Grytøyr <stian2@example.com>",
         'bcc' => "Grytøyr <stian3@example.com>",
         'body' => "Nothing to see here.",
-        'charset' => "iso-8859-1"
+        'charset' => "ISO-8859-1"
         ));
     }
 

@@ -99,11 +99,11 @@ class AkActionMailerQuoting
     function quoteAddressIfNecessary($address, $charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
         if(is_array($address)){
-            return join(";".AK_ACTION_MAILER_EOL."     ",AkActionMailerQuoting::quoteAnyAddressIfNecessary($address, $charset));
+            return join(", ".AK_ACTION_MAILER_EOL."     ",AkActionMailerQuoting::quoteAnyAddressIfNecessary($address, $charset));
         }elseif (preg_match('/^(\S.*)\s+(<?('.AK_ACTION_MAILER_EMAIL_REGULAR_EXPRESSION.')>?)$/i', $address, $match)){
             $address = $match[3];
             $phrase = AkActionMailerQuoting::quoteIfNecessary(preg_replace('/^[\'"](.*)[\'"]$/', '$1', $match[1]), $charset);
-            return "\"$phrase\" <$address>";
+            return "$phrase <$address>";
         }else{
             return $address;
         }
@@ -131,11 +131,11 @@ class AkActionMailerQuoting
                 continue;
             }
             preg_match_all( '/.{1,'.($max_length - 2).'}([^=]{0,2})?/', $line, $match );
-            $line = implode( "=\n", $match[0] );
+            $line = implode('='.AK_ACTION_MAILER_EOL.' ', $match[0] );
 
             $lines[$k] =& $line;
         }
-        return implode("\n",$lines);
+        return implode(AK_ACTION_MAILER_EOL,$lines);
     }
 }
 

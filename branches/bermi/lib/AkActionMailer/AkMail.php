@@ -66,12 +66,12 @@ class AkMail extends Mail
         $charset = empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset;
 
         switch ($encoding) {
-        	case 'quoted-printable':
-        		return AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset));
+            case 'quoted-printable':
+            return AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset));
             case 'base64':
-        		return chunk_split(base64_encode($this->body));
-        	default:
-        	return $this->body;
+            return trim(chunk_split(base64_encode($this->body)));
+            default:
+            return $this->body;
         }
     }
 
@@ -162,7 +162,7 @@ class AkMail extends Mail
     {
         $this->setContentTransferEncoding($content_transfer_encoding);
     }
-    
+
     function getContentTransferEncoding()
     {
         if(empty($this->contentTransferEncoding)){
@@ -170,7 +170,7 @@ class AkMail extends Mail
         }
         return $this->contentTransferEncoding;
     }
-    
+
     function getTransferEncoding()
     {
         return $this->getTransferEncoding();
@@ -187,7 +187,8 @@ class AkMail extends Mail
 
     function _getAddressHeaderFieldFormated($address_header_field)
     {
-        return AkActionMailerQuoting::quoteAddressIfNecessary(Ak::toArray($address_header_field));
+        $charset = empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset;
+        return join(", ",AkActionMailerQuoting::quoteAnyAddressIfNecessary(Ak::toArray($address_header_field), $charset));
     }
 
     function getFrom()
@@ -197,6 +198,11 @@ class AkMail extends Mail
 
 
     function getTo()
+    {
+        return $this->getRecipients();
+    }
+
+    function getRecipients()
     {
         return $this->_getAddressHeaderFieldFormated($this->recipients);
     }
@@ -342,8 +348,8 @@ class AkMail extends Mail
      */
     function setRecipients($recipients)
     {
-        $this->recipients = $recipients;
-        $this->setHeader('to',$recipients);
+        $this->recipients = join(", ", Ak::toArray($recipients));
+        $this->setHeader('to',$this->getTo());
     }
 
 
@@ -468,7 +474,7 @@ class AkMail extends Mail
             $this->setDate();
         }
         $this->_moveMailInstanceAttributesToHeaders();
-        $headers = array_map(array('AkActionMailerQuoting','chunkQuoted'),$this->header);
+        $headers = array_map(array('AkActionMailerQuoting','chunkQuoted'), $this->header);
         unset($headers['Charset']);
         $this->_sanitizeHeaders($headers);
         list(,$text_headers) = Mail::prepareHeaders($headers);
