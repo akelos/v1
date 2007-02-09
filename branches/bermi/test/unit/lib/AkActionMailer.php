@@ -255,11 +255,11 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
     }
 
-    
 
 
-  function test_iso_charset()
-  {
+
+    function test_iso_charset()
+    {
         $Expected =& $this->new_mail();
         $Expected->setTo($this->recipient);
         $Expected->setCharset("ISO-8859-1");
@@ -273,18 +273,18 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $TestMailer =& new TestMailer();
 
         $this->assertTrue($Created = $TestMailer->create('iso_charset', $this->recipient));
-        
+
         $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
 
         $this->assertTrue($TestMailer->deliver('iso_charset', $this->recipient));
         $this->assertTrue(!empty($TestMailer->deliveries[0]));
         $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
     }
-    
-    
 
-  function test_unencoded_subject()
-  {
+
+
+    function test_unencoded_subject()
+    {
         $Expected =& $this->new_mail();
         $Expected->setTo($this->recipient);
         $Expected->setSubject("testing unencoded subject");
@@ -297,14 +297,100 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $TestMailer =& new TestMailer();
 
         $this->assertTrue($Created = $TestMailer->create('unencoded_subject', $this->recipient));
-        
+
         $this->assertEqual($Expected->getEncoded(), $Created->getEncoded());
 
         $this->assertTrue($TestMailer->deliver('unencoded_subject', $this->recipient));
         $this->assertTrue(!empty($TestMailer->deliveries[0]));
         $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
-  }
- 
+    }
+
+
+    function test_perform_deliveries_flag()
+    {
+        $TestMailer =& new TestMailer();
+
+        $TestMailer->perform_deliveries = false;
+        $this->assertTrue($TestMailer->deliver('signed_up', $this->recipient));
+        $this->assertEqual(count($TestMailer->deliveries), 0);
+
+        $TestMailer->perform_deliveries = true;
+        $this->assertTrue($TestMailer->deliver('signed_up', $this->recipient));
+        $this->assertEqual(count($TestMailer->deliveries), 1);
+
+    }
+
+
+
+    function test_unquote_quoted_printable_subject()
+    {
+        $msg = <<<EOF
+From: me@example.com
+Subject: =?UTF-8?Q?testing_testing_=D6=A4?=
+Content-Type: text/plain; charset=iso-8859-1
+
+The body
+EOF;
+
+        $Mail = AkMail::parse($msg);
+        $this->assertEqual("testing testing \326\244", $Mail->subject);
+        $this->assertEqual("=?UTF-8?Q?testing_testing_=D6=A4?=", $Mail->getSubject());
+
+    }
+
+    function test_unquote_7bit_subject()
+    {
+        $msg = <<<EOF
+From: me@example.com
+Subject: this == working?
+Content-Type: text/plain; charset=iso-8859-1
+
+The body
+EOF;
+
+        $Mail = AkMail::parse($msg);
+        $this->assertEqual("this == working?", $Mail->subject);
+        $this->assertEqual("this == working?", $Mail->getSubject());
+
+    }
+
+    
+    function test_unquote_7bit_body()
+    {
+        $msg = <<<EOF
+From: me@example.com
+Subject: subject
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 7bit
+
+The=3Dbody
+EOF;
+
+        $Mail = AkMail::parse($msg);
+        $this->assertEqual("The=3Dbody", $Mail->body);
+        $this->assertEqual("The=3Dbody", $Mail->getBody());
+
+    }
+    
+    
+    function test_unquote_quoted_printable_body()
+    {
+        $msg = <<<EOF
+From: me@example.com
+Subject: subject
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+The=3Dbody
+EOF;
+
+        $Mail = AkMail::parse($msg);
+        $this->assertEqual("The=body", $Mail->body);
+        $this->assertEqual("The=3Dbody", $Mail->getBody());
+
+    }
+
+
 
 }
 Ak::test('Tests_for_Mailers');

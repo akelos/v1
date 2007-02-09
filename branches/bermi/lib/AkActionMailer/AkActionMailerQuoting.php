@@ -16,9 +16,10 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
+
 defined('AK_ACTION_MAILER_CHARS_NEEDING_QUOTING_REGEX') ? null :
 define('AK_ACTION_MAILER_CHARS_NEEDING_QUOTING_REGEX', "/[\\000-\\011\\013\\014\\016-\\037\\177-\\377]/");
-
+ak_define('ACTION_MAILER_EMULATE_IMAP_8_BIT', true);
 
 class AkActionMailerQuoting
 {
@@ -37,14 +38,35 @@ class AkActionMailerQuoting
      * Convert the given character to quoted printable format, taking into
      * account multi-byte characters
      */
-    function quotedPrintableEncode($character)
+    function quotedPrintableEncode($character, $emulate_imap_8bit = AK_ACTION_MAILER_EMULATE_IMAP_8_BIT)
     {
+        $lines = preg_split("/(?:\r\n|\r|\n)/", $character);
+        $search_pattern = $emulate_imap_8bit ? '/[^\x20\x21-\x3C\x3E-\x7E]/e' : '/[^\x09\x20\x21-\x3C\x3E-\x7E]/e';
+        foreach ((array)$lines as $k=>$line){
+            $length = strlen($line);
+            if ($length == 0){
+                continue;
+            }
+            $line = preg_replace($search_pattern, 'sprintf( "=%02X", ord ( "$0" ) ) ;', $line );
+            $last_char = ord($line[$length-1]);
+            if (!($emulate_imap_8bit && ($k==count($lines)-1)) && ($last_char==0x09) || ($last_char==0x20)) {
+                $line[$length-1] = '=';
+                $line .= ($last_char==0x09) ? '09' : '20';
+            }
+            if ($emulate_imap_8bit) {
+                $line = str_replace(' =0D', '=20=0D', $line);
+            }
+            $lines[$k] = $line;
+        }
+        return implode(AK_ACTION_MAILER_EOL,$lines);
+        /*
         $characters = unpack('C*', $character);
         $result = '';
         for ($i=1,$count = count($characters);$i<=$count;$i++){
             $result .= sprintf( "=%02X", $characters[$i]);
         }
         return $result;
+        */
     }
 
 

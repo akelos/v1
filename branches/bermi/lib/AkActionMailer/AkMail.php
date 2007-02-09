@@ -38,10 +38,11 @@ class AkMail extends Mail
         }
     }
 
-    function parse($raw_email)
+    function &parse($raw_email)
     {
         $Parser =& new AkMailEncoding($raw_email);
-        return new AkMail((array)$Parser->decode());
+        $Mail =& new AkMail((array)$Parser->decode());
+        return $Mail;
     }
 
     function load($email_file)
@@ -56,6 +57,22 @@ class AkMail extends Mail
     function setBody($body)
     {
         $this->body = $body;
+    }
+
+
+    function getBody()
+    {
+        $encoding = $this->getContentTransferEncoding();
+        $charset = empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset;
+
+        switch ($encoding) {
+        	case 'quoted-printable':
+        		return AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset));
+            case 'base64':
+        		return chunk_split(base64_encode($this->body));
+        	default:
+        	return $this->body;
+        }
     }
 
     /**
@@ -136,6 +153,27 @@ class AkMail extends Mail
     function setContentTransferEncoding($content_transfer_encoding)
     {
         $this->contentTransferEncoding = $content_transfer_encoding;
+    }
+
+    /**
+     * Alias for  setContentTransferEncoding
+     */
+    function setTransferEncoding($content_transfer_encoding)
+    {
+        $this->setContentTransferEncoding($content_transfer_encoding);
+    }
+    
+    function getContentTransferEncoding()
+    {
+        if(empty($this->contentTransferEncoding)){
+            return null;
+        }
+        return $this->contentTransferEncoding;
+    }
+    
+    function getTransferEncoding()
+    {
+        return $this->getTransferEncoding();
     }
 
     /**
@@ -317,9 +355,9 @@ class AkMail extends Mail
         $this->subject = $subject;
     }
 
-    function getSubject()
+    function getSubject($charset = AK_ACTION_MAILER_DEFAULT_CHARSET)
     {
-        return AkActionMailerQuoting::quoteIfNecessary($this->subject, empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset);
+        return AkActionMailerQuoting::quoteIfNecessary($this->subject, $charset);
     }
 
 
@@ -393,7 +431,7 @@ class AkMail extends Mail
             if($k[0] != '_' && $this->_belongsToHeaders($k)){
                 $attribute_name = $this->_getFormatedHeaderAttribute($k);
                 if(isset($this->header[$attribute_name])){
-                    $attribute_setter = 'set'.ucfirst($k);
+                    $attribute_setter = 'set'.ucfirst(str_replace('-','',$k));
                     if(method_exists($this, $attribute_setter)){
                         $this->$attribute_setter($this->header[$attribute_name]);
                         unset($this->header[$attribute_name]);
@@ -434,7 +472,7 @@ class AkMail extends Mail
         unset($headers['Charset']);
         $this->_sanitizeHeaders($headers);
         list(,$text_headers) = Mail::prepareHeaders($headers);
-        return $text_headers.AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.trim(AkActionMailerQuoting::quoteIfNecessary($this->body));
+        return $text_headers.AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$this->getBody();
         /*
 
 
