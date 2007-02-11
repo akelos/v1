@@ -1321,6 +1321,23 @@ Options are:
         return is_array($args[0]) ? $args[0] : (func_num_args() === 1 ? Ak::stringToArray($args[0]) : $args);
     }
 
+    /**
+     * Gets a copy of the first element of an array. Similar to array_shift but it does not modify the original array 
+     */
+    function first()
+    {
+        $args = func_get_args();
+        return array_shift(array_slice(is_array($args[0]) ? $args[0] : $args , 0));
+    }
+    
+    /**
+     * Gets a copy of the last element of an array. Similar to array_pop but it does not modify the original array 
+     */
+    function last()
+    {
+        $args = func_get_args();
+        return array_shift(array_slice(is_array($args[0]) ? $args[0] : $args , -1));
+    }
 
     /**
      * Includes PHP functions that are not available on current PHP version

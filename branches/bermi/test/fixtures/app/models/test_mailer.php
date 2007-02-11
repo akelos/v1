@@ -77,7 +77,7 @@ class TestMailer extends AkActionMailer
         'cc' => "Grytøyr <stian2@example.com>",
         'bcc' => "Grytøyr <stian3@example.com>",
         'body' => "Nothing to see here.",
-        'charset' => "ISO-8859-1"
+        'charset' => "ISO-8859-1" 
         ));
     }
 
@@ -303,10 +303,11 @@ class TestMailer extends AkActionMailer
         ));
     }
 
-    function receive($mail)
+    function &receive($raw_email)
     {
-        parent::receive($mail);
-        $this->received_body = $mail->body;
+        $Mail =& parent::receive($raw_email);
+        $this->received_body = $Mail->body;
+        return $Mail;
     }
 
 }

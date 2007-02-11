@@ -18,13 +18,14 @@
 
 require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
+require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailParser.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkActionMailerQuoting.php');
 
 ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', false);
 ak_define('ACTION_MAILER_DEFAULT_CHARSET', AK_CHARSET);
 ak_define('ACTION_MAILER_EOL', "\r\n");
 ak_define('ACTION_MAILER_EMAIL_REGULAR_EXPRESSION', "([a-z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-z0-9\-]+\.)+))([a-z]{2,4}|[0-9]{1,3})(\]?)");
-ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun), )?(\d\d?) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d\d\d) (\d{2}:\d{2}(?::\d\d)) (UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[A-Z]|(?:\+|\-)\d{4})");
+ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun), *)?(\d\d?) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d\d\d) (\d{2}:\d{2}(?::\d\d)) (UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[A-Z]|(?:\+|\-)\d{4})");
 
 /**
 * AkActionMailer allows you to send email from your application using a mailer model and views.
@@ -463,12 +464,12 @@ class AkActionMailer extends AkBaseModel
      *     }
      *   }
      */
-    function receive(&$Mail)
+    function receive($raw_mail)
     {
-        $this->_MailDriver =& AkMail::parse($raw_email);
+        $this->_MailDriver =& AkMail::parse($raw_mail);
         return $this->_MailDriver;
     }
-
+    
 
     /**
      * Deliver the given mail object directly. This can be used to deliver

@@ -25,6 +25,7 @@ class AkMail extends Mail
     var $rawMessage = '';
     var $charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
     var $contentType = 'text/plain';
+    var $body;
 
     function AkMail()
     {
@@ -38,9 +39,18 @@ class AkMail extends Mail
         }
     }
 
-    function &parse($raw_email)
+    function &parse($raw_email = '')
     {
+        if(empty($raw_email)){
+            trigger_error(Ak::t('Cannot parse an empty message'), E_USER_ERROR);
+        }
+        $Parser =& new AkMailParser();
+        $Mail =& new AkMail((array)$Parser->parse($raw_email));
+        return $Mail;
         $Parser =& new AkMailEncoding($raw_email);
+        if(!empty($Parser->_error)){
+            trigger_error(Ak::t("Error while parsing message: %error",array('%error'=>Ak::t($Parser->_error))), E_USER_ERROR);
+        }
         $Mail =& new AkMail((array)$Parser->decode());
         return $Mail;
     }
@@ -56,9 +66,30 @@ class AkMail extends Mail
 
     function setBody($body)
     {
-        $this->body = $body;
+        $this->body = is_string($body) ? trim($body) : $body;
+        $this->_decodeBodyIfNecessary();
     }
 
+    function _decodeBodyIfNecessary()
+    {
+        if(!empty($this->body) && empty($this->_body_has_been_decoded) && is_string($this->body)){
+            $encoding = $this->getContentTransferEncoding();
+            if(!empty($encoding)){
+                switch (strtolower($encoding)) {
+                    case 'quoted-printable':
+                    $this->body = preg_replace('/=([a-f0-9]{2})/ie', "chr(hexdec('\\1'))", preg_replace("/=\r?\n/", '', $this->body));
+                    break;
+
+                    case 'base64':
+                    // AkMailParser will decode base64 for us
+                    //$this->body = base64_decode($this->body);
+                    break;
+                }
+                $this->_body_has_been_decoded = true;
+            }
+        }
+
+    }
 
     function getBody()
     {
@@ -67,15 +98,15 @@ class AkMail extends Mail
 
         switch ($encoding) {
             case 'quoted-printable':
-            return AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset));
+            return trim(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset)));
             case 'base64':
             return trim(chunk_split(base64_encode($this->body)));
             default:
-            return $this->body;
+            return trim($this->body);
         }
     }
 
-    /**
+    /** 
     * Specify the CC addresses for the message.
     */
     function setCc($cc)
@@ -161,6 +192,7 @@ class AkMail extends Mail
     function setTransferEncoding($content_transfer_encoding)
     {
         $this->setContentTransferEncoding($content_transfer_encoding);
+        $this->_decodeBodyIfNecessary();
     }
 
     function getContentTransferEncoding()
@@ -423,8 +455,10 @@ class AkMail extends Mail
     {
         empty($structure['headers']) ? null : $this->setHeaders($structure['headers'], array('decode'=>false));
         empty($structure['body']) ? null : $this->setBody($structure['body'], array('decode'=>false));
-        $this->setContentType($structure['ctype_primary'].'/'.$structure['ctype_secondary']);
+        empty($structure['parts']) ? null : $this->setParts($structure['parts']);
+        !empty($structure['ctype_primary']) ? $this->setContentType($structure['ctype_primary'].'/'.$structure['ctype_secondary']) : null;
         $this->_propagateComonHeaders();
+        $this->_decodeBodyIfNecessary();
     }
 
     /**

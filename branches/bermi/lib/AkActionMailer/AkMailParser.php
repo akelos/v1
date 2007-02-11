@@ -2,86 +2,122 @@
 
 class AkMailParser
 {
-    function parse($raw_email)
-    {
-        list($raw_header, $raw_body) = $this->_getRawHeaderAndBody($raw_email);
-        $headers = $this->_getHeaders($raw_header);
+    var $decode_body = true;
+    var $content_type = 'text/plain';
+    var $recode_messages = true;
+    var $recode_to_charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
+    var $raw_message = '';
+    var $options = array();
 
-        if($content_type = $this->getContentType($headers)){
-            foreach ($this->{$this->getContentTypeProcessorMethodName($content_type)}($raw_body, $headers) as $k => $v) {
-                $body[$k] = $v;
+    var $html_charset_on_recoding_failure = false;
+
+    var $headers = array();
+    var $body;
+    var $parts;
+
+    function AkMailParser($options = array())
+    {
+        $this->options = $options;
+        $default_options = array(
+        'content_type' => $this->content_type,
+        'decode_body' => $this->decode_body,
+        );
+        $options = array_merge($default_options, $options);
+        foreach ($options as $k=>$v){
+            if($k[0] != '_'){
+                $this->$k = $v;
             }
         }
-
-        $body = empty($body) ? false : (count($body) > 1 ? $body : array_shift($body));
-
-        echo "<pre>".print_r($headers,true)."</pre>";
-        echo $body;
-        return new AkMail();
     }
 
-    function getContentType($headers)
+    function parse($raw_message = '')
     {
-        return $this->_findHeader('content-type',$headers);
+        $Mail = new stdClass();
+        $raw_message = empty($raw_message) ? $this->raw_message : $raw_message;
+        if(!empty($raw_message)){
+            list($raw_header, $raw_body) = $this->_getRawHeaderAndBody($raw_message);
+            $Mail->headers = $this->headers = $this->getParsedRawHeaders($raw_header);
+            $this->{$this->getContentTypeProcessorMethodName()}($raw_body);
+        }
+        $this->_expandHeadersOnMailObject($Mail);
+        $Mail->body = $this->body;
+        $Mail->pats = $this->parts;
+        return $Mail;
     }
 
-    function getContentTypeProcessorMethodName($content_type)
+    function getContentTypeProcessorMethodName()
     {
-        $content_type = is_array($content_type) ? $content_type['value'] : $content_type;
-        $method_name = 'getParsed'.ucfirst(strtolower(substr("text/plain",0,strpos("text/plain","/")))).'Body';
+        $content_type = $this->findHeaderValueOrDefaultTo('content-type', $this->content_type);
+        $method_name = 'getParsed'.ucfirst(strtolower(substr($content_type,0,strpos($content_type,"/")))).'Body';
         return method_exists($this, $method_name) ? $method_name : 'getParsedTextBody';
     }
 
-    function getContentDisposition($headers)
+    function getContentDisposition()
     {
-        return $this->_findHeader('content-disposition',$headers);
+        return $this->_findHeader('content-disposition');
     }
 
 
-    function getParsedTextBody($body, $headers)
+    function getParsedTextBody($body)
     {
-        return array($this->_getDecodedBody($body, $headers));
+        $this->body = $this->_getDecodedBody($body);
     }
 
-    function getParsedMultipartBody($body, $headers)
+    function getParsedMultipartBody($body)
     {
+        $boundary = trim($this->_findHeaderAttributeValue('content-type','boundary'));
+        $this->content_type = $this->options['content_type'] = (trim(strtolower($this->_findHeaderValue('content-type'))) == 'multipart/digest' ? 'message/rfc822' : 'text/plain');
 
+
+        $this->parts = array();
+        $raw_parts = array_diff(array_map('trim',(array)preg_split('/([\-]{0,2}'.preg_quote($boundary).'[\-]{0,2})+/', $body)),array(''));
+        foreach ($raw_parts as $raw_part){
+            $Parser = new AkMailParser($this->options);
+            $this->parts[] = $Parser->parse($raw_part);
+        }
     }
 
-    function getParsedMessageBody($body, $headers)
+    function getParsedMessageBody($body)
     {
-
+        $Parser = new AkMailParser($this->options);
+        $this->body = $Parser->parse($raw_part);
     }
-    
-    function _getDecodedBody($body, $headers)
+
+    function _getDecodedBody($body)
     {
-        $encoding = trim(strtolower($this->_findHeaderValue('content-transfer-encoding', $headers)));
-        $charset = trim(strtolower($this->_findHeaderAttributeValue('content-type','charset', $headers)));
+        $encoding = trim(strtolower($this->_findHeaderValue('content-transfer-encoding')));
+        $charset = trim(strtolower($this->_findHeaderAttributeValue('content-type','charset')));
 
         if($encoding == 'base64'){
             $body = base64_decode($body);
         }elseif($encoding == 'quoted-printable'){
             $body = preg_replace('/=([a-f0-9]{2})/ie', "chr(hexdec('\\1'))", preg_replace("/=\r?\n/", '', $body));
         }
-        return empty($charset) ? $body : Ak::recode($body, 'UTF-8', $charset);
+        return empty($charset) ? $body : ($charset && $this->recode_messages ? Ak::recode($body, $this->recode_to_charset, $charset, $this->html_charset_on_recoding_failure) : $body);
     }
 
-    function _findHeaderValue($name, $headers)
+    function _findHeaderValue($name)
     {
-        $header = $this->_findHeader($name, $headers);
+        $header = $this->_findHeader($name);
         return !empty($header['value']) ? $header['value'] : false;
     }
-    
-    function _findHeaderAttributeValue($name, $attribute, $headers)
+
+    function _findHeaderAttributeValue($name, $attribute)
     {
-        $header = $this->_findHeader($name, $headers);
+        $header = $this->_findHeader($name);
         return !empty($header['attributes'][$attribute]) ? $header['attributes'][$attribute] : false;
     }
 
-    function _findHeader($name, $headers)
+    function findHeaderValueOrDefaultTo($name, $default)
+    {
+        $value = $this->_findHeaderValue($name);
+        return !empty($value) ? $value : $default;
+    }
+
+    function _findHeader($name)
     {
         $results = array();
-        foreach ($headers as $header) {
+        foreach ($this->headers as $header) {
             if(isset($header['name']) && strtolower($header['name']) == $name){
                 $results[] = $header;
             }
@@ -89,7 +125,7 @@ class AkMailParser
         return empty($results) ? false : (count($results) > 1 ? $results : array_shift($results));
     }
 
-    function _getHeaders($raw_headers)
+    function getParsedRawHeaders($raw_headers)
     {
         $headers = array();
         if(!empty($raw_headers)){
@@ -143,20 +179,25 @@ class AkMailParser
 
     function _decodeHeader_(&$header)
     {
-        $header_value = $header['value'];
-        if(preg_match_all('/(\=\?([^\?]+)\?([BQ]{1})\?([^\?]+)\?\=?)+/i', $header_value, $match)){
-            foreach ($match[0] as $k=>$encoded){
-                $charset = strtoupper($match[2][$k]);
-                $decode_function = strtolower($match[3][$k]) == 'q' ? 'quoted_printable_decode' : 'base64_decode';
-                $decoded_part = trim(Ak::recode($decode_function(str_replace('_',' ',$match[4][$k])), AK_ACTION_MAILER_DEFAULT_CHARSET, $charset, true));
+        if(!empty($header['value'])){
+            $header_value = $header['value'];
+            if(preg_match_all('/(\=\?([^\?]+)\?([BQ]{1})\?([^\?]+)\?\=?)+/i', $header_value, $match)){
+                foreach ($match[0] as $k=>$encoded){
+                    $charset = strtoupper($match[2][$k]);
+                    $decode_function = strtolower($match[3][$k]) == 'q' ? 'quoted_printable_decode' : 'base64_decode';
+                    $decoded_part = trim(
+                    Ak::recode($decode_function(str_replace('_',' ',$match[4][$k])), $this->recode_to_charset, $charset, $this->html_charset_on_recoding_failure)
 
-                $header_value = str_replace(trim($match[0][$k]), $decoded_part, $header_value);
+                    );
+
+                    $header_value = str_replace(trim($match[0][$k]), $decoded_part, $header_value);
+                }
             }
-        }
-        $header_value = trim(preg_replace("/(%0A|%0D|\n+|\r+)/i",'',$header_value));
-        if($header_value != $header['value']){
-            $header['encoded'] = $header['value'];
-            $header['value'] = $header_value;
+            $header_value = trim(preg_replace("/(%0A|%0D|\n+|\r+)/i",'',$header_value));
+            if($header_value != $header['value']){
+                $header['encoded'] = $header['value'];
+                $header['value'] = $header_value;
+            }
         }
     }
 
@@ -168,6 +209,32 @@ class AkMailParser
         preg_replace("/(\n[\t ]+)+/",' ', // Join multiline headers
         str_replace(array("\r\n","\r"),"\n", $raw_part."\n") // Lets keep it simple and use only \n for decoding
         ),2));
+    }
+
+    function _expandHeadersOnMailObject(&$Mail)
+    {
+        if(!empty($Mail->headers)){
+            foreach ($Mail->headers as $k=>$details){
+                if (empty($details['name'])) {
+                    continue;
+                }
+                $caption = AkInflector::underscore($details['name']);
+                if(!in_array($caption, array('headers','body','parts'))){
+                    if(!empty($details['value'])){
+                        if(empty($Mail->$caption)){
+                            $Mail->$caption = $details['value'];
+                        }elseif (!empty($Mail->$caption) && is_array($Mail->$caption)){
+                            $Mail->{$caption}[] = $details['value'];
+                        }else{
+                            $Mail->$caption = array($Mail->$caption, $details['value']);
+                        }
+                    }
+                    if(!empty($details['attributes'])){
+                        $Mail->{$caption.'_attributes'} = $details['attributes'];
+                    }
+                }
+            }
+        }
     }
 }
 
