@@ -84,10 +84,9 @@ class AkResponse extends AkObject
         }
         if(!empty($this->_headers['Status'])){
             $status = $this->_getStatusHeader($this->_headers['Status']);
-            array_unshift($this->_headers,  $status ? $status : (strstr('HTTP/1.1 '.$this->_headers['Status'],'HTTP') ? $this->_headers['Status'] : 'HTTP/1.1 '.$this->_headers['Status']));
+            array_unshift($this->_headers,  $status ? $status : (strstr($this->_headers['Status'],'HTTP') ? $this->_headers['Status'] : 'HTTP/1.1 '.$this->_headers['Status']));
             unset($this->_headers['Status']);
         }
-        
         if(!empty($this->_headers) && is_array($this->_headers)){
             foreach ($this->_headers as $k=>$v){
                 $header = trim((!is_numeric($k) ? $k.': ' : '').$v);
