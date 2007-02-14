@@ -30,18 +30,21 @@ class AkMailParser
         }
     }
 
-    function parse($raw_message = '')
+    function parse($raw_message = '', $options = array())
     {
+        $parser_class = empty($options['parser_class']) ? 'AkMailParser' : $options['parser_class'];
+        $Parser =& new $parser_class($options);
         $Mail = new stdClass();
-        $raw_message = empty($raw_message) ? $this->raw_message : $raw_message;
+        $raw_message = empty($raw_message) ? $Parser->raw_message : $raw_message;
         if(!empty($raw_message)){
-            list($raw_header, $raw_body) = $this->_getRawHeaderAndBody($raw_message);
-            $Mail->headers = $this->headers = $this->getParsedRawHeaders($raw_header);
-            $this->{$this->getContentTypeProcessorMethodName()}($raw_body);
+            list($raw_header, $raw_body) = $Parser->_getRawHeaderAndBody($raw_message);
+            $Mail->headers = $Parser->headers = $Parser->getParsedRawHeaders($raw_header);
+            $Parser->{$Parser->getContentTypeProcessorMethodName()}($raw_body);
         }
-        $this->_expandHeadersOnMailObject($Mail);
-        $Mail->body = $this->body;
-        $Mail->pats = $this->parts;
+        $Parser->_expandHeadersOnMailObject($Mail);
+        $Mail->body = $Parser->body;
+        $Mail->parts = $Parser->parts;
+        
         return $Mail;
     }
 
@@ -73,14 +76,15 @@ class AkMailParser
         $raw_parts = array_diff(array_map('trim',(array)preg_split('/([\-]{0,2}'.preg_quote($boundary).'[\-]{0,2})+/', $body)),array(''));
         foreach ($raw_parts as $raw_part){
             $Parser = new AkMailParser($this->options);
-            $this->parts[] = $Parser->parse($raw_part);
+            $Part = $Parser->parse($raw_part);
+            $this->parts[] = $Part;
         }
     }
 
     function getParsedMessageBody($body)
     {
         $Parser = new AkMailParser($this->options);
-        $this->body = $Parser->parse($raw_part);
+        $this->body = $Parser->parse($body);
     }
 
     function _getDecodedBody($body)
@@ -127,12 +131,11 @@ class AkMailParser
 
     function getParsedRawHeaders($raw_headers)
     {
+        $raw_header_lines = array_diff(array_map('trim',explode("\n",$raw_headers."\n")), array(''));
         $headers = array();
         if(!empty($raw_headers)){
-            foreach (explode("\n",$raw_headers."\n") as $header_line){
-                if(!empty($header_line)){
-                    $headers[] = $this->_parseHeaderLine($header_line);
-                }
+            foreach ($raw_header_lines as $header_line){
+                $headers[] = $this->_parseHeaderLine($header_line);
             }
         }
 
@@ -164,7 +167,7 @@ class AkMailParser
         $header['value'] = trim($header['value']," ;");
 
         if(strstr($header['value'],';') && strtolower($header['name']) != 'date' &&
-        preg_match("/([; ])*(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun), *)?(\d\d?)".
+        preg_match("/([; ])*(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun),? *)?(\d\d?)".
         " +(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +(\d\d\d\d) ".
         "+(\d{2}:\d{2}(?::\d\d)) +([\( ]*(UT|GMT|EST|EDT|CST|CDT|MST|MDT|".
         "PST|PDT|[A-Z]|(?:\+|\-)\d{4})[\) ]*)+/",$header['value'],$match)){
@@ -179,10 +182,12 @@ class AkMailParser
 
     function _decodeHeader_(&$header)
     {
+
         if(!empty($header['value'])){
+            $encoded_header =  preg_replace('/\?\=([^=^\n^\r]+)?\=\?/', "?=$1\n=?",$header['value']);
             $header_value = $header['value'];
-            if(preg_match_all('/(\=\?([^\?]+)\?([BQ]{1})\?([^\?]+)\?\=?)+/i', $header_value, $match)){
-                foreach ($match[0] as $k=>$encoded){
+            if(preg_match_all('/(\=\?([^\?]+)\?([BQ]{1})\?([^\?]+)\?\=?)+/i', $encoded_header, $match)){
+                foreach (array_keys($match[0]) as $k){
                     $charset = strtoupper($match[2][$k]);
                     $decode_function = strtolower($match[3][$k]) == 'q' ? 'quoted_printable_decode' : 'base64_decode';
                     $decoded_part = trim(
@@ -206,15 +211,15 @@ class AkMailParser
         return
         array_map('trim',
         preg_split("/\n\n/",
-        preg_replace("/(\n[\t ]+)+/",' ', // Join multiline headers
-        str_replace(array("\r\n","\r"),"\n", $raw_part."\n") // Lets keep it simple and use only \n for decoding
+        preg_replace("/(\n[\t ]+)/",'', // Join multiline headers
+        str_replace(array("\r\n","\n\r","\r"),"\n", $raw_part."\n") // Lets keep it simple and use only \n for decoding
         ),2));
     }
 
     function _expandHeadersOnMailObject(&$Mail)
     {
         if(!empty($Mail->headers)){
-            foreach ($Mail->headers as $k=>$details){
+            foreach ($Mail->headers as $details){
                 if (empty($details['name'])) {
                     continue;
                 }
@@ -228,6 +233,7 @@ class AkMailParser
                         }else{
                             $Mail->$caption = array($Mail->$caption, $details['value']);
                         }
+                        $Mail->header[$caption] =& $Mail->$caption;
                     }
                     if(!empty($details['attributes'])){
                         $Mail->{$caption.'_attributes'} = $details['attributes'];
@@ -236,6 +242,7 @@ class AkMailParser
             }
         }
     }
+    
 }
 
 ?>

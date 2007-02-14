@@ -235,7 +235,7 @@ class TestMailer extends AkActionMailer
         'content_type' => "multipart/mixed",
 
         'parts' => array(
-            array('content_type' => 'multipart/alternative', 'content_disposition' => 'inline',  'headers' => array("foo" => "bar"), 'parts' => array(
+            array('content_type' => 'multipart/alternative', 'content_disposition' => 'inline',  'headers' => array("Foo" => "bar"), 'parts' => array(
                      array('content_type' => 'text/plain', 'body' => 'test text\nline #2'),
                     array('content_type' => 'text/html', 'body' => '<b>test</b> HTML<br/>\nline #2')
                 )

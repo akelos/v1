@@ -243,11 +243,11 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *   can also pick a different content type from inside a method with <tt>$this->content_type</tt>. 
 * * <tt>default_mime_version</tt> - The default mime version used for the message. Defaults to "1.0". You
 *   can also pick a different value from inside a method with <tt>$this->mime_version</tt>.
-* * <tt>default_implicitPartsOrder</tt> - When a message is built implicitly (i.e. multiple parts are assembled from templates
+* * <tt>default_implicit_parts_order</tt> - When a message is built implicitly (i.e. multiple parts are assembled from templates
 *   which specify the content type in their filenames) this variable controls how the parts are ordered. Defaults to
 *   array("text/html", "text/enriched", "text/plain"). Items that appear first in the array have higher priority in the mail client
 *   and appear last in the mime encoded message. You can also pick a different order from inside a method with
-*   <tt>$this->implicitPartsOrder</tt>.
+*   <tt>$this->implicit_parts_order</tt>.
 */
 class AkActionMailer extends AkBaseModel
 {
@@ -267,7 +267,7 @@ class AkActionMailer extends AkBaseModel
     var $default_charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
     var $default_content_type = 'text/plain';
     var $default_mime_version = '1.0';
-    var $default_implicitPartsOrder = array('text/html', 'text/enriched', 'text/plain');
+    var $default_implicit_parts_order = array('text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
     var $_MailDriver;
     var $_defaultMailDriverName = 'AkMail';
@@ -369,11 +369,11 @@ class AkActionMailer extends AkBaseModel
 
     /**
     * Specify the order in which parts should be sorted, based on content-type.
-    * This defaults to the value for the +default_implicitPartsOrder+.
+    * This defaults to the value for the +default_implicit_parts_order+.
     */
-    function setImplicitPartsOrder($implicitPartsOrder)
+    function setImplicitPartsOrder($implicit_parts_order)
     {
-        $this->_MailDriver->setImplicitPartsOrder($implicitPartsOrder);
+        $this->_MailDriver->setImplicitPartsOrder($implicit_parts_order);
     }
 
 
@@ -529,7 +529,7 @@ class AkActionMailer extends AkBaseModel
                 }
                 if(!empty($this->parts)){
                     $Mail->content_type = 'multipart/alternative';
-                    $Mail->setParts($Mail->sortParts($Mail->parts, $Mail->implicitPartsOrder));
+                    $Mail->setParts($Mail->sortParts($Mail->parts, $Mail->implicit_parts_order));
                 }
             }
 
@@ -602,7 +602,7 @@ class AkActionMailer extends AkBaseModel
     function _initializeDefaults($method_name)
     {
         $Mail =& $this->_MailDriver;
-        foreach (array('charset','content_type','implicitPartsOrder', 'mime_version') as $attribute) {
+        foreach (array('charset','content_type','implicit_parts_order', 'mime_version') as $attribute) {
             $method = 'set'.AkInflector::camelize($attribute);
             $Mail->$method(empty($this->$attribute) ? $this->{'default_'.$attribute} : $this->$attribute);
         }

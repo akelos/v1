@@ -98,23 +98,26 @@ class Tests_for_Mailers extends  AkUnitTest
     {
         $headers = array(
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?=\n\r =?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]',
+
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?==?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]',
 
         'Subject: =?UTF-8?B?UHLDvGZ1bmcgUHLDvGZ1bmc=?='=>'Subject: Prüfung Prüfung',
         'Subject: =?iso-8859-1?Q?RV:_=5BFwd:__chiste_inform=E1tico=5D?='=>'Subject: RV: [Fwd:  chiste informático]',
-        '=?ISO-8859-11?B?4L7U6MG7w9DK1Le41MDSvuPL6aHRuuCr1MPsv+DHzcPstOnHwiBEdWFsLUNvcmUgSW50ZWwoUikgWGVvbihSKSBQcm9jZXNzb3Ig48vB6A==?='=>'เพิ่มประสิทธิภาพให้กับเซิร์ฟเวอร์ด้วย Dual-Core Intel(R) Xeon(R) Processor ใหม่',
-        '=?UTF-8?B?0KDRg9GB0YHQutC40Lkg5Lit5paHINei15HXqNeZ16o=?='=>'Русский 中文 עברית',
-        '=?UTF-8?B?ZXN0w6Egw6MgYsOkc8OqNjQ=?='=>'está ã bäsê64',
-        // NOT SUPPORTED YET   '=?ISO-2022-JP?B?GyRCJDMkcyRLJEEkT0AkMyYbKEI=?='=>'こんにちは世界',
-        '=?UTF-8?Q?E=C3=B1e_de_Espa=C3=B1a?= =?UTF-8?Q?_Fwd:_?= =?UTF-8?Q?=E3=81=93=E3=82=93=E3=81=AB=E3=81=A1=E3=81=AF=E4=B8=96=E7=95=8C?='=>'Eñe de España Fwd: こんにちは世界',
+        'X-Akelos-Random: =?ISO-8859-11?B?4L7U6MG7w9DK1Le41MDSvuPL6aHRuuCr1MPsv+DHzcPstOnHwiBEdWFsLUNvcmUgSW50ZWwoUikgWGVvbihSKSBQcm9jZXNzb3Ig48vB6A==?='=>'X-Akelos-Random: เพิ่มประสิทธิภาพให้กับเซิร์ฟเวอร์ด้วย Dual-Core Intel(R) Xeon(R) Processor ใหม่',
+        'X-Akelos-Random: =?UTF-8?B?0KDRg9GB0YHQutC40Lkg5Lit5paHINei15HXqNeZ16o=?='=>'X-Akelos-Random: Русский 中文 עברית',
+        'X-Akelos-Random: =?UTF-8?B?ZXN0w6Egw6MgYsOkc8OqNjQ=?='=>'X-Akelos-Random: está ã bäsê64',
+        //'X-Akelos-Random: =?ISO-2022-JP?B?GyRCJDMkcyRLJEEkT0AkMyYbKEI=?='=>'X-Akelos-Random: こんにちは世界',
+
+        'X-Akelos-Random: =?UTF-8?Q?E=C3=B1e_de_Espa=C3=B1a?= =?UTF-8?Q?_Fwd:_?= =?UTF-8?Q?=E3=81=93=E3=82=93=E3=81=AB=E3=81=A1=E3=81=AF=E4=B8=96=E7=95=8C?='=>'X-Akelos-Random: Eñe de España Fwd: こんにちは世界',
         'From: =?ISO-8859-1?Q?Crist=F3bal_G=F3mez_Moreno?= <cristobal@example.com>'=>'From: Cristóbal Gómez Moreno <cristobal@example.com>',
 
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?=\n =?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]'
         );
 
-
-        foreach ($headers as $encoded_header=>$expected){
-            $this->assertEqual(AkMailEncoding::_decodeHeader($encoded_header), $expected);
+        $raw_mail = join("\r\n",array_keys($headers))."\r\n\r\nMail body";
+        $Mail = AkMailParser::parse($raw_mail);
+        foreach ($Mail->headers as $k=>$header){
+            $this->assertEqual($header['name'].': '.$header['value'], array_shift((array_slice($headers, $k,1))));
         }
     }
 
@@ -159,7 +162,6 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->recipient = 'test@localhost';
     }
 
-
     function test_nested_parts()
     {
         $HelperMailer =& new TestMailer();
@@ -167,12 +169,13 @@ class Tests_for_AkActionMailer extends  AkUnitTest
 
         $this->assertEqual(2, count($Created->parts));
         $this->assertEqual(2, count($Created->parts[0]->parts));
-        $this->assertEqual( "multipart/mixed", $Created->contentType );
-        $this->assertEqual( "multipart/alternative", $Created->parts[0]->contentType );
+        $this->assertEqual( "multipart/mixed", $Created->content_type );
+        $this->assertEqual( "multipart/alternative", $Created->parts[0]->content_type );
+        //echo "<pre>".print_r($Created,true)."</pre>";
         $this->assertEqual( "bar", $Created->parts[0]->header['Foo'] );
-        $this->assertEqual( "text/plain", $Created->parts[0]->parts[0]->contentType );
-        $this->assertEqual( "text/html", $Created->parts[0]->parts[1]->contentType );
-        $this->assertEqual( "application/octet-stream", $Created->parts[1]->contentType );
+        $this->assertEqual( "text/plain", $Created->parts[0]->parts[0]->content_type );
+        $this->assertEqual( "text/html", $Created->parts[0]->parts[1]->content_type );
+        $this->assertEqual( "application/octet-stream", $Created->parts[1]->content_type );
     }
 
 
@@ -321,8 +324,6 @@ class Tests_for_AkActionMailer extends  AkUnitTest
 
     }
 
-
-
     function test_unquote_quoted_printable_subject()
     {
         $msg = <<<EOF
@@ -444,308 +445,34 @@ EOF;
         $this->assertPattern('/åœö blah/', $Created->getBody());
     }
     
-   
 
     function test_multiple_utf8_recipients()
     {
         $this->recipient = array("\"Foo áëô îü\" <extended@example.com>", "\"Example Recipient\" <me@example.com>");
         $TestMailer =& new TestMailer();
         $this->assertTrue($Created = $TestMailer->create('utf8_body', $this->recipient));
-        
         $this->assertPattern("/\nFrom: =\?UTF-8\?Q\?Foo_.*?\?= <extended@example.com>\r/", $Created->getEncoded());
         $this->assertPattern("/To: =\?UTF-8\?Q\?Foo_.*?\?= <extended@example.com>, Ex=\r\n ample Recipient <me/", $Created->getEncoded());
     }
-    
 
     function test_receive_decodes_base64_encoded_mail()
     {
         $TestMailer =& new TestMailer();
         $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email"));
         $this->assertPattern("/Jamis/", $TestMailer->received_body);
-    }
-    
+
+      }
 
     function test_receive_attachments()
     {
-        return;
-        $TestMailer =& new TestMailer();
-        //$Mail =& $TestMailer->receive(file_get_contents('/Users/bermi/test'));
-        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email12"));
-        echo "<pre>".print_r($Mail,true)."</pre>";
-        /**
         $TestMailer =& new TestMailer();
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email2"));
-        echo "<pre>".print_r($Mail,true)."</pre>";
-        return ;
         $Attachment = Ak::last($Mail->attachments);
         $this->assertEqual("smime.p7s", $Attachment->original_file_name);
-        $this->assertEqual("application/pkcs7-signature", $Attachment->content_type);*/
+        $this->assertEqual("application/pkcs7-signature", $Attachment->content_type);
     }
     
    
-    /**
-
-
-
-        file_put_contents('/Users/bermi/A',$Expected->getEncoded());
-        file_put_contents('/Users/bermi/B',$Created->getEncoded());
-
-  def test_receive_attachments
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email2")
-    mail = TMail::Mail.parse(fixture)
-    attachment = mail.attachments.last
-    assert_equal "smime.p7s", attachment.original_filename
-    assert_equal "application/pkcs7-signature", attachment.content_type
-  end
-
-  def test_decode_attachment_without_charset
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email3")
-    mail = TMail::Mail.parse(fixture)
-    attachment = mail.attachments.last
-    assert_equal 1026, attachment.read.length
-  end
-
-  def test_attachment_using_content_location
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email12")
-    mail = TMail::Mail.parse(fixture)
-    assert_equal 1, mail.attachments.length
-    assert_equal "Photo25.jpg", mail.attachments.first.original_filename
-  end
-
-  def test_attachment_with_text_type
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email13")
-    mail = TMail::Mail.parse(fixture)
-    assert mail.has_attachments?
-    assert_equal 1, mail.attachments.length
-    assert_equal "hello.rb", mail.attachments.first.original_filename
-  end
-
-  def test_decode_part_without_content_type
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email4")
-    mail = TMail::Mail.parse(fixture)
-    assert_nothing_raised { mail.body }
-  end
-
-  def test_decode_message_without_content_type
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email5")
-    mail = TMail::Mail.parse(fixture)
-    assert_nothing_raised { mail.body }
-  end
-
-  def test_decode_message_with_incorrect_charset
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email6")
-    mail = TMail::Mail.parse(fixture)
-    assert_nothing_raised { mail.body }
-  end
-
-  def test_multipart_with_mime_version
-    mail = TestMailer.create_multipart_with_mime_version(@recipient)
-    assert_equal "1.1", mail.mime_version
-  end
-  
-  def test_multipart_with_utf8_subject
-    mail = TestMailer.create_multipart_with_utf8_subject(@recipient)
-    assert_match(/\nSubject: =\?utf-8\?Q\?Foo_.*?\?=/, mail.encoded)
-  end
-
-  def test_implicitly_multipart_with_utf8
-    mail = TestMailer.create_implicitly_multipart_with_utf8
-    assert_match(/\nSubject: =\?utf-8\?Q\?Foo_.*?\?=/, mail.encoded)
-  end
-
-  def test_explicitly_multipart_messages
-    mail = TestMailer.create_explicitly_multipart_example(@recipient)
-    assert_equal 3, mail.parts.length
-    assert_nil mail.content_type
-    assert_equal "text/plain", mail.parts[0].content_type
-
-    assert_equal "text/html", mail.parts[1].content_type
-    assert_equal "iso-8859-1", mail.parts[1].sub_header("content-type", "charset")
-    assert_equal "inline", mail.parts[1].content_disposition
-
-    assert_equal "image/jpeg", mail.parts[2].content_type
-    assert_equal "attachment", mail.parts[2].content_disposition
-    assert_equal "foo.jpg", mail.parts[2].sub_header("content-disposition", "filename")
-    assert_equal "foo.jpg", mail.parts[2].sub_header("content-type", "name")
-    assert_nil mail.parts[2].sub_header("content-type", "charset")
-  end
-
-  def test_explicitly_multipart_with_content_type
-    mail = TestMailer.create_explicitly_multipart_example(@recipient, "multipart/alternative")
-    assert_equal 3, mail.parts.length
-    assert_equal "multipart/alternative", mail.content_type
-  end
-
-  def test_explicitly_multipart_with_invalid_content_type
-    mail = TestMailer.create_explicitly_multipart_example(@recipient, "text/xml")
-    assert_equal 3, mail.parts.length
-    assert_nil mail.content_type
-  end
-
-  def test_implicitly_multipart_messages
-    mail = TestMailer.create_implicitly_multipart_example(@recipient)
-    assert_equal 3, mail.parts.length
-    assert_equal "1.0", mail.mime_version
-    assert_equal "multipart/alternative", mail.content_type
-    assert_equal "text/yaml", mail.parts[0].content_type
-    assert_equal "utf-8", mail.parts[0].sub_header("content-type", "charset")
-    assert_equal "text/plain", mail.parts[1].content_type
-    assert_equal "utf-8", mail.parts[1].sub_header("content-type", "charset")
-    assert_equal "text/html", mail.parts[2].content_type
-    assert_equal "utf-8", mail.parts[2].sub_header("content-type", "charset")
-  end
-
-  def test_implicitly_multipart_messages_with_custom_order
-    mail = TestMailer.create_implicitly_multipart_example(@recipient, nil, ["text/yaml", "text/plain"])
-    assert_equal 3, mail.parts.length
-    assert_equal "text/html", mail.parts[0].content_type
-    assert_equal "text/plain", mail.parts[1].content_type
-    assert_equal "text/yaml", mail.parts[2].content_type
-  end
-
-  def test_implicitly_multipart_messages_with_charset
-    mail = TestMailer.create_implicitly_multipart_example(@recipient, 'iso-8859-1')
-
-    assert_equal "multipart/alternative", mail.header['content-type'].body
-    
-    assert_equal 'iso-8859-1', mail.parts[0].sub_header("content-type", "charset")
-    assert_equal 'iso-8859-1', mail.parts[1].sub_header("content-type", "charset")
-    assert_equal 'iso-8859-1', mail.parts[2].sub_header("content-type", "charset")
-  end
-
-  def test_html_mail
-    mail = TestMailer.create_html_mail(@recipient)
-    assert_equal "text/html", mail.content_type
-  end
-
-  def test_html_mail_with_underscores
-    mail = TestMailer.create_html_mail_with_underscores(@recipient)
-    assert_equal %{<a href="http://google.com" target="_blank">_Google</a>}, mail.body
-  end
-
-  def test_various_newlines
-    mail = TestMailer.create_various_newlines(@recipient)
-    assert_equal("line #1\nline #2\nline #3\nline #4\n\n" +
-                 "line #5\n\nline#6\n\nline #7", mail.body)
-  end
-
-  def test_various_newlines_multipart
-    mail = TestMailer.create_various_newlines_multipart(@recipient)
-    assert_equal "line #1\nline #2\nline #3\nline #4\n\n", mail.parts[0].body
-    assert_equal "<p>line #1</p>\n<p>line #2</p>\n<p>line #3</p>\n<p>line #4</p>\n\n", mail.parts[1].body
-  end
-  
-  def test_headers_removed_on_smtp_delivery
-    ActionMailer::Base.delivery_method = :smtp
-    TestMailer.deliver_cc_bcc(@recipient)
-    assert MockSMTP.deliveries[0][2].include?("root@loudthinking.com")
-    assert MockSMTP.deliveries[0][2].include?("nobody@loudthinking.com")
-    assert MockSMTP.deliveries[0][2].include?(@recipient)
-    assert_match %r{^Cc: nobody@loudthinking.com}, MockSMTP.deliveries[0][0]
-    assert_match %r{^To: #{@recipient}}, MockSMTP.deliveries[0][0]
-    assert_no_match %r{^Bcc: root@loudthinking.com}, MockSMTP.deliveries[0][0]
-  end
-
-  def test_recursive_multipart_processing
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email7")
-    mail = TMail::Mail.parse(fixture)
-    assert_equal "This is the first part.\n\nAttachment: test.rb\nAttachment: test.pdf\n\n\nAttachment: smime.p7s\n", mail.body
-  end
-
-  def test_decode_encoded_attachment_filename
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email8")
-    mail = TMail::Mail.parse(fixture)
-    attachment = mail.attachments.last
-    assert_equal "01QuienTeDijat.Pitbull.mp3", attachment.original_filename
-  end
-
-  def test_wrong_mail_header
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email9")
-    assert_raise(TMail::SyntaxError) { TMail::Mail.parse(fixture) }
-  end
-
-  def test_decode_message_with_unknown_charset
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email10")
-    mail = TMail::Mail.parse(fixture)
-    assert_nothing_raised { mail.body }
-  end
-
-  def test_decode_message_with_unquoted_atchar_in_header
-    fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email11")
-    mail = TMail::Mail.parse(fixture)
-    assert_not_nil mail.from
-  end
-
-  def test_empty_header_values_omitted
-    result = TestMailer.create_unnamed_attachment(@recipient).encoded
-    assert_match %r{Content-Type: application/octet-stream[^;]}, result
-    assert_match %r{Content-Disposition: attachment[^;]}, result
-  end
-
-  def test_headers_with_nonalpha_chars
-    mail = TestMailer.create_headers_with_nonalpha_chars(@recipient)
-    assert !mail.from_addrs.empty?
-    assert !mail.cc_addrs.empty?
-    assert !mail.bcc_addrs.empty?
-    assert_match(/:/, mail.from_addrs.to_s)
-    assert_match(/:/, mail.cc_addrs.to_s)
-    assert_match(/:/, mail.bcc_addrs.to_s)
-  end
-
-  def test_deliver_with_mail_object
-    mail = TestMailer.create_headers_with_nonalpha_chars(@recipient)
-    assert_nothing_raised { TestMailer.deliver(mail) }
-    assert_equal 1, TestMailer.deliveries.length
-  end
-
-  def test_multipart_with_template_path_with_dots
-    mail = FunkyPathMailer.create_multipart_with_template_path_with_dots(@recipient)
-    assert_equal 2, mail.parts.length
-  end
-
-  def test_custom_content_type_attributes
-    mail = TestMailer.create_custom_content_type_attributes
-    assert_match %r{format=flowed}, mail['content-type'].to_s
-    assert_match %r{charset=utf-8}, mail['content-type'].to_s
-  end
-end
-
-end # uses_mocha
-
-class InheritableTemplateRootTest < Test::Unit::TestCase
-  def test_attr
-    expected = "#{File.dirname(__FILE__)}/fixtures/path.with.dots"
-    assert_equal expected, FunkyPathMailer.template_root
-
-    sub = Class.new(FunkyPathMailer)
-    sub.template_root = 'test/path'
-
-    assert_equal 'test/path', sub.template_root
-    assert_equal expected, FunkyPathMailer.template_root
-  end
-end
-
-class MethodNamingTest < Test::Unit::TestCase
-  class TestMailer < ActionMailer::Base
-    def send
-      body 'foo'
-    end
-  end
-
-  def setup
-    ActionMailer::Base.delivery_method = :test
-    ActionMailer::Base.perform_deliveries = true
-    ActionMailer::Base.deliveries = []
-  end
-
-  def test_send_method
-    assert_nothing_raised do
-      assert_emails 1 do
-        TestMailer.deliver_send
-      end
-    end
-  end
-end
      /**/
 
 }

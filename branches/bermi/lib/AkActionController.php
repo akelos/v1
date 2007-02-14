@@ -1347,7 +1347,7 @@ class AkActionController extends AkObject
     *   {
     *       function filter(&$controller)
     *       {
-    *           $controller->response->body = compress($controller->response->body);
+    *           $controller->Response->body = compress($controller->Response->body);
     *       }
     *   }
     * 
