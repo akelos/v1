@@ -1,6 +1,6 @@
 <?php
 
-class AkMailEnCoder
+class AkMailEncoder
 {
     
 }

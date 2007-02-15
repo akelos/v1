@@ -519,11 +519,11 @@ class AkActionMailer extends AkBaseModel
                     if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
                         if($this->template == $match[1]){
                             $content_type = str_replace('.','/', $match[2]);
-                            $Mail->addPart(array(
+                            $Mail->setPart(array(
                             'content_type' => $content_type,
                             'disposition' => 'inline',
                             'charset' => $Mail->charset,
-                            'body' => $this->renderMessage($template_name, $Mail->body)));
+                            'body' => $this->renderMessage($template_name, $Mail->body, array('use_full_path'=>true))));
                         }
                     }
                 }
@@ -554,7 +554,7 @@ class AkActionMailer extends AkBaseModel
             }
         }
 
-        $Mail->setMimeVersion((empty($Mail->mimeVersion) && !empty($Mail->parts)) ? '1.0' : $Mail->mimeVersion);
+        $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
 
         $this->Mail =& $Mail;
         return $Mail;
@@ -615,9 +615,9 @@ class AkActionMailer extends AkBaseModel
         $this->mailerName = empty($this->mailerName) ? AkInflector::underscore($this->getModelName()) : $this->mailerName;
     }
 
-    function renderMessage($method_name, $body)
+    function renderMessage($method_name, $body, $options = array())
     {
-        return $this->render(array('file' => $method_name, 'body' => $body));
+        return $this->render(array_merge($options, array('file' => $method_name, 'body' => $body)));
     }
 
     function render($options = array())

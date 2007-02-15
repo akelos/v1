@@ -67,16 +67,18 @@ class AkMail extends Mail
 
     function getBody()
     {
-        $encoding = $this->getContentTransferEncoding();
-        $charset = empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset;
+        if(!is_array($this->body)){
+            $encoding = $this->getContentTransferEncoding();
+            $charset = empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset;
 
-        switch ($encoding) {
-            case 'quoted-printable':
-            return trim(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset)));
-            case 'base64':
-            return trim(chunk_split(base64_encode($this->body)));
-            default:
-            return trim($this->body);
+            switch ($encoding) {
+                case 'quoted-printable':
+                return trim(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset)));
+                case 'base64':
+                return trim(chunk_split(base64_encode($this->body)));
+                default:
+                return trim($this->body);
+            }
         }
     }
 
@@ -288,13 +290,14 @@ class AkMail extends Mail
                     $Part->_propagated = true;
                     if(!empty($Part->content_disposition)){
                         // Inline bodies
-                        if(isset($Part->content_type) && (empty($this->body) || is_array($this->body)) && $Part->content_disposition == 'inline'){
-                            $type = strstr($Part->content_type, '/') ? substr($Part->content_type,0,strpos($Part->content_type,"/")) : $Part->content_type;
+                        if(isset($Part->content_type) && (empty($this->body) || is_array($this->body)) && strstr($Part->content_type,'text') && $Part->content_disposition == 'inline'){
+                            $type = strstr($Part->content_type, '/') ? substr($Part->content_type,strpos($Part->content_type,"/")+1) : $Part->content_type;
+                            $Part->_on_body_as = $type;
                             $this->body[$type] = $Part->body;
                         }
 
                         // Attachments
-                        elseif ($Part->content_disposition == 'attachment'){
+                        elseif ($Part->content_disposition == 'attachment' || !empty($Part->content_location)){
                             $this->_addAttachment($Part);
                         }
                     }
@@ -307,10 +310,19 @@ class AkMail extends Mail
     {
         $Attachment = new stdClass();
         $Attachment->content_type = @$Part->content_type;
-        $Attachment->original_file_name = !empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] : @$Part->content_type_attributes['name'];
-        $Attachment->data = @$Part->body;
-        $this->attachments[] = $Attachment;
+        $Attachment->original_filename = !empty($Part->content_type_attributes['name']) ? $Part->content_type_attributes['name'] :
+        (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] : @$Part->content_location);
+        if(!empty($Part->body)){
+            $Attachment->data =& $Part->body;
+        }
+        $this->attachments[] =& $Attachment;
     }
+
+    function hasAttachments()
+    {
+        return !empty($this->attachments);
+    }
+
     /**
      * Add an attachment to a multipart message. This is simply a part with the
      * content-disposition set to "attachment".
@@ -374,7 +386,7 @@ class AkMail extends Mail
      */
     function setMimeVersion($mime_version)
     {
-        $this->mimeVersion = $mime_version;
+        $this->mime_version = $mime_version;
     }
 
     /**
@@ -519,7 +531,7 @@ class AkMail extends Mail
         die();
         */
     }
-    
+
     function _getHeadersAsText()
     {
         if(empty($this->date)){

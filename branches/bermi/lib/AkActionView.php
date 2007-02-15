@@ -186,9 +186,9 @@ class AkActionView
         }
     }
 
-    //Checked
+
     /*
-    * Renders the +template+ which is given as a string as tpl.php or js.tpl depending on <tt>template_extension</tt>.
+    * Renders the +template+ which is given as a string as tpl.
     * The array in <tt>local_assigns</tt> is made available as local variables.
     */
     function renderTemplate($____template_extension, $____template, $____file_path = null, $____local_assigns = array(), $____save_content_in_attribute_as = 'layout')

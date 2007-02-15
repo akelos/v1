@@ -38,6 +38,7 @@ class AkMailParser
         $raw_message = empty($raw_message) ? $Parser->raw_message : $raw_message;
         if(!empty($raw_message)){
             list($raw_header, $raw_body) = $Parser->_getRawHeaderAndBody($raw_message);
+
             $Mail->headers = $Parser->headers = $Parser->getParsedRawHeaders($raw_header);
             $Parser->{$Parser->getContentTypeProcessorMethodName()}($raw_body);
         }
@@ -213,7 +214,7 @@ class AkMailParser
         preg_split("/\n\n/",
         preg_replace("/(\n[\t ]+)/",'', // Join multiline headers
         str_replace(array("\r\n","\n\r","\r"),"\n", $raw_part."\n") // Lets keep it simple and use only \n for decoding
-        ),2));
+        )."\n\n",2));
     }
 
     function _expandHeadersOnMailObject(&$Mail)

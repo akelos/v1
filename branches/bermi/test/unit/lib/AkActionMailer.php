@@ -133,12 +133,16 @@ class Tests_for_Mailers extends  AkUnitTest
     {
         $Mail = AkMail::parse(file_get_contents(AK_TEST_DIR.'/fixtures/data/raw_email_with_partially_quoted_subject'));
         $this->assertEqual("Re: Test: \"\346\274\242\345\255\227\" mid \"\346\274\242\345\255\227\" tail", $Mail->subject);
-    } /**/
+    } 
+    
+    /**/
 }
 
 
 class Tests_for_AkActionMailer extends  AkUnitTest
-{/**/
+{
+    /**/
+    
     function encode($text, $charset = 'utf-8')
     {
         return AkActionMailerQuoting::quotedPrintable($text, $charset);
@@ -432,19 +436,13 @@ EOF;
         $this->assertTrue(!empty($TestMailer->deliveries[0]));
         $this->assertEqual($Expected->getEncoded(), $TestMailer->deliveries[0]);
     }
-    
-    
 
     function test_utf8_body_is_not_quoted()
     {
-
         $TestMailer =& new TestMailer();
-
         $this->assertTrue($Created = $TestMailer->create('utf8_body', $this->recipient));
-
         $this->assertPattern('/åœö blah/', $Created->getBody());
     }
-    
 
     function test_multiple_utf8_recipients()
     {
@@ -461,19 +459,98 @@ EOF;
         $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email"));
         $this->assertPattern("/Jamis/", $TestMailer->received_body);
 
-      }
+    }
 
     function test_receive_attachments()
     {
         $TestMailer =& new TestMailer();
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email2"));
         $Attachment = Ak::last($Mail->attachments);
-        $this->assertEqual("smime.p7s", $Attachment->original_file_name);
+        $this->assertEqual("smime.p7s", $Attachment->original_filename);
         $this->assertEqual("application/pkcs7-signature", $Attachment->content_type);
     }
-    
-   
-     /**/
+
+    function test_decode_attachment_without_charset()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email3"));
+        $Attachment = Ak::last($Mail->attachments);
+        $this->assertEqual(1026, Ak::size($Attachment->data));
+    }
+
+
+    function test_attachment_using_content_location()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email12"));
+
+        $this->assertEqual(1, Ak::size($Mail->attachments));
+
+        $Attachment = Ak::first($Mail->attachments);
+        $this->assertEqual("Photo25.jpg", $Attachment->original_filename);
+    }
+
+
+    function test_attachment_with_text_type()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email13"));
+
+        $this->assertTrue($Mail->hasAttachments());
+        $this->assertEqual(1, Ak::size($Mail->attachments));
+
+        $Attachment = Ak::first($Mail->attachments);
+        $this->assertEqual("hello.rb", $Attachment->original_filename);
+    }
+
+
+
+    function test_decode_part_without_content_type()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email4"));
+        $this->assertNoErrors();
+    }
+
+    function test_decode_message_without_content_type()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email5"));
+        $this->assertNoErrors();
+    }
+
+    function test_decode_message_with_incorrect_charset()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email6"));
+        $this->assertNoErrors();
+    }
+
+
+    function test_multipart_with_mime_version()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('multipart_with_mime_version', $this->recipient));
+        $this->assertEqual('1.1', $Created->mime_version);
+    }
+
+    function test_multipart_with_utf8_subject()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('multipart_with_utf8_subject', $this->recipient));
+        $this->assertPattern("/\nSubject: =\?UTF-8\?Q\?Foo_.*?\?=/", $Created->getEncoded());
+    }
+
+    function test_implicitly_multipart_with_utf8()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Created = $TestMailer->create('implicitly_multipart_with_utf8', $this->recipient));
+        echo "<pre>".print_r($Created,true)."</pre>";
+        $this->assertPattern("/\nSubject: =\?UTF-8\?Q\?Foo_.*?\?=/", $Created->getEncoded());
+    }
+
+
+
 
 }
 Ak::test('Tests_for_Mailers');
