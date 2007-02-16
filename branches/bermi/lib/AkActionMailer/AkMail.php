@@ -24,8 +24,9 @@ class AkMail extends Mail
 {
     var $raw_message = '';
     var $charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
-    var $content_type = 'text/plain';
+    var $content_type;
     var $body;
+    var $parts = array();
 
     function AkMail()
     {
@@ -103,7 +104,7 @@ class AkMail extends Mail
      */
     function setCharset($charset, $append_to_content_type_as_attribute = true)
     {
-        $this->_charset = $charset;
+        $this->_charset = $this->charset = $charset;
         if($append_to_content_type_as_attribute){
             $this->setContenttypeAttributes(array('charset'=>$charset));
         }
@@ -254,8 +255,13 @@ class AkMail extends Mail
 
     function setParts($parts)
     {
-        foreach ((array)$parts as $part){
-            $this->setPart((array)$part);
+        foreach ((array)$parts as $k=>$part){
+            if(is_numeric($k)){
+                $this->setPart((array)$part);
+            }else{
+                $this->setPart($parts);
+                break;
+            }
         }
     }
 
@@ -271,13 +277,14 @@ class AkMail extends Mail
      *     ));
      *   }
      */
-    function setPart($options = array())
+    function setPart($options = array(), $position = 'append')
     {
         $default_options = array('content_disposition' => 'inline', 'content_transfer_encoding' => 'quoted-printable');
         $options = array_merge($default_options, $options);
+
         $Part =& new AkMail($options);
         $Part->_isPart = true;
-        $this->parts[] = $Part;
+        $position == 'append' ? array_push($this->parts, $Part) : array_unshift($this->parts, $Part);
         $this->_propagateMultipartParts();
     }
 
@@ -290,7 +297,10 @@ class AkMail extends Mail
                     $Part->_propagated = true;
                     if(!empty($Part->content_disposition)){
                         // Inline bodies
-                        if(isset($Part->content_type) && (empty($this->body) || is_array($this->body)) && strstr($Part->content_type,'text') && $Part->content_disposition == 'inline'){
+                        if(isset($Part->content_type) && strstr($Part->content_type,'text') && $Part->content_disposition == 'inline'){
+                            if(!empty($this->body) && is_string($this->body)){
+                                $this->_moveBodyToInlinePart();
+                            }
                             $type = strstr($Part->content_type, '/') ? substr($Part->content_type,strpos($Part->content_type,"/")+1) : $Part->content_type;
                             $Part->_on_body_as = $type;
                             $this->body[$type] = $Part->body;
@@ -305,17 +315,37 @@ class AkMail extends Mail
             }
         }
     }
+    
+    function _moveBodyToInlinePart()
+    {
+        $options = array(
+        'content_type' => @$this->content_type,
+        'body' => @$this->body,
+        'charset' => @$this->charset,
+        'content_disposition' => 'inline',
+        );
+        foreach (array_keys($options) as $k){
+            unset($this->$k);
+        }
+        $this->setPart($options, 'preppend');
+    }
 
     function _addAttachment($Part)
     {
-        $Attachment = new stdClass();
-        $Attachment->content_type = @$Part->content_type;
-        $Attachment->original_filename = !empty($Part->content_type_attributes['name']) ? $Part->content_type_attributes['name'] :
-        (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] : @$Part->content_location);
+        $Part->original_filename = !empty($Part->content_type_attributes['name']) ? $Part->content_type_attributes['name'] :
+        (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] : 
+        (empty($Part->filename) ? @$Part->content_location : $Part->filename));
         if(!empty($Part->body)){
-            $Attachment->data =& $Part->body;
+            $Part->data =& $Part->body;
         }
-        $this->attachments[] =& $Attachment;
+        if(empty($Part->content_disposition_attributes['filename'])){
+            $Part->content_disposition_attributes['filename'] = $Part->original_filename;
+        }
+        if(empty($Part->content_type_attributes['name'])){
+            $Part->content_type_attributes['name'] = $Part->original_filename;
+        }
+        unset($Part->content_type_attributes['charset']);
+        $this->attachments[] =& $Part;
     }
 
     function hasAttachments()
@@ -426,15 +456,11 @@ class AkMail extends Mail
      */
     function set($attributes = array())
     {
-        if(!empty($attributes['body'])){
-            $this->setBody($attributes['body']);
-        }
-        unset($attributes['body']);
         foreach ((array)$attributes as $key=>$value){
             if($key[0] != '_'){
-                $method = 'set'.AkInflector::camelize($key);
-                if(method_exists($this, $method)){
-                    $this->$method($value);
+                $attribute_setter = 'set'.AkInflector::camelize($key);
+                if(method_exists($this, $attribute_setter)){
+                    $this->$attribute_setter($value);
                 }else{
                     $this->setHeader($key, $value);
                 }

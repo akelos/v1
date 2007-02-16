@@ -141,8 +141,7 @@ class Tests_for_Mailers extends  AkUnitTest
 
 class Tests_for_AkActionMailer extends  AkUnitTest
 {
-    /**/
-    
+        
     function encode($text, $charset = 'utf-8')
     {
         return AkActionMailerQuoting::quotedPrintable($text, $charset);
@@ -165,6 +164,8 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->Mailer->deliveries = array();
         $this->recipient = 'test@localhost';
     }
+
+    /**/
 
     function test_nested_parts()
     {
@@ -545,8 +546,27 @@ EOF;
     {
         $TestMailer =& new TestMailer();
         $this->assertTrue($Created = $TestMailer->create('implicitly_multipart_with_utf8', $this->recipient));
-        echo "<pre>".print_r($Created,true)."</pre>";
         $this->assertPattern("/\nSubject: =\?UTF-8\?Q\?Foo_.*?\?=/", $Created->getEncoded());
+    }
+
+    function test_explicitly_multipart_messages()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('explicitly_multipart_example', $this->recipient));
+        
+        $this->assertEqual(3, Ak::size($Mail->parts));
+        $this->assertTrue(empty($Mail->content_type));
+        
+        $this->assertEqual("text/html", $Mail->parts[1]->content_type);
+        $this->assertEqual("iso-8859-1", $Mail->parts[1]->content_type_attributes['charset']);
+        $this->assertEqual("inline", $Mail->parts[1]->content_disposition);
+        
+        $this->assertEqual("image/jpeg", $Mail->parts[2]->content_type);
+        $this->assertEqual("attachment", $Mail->parts[2]->content_disposition);
+        $this->assertEqual("foo.jpg", $Mail->parts[2]->content_disposition_attributes['filename']);
+        $this->assertEqual("foo.jpg", $Mail->parts[2]->content_type_attributes['name']);
+        $this->assertTrue(empty($Mail->parts[2]->content_type_attributes['charset']));
+        
     }
 
 

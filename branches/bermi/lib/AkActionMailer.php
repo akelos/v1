@@ -523,7 +523,7 @@ class AkActionMailer extends AkBaseModel
                             'content_type' => $content_type,
                             'disposition' => 'inline',
                             'charset' => $Mail->charset,
-                            'body' => $this->renderMessage($template_name, $Mail->body, array('use_full_path'=>true))));
+                            'body' => $this->renderMessage($this->getTemplatePath().DS.$template_name, $Mail->body)));
                         }
                     }
                 }
