@@ -174,7 +174,7 @@ class Tests_for_AkActionMailer extends  AkUnitTest
 
         $this->assertEqual(2, count($Created->parts));
         $this->assertEqual(2, count($Created->parts[0]->parts));
-        $this->assertEqual( "multipart/mixed", $Created->content_type );
+        $this->assertEqual( "multipart/mixed", $Created->content_type);
         $this->assertEqual( "multipart/alternative", $Created->parts[0]->content_type );
         //echo "<pre>".print_r($Created,true)."</pre>";
         $this->assertEqual( "bar", $Created->parts[0]->header['Foo'] );
@@ -549,13 +549,14 @@ EOF;
         $this->assertPattern("/\nSubject: =\?UTF-8\?Q\?Foo_.*?\?=/", $Created->getEncoded());
     }
 
-    function test_explicitly_multipart_messages()
+    function test_explicitly_multipart_with_content_type()
     {
         $TestMailer =& new TestMailer();
         $this->assertTrue($Mail = $TestMailer->create('explicitly_multipart_example', $this->recipient));
         
         $this->assertEqual(3, Ak::size($Mail->parts));
         $this->assertTrue(empty($Mail->content_type));
+        $this->assertEqual("multipart/alternative", $Mail->getContentType());
         
         $this->assertEqual("text/html", $Mail->parts[1]->content_type);
         $this->assertEqual("iso-8859-1", $Mail->parts[1]->content_type_attributes['charset']);
@@ -568,6 +569,37 @@ EOF;
         $this->assertTrue(empty($Mail->parts[2]->content_type_attributes['charset']));
         
     }
+
+    function test_explicitly_multipart_with_invalid_content_type()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('explicitly_multipart_example', $this->recipient, 'text/xml'));
+        
+        $this->assertEqual(3, Ak::size($Mail->parts));
+        $this->assertEqual("multipart/alternative", $Mail->getContentType());
+        
+    }
+
+
+    function test_implicitly_multipart_messages()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('implicitly_multipart_example', $this->recipient));
+
+        $this->assertEqual(3, Ak::size($Mail->parts));
+        $this->assertEqual("1.0", $Mail->mime_version);
+        $this->assertEqual("multipart/alternative", $Mail->content_type);
+
+        $this->assertEqual("text/yaml", $Mail->parts[0]->content_type);
+        $this->assertEqual('UTF-8', $Mail->parts[0]->content_type_attributes['charset']);
+
+        $this->assertEqual("text/plain", $Mail->parts[1]->content_type);
+        $this->assertEqual('UTF-8', $Mail->parts[1]->content_type_attributes['charset']);
+        
+        $this->assertEqual("text/html", $Mail->parts[2]->content_type);
+        $this->assertEqual('UTF-8', $Mail->parts[1]->content_type_attributes['charset']);
+    }
+
 
 
 

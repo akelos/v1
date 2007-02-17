@@ -123,7 +123,7 @@ class AkMail extends Mail
 
     function getContentType()
     {
-        return $this->content_type.$this->getContenttypeAttributes();
+        return empty($this->content_type) ? ($this->_isMultipart()?'multipart/alternative':null) : $this->content_type.$this->getContenttypeAttributes();
     }
 
     function setContenttypeAttributes($attributes = array())
@@ -285,7 +285,7 @@ class AkMail extends Mail
         $Part =& new AkMail($options);
         $Part->_isPart = true;
         $position == 'append' ? array_push($this->parts, $Part) : array_unshift($this->parts, $Part);
-        $this->_propagateMultipartParts();
+        empty($this->_avoid_multipart_propagation) ? $this->_propagateMultipartParts() : null;
     }
 
     function _propagateMultipartParts()
@@ -298,12 +298,15 @@ class AkMail extends Mail
                     if(!empty($Part->content_disposition)){
                         // Inline bodies
                         if(isset($Part->content_type) && strstr($Part->content_type,'text') && $Part->content_disposition == 'inline'){
-                            if(!empty($this->body) && is_string($this->body)){
+                            if((!empty($this->body) && is_string($this->body))
+                            ||  (!empty($this->body) && is_array($this->body) && ($this->_isMultipart() || $this->content_type == 'text/plain'))
+                            ){
                                 $this->_moveBodyToInlinePart();
                             }
                             $type = strstr($Part->content_type, '/') ? substr($Part->content_type,strpos($Part->content_type,"/")+1) : $Part->content_type;
                             $Part->_on_body_as = $type;
                             $this->body[$type] = $Part->body;
+
                         }
 
                         // Attachments
@@ -315,25 +318,31 @@ class AkMail extends Mail
             }
         }
     }
-    
+
     function _moveBodyToInlinePart()
     {
         $options = array(
         'content_type' => @$this->content_type,
         'body' => @$this->body,
         'charset' => @$this->charset,
-        'content_disposition' => 'inline',
+        'content_disposition' => 'inline'
         );
         foreach (array_keys($options) as $k){
             unset($this->$k);
         }
+        $this->_multipart_message = true;
         $this->setPart($options, 'preppend');
+    }
+
+    function _isMultipart()
+    {
+        return !empty($this->_multipart_message);
     }
 
     function _addAttachment($Part)
     {
         $Part->original_filename = !empty($Part->content_type_attributes['name']) ? $Part->content_type_attributes['name'] :
-        (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] : 
+        (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] :
         (empty($Part->filename) ? @$Part->content_location : $Part->filename));
         if(!empty($Part->body)){
             $Part->data =& $Part->body;
@@ -469,18 +478,18 @@ class AkMail extends Mail
     }
 
 
-    function sortParts($parts, $order = array())
+    function getSortedParts($parts, $order = array())
     {
         $this->_parts_order = array_map('strtolower', empty($order) ? $this->implicit_parts_order : $order);
-        rsort($parts);
         usort($parts, array($this,'_contentTypeComparison'));
+        rsort($parts);
         return $parts;
     }
 
     function _contentTypeComparison($a, $b)
     {
-        $a_ct = strtolower($a['content_type']);
-        $b_ct = strtolower($b['content_type']);
+        $a_ct = strtolower($a->content_type);
+        $b_ct = strtolower($b->content_type);
         $a_in = in_array($a_ct, $this->_parts_order);
         $b_in = in_array($b_ct, $this->_parts_order);
         if($a_in && $b_in){

@@ -500,11 +500,11 @@ class AkActionMailer extends AkBaseModel
      * Initialize the mailer via the given +method_name+. The body will be
      * rendered and a new AkMail object created.
      */
-    function &create($method_name, $parameters)
+    function &create($method_name, $parameters, $content_type = '')
     {
         $this->_initializeDefaults($method_name);
         if(method_exists($this, $method_name)){
-            $this->$method_name($parameters);
+            $this->$method_name($parameters, $content_type);
         }else{
             trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
         }
@@ -513,8 +513,8 @@ class AkActionMailer extends AkBaseModel
 
         if(!is_string($Mail->body)){
             if(empty($Mail->parts)){
+                $Mail->_avoid_multipart_propagation = true;
                 $templates = array_map('basename', Ak::dir($this->getTemplatePath().DS, array('dirs'=>false)));
-
                 foreach ($templates as $template_name){
                     if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
                         if($this->template == $match[1]){
@@ -522,14 +522,14 @@ class AkActionMailer extends AkBaseModel
                             $Mail->setPart(array(
                             'content_type' => $content_type,
                             'disposition' => 'inline',
-                            'charset' => $Mail->charset,
+                            'charset' => @$Mail->charset,
                             'body' => $this->renderMessage($this->getTemplatePath().DS.$template_name, $Mail->body)));
                         }
                     }
                 }
-                if(!empty($this->parts)){
+                if(!empty($Mail->parts)){
                     $Mail->content_type = 'multipart/alternative';
-                    $Mail->setParts($Mail->sortParts($Mail->parts, $Mail->implicit_parts_order));
+                    $Mail->parts = $Mail->getSortedParts($Mail->parts, $Mail->implicit_parts_order);
                 }
             }
 

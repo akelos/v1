@@ -150,9 +150,7 @@ class TestMailer extends AkActionMailer
         'recipients' => $recipient,
         'subject' => "multipart example",
         'from' => "test@example.com",
-        'body' => array('recipient' => $recipient),
-        'parts' => array('content_type' => 'text/html', 'body' => 'blah', 'charset' => 'iso-8859-1'),
-        'attachment' => array('content_type' => 'image/jpeg', 'filename'=> 'foo.jpg', 'body' => '123456789'),
+        'body' => array('recipient' => $recipient)
         ));
     }
 
