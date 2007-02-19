@@ -63,7 +63,11 @@ class AkMail extends Mail
 
     function setBody($body)
     {
-        $this->body = is_string($body) ? trim($body) : $body;
+        if(is_string($body)){
+            $this->body = stristr(@$this->content_type,'text/') ? str_replace(array("\r\n","\r"),"\n", $body) : $body;
+        }else{
+            $this->body = $body;
+        }
     }
 
     function getBody()
@@ -297,7 +301,7 @@ class AkMail extends Mail
                     $Part->_propagated = true;
                     if(!empty($Part->content_disposition)){
                         // Inline bodies
-                        if(isset($Part->content_type) && strstr($Part->content_type,'text') && $Part->content_disposition == 'inline'){
+                        if(isset($Part->content_type) && stristr($Part->content_type,'text/') && $Part->content_disposition == 'inline'){
                             if((!empty($this->body) && is_string($this->body))
                             ||  (!empty($this->body) && is_array($this->body) && ($this->_isMultipart() || $this->content_type == 'text/plain'))
                             ){
@@ -310,7 +314,7 @@ class AkMail extends Mail
                         }
 
                         // Attachments
-                        elseif ($Part->content_disposition == 'attachment' || !empty($Part->content_location)){
+                        elseif ($Part->content_disposition == 'attachment' || ($Part->content_disposition == 'inline' && !stristr($Part->content_type,'text/')) || !empty($Part->content_location)){
                             $this->_addAttachment($Part);
                         }
                     }
@@ -344,6 +348,9 @@ class AkMail extends Mail
         $Part->original_filename = !empty($Part->content_type_attributes['name']) ? $Part->content_type_attributes['name'] :
         (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] :
         (empty($Part->filename) ? @$Part->content_location : $Part->filename));
+        
+        $Part->original_filename = preg_replace('/[^A-Z^a-z^0-9^\-^_^\.]*/','',$Part->original_filename);
+                
         if(!empty($Part->body)){
             $Part->data =& $Part->body;
         }
@@ -482,8 +489,7 @@ class AkMail extends Mail
     {
         $this->_parts_order = array_map('strtolower', empty($order) ? $this->implicit_parts_order : $order);
         usort($parts, array($this,'_contentTypeComparison'));
-        rsort($parts);
-        return $parts;
+        return array_reverse(&$parts);
     }
 
     function _contentTypeComparison($a, $b)
@@ -674,6 +680,32 @@ class AkMail extends Mail
         return array(trim($content_type), $attributes);
     }
 
+
+    function bodyToString($Mail = null)
+    {
+        $Mail = empty($Mail) ? $this : $Mail;
+        $result = '';
+        foreach ((array)$Mail as $field => $value){
+            if(empty($Mail->_isPart) && $field=='body' && !empty($value)){
+                $result .= $value."\n";
+            }elseif(empty($Mail->data) && $field=='body' && !empty($value)){
+                $result .= $value."\n";
+            }elseif(!empty($Mail->data) && $field=='original_filename' && !empty($value)){
+                $result .= $value;
+            }
+            if($field == 'parts' && !empty($value)){
+                foreach ($value as $part){
+                    if(!empty($part->data) && !empty($part->original_filename)){
+                        $result .= "Attachment: ";
+                        $result .= $this->bodyToString($part)."\n";
+                    }else{
+                        $result .= $this->bodyToString($part)."\n";
+                    }
+                }
+            }
+        }
+        return $result;
+    }
 
 
 }

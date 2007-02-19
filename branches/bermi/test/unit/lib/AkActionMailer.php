@@ -133,15 +133,15 @@ class Tests_for_Mailers extends  AkUnitTest
     {
         $Mail = AkMail::parse(file_get_contents(AK_TEST_DIR.'/fixtures/data/raw_email_with_partially_quoted_subject'));
         $this->assertEqual("Re: Test: \"\346\274\242\345\255\227\" mid \"\346\274\242\345\255\227\" tail", $Mail->subject);
-    } 
-    
+    }
+
     /**/
 }
 
 
 class Tests_for_AkActionMailer extends  AkUnitTest
 {
-        
+
     function encode($text, $charset = 'utf-8')
     {
         return AkActionMailerQuoting::quotedPrintable($text, $charset);
@@ -176,7 +176,6 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->assertEqual(2, count($Created->parts[0]->parts));
         $this->assertEqual( "multipart/mixed", $Created->content_type);
         $this->assertEqual( "multipart/alternative", $Created->parts[0]->content_type );
-        //echo "<pre>".print_r($Created,true)."</pre>";
         $this->assertEqual( "bar", $Created->parts[0]->header['Foo'] );
         $this->assertEqual( "text/plain", $Created->parts[0]->parts[0]->content_type );
         $this->assertEqual( "text/html", $Created->parts[0]->parts[1]->content_type );
@@ -553,31 +552,31 @@ EOF;
     {
         $TestMailer =& new TestMailer();
         $this->assertTrue($Mail = $TestMailer->create('explicitly_multipart_example', $this->recipient));
-        
+
         $this->assertEqual(3, Ak::size($Mail->parts));
         $this->assertTrue(empty($Mail->content_type));
         $this->assertEqual("multipart/alternative", $Mail->getContentType());
-        
+
         $this->assertEqual("text/html", $Mail->parts[1]->content_type);
         $this->assertEqual("iso-8859-1", $Mail->parts[1]->content_type_attributes['charset']);
         $this->assertEqual("inline", $Mail->parts[1]->content_disposition);
-        
+
         $this->assertEqual("image/jpeg", $Mail->parts[2]->content_type);
         $this->assertEqual("attachment", $Mail->parts[2]->content_disposition);
         $this->assertEqual("foo.jpg", $Mail->parts[2]->content_disposition_attributes['filename']);
         $this->assertEqual("foo.jpg", $Mail->parts[2]->content_type_attributes['name']);
         $this->assertTrue(empty($Mail->parts[2]->content_type_attributes['charset']));
-        
+
     }
 
     function test_explicitly_multipart_with_invalid_content_type()
     {
         $TestMailer =& new TestMailer();
         $this->assertTrue($Mail = $TestMailer->create('explicitly_multipart_example', $this->recipient, 'text/xml'));
-        
+
         $this->assertEqual(3, Ak::size($Mail->parts));
         $this->assertEqual("multipart/alternative", $Mail->getContentType());
-        
+
     }
 
 
@@ -595,16 +594,110 @@ EOF;
 
         $this->assertEqual("text/plain", $Mail->parts[1]->content_type);
         $this->assertEqual('UTF-8', $Mail->parts[1]->content_type_attributes['charset']);
-        
+
         $this->assertEqual("text/html", $Mail->parts[2]->content_type);
         $this->assertEqual('UTF-8', $Mail->parts[1]->content_type_attributes['charset']);
+
     }
 
 
+    function test_implicitly_multipart_messages_with_custom_order()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('implicitly_multipart_example', $this->recipient, null, array("text/yaml", "text/plain")));
 
+        $this->assertEqual(3, Ak::size($Mail->parts));
+        $this->assertEqual("text/html", $Mail->parts[0]->content_type);
+        $this->assertEqual("text/plain", $Mail->parts[1]->content_type);
+        $this->assertEqual("text/yaml", $Mail->parts[2]->content_type);
+    }
+
+    function test_implicitly_multipart_messages_with_charset()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('implicitly_multipart_example', $this->recipient, 'iso-8859-1'));
+        $this->assertEqual("multipart/alternative", $Mail->content_type);
+
+        $this->assertEqual('iso-8859-1', $Mail->parts[0]->content_type_attributes['charset']);
+        $this->assertEqual('iso-8859-1', $Mail->parts[1]->content_type_attributes['charset']);
+        $this->assertEqual('iso-8859-1', $Mail->parts[2]->content_type_attributes['charset']);
+    }
+
+
+    function test_html_mail()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('html_mail', $this->recipient));
+        $this->assertEqual("text/html", $Mail->content_type);
+    }
+
+    function test_html_mail_with_underscores()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('html_mail_with_underscores', $this->recipient));
+        $this->assertEqual('<a href="http://google.com" target="_blank">_Google</a>', $Mail->body);
+    }
+
+    function test_various_newlines()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('various_newlines', $this->recipient));
+        $this->assertEqual("line #1\nline #2\nline #3\nline #4\n\n".
+        "line #5\n\nline#6\n\nline #7", $Mail->body);
+    }
+
+    function test_various_newlines_multipart()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('various_newlines_multipart', $this->recipient));
+        $this->assertEqual("line #1\nline #2\nline #3\nline #4\n\n", $Mail->parts[0]->body);
+        $this->assertEqual("<p>line #1</p>\n<p>line #2</p>\n<p>line #3</p>\n<p>line #4</p>\n\n", $Mail->parts[1]->body);
+    }
+
+    function test_headers_removed_on_smtp_delivery()
+    {
+        $TestMailer =& new TestMailer();
+        $this->assertTrue($Mail = $TestMailer->create('various_newlines_multipart', $this->recipient));
+        $this->assertEqual("line #1\nline #2\nline #3\nline #4\n\n", $Mail->parts[0]->body);
+        $this->assertEqual("<p>line #1</p>\n<p>line #2</p>\n<p>line #3</p>\n<p>line #4</p>\n\n", $Mail->parts[1]->body);
+    }
+
+
+    function test_recursive_multipart_processing()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email7"));
+        $this->assertEqual("This is the first part.\n\nAttachment: test.rb\nAttachment: test.pdf\n\n\nAttachment: smime.p7s\n", $Mail->bodyToString());
+    }
+
+
+    function test_decode_encoded_attachment_filename()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email8"));
+        $Attachment = Ak::last($Mail->attachments);
+        $this->assertEqual("01QuienTeDijat.Pitbull.mp3", $Attachment->original_filename);
+    }
+
+
+    function test_wrong_mail_header()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email9"));
+        $this->assertTrue(empty($Mail->quite));
+    }
+
+
+    function test_decode_message_with_unquoted_atchar_in_header()
+    {
+        $TestMailer =& new TestMailer();
+        $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/raw_email11"));
+        $this->assertTrue(!empty($Mail->from));
+    }
 
 
 }
+
 Ak::test('Tests_for_Mailers');
 Ak::test('Tests_for_AkActionMailer');
 

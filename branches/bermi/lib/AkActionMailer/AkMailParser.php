@@ -15,6 +15,7 @@ class AkMailParser
     var $body;
     var $parts;
 
+
     function AkMailParser($options = array())
     {
         $this->options = $options;
@@ -45,7 +46,7 @@ class AkMailParser
         $Parser->_expandHeadersOnMailObject($Mail);
         $Mail->body = $Parser->body;
         $Mail->parts = $Parser->parts;
-        
+
         return $Mail;
     }
 
@@ -69,15 +70,27 @@ class AkMailParser
 
     function getParsedMultipartBody($body)
     {
+        static $recursion_protection;
+
         $boundary = trim($this->_findHeaderAttributeValue('content-type','boundary'));
         $this->content_type = $this->options['content_type'] = (trim(strtolower($this->_findHeaderValue('content-type'))) == 'multipart/digest' ? 'message/rfc822' : 'text/plain');
 
+        if(empty($boundary)){
+            trigger_error(Ak::t('Could not fetch multipart boundary'), E_USER_WARNING);
+            return false;
+        }
 
         $this->parts = array();
         $raw_parts = array_diff(array_map('trim',(array)preg_split('/([\-]{0,2}'.preg_quote($boundary).'[\-]{0,2})+/', $body)),array(''));
         foreach ($raw_parts as $raw_part){
             $Parser = new AkMailParser($this->options);
-            $Part = $Parser->parse($raw_part);
+            $recursion_protection[$body] = @$recursion_protection[$body]+1;
+            if($recursion_protection[$body] > 50){
+                trigger_error(Ak::t('Maximum multipart decoding recursion reached.'), E_USER_WARNING);
+                return false;
+            }else{
+                $Part = $Parser->parse($raw_part);
+            }
             $this->parts[] = $Part;
         }
     }
@@ -146,26 +159,40 @@ class AkMailParser
     function _parseHeaderLine($header_line)
     {
         $header = array();
-        if(preg_match("/^([A-Za-z\-]+)\:? *(.*)$/",$header_line,$match)){
+        if(preg_match("/^([A-Za-z\-]+)\: *(.*)$/",$header_line,$match)){
             $header['name'] = $match[1];
             $header['value'] = $match[2];
+            $this->_decodeHeader_($header);
+            $this->_headerCanHaveAttributes($header) ? $this->_extractAttributesForHeader_($header) : null;
+            return $header;
         }
-        $this->_decodeHeader_($header);
-        $this->_extractAttributesForHeader_($header);
-        return $header;
+
+    }
+
+    function _headerCanHaveAttributes($header)
+    {
+        return !in_array(strtolower($header['name']), array('subject','to','from','cc','bcc'));
     }
 
     function _extractAttributesForHeader_(&$header)
     {
         $attributes = array();
-        if(preg_match_all("/(([A-Za-z\-]+)=([^;]*);?)+/", $header['value'], $matches)){
+        if(preg_match_all("/([A-Z\-_ ]+)".
+        "(\*[0-9 ]*)?". // RFC 2231
+        "=([^;]*);?/i", $header['value'], $matches)){
             $header['value'] = str_replace($matches[0],'', $header['value']);
             foreach ($matches[0] as $k=>$match){
-                $attributes[$matches[2][$k]] = trim($matches[3][$k],';"');
+                $attribute_name = trim($matches[1][$k]);
+                $value = trim($matches[3][$k],'; "\'');
+                if(!empty($matches[2][$k])){ // RFC 2231
+                    $value = (empty($attributes[$attribute_name]) ? '' : $attributes[$attribute_name])
+                    .$this->_decodeHeaderAttribute($value, $matches[2][$k]);
+                }
+                $attributes[$attribute_name] = $value;
             }
         }
 
-        $header['value'] = trim($header['value']," ;");
+        $header['value'] = trim($header['value'],'; ');
 
         if(strstr($header['value'],';') && strtolower($header['name']) != 'date' &&
         preg_match("/([; ])*(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun),? *)?(\d\d?)".
@@ -176,14 +203,11 @@ class AkMailParser
             $attributes['Date'] = trim(str_replace('  ',' ',$match[0]),"; ");
         }
 
-        if(!empty($attributes)){
-            $header['attributes'] = $attributes;
-        }
+        $header['attributes'] = empty($attributes) ? false : $attributes;
     }
 
     function _decodeHeader_(&$header)
     {
-
         if(!empty($header['value'])){
             $encoded_header =  preg_replace('/\?\=([^=^\n^\r]+)?\=\?/', "?=$1\n=?",$header['value']);
             $header_value = $header['value'];
@@ -205,6 +229,18 @@ class AkMailParser
                 $header['value'] = $header_value;
             }
         }
+    }
+
+    /**
+     * RFC 2231 Implementation
+     */
+    function _decodeHeaderAttribute($header_attribute, $charset = '')
+    {
+        if(preg_match("/^([A-Z0-9\-]+)(\'[A-Z\-]{2,5}\')?/i",$header_attribute,$match)){
+            $charset = $match[1];
+            $header_attribute = urldecode(str_replace(array('_','='),array('%20','%'), substr($header_attribute,strlen($match[0]))));
+        }
+        return Ak::recode($header_attribute, 'UTF-8', $charset);
     }
 
     function _getRawHeaderAndBody($raw_part)
@@ -243,7 +279,7 @@ class AkMailParser
             }
         }
     }
-    
+
 }
 
 ?>

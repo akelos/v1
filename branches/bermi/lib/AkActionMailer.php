@@ -502,12 +502,16 @@ class AkActionMailer extends AkBaseModel
      */
     function &create($method_name, $parameters, $content_type = '')
     {
+        $args = func_get_args();
+        $method_name = array_shift($args);
         $this->_initializeDefaults($method_name);
         if(method_exists($this, $method_name)){
-            $this->$method_name($parameters, $content_type);
+            call_user_func_array(array(&$this, $method_name), $args);
         }else{
             trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
         }
+        $parameters = @array_shift($args);
+        $content_type = @array_shift($args);
 
         $Mail =& $this->_MailDriver;
 

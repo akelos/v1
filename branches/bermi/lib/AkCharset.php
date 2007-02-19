@@ -577,7 +577,7 @@ class AkCharset
         'latin10'=>'iso885916','latin2'=>'iso88592','latin3'=>'iso88593','latin4'=>'iso88594','latin5'=>'iso88599',
         'latin7'=>'iso885913','latin8'=>'iso885914','mscyrl'=>'cp1251','mshebr'=>'cp1255','mskanji'=>'shiftjis',
         'sjis'=>'shiftjis','tcabig5'=>'big5','tis6200'=>'tis620','tis62025291'=>'tis620','tis62025330'=>'tis620',
-        'us'=>'ascii','usascii'=>'ascii','iso2022jp'=>'jis0228');
+        'us'=>'ascii','usascii'=>'ascii');
         $alias = array(
         'armscii8'=>'armscii_8','ascii'=>'ascii','big5hkscs'=>'big5_hkscs','utf8'=>'utf8',
         'big5'=>'big5','cp1046'=>'cp1046','cp1124'=>'cp1124','cp1125'=>'cp1125','cp1129'=>'cp1129',
@@ -601,7 +601,7 @@ class AkCharset
         'macromania'=>'macromania','macthai'=>'macthai','macturkish'=>'macturkish','macukraine'=>'macukraine',
         'mulelao1'=>'mulelao_1','nextstep'=>'nextstep','riscoslatin1'=>'riscos_latin1','shiftjis'=>'shift_jis',
         'shiftjisx0213'=>'shift_jisx0213','tcvn'=>'tcvn','tds565'=>'tds565','tis620'=>'tis_620','viscii'=>'viscii'
-        ,'iso885911'=>'iso_8859_11', 'jis0228' => 'jis_0228'
+        ,'iso885911'=>'iso_8859_11', 'jis0228' => 'jis_0228', 'jis0212' => 'jis_0212'
         );
         $procesed_charset = isset($alias_xref[$procesed_charset]) ? $alias_xref[$procesed_charset] : $procesed_charset;
         $memory[$charset] = isset($alias[$procesed_charset]) ? $alias[$procesed_charset] : FALSE;//$this->defaultCharset;

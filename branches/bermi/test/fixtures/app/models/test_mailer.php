@@ -219,8 +219,8 @@ class TestMailer extends AkActionMailer
         'from' => "test@example.com",
         'content_type' => "multipart/alternative",
         'parts' => array(
-        array('content_type' => 'text/plain', 'body' => 'line #1\nline #2\rline #3\r\nline #4\r\r'),
-        array('content_type' => 'text/html', 'body' => '<p>line #1</p>\n<p>line #2</p>\r<p>line #3</p>\r\n<p>line #4</p>\r\r'))
+        array('content_type' => 'text/plain', 'body' => "line #1\nline #2\rline #3\r\nline #4\r\r"),
+        array('content_type' => 'text/html', 'body' => "<p>line #1</p>\n<p>line #2</p>\r<p>line #3</p>\r\n<p>line #4</p>\r\r"))
         ));
     }
 
