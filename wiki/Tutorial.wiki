@@ -18,13 +18,13 @@ This setting can be found on most Linux boxes and hosting providers. Akelos work
 
 == Download and installation ==
 
-We highly recommend you to get the trunk version of Akelos until we hit version 1.0. You need to have installed [http://subversion.tigris.org/ subversion] in order to do this and run the this from your command line:
+We highly recommend you to get the trunk version of Akelos until we hit version 1.0. You need to have installed [http://subversion.tigris.org/ subversion]. You can checkout a working copy of the Akelos source code with the command:
 
 {{{
 svn co http://akelosframework.googlecode.com/svn/trunk/ akelos
 }}}
 
-If you cant or don’t want to checkout the code from subversion, you can get the [http://www.akelos.org/akelos_framework-dev_preview.tar.gz latest stable version] generated automatically by the Continuous Integration system, and untar it by typing:
+If you can’t or don’t want to checkout the code from subversion, you can get the [http://www.akelos.org/akelos_framework-dev_preview.tar.gz latest stable version] generated automatically by the Continuous Integration system, and untar it by typing:
 
 {{{
 tar zxvf akelos_framework-dev_preview.tar.gz;mv akelos_framework-dev_preview akelos
@@ -50,7 +50,7 @@ you’re on the right track and can continue creating an Akelos application; oth
 which php
 }}}
 
-And change the {{{#!/usr/bin/env php}}} at the beginning of these files {{{script/console}}}, {{{script/generate}}}, {{{script/migrate}}}, {{{script/setup}}} and {{{script/test}}} to you php binary path.
+And change the `#!/usr/bin/env php` at the beginning of these files `script/console`, `script/generate`, `script/migrate`, `script/setup` and `script/test` to you php binary path.
 
 *Note for Windows users:* You will need to call the scripts from your application directory using the full path to your php.exe file like:
 
@@ -69,7 +69,7 @@ Now you can follow two paths:
 
 As you might have guessed we go with the first option and will create a linked Akelos application which will only expose the public folder to the world. Changing the Framework paths is really simple in Akelos, all you have to do is define in your configuration file where each component is located, but we will leave this for a future tutorial about designing an application for distributing it.
 
-Assuming you’ve downloaded the framework to {{{HOME_DIR/akelos}}} and that you are inside the {{{akelos}}} directory you will check available options for setting up your new application by running
+Assuming you’ve downloaded the framework to `HOME_DIR/akelos` and that you are inside the `akelos` directory you will check available options for setting up your new application by running
 
 ./script/setup -h
 
@@ -88,7 +88,7 @@ Usage: setup [-sqphf --dependencies] <-d>
  -s --skip                 Skip files that already exist. (false)
 }}}
 
-So running this command: (replace {{{/www/htdocs}}} with your web server public path. On some shared server it’s {{{/home/USERNAME/public_html}}})
+So running this command: (replace `/www/htdocs` with your web server public path. On some shared server it’s `/home/USERNAME/public_html`)
 
 {{{
 ./script/setup -d HOMEDIR/booklink -p /www/htdocs/booklink
@@ -104,7 +104,7 @@ booklink/
      script/ << Utils for code generation and running tests
 }}}
 
-*Note for Windows users:* A soft link to booklink/public is created only on *NIX systems, so you’ll need to tell your web server where to find the public path for the *booklink* application on your {{{httpd.conf}}} file by adding something like this:
+*Note for Windows users:* A soft link to booklink/public is created only on *NIX systems, so you’ll need to tell your web server where to find the public path for the *booklink* application on your `httpd.conf` file by adding something like this:
 
 {{{
 Alias /booklink "/path/to_your/booklink/public"
@@ -148,15 +148,15 @@ Follow the steps in the wizard to set up your database, locales and file permiss
 
 ==== Manual configuration editing ====
 
-Save the files {{{config/DEFAULT-config.php}}} and {{{config/DEFAULT-routes.php}}} as {{{config/config.php}}} and {{{config/routes.php}}} and edit them following them as needed.
+Save the files `config/DEFAULT-config.php` and `config/DEFAULT-routes.php` as `config/config.php` and `config/routes.php` and edit them following them as needed.
 
-You might also need to set the base rewrite path manually is you want to be able to use nice URLs by editing the file {{{public/.htaccess}}} and setting RewriteBase like:
+You might also need to set the base rewrite path manually if you want to be able to use nice URLs by editing the file `public/.htaccess` and setting RewriteBase like:
 
 {{{
 RewriteBase /booklink
 }}}
 
-After your application has been installed correctly you’ll see a welcome message at http://localhost/booklink. Now you can safely remove the framework setup files (it won’t be available is you have a {{{/configconfig.php}}} file)
+After your application has been installed correctly you’ll see a welcome message at http://localhost/booklink. Now you can safely remove the framework setup files (they won’t be accessible if a `/config/config.php` file exists)
 
 == The booklink database structure ==
 
@@ -166,7 +166,7 @@ When working with other developers database changes can be difficult to distribu
 
 So you will create the database using an installer in order to distribute the changes you make to the booklink database scheme from time to time. Using _installers_ will also allow you to define your database tables and columns independently from the database vendor.
 
-Now you will create a file named {{{app/installers/booklink_installer.php}}} with the following Installer code
+Now you will create a file named `app/installers/booklink_installer.php` with the following Installer code
 
 {{{
  <?php
@@ -203,7 +203,6 @@ Now we need to execute the installer with the command
 and that will do the trick. If we are using MySQL the database will look something like this:
 
 *BOOKS TABLE*
-
 {{{
 +--------------+--------------+------+-----+----------------+
  | Field        | Type         | Null | Key | Extra          |
@@ -217,7 +216,6 @@ and that will do the trick. If we are using MySQL the database will look somethi
 }}}
 
 *AUTHORS TABLE*
-
 {{{
 +-------+--------------+------+-----+----------------+
  | Field | Type         | Null | Key | Extra          |
@@ -247,8 +245,8 @@ These are the conventions that empower the Akelos convention over configuration 
 ==== Controllers ====
 
   * *Path:* _/app/controllers/_
-  * *Class Name:* singular or pural, camel cased, ends in {{{Controller}}} _(AccountController, PersonController)_
-  * *File Name:* singular or pural, underscored, ends in {{{_controller}}} _(account_controller.php, person_controller.php)_
+  * *Class Name:* singular or pural, camel cased, ends in `Controller` _(AccountController, PersonController)_
+  * *File Name:* singular or pural, underscored, ends in `_controller` _(account_controller.php, person_controller.php)_
 
 ==== Views ====
 
@@ -273,27 +271,27 @@ and
 ./script/generate scaffold Author
 }}}
 
-This will generate a brunch of files and folder with code that really works!, don’t trust me? try it yourself. Point your browser to http://localhost/booklink/author and http://localhost/booklink/books to start adding authors and books. Create some records and come back for an explanation of what is going under the hood.
+This will generate a brunch of files and folder with code that really works!. Don’t trust me? Try it yourself. Point your browser to http://localhost/booklink/author and http://localhost/booklink/books to start adding authors and books. Create some records and come back for an explanation of what is going under the hood.
 
 == The Akelos Workflow ==
 
-This is a small description of the workflow for a call to the following URL {{{http://localhost/booklink/book/show/2}}}
+This is a small description of the workflow for a call to the following URL `http://localhost/booklink/book/show/2`
 
-  1. Akelos will break up your request into three parameters according to your {{{/config/routes.php}}} file (more on this later)
+  1. Akelos will break up your request into three parameters according to your `/config/routes.php` file (more on this later)
     * controller: _book_
     * action: _show_
     * id: 2
-  1. Once Akelos knows about this request it will look for the file {{{/app/controllers/book_controller.php}}} and if found it will instantiate the class {{{BookController}}}
-  1. The controller will look for a model that matches the parameter {{{controller}}} from the request. In this case it will look for {{{/app/models/book.php}}}. If found, it will create an instance of the model on the controller {{{$this->Book}}} attribute. If an {{{id}}} is on the request, it will search into the database for the Book with the id 2 and that will remain on {{{$this->Book}}}
-  1. Now it will call the action {{{show}}} from the {{{BookController}}} class if it’s available.
-  1. Once the show action has been executed, the controller will look for the view file at {{{/app/views/book/show.tpl}}} and will render the results into the {{{$content_for_layout}}} variable.
-  1. Now Akelos will look for a layout named like the controller at {{{/app/views/layouts/book.tpl}}}. If found it will render the layout inserting {{{$content_for_layout}}} content and sending the output to the browser.
+  1. Once Akelos knows about this request it will look for the file `/app/controllers/book_controller.php` and if found it will instantiate the class `BookController`
+  1. The controller will look for a model that matches the parameter `controller` from the request. In this case it will look for `/app/models/book.php`. If found, it will create an instance of the model on the controller `$this->Book` attribute. If an `id` is on the request, it will search into the database for the Book with the id 2 and that will remain on `$this->Book`
+  1. Now it will call the action `show` from the `BookController` class if it’s available.
+  1. Once the show action has been executed, the controller will look for the view file at `/app/views/book/show.tpl` and will render the results into the `$content_for_layout` variable.
+  1. Now Akelos will look for a layout named like the controller at `/app/views/layouts/book.tpl`. If found it will render the layout inserting `$content_for_layout` content and sending the output to the browser.
 
 This might help you understanding the way Akelos handles your requests, so we are ready to modify the base application.
 
 == Relating Books and Authors ==
 
-Now you are going to link *boolink* authors and books (complex associations in upcoming tutorials). In order to achieve this you will use the {{{author_id}}} column you added to your database.
+Now you are going to link authors and books (complex associations in upcoming tutorials). In order to achieve this you will use the `author_id` column you added to your database.
 
 So you will need to tell your models how they relate to each other like
 
@@ -319,7 +317,7 @@ _/app/models/author.php_
  ?>
 }}}
 
-Now that you made the models aware of each other you will need to modify the book controller so it loads the {{{author}}} and the {{{book}}} model instances
+Now that you made the models aware of each other you will need to modify the book controller so it loads the `author` and the `book` model instances
 
 _/app/models/author.php_
 
@@ -331,7 +329,7 @@ _/app/models/author.php_
      // ... more BookController code
 }}}
 
-Next step is to show available authors when creating or editing a book. This can be achieved using the {{{$form_options_helper}}} by inserting the following code right after {{{<?=$active_record_helper->error_messages_for('book');?>}}} on the _/app/views/book/_form.tpl_ file
+Next step is to show available authors when creating or editing a book. This can be achieved using the `$form_options_helper` by inserting the following code right after `<?=$active_record_helper->error_messages_for('book');?>` on the _/app/views/book/_form.tpl_ file
 
 {{{
 <p>
@@ -342,17 +340,17 @@ Next step is to show available authors when creating or editing a book. This can
 
 If you have not added authors yet, go and created some right now and then visit http://locahost/boolink/book/add to check out the brand new authors select list. Go ahead and create a new book selecting an author from the list.
 
-Seems like the author has been saved but it its not included on the {{{app/views/book/show.tpl}}} view. You’ll add it this code right after {{{<? $content_columns = array_keys($Book->getContentColumns()); ?>}}}
+Seems like the author has been saved but it its not included on the `app/views/book/show.tpl` view. You’ll add it this code right after `<? $content_columns = array_keys($Book->getContentColumns()); ?>`
 
 {{{
 <label>_{Author}:</label> <span class="static">{book.author.name?}</span><br />
 }}}
 
-You must be screaming now about the rare {{{_{Author}}}} and {{{{book.author.name?}}}} syntax. Thats actually [http://www.bermi.org/projects/sintags Sintags] a small set of rules that helps on writing cleaner views and that will be compiled to standard PHP.
+You must be screaming now about the rare `_{Author}` and `{book.author.name?}` syntax. Thats actually [http://www.bermi.org/projects/sintags Sintags] a small set of rules that helps on writing cleaner views and that will be compiled to standard PHP.
 
 == Colophon ==
 
-This is all for know, I’ll be improving this tutorial from time to time to add some missing features to this and other documents like:
+This is all for now, I’ll be improving this tutorial from time to time to add some missing features to this and other documents like:
 
   * validations
   * routes
@@ -368,5 +366,3 @@ This is all for know, I’ll be improving this tutorial from time to time to add
   * and many more…
 
 My apologies for any typo or grammatical error you might find. English is not my mother tongue and I would really like you to help me fixing errors in this document.
-
-
