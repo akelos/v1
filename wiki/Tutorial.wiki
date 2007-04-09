@@ -271,7 +271,7 @@ and
 ./script/generate scaffold Author
 }}}
 
-This will generate a brunch of files and folder with code that really works!. Don’t trust me? Try it yourself. Point your browser to http://localhost/booklink/author and http://localhost/booklink/books to start adding authors and books. Create some records and come back for an explanation of what is going under the hood.
+This will generate a bunch of files and folder with code that really works!. Don’t trust me? Try it yourself. Point your browser to http://localhost/booklink/author and http://localhost/booklink/books to start adding authors and books. Create some records and come back for an explanation of what is going under the hood.
 
 == The Akelos Workflow ==
 
@@ -319,14 +319,26 @@ _/app/models/author.php_
 
 Now that you made the models aware of each other you will need to modify the book controller so it loads the `author` and the `book` model instances
 
-_/app/models/author.php_
+_/app/controllers/book_controller.php_
 
 {{{
 <?php
- class BookController extends ApplicationController
- {
-     var $models = 'book, author'; // <- make this models available
-     // ... more BookController code
+
+class BookController extends ApplicationController
+{
+    var $models = 'book, author'; // <- make this models available
+
+    // ... more BookController code
+
+    function show()
+    {
+        // Replace "$this->book = $this->Book->find(@$this->params['id']);"
+        // with this in order to find related authors.
+        $this->book = $this->Book->find(@$this->params['id'], array('include' => 'author'));
+    }
+
+    // ... more BookController code
+}
 }}}
 
 Next step is to show available authors when creating or editing a book. This can be achieved using the `$form_options_helper` by inserting the following code right after `<?=$active_record_helper->error_messages_for('book');?>` on the _/app/views/book/_form.tpl_ file
