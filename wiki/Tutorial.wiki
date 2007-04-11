@@ -88,13 +88,13 @@ Usage: setup [-sqphf --dependencies] <-d>
  -s --skip                 Skip files that already exist. (false)
 }}}
 
-So running this command: (replace `/www/htdocs` with your web server public path. On some shared server it’s `/home/USERNAME/public_html`)
+So running this command (replacing `/www/htdocs` with your web server public path. On some shared server it’s `/home/USERNAME/public_html`)
 
 {{{
 ./script/setup -d HOMEDIR/booklink -p /www/htdocs/booklink
 }}}
 
-This will create the following structure for the *booklink* application:
+will create the following structure for the *booklink* application:
 
 {{{
 booklink/
@@ -104,7 +104,7 @@ booklink/
      script/ << Utils for code generation and running tests
 }}}
 
-*Note for Windows users:* A soft link to booklink/public is created only on *NIX systems, so you’ll need to tell your web server where to find the public path for the *booklink* application on your `httpd.conf` file by adding something like this:
+*Note for Windows users:* A soft link to booklink/public is created only on UNIX systems, so you’ll need to tell your web server where to find the public path for the *booklink* application on your `httpd.conf` file by adding something like this:
 
 {{{
 Alias /booklink "/path/to_your/booklink/public"

@@ -1,4 +1,6 @@
 #labels Featured,Tutorial
+Traducción realizada por: Matias Quaglia
+
 = Creando una aplicación simple utilizando el Akelos Framework =
 
 == Introducción ==
@@ -102,7 +104,7 @@ booklink/
      script/ << Utilidades para generación de código y ejecución de pruebas unitarias (tests)
 }}}
 
-*Nota para los usuarios de Windows:* Un enlace simbólico al directorio booklink/public se crea solamente en sistemas *NIX, así que necesitarás indicarle a tu servidor web cómo encontrar la ruta pública para la aplicación *booklink* en tu archivo `httpd.conf` agregando algo así como:
+*Nota para los usuarios de Windows:* Un enlace simbólico al directorio booklink/public se crea solamente en sistemas UNIX, así que necesitarás indicarle a tu servidor web cómo encontrar la ruta pública para la aplicación *booklink* en tu archivo `httpd.conf` agregando algo así como:
 
 {{{
 Alias /booklink "/path/to_your/booklink/public"

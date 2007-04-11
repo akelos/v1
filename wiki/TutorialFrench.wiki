@@ -1,4 +1,6 @@
 #labels Featured,Tutorial
+Translated by: Naixn
+
 = Comment créer une application simple grâce au framework Akelos =
 
 == Introduction ==
@@ -12,7 +14,7 @@ Ce tutoriel va vous permettre de créer une application à l’aide du framework
   * Un accès shell à votre serveur (‘cmd’ sur Windows)
   * PHP4 or PHP5
 
-Cette configuration est plutôt commune et se retrouve sur la plupart des serveurs web ou machines *NIX. Bien sûr, Akelos fonctionne sur plusieurs types de configuration, mais pour ce tutoriel, nous nous concentrerons sur celle-ci.
+Cette configuration est plutôt commune et se retrouve sur la plupart des serveurs web ou machines UNIX. Bien sûr, Akelos fonctionne sur plusieurs types de configuration, mais pour ce tutoriel, nous nous concentrerons sur celle-ci.
 
 == Téléchargement et installation ==
 
@@ -146,7 +148,7 @@ N’oubliez pas de redémarrer le serveur Apache.
 
 === Création de la base de données (MySQL) ===
 
-*/!\ Si vous comptez utiliser SQLite, sautez cette étape /!\*
+* Si vous comptez utiliser SQLite, sautez cette étape *
 
 La prochaine étape consiste à créer la base de données relative à votre application.
 
@@ -256,7 +258,9 @@ Et pouf ! Les tables sont installées automagiquement ! Avec MySQL, vous devriez
 
 == Modèles, Vues, et Controlleurs ==
 
-Pour faire fonctionner vos applications, Akelos utilise le [http://fr.wikipedia.org/wiki/Motif_de_conception motif de conception appelé MVC].
+Pour faire fonctionner vos applications, Akelos utilise le [http://fr.wikipedia.org/wiki/Motif_de_conception motif de conception appelé]. [http://fr.wikipedia.org/wiki/Mod%C3%A8le-Vue-Contr%C3%B4leur Modèle-Vue-Contrôleur (MVC)]
+
+http://akelosframework.googlecode.com/svn/trunk/docs/images/akelos_mvc.png
 
 === Les conventions de nommage dans Akelos ===
 
