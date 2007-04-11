@@ -1,4 +1,5 @@
 #summary Contributing
+#labels Featured
 
 = Contributing =
 
@@ -17,7 +18,6 @@ Tickets are fine, but patches are great. If you want to change something in the 
    * Keep an eye on your patch in case there are any reservations raised before it can be applied.
 
 Please make sure you read the [http://akelos.org/Akelos%20Framework%20Developer%20Coding%20Style%20Guide.pdf Akelos Framework coding guidelines] before writing *large components* for the Framework 
-
 
 
 
