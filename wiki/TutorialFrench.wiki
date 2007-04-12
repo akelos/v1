@@ -1,5 +1,5 @@
 #labels Featured,Tutorial
-Translated by: Naixn
+Traduit par: Naixn
 
 = Comment créer une application simple grâce au framework Akelos =
 
