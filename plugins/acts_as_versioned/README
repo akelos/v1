@@ -1,0 +1,76 @@
+Acts as versioned behaviour plugin for Akelos Active Records
+===================================
+
+This plugin adds versioning capabilities to you Active Record Models.
+
+
+Installation
+--------------------------------
+
+    svn co http://svn.akelos.org/plugins/acts_as_versioned app/vendor/plugins/acts_as_versioned
+
+Enabling versioning in your models
+--------------------------------
+
+Say you have a Chapter model and you want to keep the latest 20 modifications for each chapter.
+
+=== Adding the acts as behaviour to your Chapter model
+
+./app/models/chapter.php
+
+    <?php
+
+    class Chapter extends ActiveRecord
+    {
+        var $acts_as = array('versioned' => array('limit'=>10));
+    }
+
+    ?>
+
+=== Modifying your chapters table to add a version number and create a chapter_versions table
+
+./app/installers/chapter_installer.php
+
+    <?php
+
+    Ak::import('Chapter');
+    Ak::loadPlugins();
+
+    class ChapterInstaller extends AkInstaller
+    {
+        function up_1()
+        {
+            //.....
+        }
+
+        function up_2()
+        {
+            $Chapter =& new Chapter();
+            $Chapter->versioned->createVersionedTable();
+        }
+
+        function down_1()
+        {
+            //.....
+        }
+
+        function down_2()
+        {
+            $Chapter =& new Chapter();
+            $Chapter->versioned->dropVersionedTable();
+        }
+    }
+
+    ?>
+
+=== Using your brand new versioning system
+
+ * $Chapter->versioned  // behaviour handler
+ * $Chapter->versioned->load() // Loads versions, pass true to force a db reload
+ * $Chapter->versioned->revertToVersion(3); // Rolling back a version
+ * $Chapter->versioned->find(); // Same as find() but scoped to older versions
+ * $Chapter->versions // Guess what? An array with your versions
+ * $Chapter->versions[2]->getNext(); // Next versioned item if exists
+ * $Chapter->versions[2]->getPrevious(); // Previous versioned item if exists 
+
+
