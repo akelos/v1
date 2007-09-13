@@ -193,6 +193,9 @@ class $class_name extends ActiveRecord
     {
         $columns = $this->getVersionedColumnSettings();
         $migration_columns = array();
+        if(empty($columns[$this->options['version_column']])){
+            $columns[$this->options['version_column']] = array('type'=>'integer');
+        }
         foreach ($columns as $name => $details){
             $migration_columns[] = $name.' '.$details['type'];
         }
