@@ -299,7 +299,7 @@ class $class_name extends ActiveRecord
             $owner_attributes = $this->_ActiveRecordInstance->getAttributes();
             $this->_removeIgnoredAttributes_($owner_attributes);
             foreach ($owner_attributes as $name => $value){
-                if(isset($versioned_attributes[$name]) && $versioned_attributes[$name] == $value){
+                if($versioned_attributes[$name] == $value){
                     continue;
                 }
                 $changed_attributes[$name] = $value;
