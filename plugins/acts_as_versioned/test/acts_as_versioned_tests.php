@@ -186,6 +186,18 @@ class ActsAsVersionedTestCase extends AkUnitTest
         $this->assertEqual($Version3->get('version'), 3);
     }
 
+    function test_should_not_create_new_versions_when_updating_models_without_changes()
+    {
+        $this->assertTrue($Post =& $this->Post->findFirstBy('title', 'Post 3.5'));
+        $Post->versioned->load();
+        $expected_versions_count = count($Post->versions);
+        
+        $this->assertTrue($Post =& $this->Post->findFirstBy('title', 'Post 3.5'));
+        $this->assertTrue($Post->save());
+        $Post->versioned->load();
+        $this->assertEqual(count($Post->versions), $expected_versions_count);
+    }
+    
     function test_should_drop_versioned_table()
     {
         $this->Post->versioned->dropVersionedTable();

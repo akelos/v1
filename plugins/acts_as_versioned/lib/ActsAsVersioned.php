@@ -381,7 +381,7 @@ class $class_name extends ActiveRecord
 
     function afterUpdate(&$Object)
     {
-        if(!empty($Object->versioned->_skipVersioning)){
+        if(!empty($Object->versioned->_skipVersioning) || !$Object->versioned->isDifferentFromLastVersion()){
             return true;
         }
         $this->createNewVersion($Object);
