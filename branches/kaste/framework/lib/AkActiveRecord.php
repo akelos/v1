@@ -944,7 +944,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     * <code> 
     *   $Person->find('all'); // returns an array of objects for all the rows fetched by SELECT * FROM people
     *   $Person->find(); // Same as $Person->find('all');
-    *   $Person->find('all', array('conditions => array("category IN (categories)", 'categories' => join(','$categories)), 'limit' => 50));
+    *   $Person->find('all', array('conditions' => array("category IN (categories)", 'categories' => join(','$categories)), 'limit' => 50));
     *   $Person->find('all', array('offset' => 10, 'limit' => 10));
     *   $Person->find('all', array('include' => array('account', 'friends'));
     * </code>
@@ -955,186 +955,175 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
 
-        $num_args = func_num_args();
-        if($num_args === 2 && func_get_arg(0) == 'set arguments'){
-            $args  = func_get_arg(1);
-            $num_args = count($args);
-        }
-
-        $args = $num_args > 0 ? (!isset($args) ? func_get_args() : $args) : array('all');
-
-        // Handle find('first', 23)
-        if($num_args >= 2 && is_numeric($args[1]) && $args[0] == 'first'){
-            array_shift($args);
-            $args[0] = (integer)$args[0];
-            $num_args--;
-        }
+        $args = func_get_args();
+        if(empty($args)) $args = array('all');
         
-        if($num_args === 1 && is_numeric($args[0]) && $args[0] > 0){
-            $args[0] = (integer)$args[0]; //Cast query by Id
-        }
-
-        $options = $num_args > 0 && (is_array($args[$num_args-1]) && isset($args[0][0]) && !is_numeric($args[0][0])) ? array_pop($args) : array();
-
-        //$options = func_get_arg(func_num_args()-1);
+        $options = $this->_extractOptionsFromArgs($args);
+        $this->_extractConditionsFromArgs($args,$options);
+        
+        //$this->santizeSql(conditions);
         if(!empty($options['conditions']) && is_array($options['conditions'])){
             if (isset($options['conditions'][0]) && strstr($options['conditions'][0], '?') && count($options['conditions']) > 1){
+            //array('conditions' => array("name=?",$name))
                 $pattern = array_shift($options['conditions']);
                 $options['bind'] = array_values($options['conditions']);
                 $options['conditions'] = $pattern;
             }elseif (isset($options['conditions'][0])){
+            //array('conditions' => array("user_name = :user_name", ':user_name' => 'hilario')
                 $pattern = array_shift($options['conditions']);
                 $options['conditions'] = str_replace(array_keys($options['conditions']), array_values($this->getSanitizedConditionsArray($options['conditions'])),$pattern);
             }else{
+            //array('conditions' => array('user_name'=>'Hilario'))
                 $options['conditions'] = join(' AND ',(array)$this->getAttributesQuoted($options['conditions']));
-            }
-        }
-
-        if ($num_args === 2 && !empty($args[0]) && !empty($args[1]) && is_string($args[0]) && ($args[0] == 'all' || $args[0] == 'first') && is_string($args[1])){
-            if (!is_array($args[1]) && $args[1] > 0 && $args[0] == 'first'){
-                $num_args = 1;
-                $args = array($args[1]);
-                $options = array();
-            }else{
-                $options['conditions'] = $args[1];
-                $args = array($args[0]);
-            }
-        }elseif ($num_args === 1 && isset($args[0]) && is_string($args[0]) && $args[0] != 'all' && $args[0] != 'first'){
-            $options = array('conditions'=> $args[0]);
-            $args = array('first');
-        }
-
-        if(!empty($options['conditions']) && is_numeric($options['conditions']) && $options['conditions'] > 0){
-            unset($options['conditions']);
-        }
-
-        if($num_args > 1){
-            if(!empty($args[0]) && is_string($args[0]) && strstr($args[0],'?')){
-                $options = array_merge(array('conditions' => array_shift($args)), $options);
-                $options['bind'] = $args;
-                $args = array('all');
-            }elseif (!empty($args[1]) && is_string($args[1]) && strstr($args[1],'?')){
-                $_tmp_mode = array_shift($args);
-                $options = array_merge(array('conditions' => array_shift($args)),$options);
-                $options['bind'] = $args;
-                $args = array($_tmp_mode);
             }
         }
 
         switch ($args[0]) {
             case 'first':
-
-            $options = array_merge($options, array((!empty($options['include']) && $this->hasAssociations() ?'virtual_limit':'limit')=>1));
-            $result =& $this->find('all', $options);
-
-            if(!empty($result) && is_array($result)){
-                $_result =& $result[0];
-            }else{
-                $_result = false;
-            }
-            return  $_result;
-            break;
+                // HACK: php4 pass by ref
+                $result =& $this->_find_initial($options);
+                return $result;
+                break;
 
             case 'all':
-
-
-            $limit = isset($options['limit']) ? $options['limit'] : null;
-            $offset = isset($options['offset']) ? $options['offset'] : null;
-            if((empty($options['conditions']) && empty($options['order']) && is_null($offset) && $this->_getDatabaseType() == 'postgre' ? 1 : 0)){
-                $options['order'] = $this->getPrimaryKey();
-            }
-            $sql = $this->constructFinderSql($options);
-            if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
-                $sql = array_merge(array($sql),$options['bind']);
-            }
-
-            if((!empty($options['include']) && $this->hasAssociations())){
-                $result =& $this->findWithAssociations($options,  $limit, $offset);
-            }else{
-                $result =& $this->findBySql($sql, $limit, $offset);
-            }
-
-            if(!empty($result) && is_array($result)){
-                $_result =& $result;
-            }else{
-                $_result = false;
-            }
-            return  $_result;
-            break;
+                // HACK: php4 pass by ref
+                $result =& $this->_find_every($options);
+                return $result;
+                break;
 
             default:
-
-            $ids = array_unique(isset($args[0]) ? (is_array($args[0]) ? $args[0] : (array)$args) : array());
-
-            $num_ids = count($ids);
-            $num_args = count($args);
-
-            if(isset($ids[$num_ids-1]) && is_array($ids[$num_ids-1])){
-                $options =  array_merge($options, array_pop($ids));
-                $num_ids--;
-            }
-
-            if($num_args === 1 && !$args[0] > 0){
-                $options['conditions'] = $args[0];
-            }
-
-            $conditions = !empty($options['conditions']) ? ' AND '.$options['conditions'] : '';
-
-            if(empty($options) && !empty($args[0]) && !empty($args[1]) && is_array($args[0]) && is_array($args[1])){
-                $options = array_pop($args);
-            }
-
-            switch ($num_ids){
-
-                case 0 :
-                trigger_error($this->t('Couldn\'t find %object_name without an ID%conditions',array('%object_name'=>$this->getModelName(),'%conditions'=>$conditions)), E_USER_ERROR);
+                // HACK: php4 pass by ref
+                $result =& $this->_find_from_ids($args, $options);
+                return $result;
                 break;
-
-                case 1 :
-                $table_name = !empty($options['include']) && $this->hasAssociations() ? '__owner' : $this->getTableName();
-                $result =& $this->find('first', array_merge($options, array('conditions' => $table_name.'.'.$this->getPrimaryKey().' = '.$ids[0].$conditions)));
-                if(is_array($args[0]) && $result !== false){
-                    //This is a dirty hack for avoiding PHP4 pass by reference error
-                    $result_for_ref = array(&$result);
-                    $_result =& $result_for_ref;
-                }else{
-                    $_result =& $result;
-                }
-                return  $_result;
-
-                break;
-
-                default:
-
-                $ids_condition = $this->getPrimaryKey().' IN ('.join(', ',$ids).')';
-
-                if(!empty($options['conditions']) && is_array($options['conditions'])){
-                    $options['conditions'][0] = $ids_condition.' AND '.$options['conditions'][0];
-                }elseif(!empty($options['conditions'])){
-                    $options['conditions'] = $ids_condition.' AND '.$options['conditions'];
-                }else{
-                    $without_conditions = true;
-                    $options['conditions'] = $ids_condition;
-                }
-
-                $result =& $this->find('all', $options);
-                if(is_array($result) && (count($result) == $num_ids || empty($without_conditions))){
-                    if($result === false){
-                        $_result = false;
-                    }else{
-                        $_result =& $result;
-                    }
-                    return $_result;
-                }else{
-                    $result = false;
-                    return $result;
-                }
-                break;
-            }
-            break;
         }
         $result = false;
         return $result;
+    }
+    
+    function &_find_initial($options)
+    {
+        $options = array_merge($options, array((!empty($options['include']) ?'virtual_limit':'limit')=>1));
+        $result =& $this->_find_every($options);
+    
+        if(!empty($result) && is_array($result)){
+            $_result =& $result[0];
+        }else{
+            $_result = false;
+            // if we return an empty array instead of false we need to change this->exists()!
+            //$_result = array();
+        }
+        return  $_result;
+    
+    }
+
+    function &_find_every($options)
+    {
+        $limit = isset($options['limit']) ? $options['limit'] : null;
+        $offset = isset($options['offset']) ? $options['offset'] : null;
+        if((empty($options['conditions']) && empty($options['order']) && is_null($offset) && $this->_getDatabaseType() == 'postgre' ? 1 : 0)){
+            $options['order'] = $this->getPrimaryKey();
+        }
+        $sql = $this->constructFinderSql($options);
+        if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
+            $sql = array_merge(array($sql),$options['bind']);
+        }
+    
+        if((!empty($options['include']) && $this->hasAssociations())){
+            $result =& $this->findWithAssociations($options,  $limit, $offset);
+        }else{
+            $result =& $this->findBySql($sql, $limit, $offset);
+        }
+    
+        if(!empty($result) && is_array($result)){
+            $_result =& $result;
+        }else{
+            $_result = false;
+        }
+        return  $_result;
+        
+    }
+    
+    function &_find_from_ids($ids,$options)
+    {
+        $expects_array = is_array($ids[0]);
+        $ids = array_unique($expects_array ? (isset($ids[1]) ? array_merge($ids[0],$ids) : $ids[0]) : $ids);
+    
+        $num_ids = count($ids);
+    
+        //at this point $options['conditions'] can't be an array
+        $conditions = !empty($options['conditions']) ? ' AND '.$options['conditions'] : '';
+    
+        switch ($num_ids){
+            case 0 :
+                trigger_error($this->t('Couldn\'t find %object_name without an ID%conditions',array('%object_name'=>$this->getModelName(),'%conditions'=>$conditions)), E_USER_ERROR);
+                break;
+    
+            case 1 :
+                $table_name = !empty($options['include']) && $this->hasAssociations() ? '__owner' : $this->getTableName();
+                $options['conditions'] = $table_name.'.'.$this->getPrimaryKey().' = '.$ids[0].$conditions;
+    
+                $result =& $this->_find_every($options);
+                if (!$expects_array && $result !== false){ 
+                    $result =& $result[0];
+                }
+                return  $result;
+                break;
+    
+            default:
+                $without_conditions = empty($options['conditions']) ? true : false;
+                $ids_condition = $this->getPrimaryKey().' IN ('.join(', ',$ids).')';
+                $options['conditions'] = $ids_condition.$conditions;
+    
+                $result =& $this->_find_every($options);
+                if(is_array($result) && (count($result) != $num_ids && $without_conditions)){
+                    $result = false;
+                }
+                return $result;
+                break;
+        }
+        
+    }
+    
+    function _extractOptionsFromArgs(&$args)
+    {
+        $num_args = count($args);
+        //                                     ensure args.last is a hash!
+        return is_array($args[$num_args-1]) && !isset($args[$num_args-1][0]) ? array_pop($args) : array();
+    }
+    
+    function _extractConditionsFromArgs(&$args, &$options)
+    {
+        $num_args = count($args);
+        // API-shortcuts
+        if ($num_args === 2 && ($args[0] == 'all' || $args[0] == 'first') && is_string($args[1])){
+        //  $Users->find('first',"last_name = 'Williams'");
+        //  $Users->find('all',"last_name = 'Williams'");
+            $options['conditions'] = $args[1];
+            unset($args[1]);
+            $num_args = count($args);  // =1
+        }elseif ($num_args === 1 && !is_numeric($args[0]) && is_string($args[0]) && $args[0] != 'all' && $args[0] != 'first'){
+        //  $Users->find("last_name = 'Williams'");    ->find('first',...);
+            $options = array('conditions'=> $args[0]);
+            $args = array('first');
+            $num_args = count($args);  // =1
+        }
+        
+        //API-shortcuts
+        if($num_args > 1){
+            if(is_string($args[0]) && strstr($args[0],'?')){
+            //  $Users->find("first_name = ?",'Tim');
+                //TODO: merge_conditions
+                $options = array_merge($options, array('conditions'=>$args));
+                $args = array('all');
+            }elseif (is_string($args[1]) && strstr($args[1],'?')){
+            //  $Users->find("all","first_name = ?",'Tim');
+                $_tmp_mode = array_shift($args);
+                //TODO: merge_conditions
+                $options = array_merge($options, array('conditions'=>$args));
+                $args = array($_tmp_mode);
+            }
+        }
     }
 
     function &findFirst()
@@ -1212,10 +1201,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
         $args = func_get_args();
-        if($args[0] != 'first'){
+        array_unshift($args,'first');
+ /*       if($args[0] != 'first'){
+
             array_unshift($args,'first');
         }
-        $result =& Ak::call_user_func_array(array(&$this,'findBy'), $args);
+   */     $result =& Ak::call_user_func_array(array(&$this,'findBy'), $args);
         return $result;
     }
 
@@ -1242,9 +1233,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
         $args = func_get_args();
-        if($args[0] == 'first'){
-            array_shift($args);
-        }
         $result =& Ak::call_user_func_array(array(&$this,'findBy'), $args);
         return $result;
     }
@@ -1308,15 +1296,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
     
         $_find_arguments = array();
-        $_find_arguments[] = $fetch;
-        $_find_arguments[] = $sql;
+        $_find_arguments['conditions'][] = $sql;
         foreach ($query_values as $value){
-            $_find_arguments[] = $value;
+            $_find_arguments['conditions'][] = $value;
         }
-        $_find_arguments[] = $options;
-    
-        $_result =& $this->find('set arguments', $_find_arguments);
-        $result =& $_result; // Pass by reference hack
+        $_find_arguments = array_merge($_find_arguments, $options);
+        
+        $result =& Ak::call_user_func_array(array(&$this,'find'), array($fetch,$_find_arguments));
+        //$result =& $_result; // Pass by reference hack
         return $result;
     }
     
@@ -5269,6 +5256,15 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     
     /*/Calculations*/
 
+    function _validateFindOptions($options)
+    {
+        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
+        foreach (array_keys($options) as $key){
+            if (!in_array($key,$valid_keys)) unset($options[$key]);
+        }
+        return true;
+    }
+    
     function extractOptionsFromArgs(&$args)
     {
         $_tmp_options = !empty($args) && is_array($args) && is_array($args[count($args)]) ? array_pop($args) : array();

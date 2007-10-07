@@ -11,14 +11,16 @@ class AkActiveRecord_finders_TestCase extends  AkUnitTest
         @Ak::file_delete(AK_MODELS_DIR.DS.'post_tag.php');
     }
     
-    function test_should_find_using_first_id_and_options()
+    function test_should_find_using_id_and_options()
     {
         $Tag =& new Tag();
 
         $One =& $Tag->create(array('name' => 'One'));
         $Two =& $Tag->create(array('name' => 'Two'));
 
-        $Found =& $Tag->find('first', $Two->getId(), array('order'=>'name'));
+        //find by id is always 'first'; API-change
+        //$Found =& $Tag->find('first', $Two->getId(), array('order'=>'name'));
+        $Found =& $Tag->find($Two->getId(), array('order'=>'name'));
 
         $this->assertEqual($Found->getId(), $Two->getId());
 
