@@ -241,7 +241,7 @@ class test_AkActiveRecord_2 extends  UnitTestCase
         
         $User->save();
 
-        $User = $Users->find("first_name = 'John' AND last_name = 'Smith'");
+        $User = $Users->find('first', "first_name = 'John' AND last_name = 'Smith'");
         $this->assertEqual($User->first_name,'John');
         $this->assertEqual($User->last_name,'Smith');
     }
@@ -280,7 +280,7 @@ class test_AkActiveRecord_2 extends  UnitTestCase
         $Got = $Users->findFirst("last_name = 'Ferrer Martínez'");
         $this->assertEqual($Got->first_name, 'Bermi');
         
-        $Got = $Users->findFirst();
+        $Got = $Users->findFirst(array('order'=>'id ASC'));
         
         $this->assertEqual($Got->first_name, 'Bermi');
         

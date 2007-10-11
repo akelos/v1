@@ -514,7 +514,7 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
         $this->assertTrue($TodoItems->list->incrementPositionsOnHigherItems());
         $todo_list = $this->_getTodoList();
         $this->assertEqual($todo_list[9] , 'Task number 8');
-        $this->assertEqual($todo_list[10] , 'Task number 10');
+        $this->assertEqual($todo_list[10] , 'Task number 10');  // Task 9&10 are on position 10, so this is ambigious; last one returned by find wins
         $TodoItems->transactionFail();
         $TodoItems->transactionComplete();
     }
@@ -679,7 +679,7 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
     function _getTodoList($use_id_as_index = false)
     {
         $TodoItems = new AkTestTodoItem();
-        $TodoItems = $TodoItems->find();
+        $TodoItems = $TodoItems->find('all',array('order'=>'id ASC'));
         $list = array();
         foreach ($TodoItems as $TodoItem){
             if($use_id_as_index){
@@ -690,7 +690,6 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
         }
         return $list;
     }
-
 
     function test_should_move_up_the_item_with_the_same_position_as_the_inserted()
     {

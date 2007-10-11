@@ -280,10 +280,13 @@ class HasManyTestCase extends AkUnitTest
        
         $this->assertTrue($Post =& $Post->find(10, array('include' => 'comments')));
         
-        
+        // order cannot be guaranteed! 
+        $expected_ids = array(1,2,3,4,5);
         foreach (array_keys($Post->comments) as $k){
-            $this->assertEqual($Post->comments[$k]->getId(), $k+1);
+            $this->assertTrue(in_array($Post->comments[$k]->getId(),$expected_ids));
+            unset($expected_ids[$Post->comments[$k]->getId()-1]);
         }
+        $this->assertTrue(empty($expected_ids));
         
         // Comment 10 should exist but unrelated to a post
         $this->assertTrue($Comment =& $Post->comments[$k]->find(10));

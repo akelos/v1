@@ -36,7 +36,14 @@ class AkActiveRecord_finders_TestCase extends  AkUnitTest
 
         $this->assertTrue($Post->save());
 
+        // on PostgreSQL we get an unordered comments-list
         $this->assertTrue($Post =& $Post->find($Post->getId(), array('include'=>array('comments', 'tags'))));
+        $exptected = array('Comment 1','Comment 2');
+        $this->assertTrue(in_array($Post->comments[0]->get('name'),$exptected));
+        $this->assertTrue(in_array($Post->comments[1]->get('name'),$exptected));
+        
+        // so we could do this 
+        $this->assertTrue($Post =& $Post->find($Post->getId(), array('include'=>array('comments', 'tags'),'order'=>'_comments.id ASC')));
         $this->assertEqual(count($Post->comments), 2);
         $this->assertEqual($Post->comments[0]->get('name'), 'Comment 1');
         $this->assertEqual($Post->comments[1]->get('name'), 'Comment 2');
