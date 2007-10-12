@@ -226,7 +226,7 @@ class test_AkActiveRecord_3 extends  UnitTestCase
     function Test_of_cloneRecord()
     {
         $AkTestUser = new AkTestUser();
-        $User = $AkTestUser->find("first_name = 'Bermi'");
+        $User = $AkTestUser->find('first',"first_name = 'Bermi'");
         $Cloned = $User->cloneRecord();
 
         $user_attributes = $User->getAttributes();

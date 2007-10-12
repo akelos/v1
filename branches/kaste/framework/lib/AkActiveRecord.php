@@ -956,10 +956,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         $args = func_get_args();
-        if(empty($args)) $args = array('all');
         
         $options = $this->_extractOptionsFromArgs($args);
-        $this->_extractConditionsFromArgs($args,$options);
+        list($fetch,$options) = $this->_extractConditionsFromArgs($args,$options);
         
         //$this->santizeSql(conditions);
         if(!empty($options['conditions']) && is_array($options['conditions'])){
@@ -978,7 +977,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
 
-        switch ($args[0]) {
+        switch ($fetch) {
             case 'first':
                 // HACK: php4 pass by ref
                 $result =& $this->_find_initial($options);
@@ -1003,6 +1002,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     
     function &_find_initial($options)
     {
+        // TODO: virtual_limit is a hack 
+        // actually we fetch_all and return only the first row
         $options = array_merge($options, array((!empty($options['include']) ?'virtual_limit':'limit')=>1));
         $result =& $this->_find_every($options);
     
@@ -1021,9 +1022,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         $limit = isset($options['limit']) ? $options['limit'] : null;
         $offset = isset($options['offset']) ? $options['offset'] : null;
-        if((empty($options['conditions']) && empty($options['order']) && is_null($offset) && $this->_getDatabaseType() == 'postgre' ? 1 : 0)){
-            $options['order'] = $this->getPrimaryKey();
-        }
+        // dirty postgre HACK to get ordered-by-id lists  
+        //if(/*empty($options['conditions']) &&*/ empty($options['order'])/* && is_null($offset)*/ && $this->_getDatabaseType() == 'postgre'){
+        //    $options['order'] = $this->getPrimaryKey();
+        //}
         $sql = $this->constructFinderSql($options);
         if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
             $sql = array_merge(array($sql),$options['bind']);
@@ -1087,45 +1089,64 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     
     function _extractOptionsFromArgs(&$args)
     {
-        $num_args = count($args);
-        //                                     ensure args.last is a hash!
-        return is_array($args[$num_args-1]) && !isset($args[$num_args-1][0]) ? array_pop($args) : array();
+        $last_arg = count($args)-1;
+        return isset($args[$last_arg]) && is_array($args[$last_arg]) && $this->_isOptionsHash($args[$last_arg]) ? array_pop($args) : array();
     }
     
-    function _extractConditionsFromArgs(&$args, &$options)
+    function _isOptionsHash($options)
     {
-        $num_args = count($args);
-        // API-shortcuts
-        if ($num_args === 2 && ($args[0] == 'all' || $args[0] == 'first') && is_string($args[1])){
-        //  $Users->find('first',"last_name = 'Williams'");
-        //  $Users->find('all',"last_name = 'Williams'");
-            $options['conditions'] = $args[1];
-            unset($args[1]);
-            $num_args = count($args);  // =1
-        }elseif ($num_args === 1 && !is_numeric($args[0]) && is_string($args[0]) && $args[0] != 'all' && $args[0] != 'first'){
-        //  $Users->find("last_name = 'Williams'");    ->find('first',...);
-            $options = array('conditions'=> $args[0]);
-            $args = array('first');
-            $num_args = count($args);  // =1
+        if (isset($options[0])) return false;
+        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
+        foreach (array_keys($options) as $key){
+            if (!in_array($key,$valid_keys)) return false;
         }
+        return true;
+    }
+    
+    function _extractConditionsFromArgs($args, $options)
+    {
+        if(empty($args)) $fetch = 'all';
+            else         $fetch = $args[0];
+        $num_args = count($args);
         
-        //API-shortcuts
-        if($num_args > 1){
-            if(is_string($args[0]) && strstr($args[0],'?')){
-            //  $Users->find("first_name = ?",'Tim');
-                //TODO: merge_conditions
-                $options = array_merge($options, array('conditions'=>$args));
-                $args = array('all');
-            }elseif (is_string($args[1]) && strstr($args[1],'?')){
-            //  $Users->find("all","first_name = ?",'Tim');
-                $_tmp_mode = array_shift($args);
-                //TODO: merge_conditions
-                $options = array_merge($options, array('conditions'=>$args));
-                $args = array($_tmp_mode);
+        // deprecated: acts like findFirstBySQL
+        if ($num_args === 1 && !is_numeric($args[0]) && is_string($args[0]) && $args[0] != 'all' && $args[0] != 'first'){
+        //  $Users->find("last_name = 'Williams'");    => find('first',"last_name = 'Williams'");
+            if (true || AK_ENVIRONMENT == 'development') {
+                trigger_error(Ak::t("AR::find('%sql') is ambiguous and therefore deprecated, use AR::find('first',%sql) instead", array('%sql'=>$args[0])), E_USER_NOTICE);    
+            }
+            $options = array('conditions'=> $args[0]);
+            return array('first',$options);
+        } //end
+        
+        // set fetch_mode to 'all' if none is given
+        if (!is_numeric($fetch) && !is_array($fetch) && $fetch != 'all' && $fetch != 'first') {
+            array_unshift($args, 'all');
+            $num_args = count($args);
+        }
+        if ($num_args > 1) {
+            if (is_string($args[1])){
+                //  $Users->find(:fetch_mode,"first_name = ?",'Tim');
+                $fetch = array_shift($args);
+                $options = array_merge($options, array('conditions'=>$args));   //TODO: merge_conditions
+            }elseif (is_array($args[1])) {
+                //  $Users->find(:fetch_mode,array('first_name = ?,'Tim'));
+                $fetch = array_shift($args);
+                $options = array_merge($options, array('conditions'=>$args[0]));   //TODO: merge_conditions
             }
         }
-    }
 
+        return array($fetch,$options);
+    }
+    
+    function _validateFindOptions(&$options)
+    {
+        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
+        foreach (array_keys($options) as $key){
+            if (!in_array($key,$valid_keys)) unset($options[$key]);
+        }
+    }
+        
     function &findFirst()
     {
         if(!isset($this->_activeRecordHasBeenInstantiated)){
@@ -1202,11 +1223,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         $args = func_get_args();
         array_unshift($args,'first');
- /*       if($args[0] != 'first'){
-
-            array_unshift($args,'first');
-        }
-   */     $result =& Ak::call_user_func_array(array(&$this,'findBy'), $args);
+        $result =& Ak::call_user_func_array(array(&$this,'findBy'), $args);
         return $result;
     }
 
@@ -1216,11 +1233,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
         $args = func_get_args();
-        $options = array_pop($args);
-        if(!is_array($options)){
-            array_push($args, $options);
-            $options = array();
-        }
+        $options = $this->_extractOptionsFromArgs($args);
         $options['order'] = $this->getPrimaryKey().' DESC';
         array_push($args, $options);
         $result =& Ak::call_user_func_array(array(&$this,'findFirstBy'), $args);
@@ -1233,6 +1246,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
         $args = func_get_args();
+        array_unshift($args,'all');
         $result =& Ak::call_user_func_array(array(&$this,'findBy'), $args);
         return $result;
     }
@@ -1259,13 +1273,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $fetch = 'all';
         }
     
-        $options = array_pop($args);
-    
-        if(!is_array($options)){
-            array_push($args, $options);
-            $options = array();
-        }
-    
+        $options = $this->_extractOptionsFromArgs($args);
+
         $query_values = $args;
         $query_arguments_count = count($query_values);
     
@@ -1295,15 +1304,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
     
-        $_find_arguments = array();
-        $_find_arguments['conditions'][] = $sql;
-        foreach ($query_values as $value){
-            $_find_arguments['conditions'][] = $value;
+        $conditions = array($sql);
+        foreach ($query_values as $bind_value){
+            $conditions[] = $bind_value;
         }
-        $_find_arguments = array_merge($_find_arguments, $options);
+        // TODO: merge_conditions
+        $options['conditions'] = $conditions;
         
-        $result =& Ak::call_user_func_array(array(&$this,'find'), array($fetch,$_find_arguments));
-        //$result =& $_result; // Pass by reference hack
+        $result =& Ak::call_user_func_array(array(&$this,'find'), array($fetch,$options));
         return $result;
     }
     
@@ -1404,12 +1412,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $sql = isset($options['select_prefix']) ? $options['select_prefix'] : ($select_from_prefix == 'default' ? 'SELECT * FROM '.$this->getTableName() : $select_from_prefix);
         $sql  .= !empty($options['joins']) ? ' '.$options['joins'] : '';
 
-
-        if(isset($options['conditions'])){
-            $this->addConditions($sql, $options['conditions']);
-        }elseif ($this->getInheritanceColumn() !== false){
-            $this->addConditions($sql, array());
-        }
+        $this->addConditions($sql, isset($options['conditions']) ? $options['conditions'] : array());
 
         // Create an alias for order
         if(empty($options['order']) && !empty($options['sort'])){
@@ -1433,7 +1436,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $concat = ' AND ';
         }
 
-        if($this->descendsFromActiveRecord($this) && $this->getInheritanceColumn() !== false){
+        if($this->getInheritanceColumn() !== false && $this->descendsFromActiveRecord($this)){
             $type_condition = $this->typeCondition();
             $sql .= !empty($type_condition) ? $concat.$type_condition : '';
         }
@@ -5256,28 +5259,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     
     /*/Calculations*/
 
-    function _validateFindOptions($options)
-    {
-        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
-        foreach (array_keys($options) as $key){
-            if (!in_array($key,$valid_keys)) unset($options[$key]);
-        }
-        return true;
-    }
-    
-    function extractOptionsFromArgs(&$args)
-    {
-        $_tmp_options = !empty($args) && is_array($args) && is_array($args[count($args)]) ? array_pop($args) : array();
-        $options = array();
-        foreach (array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select', 'readonly') as $k){
-            if(isset($_tmp_options[$k])){
-                $options[$k] = $_tmp_options[$k];
-            }
-        }
-        return $options;
-    }
-    
-    
     function hasBeenModified()
     {
         return Ak::objectHasBeenModified($this);

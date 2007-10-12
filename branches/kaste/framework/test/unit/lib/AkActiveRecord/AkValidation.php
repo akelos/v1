@@ -522,12 +522,13 @@ class test_AkActiveRecord_validators extends  AkUnitTest
         $Person->validatesUniquenessOf("user_name");
         $this->assertTrue($Person->hasErrors());
 
-        $Person = $Person->findFirst(array('username = ?','bermi'));
+        $Person = $Person->findFirst(array('user_name' => 'bermi'));
+        $this->assertEqual($Person->user_name,'bermi');
         $Person->validatesUniquenessOf("user_name");
         $this->assertFalse($Person->hasErrors());
 
 
-        $Person = $Person->findFirst(array('username = ?','bermi'));
+        $Person = $Person->findFirst(array('user_name = ?','bermi'));
         $Person->validatesUniquenessOf("user_name",array('scope'=>'country'));
         $this->assertFalse($Person->hasErrors());
 
@@ -854,7 +855,7 @@ class test_AkActiveRecord_validators extends  AkUnitTest
         $this->assertEqual($Person->getErrors(), array('first_name' => array("can't be blank"),'tos' =>array("must be accepted")));
 
         $Person->clearErrors();
-        $Person = $Person->findFirst(array('username = ?','bermi'));
+        $Person = $Person->findFirst(array('user_name = ?','bermi'));
         $Person->set('tos',0);
         $this->assertFalse($Person->isValid());
         $this->assertEqual($Person->getErrors(), array('email' => array("can't be blank")));
