@@ -208,7 +208,7 @@ class test_AkActiveRecord extends  UnitTestCase
             break;
         }
 
-        $dict = NewDataDictionary($db);
+        $dict = NewDataDictionary($db->connection);
         $sqlarray = $dict->CreateTableSQL($table['table_name'], $table['fields'], $table['table_options']);
         $dict->ExecuteSQLArray($sqlarray);
         if(isset($table['index_fileds'])){
@@ -216,7 +216,7 @@ class test_AkActiveRecord extends  UnitTestCase
             $dict->ExecuteSQLArray($sqlarray);
         }
         
-        strstr($db->databaseType,'sqlite') ? $db->CreateSequence('seq_'.$table['table_name']) : null;
+        ($db->type() == 'sqlite') ? $db->CreateSequence('seq_'.$table['table_name']) : null;
 
         $this->_testing_model_databases_to_delete[] = $table_name;
         if(!isset($shutdown_called)){
@@ -232,7 +232,7 @@ class test_AkActiveRecord extends  UnitTestCase
         $db =& AK::db();
         foreach ($this->_testing_model_databases_to_delete as $table_name){
             $db->Execute('DROP TABLE '.$table_name);
-            strstr($db->databaseType,'sqlite') ? $db->DropSequence('seq_'.$table_name) : null;
+            ($db->type() == 'sqlite') ? $db->DropSequence('seq_'.$table_name) : null;
         }
     }
 

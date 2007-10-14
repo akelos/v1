@@ -99,7 +99,7 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
                 break;
         }
 
-        $dict = NewDataDictionary($db);
+        $dict = NewDataDictionary($db->connection);
         $sqlarray = $dict->CreateTableSQL($table['table_name'], $table['fields'], $table['table_options']);
         $dict->ExecuteSQLArray($sqlarray);
         if(isset($table['index_fileds'])){
@@ -170,7 +170,7 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
     function Test_of_getScopeCondition_and_setScopeCondition()
     {
         $TodoItems =& new AkTestTodoItem();
-        $this->assertEqual($TodoItems->list->getScopeCondition(), (substr($TodoItems->_db->databaseType,0,4) == 'post') ? 'true' : '1');
+        $this->assertEqual($TodoItems->list->getScopeCondition(), ($TodoItems->_db->type() == 'postgre') ? 'true' : '1');
         $TodoItems->list->setScopeCondition('true');
         $this->assertEqual($TodoItems->list->getScopeCondition(), 'true');
     }

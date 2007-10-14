@@ -136,6 +136,28 @@ class AkActsAsList extends AkObserver
         return $this->insertAtPosition($position);
     }
 
+    /**
+    * This function saves the object using save() before inserting it into the list
+    */
+    function insertAtPosition($position)
+    {
+        $this->_ActiveRecordInstance->transactionStart();
+        if($this->_ActiveRecordInstance->isNewRecord()){
+            $this->_ActiveRecordInstance->save();
+        }
+        $this->removeFromList();
+        $this->incrementPositionsOnLowerItems($position);
+
+        $this->_ActiveRecordInstance->updateAttribute($this->column, $position);
+        if($this->_ActiveRecordInstance->transactionHasFailed()){
+            $this->_ActiveRecordInstance->transactionComplete();
+            return false;
+        }
+
+        $this->_ActiveRecordInstance->transactionComplete();
+        return true;
+    }
+    
     function moveLower()
     {
         $this->_ActiveRecordInstance->transactionStart();
@@ -166,7 +188,6 @@ class AkActsAsList extends AkObserver
         return false;
     }
 
-
     function moveToBottom()
     {
         if($this->isInList()){
@@ -181,22 +202,30 @@ class AkActsAsList extends AkObserver
         }
         return false;
     }
-
-    /**
-    * This has the effect of moving all the lower items up one.
-    */
-    function decrementPositionsOnLowerItems()
+    
+    function moveToTop()
     {
         if($this->isInList()){
-            $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} - 1)", $this->getScopeCondition()." AND {$this->column} > ".$this->_ActiveRecordInstance->getAttribute($this->column));
-            return true;
+            $this->_ActiveRecordInstance->transactionStart();
+            if($this->incrementPositionsOnHigherItems() && $this->assumeTopPosition()){
+                $this->_ActiveRecordInstance->transactionComplete();
+                return true;
+            }else{
+                $this->_ActiveRecordInstance->transactionFail();
+            }
+            $this->_ActiveRecordInstance->transactionComplete();
         }
         return false;
     }
-
+    
     function assumeBottomPosition()
     {
         return $this->_ActiveRecordInstance->updateAttribute($this->column, $this->getBottomPosition($this->_ActiveRecordInstance->getId()) + 1);
+    }
+
+    function assumeTopPosition()
+    {
+        return $this->_ActiveRecordInstance->updateAttribute($this->column, 1);
     }
 
     function getBottomPosition($except = null)
@@ -217,24 +246,27 @@ class AkActsAsList extends AkObserver
         return $this->_ActiveRecordInstance->find('first', array('conditions' => $conditions, 'order' => "{$this->column} DESC"));
     }
 
-
     function isInList()
     {
         return !empty($this->_ActiveRecordInstance->{$this->column});
     }
+    
+    /**
+    * This has the effect of moving all the higher items up one.
+    */
+    function decrementPositionsOnHigherItems($position)
+    {
+        return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} - 1)", $this->getScopeCondition()." AND {$this->column} <= $position");
+    }
 
-
-    function moveToTop()
+    /**
+    * This has the effect of moving all the lower items up one.
+    */
+    function decrementPositionsOnLowerItems()
     {
         if($this->isInList()){
-            $this->_ActiveRecordInstance->transactionStart();
-            if($this->incrementPositionsOnHigherItems() && $this->assumeTopPosition()){
-                $this->_ActiveRecordInstance->transactionComplete();
-                return true;
-            }else{
-                $this->_ActiveRecordInstance->transactionFail();
-            }
-            $this->_ActiveRecordInstance->transactionComplete();
+            $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} - 1)", $this->getScopeCondition()." AND {$this->column} > ".$this->_ActiveRecordInstance->getAttribute($this->column));
+            return true;
         }
         return false;
     }
@@ -250,13 +282,20 @@ class AkActsAsList extends AkObserver
         }
         return false;
     }
-
-    function assumeTopPosition()
+    
+    /**
+    * This has the effect of moving all the lower items down one.
+    */
+    function incrementPositionsOnLowerItems($position)
     {
-        return $this->_ActiveRecordInstance->updateAttribute($this->column, 1);
+        return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} + 1)", $this->getScopeCondition()." AND {$this->column} >= $position");
     }
 
-
+    function incrementPositionsOnAllItems()
+    {
+        return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} + 1)",  $this->getScopeCondition());
+    }
+    
     function removeFromList()
     {
         if($this->isInList()){
@@ -267,7 +306,6 @@ class AkActsAsList extends AkObserver
         }
         return false;
     }
-
 
     function incrementPosition()
     {
@@ -317,7 +355,6 @@ class AkActsAsList extends AkObserver
         return false;
     }
 
-
     function addToListTop()
     {
         $this->incrementPositionsOnAllItems();
@@ -335,7 +372,7 @@ class AkActsAsList extends AkObserver
             
         // True condition in case we don't have a scope
         }elseif(empty($this->scope_condition) && empty($this->scope)){
-            $this->scope_condition = (substr($this->_ActiveRecordInstance->_db->databaseType,0,4) == 'post') ? 'true' : '1';
+            $this->scope_condition = ($this->_ActiveRecordInstance->_db->type() == 'postgre') ? 'true' : '1';
         }elseif (!empty($this->scope)){
             $this->setScopeCondition(join(' AND ',array_map(array(&$this,'getScopedColumn'),(array)$this->scope)));
         }
@@ -362,52 +399,6 @@ class AkActsAsList extends AkObserver
         }else{
             return $column;
         }
-    }
-
-
-    /**
-    * This has the effect of moving all the higher items up one.
-    */
-    function decrementPositionsOnHigherItems($position)
-    {
-        return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} - 1)", $this->getScopeCondition()." AND {$this->column} <= $position");
-    }
-
-    /**
-    * This has the effect of moving all the lower items down one.
-    */
-    function incrementPositionsOnLowerItems($position)
-    {
-        return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} + 1)", $this->getScopeCondition()." AND {$this->column} >= $position");
-    }
-
-    function incrementPositionsOnAllItems()
-    {
-        return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} + 1)",  $this->getScopeCondition());
-    }
-
-
-
-    /**
-    * This function saves the object using save() before inserting it into the list
-    */
-    function insertAtPosition($position)
-    {
-        $this->_ActiveRecordInstance->transactionStart();
-        if($this->_ActiveRecordInstance->isNewRecord()){
-            $this->_ActiveRecordInstance->save();
-        }
-        $this->removeFromList();
-        $this->incrementPositionsOnLowerItems($position);
-
-        $this->_ActiveRecordInstance->updateAttribute($this->column, $position);
-        if($this->_ActiveRecordInstance->transactionHasFailed()){
-            $this->_ActiveRecordInstance->transactionComplete();
-            return false;
-        }
-
-        $this->_ActiveRecordInstance->transactionComplete();
-        return true;
     }
 }
 

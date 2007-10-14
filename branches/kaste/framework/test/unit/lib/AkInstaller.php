@@ -25,13 +25,7 @@ class Test_of_AkInstaller extends  AkUnitTest
 
     function Test_setup_expected_returns()
     {
-        if(strstr($this->Installer->db->databaseType, 'mysql')){
-            $db_type = 'mysql';
-        }elseif(strstr($this->Installer->db->databaseType, 'sqlite')){
-            $db_type = 'sqlite';
-        }elseif(strstr($this->Installer->db->databaseType, 'postgres')){
-            $db_type = 'postgres';
-        }
+        $db_type = $db->type();
 
         switch ($db_type) {
             case 'postgres':

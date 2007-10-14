@@ -123,7 +123,7 @@ class test_AkActiveRecord_actAsTree extends  UnitTestCase
                 break;
         }
 
-        $dict = NewDataDictionary($db);
+        $dict = NewDataDictionary($db->connection);
         $sqlarray = $dict->CreateTableSQL($table['table_name'], $table['fields'], $table['table_options']);
         $dict->ExecuteSQLArray($sqlarray);
         if(isset($table['index_fileds'])){
@@ -193,7 +193,7 @@ class test_AkActiveRecord_actAsTree extends  UnitTestCase
     function Test_of_getScopeCondition_and_setScopeCondition()
     {
         $Categories =& new AkTestCategory();
-        $this->assertEqual($Categories->tree->getScopeCondition(), (substr($Categories->_db->databaseType,0,4) == 'post') ? 'true' : '1');
+        $this->assertEqual($Categories->tree->getScopeCondition(), ($Categories->_db->type() == 'postgre') ? 'true' : '1');
         $Categories->tree->setScopeCondition('true');
         $this->assertEqual($Categories->tree->getScopeCondition(), 'true');
     }

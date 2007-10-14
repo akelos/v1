@@ -19,6 +19,7 @@
  */
 
 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkAssociatedActiveRecord.php');
+require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
 
 /**#@+
  * Constants
@@ -188,6 +189,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     //var $disableAutomatedAssociationLoading = true;
     var $_tableName;
     var $_db;
+    //var $_db_settings = ;
     var $_newRecord;
     var $_freeze;
     var $_dataDictionary;
@@ -2461,7 +2463,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function setConnection($dns = null, $connection_id = null)
     {
-        $this->_db =& Ak::db($dns, $connection_id);
+        //$this->_db =& Ak::db($dns, $connection_id);
+        $this->_db =& AkDbAdapter::getConnection();
     }
     
     /**
@@ -2469,15 +2472,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _getDatabaseType()
     {
-        if(strstr($this->_db->databaseType,'mysql')){
-            return 'mysql';
-        }elseif(strstr($this->_db->databaseType,'sqlite')){
-            return 'sqlite';
-        }elseif(strstr($this->_db->databaseType,'post')){
-            return 'postgre';
-        }else{
-            return 'unknown';
-        }
+        return $this->_db->type();
     }
     /*/Database connection*/
     
@@ -2711,7 +2706,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         
         if(empty($this->_columnsSettings) || !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
             if(empty($this->_dataDictionary)){
-                $this->_dataDictionary =& NewDataDictionary($this->_db);
+                $this->_dataDictionary =& NewDataDictionary($this->_db->connection);
             }
 
             $column_objects = $this->_databaseTableInternals($this->getTableName());
@@ -4787,14 +4782,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         $resulting_array = array();
         if(!empty($source_array) && is_array($source_array) && func_num_args() > 1) {
-        (array)$args = array_filter(array_slice(func_get_args(),1),array($this,'hasColumn'));
-        foreach ($source_array as $source_item){
-            $item_fields = array();
-            foreach ($args as $arg){
-                $item_fields[$arg] =& $source_item->get($arg);
+            (array)$args = array_filter(array_slice(func_get_args(),1),array($this,'hasColumn'));
+            foreach ($source_array as $source_item){
+                $item_fields = array();
+                foreach ($args as $arg){
+                    $item_fields[$arg] =& $source_item->get($arg);
+                }
+                $resulting_array[] =& $item_fields;
             }
-            $resulting_array[] =& $item_fields;
-        }
         }
         return $resulting_array;
     }

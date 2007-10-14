@@ -42,6 +42,8 @@ if(AK_TESTING_REWRITE_BASE){
 if(defined('AK_TEST_DATABASE_ON')){
     include_once(AK_LIB_DIR.DS.'Ak.php');
     Ak::db(&$dsn);
+    //require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
+    //AkDbAdapter::getConnection($GLOBALS['default_database_settings']);
 }
 
 

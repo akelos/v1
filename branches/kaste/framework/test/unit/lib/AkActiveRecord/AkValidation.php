@@ -137,7 +137,7 @@ class test_AkActiveRecord_validators extends  AkUnitTest
             break;
         }
 
-        $dict = NewDataDictionary($db);
+        $dict = NewDataDictionary($db->connection);
         $sqlarray = $dict->CreateTableSQL($table['table_name'], $table['fields'], $table['table_options']);
         $dict->ExecuteSQLArray($sqlarray);
         if(isset($table['index_fileds'])){

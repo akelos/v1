@@ -21,6 +21,7 @@ defined('AK_CONFIG_DIR') ? null : define('AK_CONFIG_DIR', AK_BASE_DIR.DS.'config
 // edit the files config/testing.php, config/development.php, config/production.php
 if(AK_ENVIRONMENT != 'setup'){
     $akdb = $database_settings[strtolower(AK_ENVIRONMENT)];
+    $GLOBALS['default_database_settings'] = $database_settings[strtolower(AK_ENVIRONMENT)];
     $dsn = $akdb['type'] == 'sqlite' ?
     'sqlite://'.urlencode($akdb['database_file']).'/?persist' :
     $akdb['type'].'://'.$akdb['user'].':'.$akdb['password'].'@'.$akdb['host'].
@@ -111,6 +112,7 @@ if(AK_ENVIRONMENT != 'setup'){
 
 @ini_set("include_path",(AK_LIB_DIR.PATH_SEPARATOR.AK_MODELS_DIR.PATH_SEPARATOR.AK_CONTRIB_DIR.DS.'pear'.PATH_SEPARATOR.ini_get("include_path")));
 defined('AK_PHP5') ? null : define('AK_PHP5', version_compare(PHP_VERSION, '5', '>=') == 1 ? true : false);
+/* +++++++++++++ PHP5 ++++++++++++  */ if (!AK_PHP5) die('This branch is PHP5 only right now!');
 
 if(!AK_CLI && AK_WEB_REQUEST){
 

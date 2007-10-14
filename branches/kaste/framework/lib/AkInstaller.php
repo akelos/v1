@@ -35,16 +35,17 @@ class AkInstaller
     function AkInstaller($db_connection = null)
     {
         if(empty($db_connection)){
-            $this->db =& Ak::db();
+            $this->db =& AkDbAdapter::getConnection();
         }else {
             $this->db =& $db_connection;
         }
 
+
+        $this->db->connection->debug = $this->debug;
+        //$this->db->debug = $this->debug;
+
+        $this->data_dictionary = NewDataDictionary($this->db->connection);
         $this->available_tables = $this->getAvailableTables();
-
-        $this->db->debug =& $this->debug;
-
-        $this->data_dictionary = NewDataDictionary($this->db);
     }
 
     function install($version = null, $options = array())
@@ -76,7 +77,7 @@ class AkInstaller
         if(in_array('quiet',$options) && AK_ENVIRONMENT == 'development'){
             $this->vervose = false;
         }elseif(!empty($this->vervose) && AK_ENVIRONMENT == 'development'){
-            $this->db->debug = true;
+            $this->db->connection->debug = true;
         }
 
         $current_version = $this->getInstalledVersion($options);
@@ -232,7 +233,7 @@ class AkInstaller
 
     function renameColumn($table_name, $old_column_name, $new_column_name)
     {
-        if(!strstr($this->db->databaseType,'mysql')){
+        if($this->db->type() != 'mysql'){
             trigger_error(Ak::t('Column renaming is only supported when using MySQL databases'), E_USER_ERROR);
         }
         return $this->data_dictionary->ExecuteSQLArray($this->data_dictionary->RenameColumnSQL($table_name, $old_column_name, $new_column_name));
@@ -509,7 +510,7 @@ class AkInstaller
 
     function _requiresSequenceTable($column_string)
     {
-        if(preg_match('/mysql|postgres/', $this->db->databaseType)){
+        if(in_array($this->db->type(),array('mysql','postgre'))){
             return false;
         }
         foreach (explode(',',$column_string.',') as $column){

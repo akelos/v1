@@ -110,7 +110,7 @@ class test_AkActiveRecord_actsAsNestedSet extends  AkUnitTest
             break;
         }
 
-        $dict = NewDataDictionary($db);
+        $dict = NewDataDictionary($db->connection);
         $sqlarray = $dict->CreateTableSQL($table['table_name'], $table['fields'], $table['table_options']);
         $dict->ExecuteSQLArray($sqlarray);
         if(isset($table['index_fileds'])){
@@ -182,7 +182,7 @@ class test_AkActiveRecord_actsAsNestedSet extends  AkUnitTest
     function Test_of_getScopeCondition_and_setScopeCondition()
     {
         $Categories =& new AkTestNestedCategory();
-        $this->assertEqual($Categories->nested_set->getScopeCondition(), (substr($Categories->_db->databaseType,0,4) == 'post') ? 'true' : '1');
+        $this->assertEqual($Categories->nested_set->getScopeCondition(), ($Categories->_db->type() == 'postgre') ? 'true' : '1');
         $Categories->nested_set->setScopeCondition('true');
         $this->assertEqual($Categories->nested_set->getScopeCondition(), 'true');
     }

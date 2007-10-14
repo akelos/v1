@@ -602,13 +602,13 @@ class AkHasAndBelongsToMany extends AkAssociation
     {
         $options = $this->getOptions($this->association_id);
         if(empty($options['finder_sql'])){
-            $sqlite = substr($this->Owner->_db->databaseType,0,6) == 'sqlite';
+            $is_sqlite = $this->Owner->_db->type() == 'sqlite';
             $options['finder_sql'] = "SELECT {$options['table_name']}.* FROM {$options['table_name']} ".
-            $this->associationJoin().
-            "WHERE ".$this->Owner->getTableName().'.'.$this->Owner->getPrimaryKey()." ".
-            ($sqlite ? ' LIKE ' : ' = ').' '.$this->Owner->quotedId(); // (HACK FOR SQLITE) Otherwise returns wrong data
-            $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
-            $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
+                $this->associationJoin().
+                "WHERE ".$this->Owner->getTableName().'.'.$this->Owner->getPrimaryKey()." ".
+                ($is_sqlite ? ' LIKE ' : ' = ').' '.$this->Owner->quotedId(); // (HACK FOR SQLITE) Otherwise returns wrong data
+                $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
+                $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
         }
         if(empty($options['counter_sql'])){
             $options['counter_sql'] = substr_replace($options['finder_sql'],'SELECT COUNT(*)',0,strpos($options['finder_sql'],'*')+1);

@@ -63,6 +63,8 @@ class Ak
     */
     function &db($dsn = null, $connection_id = null)
     {
+        require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
+        return AkDbAdapter::getConnection();
         static $db, $default_connection_id;
 
         // In order to retrieve a database connection we just need to provide its identifier
