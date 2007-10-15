@@ -43,7 +43,7 @@ class AkActiveRecord_finders_TestCase extends  AkUnitTest
         $this->assertTrue(in_array($Post->comments[1]->get('name'),$exptected));
         
         // so we could do this 
-        $this->assertTrue($Post =& $Post->find($Post->getId(), array('include'=>array('comments', 'tags'),'order'=>'_comments.id ASC')));
+        $this->assertTrue($Post =& $Post->find($Post->getId(), array('include'=>array('comments', 'tags'),'order'=>'_comments.id ASC, _tags.id ASC')));
         $this->assertEqual(count($Post->comments), 2);
         $this->assertEqual($Post->comments[0]->get('name'), 'Comment 1');
         $this->assertEqual($Post->comments[1]->get('name'), 'Comment 2');

@@ -4826,9 +4826,18 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return Ak::toJson($this->getAttributes());
     }
     
-    function toYaml()
+    /**
+     * converts to yaml-strings 
+     * 
+     * examples: 
+     * User::toYaml($users->find('all'));
+     * $Bermi->toYaml();
+     *
+     * @param array of ActiveRecords[optional] $data
+     */
+    function toYaml($data = null)
     {
-        return Ak::convert('active_record', 'yaml', $this);
+        return Ak::convert('active_record', 'yaml', empty($data) ? $this : $data);
     }
     
 

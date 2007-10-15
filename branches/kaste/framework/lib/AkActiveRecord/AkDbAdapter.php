@@ -37,8 +37,8 @@ class AkDbAdapter
     
     function __destruct()
     {
-        var_dump(self::$methods);
-        var_dump(self::$properties);
+        //var_dump(self::$methods);
+        //var_dump(self::$properties);
     }
     
     function __call($method,$args)
@@ -102,8 +102,8 @@ class AkDbAdapter
         }
         $settings_hash = AkDbAdapter::_hash($database_settings);
         if (empty($connections[$settings_hash])){
-        var_dump($database_settings);
-        var_dump($settings_hash);
+        //var_dump($database_settings);
+        //var_dump($settings_hash);
             $available_adapters = array('mysql','pgsql','sqlite');
             $class_name = 'AkDbAdapter';
             $designated_database = strtolower($database_settings['type']);
