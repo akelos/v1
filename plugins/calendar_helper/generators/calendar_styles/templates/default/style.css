@@ -1,0 +1,70 @@
+/**
+* Author: Bermi Ferrer
+*/
+table.calendar{
+  color:#667;
+  font-size:80%;
+  border-right:0.003em solid #ccc;
+}
+table.calendar caption.monthName{
+  letter-spacing:0.2em;
+  font-weight:bold;
+  color:#fff;
+  font-size:90%;
+  background:#aab;
+  padding:4px;
+  border: 0.003em solid #aab;
+}
+table.calendar thead th{
+  padding:5px 8px;
+  color: #667;
+  background: #d9e5e5;
+  border: 0.003em solid #abc;
+}
+
+table.calendar tbody td{
+  border:0.003em solid #ccc;
+  border-right:none;
+}
+table.calendar tbody td{
+  text-align:center;
+  background-color: #fff;
+  margin-right: 1px solid white;
+  padding:5px 10px;
+}
+
+
+table.calendar tbody a,
+table.calendar tbody a:link,
+table.calendar tbody a:visited{
+  text-decoration: none;
+  color:#a00;
+}
+
+table.calendar tbody a:hover{
+  color:#000;
+}
+
+table.calendar tbody td.specialDay{
+  border:2px solid #c66;
+  border-left:none;
+  border-right:none;
+  background-color: #d99;
+  font-weight:bold;
+  color:#a00;
+}
+
+table.calendar tbody td.today{
+  border:2px solid #c66;
+  background-color: #d99;
+  font-weight:bold;
+}
+
+table.calendar tbody td.otherMonth{
+  background-color: #fff;
+  color: #ecc;
+}
+
+table.calendar tbody td.weekendDay{
+  background-color: #fee;
+}

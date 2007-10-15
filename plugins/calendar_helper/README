@@ -1,0 +1,51 @@
+Calendar Helper
+===================================
+
+A simple helper for creating an XHTML and CSS calendar. 
+
+The "calendar" and "day_months" methods will be automatically available to your view templates.
+
+
+Installation
+--------------------------------
+
+    ./script/plugin install http://svn.akelos.org/plugins/calendar_helper
+
+Using the calendar helper
+--------------------------------
+
+Printing a calendar
+
+    <%= calendar :month => 10, :year => 2007 %>
+
+Adding special meaning to a given day in the calendar. The calendar helper implements
+something similar to blocks in Ruby by using PHP variable references.
+
+This example will add the class specialDay to the days found in the array $list_of_special_days
+
+    <? while($calendar_helper->month_days(array('month' => 6, 'year' => 2010), $d)) :
+        if(in_array($d->day, $list_of_special_days)){
+            $d->cell_attributes = array('class' => 'specialDay');
+        }
+    endwhile; ?>
+
+This example will replace the inner content of the <td></td> cell with the content 
+you output in the while loop, when the day is found in the $list_of_special_days array. 
+This is really convenient for generating links and Ajax for a given day in the calendar.
+
+    <? while($calendar_helper->month_days(array('month' => 9, 'year' => 2006), $d)) :
+    
+        if(in_array($d->day, $list_of_special_days)) : ?>
+            <%= link_to d.day, :controller => 'events', :day => d.day %>
+    
+         <? endif; 
+    endwhile; ?>
+
+
+Generating the default stylesheets for the calendar
+---------------------------------
+
+    ./script/generate calendar_styles
+
+CSS will be copied to subdirectories of public/stylesheets/calendar.
+

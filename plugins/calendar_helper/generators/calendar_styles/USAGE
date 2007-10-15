@@ -1,0 +1,6 @@
+Description:
+    Copies calendar helper stylesheets to public/stylesheets/calendar/
+
+Example:
+    >> generate calendar_styles
+
