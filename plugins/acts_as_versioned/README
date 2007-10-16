@@ -7,7 +7,7 @@ This plugin adds versioning capabilities to you Active Record Models.
 Installation
 --------------------------------
 
-    svn co http://svn.akelos.org/plugins/acts_as_versioned app/vendor/plugins/acts_as_versioned
+    ./script/install acts_as_versioned
 
 Enabling versioning in your models
 --------------------------------
