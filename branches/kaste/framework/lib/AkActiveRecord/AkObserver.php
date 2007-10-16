@@ -131,8 +131,9 @@ class AkObserver extends AkObject
         foreach ($models as $class_name)
         {
             $class_name = AkInflector::camelize($class_name);
-            include_once(AkInflector::toModelFilename($class_name));
-            eval("\$model =& new $class_name();");
+            if (!class_exists($class_name)) require_once(AkInflector::toModelFilename($class_name));
+            $model =& new $class_name();
+            //eval("\$model =& new $class_name();");
             $this->observe(&$model);
         }
     }

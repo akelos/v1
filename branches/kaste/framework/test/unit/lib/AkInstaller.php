@@ -25,10 +25,10 @@ class Test_of_AkInstaller extends  AkUnitTest
 
     function Test_setup_expected_returns()
     {
-        $db_type = $db->type();
+        $db_type = $this->Installer->db->type();
 
         switch ($db_type) {
-            case 'postgres':
+            case 'postgre':
                 $this->expected_for_creating_table = array(
                 'ID' => array('type'=>'int4','not_null'=>1,'default_value'=>"nextval('test_pages_id_seq'::regclass)",'primary_key' => 1),
                 'TITLE' => array('max_length'=>255,'has_default'=>null,'type'=>'varchar'),

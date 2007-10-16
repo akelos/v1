@@ -3,242 +3,24 @@
 defined('AK_TEST_DATABASE_ON') ? null : define('AK_TEST_DATABASE_ON', true);
 require_once(dirname(__FILE__).'/../../../fixtures/config/config.php');
 
-require_once(AK_LIB_DIR.DS.'AkActiveRecord.php');
-
-class test_AkActiveRecord extends  UnitTestCase
+class test_AkActiveRecord extends  AkUnitTest 
 {
-    var $_testing_models_to_delete = array();
-    var $_testing_model_databases_to_delete = array();
 
     function test_AkActiveRecord()
     {
-        parent::UnitTestCase();
-        $this->_createNewTestingModelDatabase('AkTestUser');
-        $this->_createNewTestingModel('AkTestUser');
-        
-        $this->_createNewTestingModelDatabase('AkTestMember');
-        $this->_createNewTestingModel('AkTestMember');
-
-        $this->_createNewTestingModel('AkTestField');
-        $this->_createNewTestingModelDatabase('AkTestField');
-        
-        $this->_createNewTestingModelDatabase('AkTestComment');
-        $this->_createNewTestingModel('AkTestComment');
-
+        $this->installAndIncludeModels(array(
+            'AkTestUser'=>'id I AUTO KEY, user_name C(32), first_name C(200), last_name C(200), email C(150), country I, password C(32), created_at T, updated_at T, expires_on T',
+            'AkTestMember'=>'ak_test_user_id I, role C(25)',
+            'AkTestComment'=>'id I AUTO KEY, ak_test_user_id I, private_comment L(1), birth_date T',
+            'AkTestField'=>'id I AUTO KEY,varchar_field C(255),longtext_field XL,text_field X,logblob_field B,date_field D, 
+                    datetime_field T,tinyint_field L(2),integer_field I,smallint_field I2,bigint_field I8,double_field F,
+                    numeric_field N,bytea_field B,timestamp_field T,
+                    boolean_field L(1),int2_field I2,int4_field I4,int8_field I8,foat_field F,varchar4000_field X, 
+                    clob_field XL,nvarchar2000_field X2,blob_field B,nvarchar_field C2(255),
+                    decimal1_field L(2),decimal3_field I1,decimal5_field I2,decimal10_field I4,decimal20_field I8,decimal_field N,
+                    created_at T,updated_at T,expires_on T'));
     }
 
-    function setUp()
-    {
-    }
-
-    function tearDown()
-    {
-        unset($_SESSION['__activeRecordColumnsSettingsCache']);
-    }
-
-
-    function _createNewTestingModel($test_model_name)
-    {
-
-        static $shutdown_called;
-        switch ($test_model_name) {
-            case 'AkTestUser':
-            $model_source =
-            '<?php
-    class AkTestUser extends AkActiveRecord 
-    { 
-        //var $expiresOnDataType = "date";
-        function callBackFunctionCompose()
-        {
-            $args = func_get_arg(0); 
-            return "<a href=\'mailto:{$args[\'email\']}\'>{$args[\'name\']}</a>"; 
-        } 
-        function callBackFunctionDecompose($email_link) 
-        { 
-            $results = sscanf($email_link, "<a href=\'mailto:%[^\']\'>%[^<]</a>"); 
-            return array(\'email\'=>$results[0],\'name\'=>$results[1]); 
-        } 
-        function getPassword() 
-        {
-            parent::get("password", false);
-            return "*********";
-        }
-        function setPassword($password)
-        {
-            parent::set("password", md5($password), false);
-        }
-    } 
-?>';
-            break;
-            
-            case 'AkTestComment':
-            $model_source =
-            '<?php class AkTestComment extends AkActiveRecord { 
-            //var $belongsTo = "AkTestUser";
-            //var $_inheritanceColumn = "ak_test_user_id";
-            } ?>';
-            break;
-            
-            
-            case 'AkTestMember':
-            $model_source =
-            '<?php class AkTestMember extends AkTestUser { 
-            //var $_inheritanceColumn = "ak_test_user_id";
-                function AkTestMember(){
-                    $this->setTableName("ak_test_members");
-                    $this->init(@(array)func_get_args());
-                }
-            } ?>';
-            break;
-
-            default:
-            $model_source = '<?php class '.$test_model_name.' extends AkActiveRecord { } ?>';
-            break;
-        }
-
-        $file_name = AkInflector::toModelFilename($test_model_name);
-        
-        if(!Ak::file_put_contents($file_name,$model_source)){
-            die('Ooops!, in order to perform this test, you must set your app/model permissions so this can script can create and delete files into/from it');
-        }
-        if(!in_array($file_name, get_included_files()) && !class_exists($test_model_name)){
-            include($file_name);
-        }else {
-            return false;
-        }
-        $this->_testing_models_to_delete[] = $file_name;
-        if(!isset($shutdown_called)){
-            $shutdown_called = true;
-            register_shutdown_function(array(&$this,'_deleteTestingModels'));
-        }
-        return true;
-    }
-
-    function _deleteTestingModels()
-    {
-        foreach ($this->_testing_models_to_delete as $file){
-            Ak::file_delete($file);
-        }
-    }
-
-
-
-
-    function _createNewTestingModelDatabase($test_model_name)
-    {
-        static $shutdown_called;
-        // Create a data dictionary object, using this connection
-        $db =& AK::db();
-        //$db->debug = true;
-        $table_name = AkInflector::tableize($test_model_name);
-        if(in_array($table_name, (array)$db->MetaTables())){
-            return false;
-        }
-        switch ($table_name) {
-            case 'ak_test_users':
-            $table =
-            array(
-            'table_name' => 'ak_test_users',
-            'fields' => 'id I AUTO KEY, user_name C(32), first_name C(200), last_name C(200), email C(150), country I, password C(32), created_at T, updated_at T, expires_on T',
-            'index_fileds' => 'id',
-            'table_options' => array('mysql' => 'TYPE=InnoDB', 'REPLACE')
-            );
-            break;
-            case 'ak_test_members':
-            $table =
-            array(
-            'table_name' => 'ak_test_members',
-            'fields' => 'ak_test_user_id I, role C(25)',
-            'table_options' => array('mysql' => 'TYPE=InnoDB', 'REPLACE')
-            );
-            break;
-            case 'ak_test_comments':
-            $table =
-            array(
-            'table_name' => 'ak_test_comments',
-            'fields' => 'id I AUTO KEY, ak_test_user_id I, private_comment L(1), birth_date T',
-            'index_fileds' => 'id',
-            'table_options' => array('mysql' => 'TYPE=InnoDB', 'REPLACE')
-            );
-            break;
-            case 'ak_test_fields':
-            $table =
-            array(
-            'table_name' => 'ak_test_fields',
-            'fields' => 'id I AUTO KEY,
-                    varchar_field C(255), 
-                    longtext_field XL, 
-                    text_field X, 
-                    logblob_field B,		
-                    date_field D, 
-                    datetime_field T, 
-                    tinyint_field L(2),
-                    integer_field I, 
-                    smallint_field I2, 
-                    bigint_field I8, 
-                    double_field F,
-                    numeric_field N,
-                    bytea_field B,
-                    timestamp_field T,
-                    boolean_field L(1), 
-                    int2_field I2, 
-                    int4_field I4, 
-                    int8_field I8, 
-                    foat_field F,
-                    varchar4000_field X, 
-                    clob_field XL, 
-                    nvarchar2000_field X2,
-                    blob_field B,
-                    nvarchar_field C2(255),
-                    decimal1_field L(2), 
-                    decimal3_field I1, 
-                    decimal5_field I2, 
-                    decimal10_field I4,
-                    decimal20_field I8,
-                    decimal_field N,
-                    created_at T, 
-                    updated_at T, 
-                    expires_on T',
-            'index_fileds' => 'id',
-            'table_options' => array('mysql' => 'TYPE=InnoDB', 'REPLACE')
-            );
-            break;
-            default:
-            return false;
-            break;
-        }
-
-        $dict = NewDataDictionary($db->connection);
-        $sqlarray = $dict->CreateTableSQL($table['table_name'], $table['fields'], $table['table_options']);
-        $dict->ExecuteSQLArray($sqlarray);
-        if(isset($table['index_fileds'])){
-            $sqlarray = $dict->CreateIndexSQL('idx_'.$table['table_name'], $table['table_name'], $table['index_fileds']);
-            $dict->ExecuteSQLArray($sqlarray);
-        }
-        
-        ($db->type() == 'sqlite') ? $db->CreateSequence('seq_'.$table['table_name']) : null;
-
-        $this->_testing_model_databases_to_delete[] = $table_name;
-        if(!isset($shutdown_called)){
-            $shutdown_called = true;
-            register_shutdown_function(array(&$this,'_deleteTestingModelDatabases'));
-        }
-        //$db->debug = false;
-        return true;
-    }
-
-    function _deleteTestingModelDatabases()
-    {
-        $db =& AK::db();
-        foreach ($this->_testing_model_databases_to_delete as $table_name){
-            $db->Execute('DROP TABLE '.$table_name);
-            ($db->type() == 'sqlite') ? $db->DropSequence('seq_'.$table_name) : null;
-        }
-    }
-
-
-    /**/
-    
     function Test_of_getArrayFromAkString()
     {
         $User = new AkTestUser();
@@ -275,10 +57,10 @@ class test_AkActiveRecord extends  UnitTestCase
         $this->assertEqual($AkTestUser->getTableName(), 'ak_test_users');
         $this->assertErrorPattern('/ak_test_user/',$AkTestUser->setTableName('ak_test_user'));
 
-        $this->_createNewTestingModel('AkTestUnavailableDatabase');
+        //$this->_createNewTestingModel('AkTestUnavailableDatabase');
         //$AkTestUnavailableDatabase = new AkTestUnavailableDatabase();
         //$this->assertEqual($AkTestUnavailableDatabase->getModelName(), 'AkTestUnavailableDatabase');
-        ak_define('AK_ACTIVE_RECORD_VALIDATE_TABLE_NAMES', true);
+        //ak_define('AK_ACTIVE_RECORD_VALIDATE_TABLE_NAMES', true);
         //$this->assertErrorPattern('/Ooops! Could not fetch details for the table ak_test_unavailable_database./',$AkTestUnavailableDatabase->getTableName());
     }
 

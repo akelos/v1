@@ -54,7 +54,7 @@ require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkAssociation.php');
 */
 class AkHasOne extends AkAssociation
 {
-    var $asssociated_ids = array();
+    var $associated_ids = array();
 
     function &addAssociated($association_id, $options = array())
     {
@@ -111,7 +111,7 @@ class AkHasOne extends AkAssociation
 
     function getAssociatedId($association_id)
     {
-        return isset($this->asssociated_ids[$association_id]) ? $this->asssociated_ids[$association_id] : false;
+        return isset($this->associated_ids[$association_id]) ? $this->associated_ids[$association_id] : false;
     }
 
 

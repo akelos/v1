@@ -1,42 +1,23 @@
 <?php
 
+defined('AK_TEST_DATABASE_ON') ? null : define('AK_TEST_DATABASE_ON', true);
+require_once(dirname(__FILE__).'/../../../fixtures/config/config.php');
+
 class HasAndBelongsToManyTestCase extends  AkUnitTest
 {
-    function setup()
+
+    function test_start()
     {
         $this->installAndIncludeModels(array('Post', 'Tag'));
         $Installer = new AkInstaller();
         @$Installer->dropTable('posts_tags');
         @Ak::file_delete(AK_MODELS_DIR.DS.'post_tag.php');
-    }
-    /**/
-    function test_start()
-    {
-        require_once(AK_LIB_DIR.DS.'AkActiveRecord.php');
-        require_once(AK_LIB_DIR.DS.'AkInstaller.php');
-        require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkHasOne.php');
-        require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkBelongsTo.php');
-        require_once(AK_APP_DIR.DS.'shared_model.php');
-        require_once(AK_APP_DIR.DS.'installers'.DS.'framework_installer.php');
-        $installer = new FrameworkInstaller();
-        $installer->uninstall();
-        $installer->install();
-        
-        
-        $models = array('Picture', 'Thumbnail','Panorama', 'Property', 'PropertyType');
-        foreach ($models as $model){
-            require_once(AK_APP_DIR.DS.'installers'.DS.AkInflector::underscore($model).'_installer.php');
-            require_once(AK_MODELS_DIR.DS.AkInflector::underscore($model).'.php');
-            $installer_name = $model.'Installer';
-            $installer = new $installer_name();
-            $installer->uninstall();
-            $installer->install();
-        }
-        unset($_SESSION['__activeRecordColumnsSettingsCache']);
+
+        $this->installAndIncludeModels(array('Picture', 'Thumbnail','Panorama', 'Property', 'PropertyType'));
     }
 
 
-    function test_for_has_and_belons_to_many()
+    function test_for_has_and_belongs_to_many()
     {
 
         $Property =& new Property(array('description'=>'Gandia Palace'));
@@ -413,7 +394,7 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
         foreach (range(1,10) as $i){
             $Post =& new Post(array('title' => 'Post '.$i));
             $Post->tag->create(array('name' => 'Tag '.$i));
-            $Post->save();
+            $this->assertTrue($Post->save());    // dont know why but this fails sometimes, randomly (postgreSQL/win) -kaste
             $this->assertEqual($Post->tag->count(), 1);
         }
 
@@ -442,5 +423,6 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
     /**//** //**/
 }
 
+ak_test('HasAndBelongsToManyTestCase',true);
 
 ?>

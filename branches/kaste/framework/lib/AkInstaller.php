@@ -276,9 +276,8 @@ class AkInstaller
         //'REPLACE'
         );
         $table_options = array_merge($default_table_options, $table_options);
-
-        $column_string = $this->_getColumnsAsAdodbDataDictionaryString($column_options['columns']);
         
+        $column_string = $this->_getColumnsAsAdodbDataDictionaryString($column_options['columns']);
         $result = $this->data_dictionary->ExecuteSQLArray($this->data_dictionary->ChangeTableSQL($table_name, str_replace(array(' UNIQUE', ' INDEX', ' FULLTEXT', ' HASH'), '', $column_string), $table_options));
 
         if($result){
@@ -388,19 +387,20 @@ class AkInstaller
     {
         $columns = $this->_setColumnDefaults($columns);
         $this->_ensureColumnNameCompatibility($columns);
+
         $equivalences = array(
         '/ ((limit|max|length) ?= ?)([0-9]+)([ \n\r,]+)/'=> ' (\3) ',
         '/([ \n\r,]+)default([ =]+)([^\'^,^\n]+)/i'=> ' DEFAULT \'\3\'',
-        '/([ \n\r,]+)(integer|int)([( \n\r,]*)/'=> '\1 I \3',
+        '/([ \n\r,]+)(integer|int)([( \n\r,]+)/'=> '\1 I \3',
         '/([ \n\r,]+)float([( \n\r,]+)/'=> '\1 F \2',
-        '/([ \n\r,]+)datetime([( \n\r,]*)/'=> '\1 T \2',
-        '/([ \n\r,]+)date([( \n\r,]*)/'=> '\1 D \2',
-        '/([ \n\r,]+)timestamp([( \n\r,]*)/'=> '\1 T \2',
-        '/([ \n\r,]+)time([( \n\r,]*)/'=> '\1 T \2',
-        '/([ \n\r,]+)text([( \n\r,]*)/'=> '\1 XL \2',
-        '/([ \n\r,]+)string([( \n\r,]*)/'=> '\1 C \2',
-        '/([ \n\r,]+)binary([( \n\r,]*)/'=> '\1 B \2',
-        '/([ \n\r,]+)boolean([( \n\r,]*)/'=> '\1 L(1) \2',
+        '/([ \n\r,]+)datetime([( \n\r,]+)/'=> '\1 T \2',
+        '/([ \n\r,]+)date([( \n\r,]+)/'=> '\1 D \2',
+        '/([ \n\r,]+)timestamp([( \n\r,]+)/'=> '\1 T \2',
+        '/([ \n\r,]+)time([( \n\r,]+)/'=> '\1 T \2',
+        '/([ \n\r,]+)text([( \n\r,]+)/'=> '\1 XL \2',
+        '/([ \n\r,]+)string([( \n\r,]+)/'=> '\1 C \2',
+        '/([ \n\r,]+)binary([( \n\r,]+)/'=> '\1 B \2',
+        '/([ \n\r,]+)boolean([( \n\r,]+)/'=> '\1 L(1) \2',
         '/ NOT( |_)?NULL/i'=> ' NOTNULL',
         '/ AUTO( |_)?INCREMENT/i'=> ' AUTO ',
         '/ +/'=> ' ',

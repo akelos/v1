@@ -110,7 +110,7 @@ class AkHasAndBelongsToMany extends AkAssociation
      * Join object place holder
      */
     var $JoinObject;
-    var $asssociated_ids = array();
+    var $associated_ids = array();
     var $association_id;
     var $_automatically_create_join_model_files = AK_HAS_AND_BELONGS_TO_MANY_CREATE_JOIN_MODEL_CLASSES;
 
@@ -500,7 +500,7 @@ class AkHasAndBelongsToMany extends AkAssociation
                         unset($this->Owner->{$this->association_id}[$kk]);
                     }
                 }
-                unset($this->asssociated_ids[$record_id]);
+                unset($this->associated_ids[$record_id]);
                 $this->_unsetAssociatedMemberId($records[$k]);
                 if(!empty($options['after_remove']) && method_exists($this->Owner, $options['after_remove'])){
                     $this->Owner->{$options['after_remove']}($records[$k]);
@@ -520,21 +520,21 @@ class AkHasAndBelongsToMany extends AkAssociation
         }
         $object_id = $Member->getId();
         if(!empty($object_id)){
-            $this->asssociated_ids[$object_id] = $Member->__hasAndBelongsToManyMemberId;
+            $this->associated_ids[$object_id] = $Member->__hasAndBelongsToManyMemberId;
         }
     }
 
     function _unsetAssociatedMemberId(&$Member)
     {
         $id = $this->_getAssociatedMemberId($Member);
-        unset($this->asssociated_ids[$id]);
+        unset($this->associated_ids[$id]);
         unset($Member->__hasAndBelongsToManyMemberId);
     }
 
     function _getAssociatedMemberId(&$Member)
     {
         if(!empty($Member->__hasAndBelongsToManyMemberId)) {
-            return array_search($Member->__hasAndBelongsToManyMemberId, $this->asssociated_ids);
+            return array_search($Member->__hasAndBelongsToManyMemberId, $this->associated_ids);
         }
         return false;
     }
@@ -542,7 +542,7 @@ class AkHasAndBelongsToMany extends AkAssociation
     function _hasAssociatedMember(&$Member)
     {
         $options = $this->getOptions($this->association_id);
-        if($options['unique'] && !$Member->isNewRecord() && isset($this->asssociated_ids[$Member->getId()])){
+        if($options['unique'] && !$Member->isNewRecord() && isset($this->associated_ids[$Member->getId()])){
             return true;
         }
         $id = $this->_getAssociatedMemberId($Member);
