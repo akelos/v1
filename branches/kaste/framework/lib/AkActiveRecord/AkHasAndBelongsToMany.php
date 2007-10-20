@@ -753,13 +753,13 @@ class AkHasAndBelongsToMany extends AkAssociation
 
     function &getAssociatedModelInstance()
     {
-        static $ModelInstance;
-        if(empty($ModelInstance)){
-            $class_name = $this->getOption($this->association_id, 'class_name');
+        static $ModelInstances;
+        $class_name = $this->getOption($this->association_id, 'class_name');
+        if(empty($ModelInstances[$class_name])){  
             Ak::import($class_name);
-            $ModelInstance =& new $class_name();
-        }
-        return $ModelInstance;
+            $ModelInstances[$class_name] =& new $class_name();
+        } 
+        return $ModelInstances[$class_name];
     }
 
 

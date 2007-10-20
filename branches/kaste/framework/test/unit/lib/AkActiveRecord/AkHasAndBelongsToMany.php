@@ -15,6 +15,11 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
 
         $this->installAndIncludeModels(array('Picture', 'Thumbnail','Panorama', 'Property', 'PropertyType'));
     }
+    
+    function test_getAssociatedModelInstance_should_return_a_single_instance()  // bug-fix
+    {
+        $this->assertTrue($this->Post->tag->getAssociatedModelInstance()===$this->Post->tag->getAssociatedModelInstance());
+    }
 
 
     function test_for_has_and_belongs_to_many()
