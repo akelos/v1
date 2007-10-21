@@ -44,7 +44,7 @@ class AkInstaller
         $this->db->connection->debug = $this->debug;
         //$this->db->debug = $this->debug;
 
-        $this->data_dictionary = NewDataDictionary($this->db->connection);
+        $this->data_dictionary =& $this->db->getDictionary();
         $this->available_tables = $this->getAvailableTables();
     }
 

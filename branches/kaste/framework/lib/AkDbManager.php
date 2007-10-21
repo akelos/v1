@@ -39,7 +39,7 @@ class AkDbManager
             $db =& $this->_db;
         }
         
-        $dict = NewDataDictionary($db->connection);
+        $dict =& $db->getDictionary();
         $sqlarray = $dict->CreateTableSQL($table_name, $table_fields, $table_options);
         $dict->ExecuteSQLArray($sqlarray);
         if(isset($table_index_fields)){
