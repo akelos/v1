@@ -399,8 +399,8 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
         foreach (range(1,10) as $i){
             $Post =& new Post(array('title' => 'Post '.$i));
             $Post->tag->create(array('name' => 'Tag '.$i));
-            $this->assertTrue($Post->save());    // dont know why but this fails sometimes, randomly (postgreSQL/win) -kaste
-            $this->assertEqual($Post->tag->count(), 1);
+            $this->assertTrue($Post->save());    
+            $this->assertEqual($Post->tag->count(), 1);  // dont know why but this fails sometimes, randomly -kaste
         }
 
         $Post11 =& new Post(array('name' => 'Post 11'));
@@ -408,7 +408,7 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
 
         $Post->tag->setByIds(1,2,3,4,5);
         
-        $this->assertTrue($Post =& $Post->find(10, array('include' => 'tags')));
+        $this->assertTrue($Post =& $Post->find(10, array('include' => 'tags','order' => '_tags.id ASC')));
 
         foreach (array_keys($Post->tags) as $k){
             $this->assertEqual($Post->tags[$k]->getId(), $k+1);

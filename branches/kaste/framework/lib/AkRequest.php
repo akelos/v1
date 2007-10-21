@@ -806,11 +806,8 @@ class AkRequest extends AkObject
 
     function _connectToDatabase()
     {
-        global $dsn;
         if(AK_AUTOMATIC_DB_CONNECTION){
-            if(!empty($dsn)){
-                Ak::db($dsn);
-            }
+            Ak::db(AK_DEFAULT_DATABASE_PROFILE);
         }
     }
     

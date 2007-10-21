@@ -34,9 +34,8 @@ class AkDbAdapter_mysql extends AkDbAdapter
         $dsn .= !empty($database_settings['host']) ? '@'.$database_settings['host'] : '@localhost';
         $dsn .= !empty($database_settings['port']) ? ':'.$database_settings['port'] : '';
         $dsn .= '/'.$database_settings['database_name'];
-        $dsn .= !empty($database_settings['options']) ? $database_settings['options'] : '';
+        $dsn .= !empty($database_settings['options']) ? '?'.$database_settings['options'] : '';
         return $dsn;
-        
     }
     
     function type()

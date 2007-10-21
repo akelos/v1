@@ -1185,7 +1185,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $bindings = is_array($sql) && count($sql) > 0 ? $sql : array($sql);
             $sql = $sql_query;
         }
-        $this->setConnection();
+        //$this->setConnection();
         
         AK_LOG_EVENTS ? $this->_startSqlBlockLog() : null;
                 
@@ -2402,13 +2402,16 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     ====================================================================
     */
     /**
-    * Establishes the connection to the database. Accepts an array as input where the 'adapter' 
-    * key must be specified with the name of a database adapter (in lower-case) example for regular 
-    * databases (MySQL, Postgresql, etc):
+    * Establishes the connection to the database. Accepts either a profile name specified in config/config.php or
+    * an array as input where the 'type' key must be specified with the name of a database adapter (in lower-case) 
+    * example for regular databases (MySQL, Postgresql, etc):
+    * 
+    *   $AkActiveRecord->establishConnection('development');
+    *   $AkActiveRecord->establishConnection('super_user');
     * 
     *   $AkActiveRecord->establishConnection(
     *       array(
-    *       'adapter'  => "mysql",
+    *       'type'  => "mysql",
     *       'host'     => "localhost",
     *       'username' => "myuser",
     *       'password' => "mypass",
@@ -2419,25 +2422,25 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     *
     *     $AkActiveRecord->establishConnection(
     *       array(
-    *       'adapter' => "sqlite",
+    *       'type' => "sqlite",
     *       'dbfile'  => "path/to/dbfile"
     *       )
     *     )
     */
-    function &establishConnection($spec = null)
+    function &establishConnection($spec = AK_DEFAULT_DATABASE_PROFILE)
     {
-        if(isset($spec)){
-            $dns = is_string($spec) ? $spec : '';
-            if(!empty($spec['adapter'])){
-                $dsn = $spec['adapter'] == 'sqlite' ?
-                'sqlite://'.urlencode($spec['dbfile']).'/' :
-                $spec['adapter'].'://'.@$spec['username'].':'.@$spec['password'].'@'.@$spec['host'].'/'.@$spec['database'];
-            }
-            $dsn .= isset($spec['persist']) && $spec['persist'] === false ? '' : '?persist';
-            return $this->setConnection($dns);
-        }else{
-            return false;
+        if (is_string($spec)){
+            global $database_settings;
+            if (!empty($database_settings[$spec])){
+                $spec = $database_settings[$spec];     
+            } else {
+                trigger_error(Ak::t("Could not find the database profile '%profile_name' in config/config.php.",array('%profile_name'=>$spec)),E_USER_ERROR);
+                unset ($this->_db);
+                $return = false; return $return;
+            }     
         }
+        $this->setConnection($spec);
+        return $this->_db;
     }
 
 
@@ -2461,10 +2464,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     /**
     * Set the connection for the class.
     */
-    function setConnection($dns = null, $connection_id = null)
+    function setConnection($db_specification = null)
     {
-        //$this->_db =& Ak::db($dns, $connection_id);
-        $this->_db =& AkDbAdapter::getConnection();
+        $this->_db =& AkDbAdapter::getConnection($db_specification);
     }
     
     /**
@@ -2706,7 +2708,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         
         if(empty($this->_columnsSettings) || !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
             if(empty($this->_dataDictionary)){
-                $this->_dataDictionary =& NewDataDictionary($this->_db->connection);
+                $this->_dataDictionary =& $this->_db->getDictionary();
             }
 
             $column_objects = $this->_databaseTableInternals($this->getTableName());
@@ -4645,8 +4647,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if(!$this->isConnected()){
             $this->setConnection();
         }
-        $this->_db->debug = $this->_db->debug ? false : true;
-        $this->db_debug =& $this->_db->debug;
+        $this->_db->connection->debug = $this->_db->connection->debug ? false : true;
+        $this->db_debug =& $this->_db->connection->debug;
     }
     
     function toString($print = false)

@@ -45,12 +45,12 @@ class Ak
 {
 
     /**
-    * Gets an instance of AdoDb database connection
+    * Gets an instance of AkDbAdapter
     *
     * Whenever a database connection is required you can get a
     * reference to the default database connection by doing:
     *
-    * $db =& Ak:db(); // get an adodb instance
+    * $db =& Ak::db(); // get an adodb instance
     * 
     * AdoDB manual can be found at http://phplens.com/adodb/
     *
@@ -61,45 +61,12 @@ class Ak
     * @static
     * @return resource Php AdoDb instance.
     */
-    function &db($dsn = null, $connection_id = null)
+    function &db($dsn = null)
     {
         require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
-        return AkDbAdapter::getConnection();
-        static $db, $default_connection_id;
-
-        // In order to retrieve a database connection we just need to provide its identifier
-        if(empty($default_connection_id)){
-            $default_connection_id = md5($dsn);
-        }
-        $connection_id = empty($connection_id) ? $default_connection_id : $connection_id;
-        
-        if(empty($db[$connection_id])){
-            require_once(AK_CONTRIB_DIR.DS.'adodb'.DS.'adodb.inc.php');
-
-            if(substr($dsn, 0, 6) == 'mysql:'){
-                $dsn = substr_replace($dsn, 'mysqlt:', 0, 6);
-            }
-
-            if (!$db[$connection_id] = (AK_DEBUG ? NewADOConnection($dsn) : @NewADOConnection($dsn))){
-                error_reporting(E_ALL);
-                if(defined('AK_DATABASE_CONNECTION_FAILURE_CALLBACK') && function_exists(AK_DATABASE_CONNECTION_FAILURE_CALLBACK)){
-                    $fn = AK_DATABASE_CONNECTION_FAILURE_CALLBACK;
-                    $fn();
-                }
-                if(!AK_PHP5 && substr($dsn,0,6) == 'sqlite'){
-                    echo "\nWarning, sqlite support is not available by default on PHP4.\n Check your PHP version by running \"env php -v\", and change the first line in your scripts/ so they point to a php5 binary\n\n";
-                }
-                die(Ak::t('Connection to the database failed.').' '.
-                (AK_DEBUG?preg_replace('/\/\/(\w+):(.*)@/i','//$1:******@', urldecode($dsn))."\n":''));
-            }
-            $db[$connection_id]->debug = AK_DEBUG == 2;
-            defined('AK_DATABASE_CONNECTION_AVAILABLE') ? null : define('AK_DATABASE_CONNECTION_AVAILABLE', true);
-            $dsn = '';
-        }
-        return $db[$connection_id];
+        if (empty($dsn) || !is_array($dsn)) $dsn = array();
+        return AkDbAdapter::getConnection($dsn);
     }
-
-
 
     /**
     * Gets a cache object singleton instance

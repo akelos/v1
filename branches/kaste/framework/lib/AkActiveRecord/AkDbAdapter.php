@@ -23,8 +23,9 @@ class AkDbAdapter
 
     var $connection;
     var $settings;
-    static $methods = array();
-    static $properties = array();
+    var $dictionary;
+    static $delegated_methods = array();
+    static $delegated_properties = array();
     
     /**
      * @param array $database_settings
@@ -32,19 +33,19 @@ class AkDbAdapter
     function __construct($database_settings,$auto_connect = false)
     {
         $this->settings = $database_settings;
-        if ($auto_connect) $this->establish_connection();
+        if ($auto_connect) $this->connect();
     }
     
     function __destruct()
     {
-        //var_dump(self::$methods);
-        //var_dump(self::$properties);
+        //var_dump(self::$delegated_methods);
+        //var_dump(self::$delegated_properties);
     }
     
     function __call($method,$args)
     {
-        if (!in_array($method,self::$methods)) {
-            self::$methods[] = $method;
+        if (!in_array($method,self::$delegated_methods)) {
+            self::$delegated_methods[] = $method;
         }
         if (method_exists($this->connection,$method)) {
             $result =& call_user_func_array(array(&$this->connection,$method),$args);
@@ -54,15 +55,15 @@ class AkDbAdapter
     
     function __get($property)
     {
-        if (!in_array($property,self::$properties)) {
-            self::$properties[] = $property;
+        if (!in_array($property,self::$delegated_properties)) {
+            self::$delegated_properties[] = $property;
         }
         if (property_exists($this->connection,$property)) {
             return $this->connection->{$property};
         }
     }
     
-    function establish_connection()
+    function connect()
     {
         $dsn = $this->_constructDsn($this->settings);
         require_once(AK_CONTRIB_DIR.DS.'adodb'.DS.'adodb.inc.php');
@@ -85,36 +86,44 @@ class AkDbAdapter
         }
     }
     
+    function connected()
+    {
+        return !empty($this->connection);
+    }
+    
     /* static */
     /**
      * @param array $database_settings
      * @return object 
      */
-    function &getConnection($database_settings = null,$auto_connect = true)
+    function &getConnection($database_specifications = null,$auto_connect = true)
     {
         static $connections,$defaults;
         if (empty($defaults)) {
-            //global $default_database_settings;
-            $defaults = $GLOBALS['default_database_settings'];
+            global $database_settings;
+            $defaults = $database_settings[AK_DEFAULT_DATABASE_PROFILE];
+            //$database_specifications = $database_settings[AK_DEFAULT_DATABASE_PROFILE];
+        } 
+        if (empty($database_specifications)){
+            $database_specifications = $defaults;
+            //$return =& $defaults;
+            //return $return;
         }
-        if (empty($database_settings)) {
-            $database_settings = $defaults;
-        }
-        $settings_hash = AkDbAdapter::_hash($database_settings);
+        
+        $settings_hash = AkDbAdapter::_hash($database_specifications);
         if (empty($connections[$settings_hash])){
-        //var_dump($database_settings);
+        //var_dump($database_specifications);
         //var_dump($settings_hash);
             $available_adapters = array('mysql','pgsql','sqlite');
             $class_name = 'AkDbAdapter';
-            $designated_database = strtolower($database_settings['type']);
+            $designated_database = strtolower($database_specifications['type']);
             if (in_array($designated_database,$available_adapters)) {
                 $class_name .= '_'.$designated_database;
                 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.$class_name.'.php');
             }
-            $connections[$settings_hash] = new $class_name($database_settings,$auto_connect);
+            $connections[$settings_hash] =& new $class_name($database_specifications,$auto_connect);
+            //if (empty($defaults)) $defaults = $connections[$settings_hash];
         }
-        $connection = &$connections[$settings_hash]->connection;
-        //return $connection;
         return $connections[$settings_hash];
     }
     
@@ -126,6 +135,15 @@ class AkDbAdapter
     {
         if (isset($settings['password'])) unset($settings['password']);
         return join(':',$settings);
+    }
+
+    function getDictionary()
+    {
+        if (empty($this->dictionary)){
+            if (!$this->connected()) $this->connect();
+            $this->dictionary =& NewDataDictionary($this->connection);
+        }
+        return $this->dictionary;
     }
     
     /**

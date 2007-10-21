@@ -40,8 +40,12 @@ if(AK_TESTING_REWRITE_BASE){
 }
 
 if(defined('AK_TEST_DATABASE_ON')){
+    $last_arg = $argv[count($argv)-1];
+    $default_profile = array_key_exists($last_arg,$database_settings) ? array_pop($argv) : AK_ENVIRONMENT;;
+    define('AK_DEFAULT_DATABASE_PROFILE',$default_profile);
     include_once(AK_LIB_DIR.DS.'Ak.php');
-    Ak::db(&$dsn);
+    Ak::db();
+    unset($last_arg,$default_profile);
     //require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
     //AkDbAdapter::getConnection($GLOBALS['default_database_settings']);
 }
