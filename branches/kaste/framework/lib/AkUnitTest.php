@@ -96,7 +96,7 @@ class AkUnitTest extends UnitTestCase
                 return false;
             }
             $installer = new AkInstaller();
-            $installer->dropTable($table_name);
+            $installer->dropTable($table_name,array('sequence'=>true));
             $installer->createTable($table_name,$table_definition);
         }
     }

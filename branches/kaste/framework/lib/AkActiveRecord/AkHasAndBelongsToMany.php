@@ -173,7 +173,7 @@ class AkHasAndBelongsToMany extends AkAssociation
         $this->setAssociatedId($association_id, $options['handler_name']);
         $Collection->association_id = $association_id;
 
-        $Collection->_loadJoinObject() ? null : trigger_error(Ak::t('Could find join model %model_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_class_name'],'id'=>$this->association_id)),E_USER_ERROR);
+        $Collection->_loadJoinObject();
 
         return $Collection;
     }
@@ -216,23 +216,15 @@ class AkHasAndBelongsToMany extends AkAssociation
         }
         $options = $this->getOptions($this->association_id);
 
-        $join_model_file = AkInflector::toModelFilename($options['join_class_name']);
-        if(file_exists($join_model_file)){
-            require_once($join_model_file);
-            if(class_exists($options['join_class_name'])){
-                $this->JoinObject =& new $options['join_class_name']();
+        if (class_exists($options['join_class_name']) || $this->_loadJoinClass($options['join_class_name']) || $this->_createJoinClass()) {
+            $this->JoinObject =& new $options['join_class_name']();
+            //if($this->JoinObject->setTableName($options['join_table'], true, true) || $this->_createJoinTable()){
+            if($this->_tableExists($options['join_table']) || $this->_createJoinTable()){
                 $this->JoinObject->setPrimaryKey($options['foreign_key']);
                 return true;
-            }
-        }
-        if($this->_createJoinClass()){
-            $this->JoinObject =& new $options['join_class_name']();
-            if(!$this->_hasJoinTable()){
-                $this->_createJoinTable() ? null : trigger_error(Ak::t('Could not find join table %table_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_table'],'id'=>$this->association_id)),E_USER_ERROR);
-            }
-            $this->JoinObject->setPrimaryKey($options['foreign_key']);
-            return true;
-        }
+                
+            } else trigger_error(Ak::t('Could not find join table %table_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_table'],'id'=>$this->association_id)),E_USER_ERROR);
+        } else     trigger_error(Ak::t('Could not find join model %model_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_class_name'],'id'=>$this->association_id)),E_USER_ERROR); return false;
         return false;
     }
 
@@ -241,13 +233,20 @@ class AkHasAndBelongsToMany extends AkAssociation
         $options = $this->getOptions($this->association_id);
         return !empty($this->JoinObject) && (strtolower($options['join_class_name']) == strtolower(get_class($this->JoinObject)));
     }
+    
+    function _loadJoinClass($class_name)
+    {
+        $model_file = AkInflector::toModelFilename($class_name);
+        return file_exists($model_file) && require_once($model_file);
+    }
+    
     function _createJoinClass()
     {
         $options = $this->getOptions($this->association_id);
-        if(!class_exists($options['join_class_name'])){
-            $class_file_code = "<?php \n\n//This code was generated automatically by the active record hasAndBelongsToMany Method\n\n";
-            $class_code =
-            "class {$options['join_class_name']} extends {$options['join_class_extends']} {
+
+        $class_file_code = "<?php \n\n//This code was generated automatically by the active record hasAndBelongsToMany Method\n\n";
+        $class_code =
+        "class {$options['join_class_name']} extends {$options['join_class_extends']} {
     var \$_avoidTableNameValidation = true;
     function {$options['join_class_name']}()
     {
@@ -257,37 +256,29 @@ class AkHasAndBelongsToMany extends AkAssociation
         \$this->init(\$attributes);
     }
 }";
-            $class_file_code .= $class_code. "\n\n?>";
-            $join_file = AkInflector::toModelFilename($options['join_class_name']);
-            if($this->_automatically_create_join_model_files && !file_exists($join_file) && @Ak::file_put_contents($join_file, $class_file_code)){
-                require_once($join_file);
-            }else{
-                eval($class_code);
-            }
+        $class_file_code .= $class_code. "\n\n?>";
+        $join_file = AkInflector::toModelFilename($options['join_class_name']);
+        if($this->_automatically_create_join_model_files && !file_exists($join_file) && @Ak::file_put_contents($join_file, $class_file_code)){
+            require_once($join_file);
+        }else{
+            eval($class_code);
         }
         return class_exists($options['join_class_name']);
     }
 
-    function _hasJoinTable()
+    function _tableExists($table_name)
     {
-        $options = $this->getOptions($this->association_id);
-        if(isset($this->JoinObject)){
-            return $this->JoinObject->setTableName($options['join_table'], true, true);
-        }
-        return false;
+        return $this->JoinObject->setTableName($table_name, true, true);
     }
 
     function _createJoinTable()
     {
         $options = $this->getOptions($this->association_id);
-        require_once(AK_LIB_DIR.DS.'AkDbManager.php');
-
-        AkDbManager::createTable($options['join_table'], "id I AUTO KEY,{$options['foreign_key']} I, {$options['association_foreign_key']} I",array('mysql' => 'TYPE=InnoDB'),false,
-        "{$options['foreign_key']},{$options['association_foreign_key']}");
-        return $this->_hasJoinTable();
+        require_once(AK_LIB_DIR.DS.'AkInstaller.php');
+        $Installer =& new AkInstaller();
+        $Installer->createTable($options['join_table'],"id,{$options['foreign_key']},{$options['association_foreign_key']}");
+        return $this->JoinObject->setTableName($options['join_table'],false);
     }
-
-
 
     function &load($force_reload = false)
     {
