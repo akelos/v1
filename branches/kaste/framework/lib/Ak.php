@@ -781,8 +781,9 @@ class Ak
         static $Logger;
         if(empty($Logger)){
             require_once(AK_LIB_DIR.DS.'AkLogger.php');
-            $Logger =& new AkLogger();
+            $Logger = new AkLogger();
         }
+        $return =& $Logger; 
         return $Logger;
     }
 
