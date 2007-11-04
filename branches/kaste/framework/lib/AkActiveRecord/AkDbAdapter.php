@@ -24,6 +24,7 @@ class AkDbAdapter
     var $connection;
     var $settings;
     var $dictionary;
+    var $debug=false;
     static $delegated_methods = array();
     static $delegated_properties = array();
     
@@ -166,6 +167,64 @@ class AkDbAdapter
     {
         return $this->settings['type'];
     }
+    
+    function debug($on='switch')
+    {
+        if ($on=='switch') $this->debug = !$this->debug; 
+                      else $this->debug = $on;
+        //$this->connection->debug = $this->debug;
+        return $this->debug;
+    }
+    
+    function _log($message)
+    {
+        if (!AK_LOG_EVENTS) return;
+        Ak::getLogger()->message($message);
+    }
+    
+    /* DATABASE STATEMENTS - CRUD */
+    
+    function sqlexecute($sql,$message = '')
+    {
+        $this->_log( (empty($message) ? 'SQL' : $message).": $sql");
+        $result = $this->connection->Execute($sql);
+        if (!$result){
+            $message = !empty($message) ? "On '".$message."' got: " : 'SQL Error: ';
+            $message .= '['.$this->connection->ErrorNo().'] '.$this->connection->ErrorMsg();
+
+            $this->_log($message);   
+            if ($this->debug || AK_DEBUG) trigger_error($message, E_USER_NOTICE);
+        }
+        return $result;
+    }
+    
+    function auto_increments_primary_key()
+    {
+        return true;
+    }
+    
+    function last_inserted($table,$pk)
+    {
+        return $this->connection->Insert_ID($table,$pk);
+    }
+
+    function affected_rows()
+    {
+        return $this->connection->Affected_Rows();
+    }
+    
+    function insert($sql,$id=null,$pk=null,$table=null,$message = '')
+    {
+        $result = $this->sqlexecute($sql,$message);
+        return is_null($id) ? $this->last_inserted($table,$pk) : $id;
+    }
+    
+    function update($sql,$message = '')
+    {
+        $result = $this->sqlexecute($sql,$message);
+        return ($result) ? $this->affected_rows() : false;
+    }
+    
 }
 
 ?>

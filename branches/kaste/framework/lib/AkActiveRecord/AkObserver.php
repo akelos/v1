@@ -96,7 +96,7 @@ class AkObserver extends AkObject
         for ($i = 0; $i < $num_args; $i++){
             $target = func_get_arg($i);
             if(is_object($target)){
-                $this->observe($target);
+                $this->observe(&$target);
             }else{
                 $this->setObservedModels($target);
             }
@@ -129,7 +129,7 @@ class AkObserver extends AkObject
         $models = func_num_args() == 1 ? ( is_array($args[0]) ? $args[0] : array($args[0]) ) : $args;
 
         foreach ($models as $class_name)
-        {
+        {   //TODO: use Ak::import() instead.
             $class_name = AkInflector::camelize($class_name);
             if (!class_exists($class_name)) require_once(AkInflector::toModelFilename($class_name));
             $model =& new $class_name();

@@ -410,7 +410,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     function createOrUpdate($validate = true)
     {
-        if($validate && !$this->isValid() || !($this->isNewRecord() ? $this->afterValidationOnCreate() : $this->afterValidationOnUpdate())){
+        if($validate && !$this->isValid()){
             $this->transactionFail();
             return false;
         }
@@ -448,88 +448,70 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _create()
     {
-        if($this->isFrozen()){
-            $this->transactionFail();
-            return false;
+        if (!$this->beforeCreate() || !$this->notifyObservers('beforeCreate')) return $this->transactionFail();
+        
+        $this->_setRecordTimestamps();
+        
+        // deprecated section
+        if($this->isLockingEnabled() && is_null($this->get('lock_version'))){
+            trigger_error(Ak::t("Deprecated warning: Column %lock_version_column should have a default setting. Assumed '1'.",array('%lock_version_column'=>'lock_version')),E_USER_WARNING);
+            $this->setAttribute('lock_version',1);
+        } // end
+        
+        $attributes = $this->getColumnsForAtrributes($this->getAttributes());
+        foreach ($attributes as $column=>$value){
+            $attributes[$column] = $this->castAttributeForDatabase($column,$value);
         }
 
-        if($this->beforeCreate()){
+        $pk = $this->getPrimaryKey();
+        $table = $this->getTableName();
 
-            $this->notifyObservers('beforeCreate');
+        $id = $this->_db->auto_increments_primary_key() ? null : $this->_db->getNextSequenceValueFor($table);     
+        $attributes[$pk] = $id;
+            
+        $attributes = array_diff($attributes, array('',"''"));
 
-            if($this->_recordTimestamps){
-                if ($this->hasColumn('created_at')){
-                    $this->setAttribute('created_at', Ak::getDate());
-                }
-                if ($this->hasColumn('created_on')){
-                    $this->setAttribute('created_on', Ak::getDate(null, 'Y-m-d'));
-                }
+        $sql = 'INSERT INTO '.$table.' '.
+               '('.join(', ',array_keys($attributes)).') '.
+               'VALUES ('.join(',',array_values($attributes)).')';
 
-                if(isset($this->expires_on)){
-                    if(isset($this->expires_at) && $this->hasColumn('expires_at')){
-                        $this->setAttribute('expires_at',Ak::getDate(strtotime($this->expires_at) + (defined('AK_TIME_DIFFERENCE') ? AK_TIME_DIFFERENCE*60 : 0)));
-                    }elseif(isset($this->expires_on) && $this->hasColumn('expires_on')){
-                        $this->setAttribute('expires_on',Ak::getDate(strtotime($this->expires_on) + (defined('AK_TIME_DIFFERENCE') ? AK_TIME_DIFFERENCE*60 : 0), 'Y-m-d'));
-                    }
-                }
+        $inserted_id = $this->_db->insert($sql,$id,$pk,$table,'Create '.$this->getModelName());
+        if ($this->transactionHasFailed()) return false;
+        $this->setId($inserted_id);
+
+        if (!$this->afterCreate() || !$this->notifyObservers('afterCreate')) return $this->transactionFail();
+
+        $this->_newRecord = false;
+        return true;
+    }
+    
+    function _setRecordTimestamps()
+    {
+        if (!$this->_recordTimestamps) return;
+        if ($this->_newRecord){
+            if ($this->hasColumn('created_at')){
+                $this->setAttribute('created_at', Ak::getDate());
             }
-
-            $attributes = $this->getColumnsForAtrributes($this->getAttributes());
-
-            if($this->isLockingEnabled()){
-                $attributes['lock_version'] = 1;
-                $this->setAttribute('lock_version',1);
+            if ($this->hasColumn('created_on')){
+                $this->setAttribute('created_on', Ak::getDate(null, 'Y-m-d'));
             }
-
-            $pk = $this->getPrimaryKey();
-            $table = $this->getTableName();
-
-            foreach ($attributes as $column=>$value){
-                $attributes[$column] = $this->castAttributeForDatabase($column,$value);
+        } else {
+            if ($this->hasColumn('updated_at')){
+                $this->setAttribute('updated_at', Ak::getDate());
             }
-
-            /**
-            * @todo sanitize attributes
-            * 'beforeValidationOnCreate', 'afterValidationOnCreate'
-            */
-            if(!isset($this->_generateSequence) || (isset($this->_generateSequence) && $this->_generateSequence !== false)){
-                if((empty($attributes[$pk]) || (!empty($attributes[$pk]) && (integer)$attributes[$pk] > 0 ))){
-                    if($this->_getDatabaseType() == 'sqlite'){
-                        $table_details = $this->_databaseTableInternals('seq_'.$table);
-                        if(!isset($table_details['ID'])){
-                            $this->_db->CreateSequence('seq_'.$table);
-                        }
-                        $attributes[$pk] = $this->_db->GenID('seq_'.$table);
-                    }
-                }
+            if ($this->hasColumn('updated_on')){
+                $this->setAttribute('updated_on', Ak::getDate(null, 'Y-m-d'));
             }
-
-            $__attributes = $attributes;
-            $attributes = array_diff($attributes, array('',"''"));
-
-            $sql = 'INSERT INTO '.$table.' '.
-            '('.join(', ',array_keys($attributes)).') '.
-            'VALUES ('.join(',',array_values($attributes)).')';
-
-            if(!$this->_executeSql($sql, false)){
-                AK_DEBUG ? trigger_error($this->_db->ErrorMsg(), E_USER_NOTICE) : null;
-            }
-
-            $id = !empty($attributes[$pk]) ? $attributes[$pk] : $this->_db->Insert_ID($table, $pk);
-            $this->setId($id);
-
-            if(!$this->transactionHasFailed()){
-                $this->_newRecord = false;
-                if(!$this->afterCreate()){
-                    $this->transactionFail();
-                }else{
-                    $this->notifyObservers('afterCreate');
-                }
-            }
-        }else{
-            $this->transactionFail();
         }
-        return $this;
+        
+        if($this->_newRecord && isset($this->expires_on)){
+            if(isset($this->expires_at) && $this->hasColumn('expires_at')){
+                $this->setAttribute('expires_at',Ak::getDate(strtotime($this->expires_at) + (defined('AK_TIME_DIFFERENCE') ? AK_TIME_DIFFERENCE*60 : 0)));
+            }elseif(isset($this->expires_on) && $this->hasColumn('expires_on')){
+                $this->setAttribute('expires_on',Ak::getDate(strtotime($this->expires_on) + (defined('AK_TIME_DIFFERENCE') ? AK_TIME_DIFFERENCE*60 : 0), 'Y-m-d'));
+            }
+        }
+        
     }
 
     /*/Creating records*/
@@ -685,64 +667,34 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _update()
     {
-        if($this->isFrozen()){
-            $this->transactionFail();
-            return false;
+        if(!$this->beforeUpdate() || !$this->notifyObservers('beforeUpdate')) return $this->transactionFail();
+
+        $this->_setRecordTimestamps();
+
+        $lock_check_sql = '';
+        if ($this->isLockingEnabled()){
+            $previous_value = $this->lock_version;
+            $this->setAttribute('lock_version', $previous_value + 1);
+            $lock_check_sql = ' AND lock_version = '.$previous_value;
         }
-        if($this->beforeUpdate()){
-            $this->notifyObservers('beforeUpdate');
 
-            if($this->_recordTimestamps){
-                if ($this->hasColumn('updated_at')){
-                    $this->setAttribute('updated_at', Ak::getDate());
-                }
-                if ($this->hasColumn('updated_on')){
-                    $this->setAttribute('updated_on', Ak::getDate(null, 'Y-m-d'));
-                }
-            }
+        $quoted_attributes = $this->getAvailableAttributesQuoted();
+        $sql = 'UPDATE '.$this->getTableName().' '.
+               'SET '.join(', ', $quoted_attributes) .' '.
+               'WHERE '.$this->getPrimaryKey().'='.$this->quotedId().$lock_check_sql;
 
+        $affected_rows = $this->_db->update($sql,'Updating '.$this->getModelName());
+        if($this->transactionHasFailed()) return false;
 
-            $lock_check = '';
-            if ($this->isLockingEnabled()){
-                $previous_value = $this->lock_version;
-                $this->setAttribute('lock_version', $previous_value + 1);
-                $lock_check = ' AND lock_version = '.$previous_value;
-            }
-
-            $quoted_attributes = $this->getAvailableAttributesQuoted();
-
-            if(!empty($quoted_attributes)){
-                $sql = 'UPDATE '.$this->getTableName().' '.
-                'SET '.join(', ', $quoted_attributes) .' '.
-                'WHERE '.$this->getPrimaryKey().'='.$this->quotedId().$lock_check;
-            }
-
-            if(!$this->_executeSql($sql, false)){
-                $this->transactionFail();
-                AK_DEBUG ? trigger_error($this->_db->ErrorMsg(), E_USER_NOTICE) : null;
-            }
-
-            if ($this->isLockingEnabled()){
-                if($this->_db->Affected_Rows() != 1){
-                    $this->setAttribute('lock_version', $previous_value);
-                    $this->transactionFail();
-                    trigger_error(Ak::t('Attempted to update a stale object'), E_USER_NOTICE);
-                    return false;
-                }
-            }
-
-            if(!$this->transactionHasFailed()){
-                if($this->afterUpdate()){
-                    $this->notifyObservers('afterUpdate');
-                }else {
-                    $this->transactionFail();
-                }
-            }
-
-        }else{
-            $this->transactionFail();
+        if ($this->isLockingEnabled() && $affected_rows != 1){
+            $this->setAttribute('lock_version', $previous_value);
+            trigger_error(Ak::t('Attempted to update a stale object'), E_USER_NOTICE);
+            return $this->transactionFail();
         }
-        return $this;
+
+        if(!$this->afterUpdate() || !$this->notifyObservers('afterUpdate')) return $this->transactionFail();
+
+        return true;
     }
     
     /*/Updating records*/
@@ -3406,7 +3358,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function isLockingEnabled()
     {
-        return ((isset($this->lock_optimistically) && $this->lock_optimistically !== false) || !isset($this->lock_optimistically)) && $this->hasColumn('lock_version');
+        return (!isset($this->lock_optimistically) || $this->lock_optimistically !== false) && $this->hasColumn('lock_version');
     }
     /*/Optimistic Locking*/
 
@@ -3550,7 +3502,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     function transactionFail()
     {
-        return $this->_db->FailTrans();
+        $this->_db->FailTrans();
+        return false;
     }
 
     function transactionHasFailed()
@@ -4112,9 +4065,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function isValid()
     {
+        $this->clearErrors();
         if($this->beforeValidation() && $this->notifyObservers('beforeValidation')){
 
-            $this->clearErrors();
 
             if($this->_set_default_attribute_values_automatically){
                 $this->_setDefaultAttributeValuesAutomatically();
@@ -4126,20 +4079,24 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $this->_runAutomatedValidators();
             }
 
+            $this->afterValidation();
+            $this->notifyObservers('afterValidation');
+            
             if ($this->isNewRecord()){
                 if($this->beforeValidationOnCreate()){
                     $this->notifyObservers('beforeValidationOnCreate');
                     $this->validateOnCreate();
+                    $this->afterValidationOnCreate();
                     $this->notifyObservers('afterValidationOnCreate');
                 }
             }else{
                 if($this->beforeValidationOnUpdate()){
                     $this->notifyObservers('beforeValidationOnUpdate');
                     $this->validateOnUpdate();
+                    $this->afterValidationOnUpdate();
                     $this->notifyObservers('afterValidationOnUpdate');
                 }
             }
-            $this->notifyObservers('afterValidation');
         }
 
         return !$this->hasErrors();
@@ -4158,12 +4115,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         foreach ($this->_columns as $column_name=>$column_settings){
             if($this->_automated_max_length_validator &&
-            empty($column_settings['primaryKey']) &&
-            !empty($this->$column_name) &&
-            !empty($column_settings['maxLength']) &&
-            $column_settings['maxLength'] > 0 &&
-            strlen($this->$column_name) > $column_settings['maxLength']){
-                $this->addError($column_name, sprintf($this->_defaultErrorMessages['too_long'], $column_settings['maxLength']));
+                empty($column_settings['primaryKey']) &&
+                !empty($this->$column_name) &&
+                !empty($column_settings['maxLength']) && $column_settings['maxLength'] > 0 &&
+                strlen($this->$column_name) > $column_settings['maxLength']){
+                    $this->addError($column_name, sprintf($this->_defaultErrorMessages['too_long'], $column_settings['maxLength']));
             }elseif($this->_automated_not_null_validator && empty($column_settings['primaryKey']) && !empty($column_settings['notNull']) && (!isset($this->$column_name) || is_null($this->$column_name))){
                 $this->addError($column_name,'empty');
             }
@@ -4647,8 +4603,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if(!$this->isConnected()){
             $this->setConnection();
         }
-        $this->_db->connection->debug = $this->_db->connection->debug ? false : true;
-        $this->db_debug =& $this->_db->connection->debug;
+        //$this->_db->connection->debug = !$this->_db->connection->debug;// ? false : true;
+        $this->_db->debug();
     }
     
     function toString($print = false)

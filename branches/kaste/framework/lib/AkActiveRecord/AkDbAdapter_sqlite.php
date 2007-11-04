@@ -39,5 +39,16 @@ class AkDbAdapter_sqlite extends AkDbAdapter
     {
         return 'sqlite';
     }
+
+    /* DATABASE STATEMENTS - CRUD */
+    
+    function auto_increments_primary_key(){
+        return false;
+    }
+    
+    function getNextSequenceValueFor($table){
+        $sequence_table = 'seq_'.$table;
+        return $this->connection->GenID($sequence_table);
+    }
 }
 ?>
