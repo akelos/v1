@@ -50,6 +50,7 @@ class Test_of_AkInstaller extends  AkUnitTest
                 'CREATED_ON' => array('type'=>'date'),
                 'IS_FEATURED' => array('max_length'=>1,'type'=>'numeric'),
                 'POSITION' => array('max_length'=>-1),
+                'LOCK_VERSION' => array('type'=>'numeric', 'max_length'=>-1,'default_value' => 1),
                 );
 
 
@@ -75,6 +76,7 @@ class Test_of_AkInstaller extends  AkUnitTest
                 'CREATED_ON' => array('type'=>'DATE'),
                 'IS_FEATURED' => array('max_length'=>1,'type'=>'TINYINT'),
                 'POSITION' => array('max_length'=>10),
+                'LOCK_VERSION' => array('type'=>'DECIMAL', 'max_length'=>10, 'default_value' => 1),
                 );
 
                 break;
@@ -99,6 +101,7 @@ class Test_of_AkInstaller extends  AkUnitTest
                 'CREATED_ON' => array('type'=>'date'),
                 'IS_FEATURED' => array('max_length'=>1),
                 'POSITION' => array('max_length'=>11),
+                'LOCK_VERSION' => array('type'=>'int', 'max_length'=>11,'default_value' => 1),
                 );
                 break;
         }
@@ -232,7 +235,7 @@ class Test_of_AkInstaller extends  AkUnitTest
     function Test_of_default_types()
     {
         $this->Installer = new AkInstaller();
-        $this->Installer->createTable('test_defaults','id,name,screen_name string,description,*url,owner_id,modified_at,created_on,is_featured,position');
+        $this->Installer->createTable('test_defaults','id,name,screen_name string,description,*url,owner_id,modified_at,created_on,is_featured,position,lock_version');
         $from_datadict = $this->Installer->db->MetaColumns('test_defaults');
 
         foreach ($this->expected_for_default_types as $column=>$details){
