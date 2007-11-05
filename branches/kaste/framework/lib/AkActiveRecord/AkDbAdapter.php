@@ -187,12 +187,13 @@ class AkDbAdapter
     function sqlexecute($sql,$message = '')
     {
         $this->_log( (empty($message) ? 'SQL' : $message).": $sql");
-        $result = $this->connection->Execute($sql);
+        //$result = $this->connection->Execute($sql);
+        $result = is_array($sql) ? $this->connection->Execute(array_shift($sql),$sql) : $this->connection->Execute($sql);
         if (!$result){
             $message = !empty($message) ? "On '".$message."' got: " : 'SQL Error: ';
             $message .= '['.$this->connection->ErrorNo().'] '.$this->connection->ErrorMsg();
 
-            $this->_log($message);   
+            $this->_log($message);
             if ($this->debug || AK_DEBUG) trigger_error($message, E_USER_NOTICE);
         }
         return $result;
