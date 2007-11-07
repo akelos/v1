@@ -454,7 +454,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         
         // deprecated section
         if($this->isLockingEnabled() && is_null($this->get('lock_version'))){
-            trigger_error(Ak::t("Deprecated warning: Column %lock_version_column should have a default setting. Assumed '1'.",array('%lock_version_column'=>'lock_version')),E_USER_WARNING);
+            Ak::DeprecateWarning(array("Column %lock_version_column should have a default setting. Assumed '1'.",'%lock_version_column'=>'lock_version'));
             $this->setAttribute('lock_version',1);
         } // end
         
@@ -1066,9 +1066,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         // deprecated: acts like findFirstBySQL
         if ($num_args === 1 && !is_numeric($args[0]) && is_string($args[0]) && $args[0] != 'all' && $args[0] != 'first'){
         //  $Users->find("last_name = 'Williams'");    => find('first',"last_name = 'Williams'");
-            if (true || AK_ENVIRONMENT == 'development') {
-                trigger_error(Ak::t("AR::find('%sql') is ambiguous and therefore deprecated, use AR::find('first',%sql) instead", array('%sql'=>$args[0])), E_USER_NOTICE);    
-            }
+            Ak::DeprecateWarning(array("AR::find('%sql') is ambiguous and therefore deprecated, use AR::find('first',%sql) instead", '%sql'=>$args[0]));
             $options = array('conditions'=> $args[0]);
             return array('first',$options);
         } //end
@@ -4851,18 +4849,18 @@ class AkActiveRecord extends AkAssociatedActiveRecord
      * Returns a record array with the column names as keys and column values
      * as values.
      */
-    function sqlSelectOne($sql, $limit = false, $offset = false)
+    function sqlSelectOne($sql)
     {
-        $result = $this->sqlSelect($sql, $limit, $offset);
+        $result = $this->sqlSelect($sql);
         return  !is_null($result) ? array_shift($result) : null;
     }
 
     /**
     * Returns a single value from a record
     */
-    function sqlSelectValue($sql, $limit = false, $offset = false)
+    function sqlSelectValue($sql)
     {
-        $result = $this->sqlSelectOne($sql, $limit, $offset);
+        $result = $this->sqlSelectOne($sql);
         return !is_null($result) ? array_shift($result) : null;
     }
 
@@ -4870,10 +4868,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
      * Returns an array of the values of the first column in a select:
      *   sqlSelectValues("SELECT id FROM companies LIMIT 3") => array(1,2,3)
      */
-    function sqlSelectValues($sql, $limit = false, $offset = false)
+    function sqlSelectValues($sql)
     {
         $values = array();
-        if($results = $this->sqlSelectAll($sql, $limit, $offset)){
+        if($results = $this->sqlSelectAll($sql)){
             foreach ($results as $result){
                 $values[] = array_slice(array_values($result),0,1);
             }
@@ -4884,26 +4882,24 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     * Returns an array of record hashes with the column names as keys and
     * column values as values.
     */
-    function sqlSelectAll($sql, $limit = false, $offset = false)
+    function sqlSelectAll($sql)
     {
-        return $this->sqlSelect($sql, $limit, $offset);
+        return $this->sqlSelect($sql);
     }
 
-    function sqlSelect($sql, $limit = false, $offset = false)
+    function sqlSelect($sql)
     {
-        $results = array();
-        $previous_fetch_mode = $GLOBALS['ADODB_FETCH_MODE'];
-        $GLOBALS['ADODB_FETCH_MODE'] = ADODB_FETCH_ASSOC;
-        $ResultSet = $limit === false ? $this->_db->Execute($sql) :  $this->_db->SelectLimit($sql, $limit, empty($offset) ? 0 : $offset);
-        if($ResultSet){
-            while ($record = $ResultSet->FetchRow()) {
-                $results[] = $record;
-            }
-        }else{
-            AK_DEBUG ? trigger_error($this->_db->ErrorMsg(), E_USER_NOTICE) : null;
+        //$previous_fetch_mode = $GLOBALS['ADODB_FETCH_MODE'];
+        //$GLOBALS['ADODB_FETCH_MODE'] = ADODB_FETCH_ASSOC;
+        $result = $this->_db->sqlexecute($sql,'selecting');
+        if (!$result) return array();     
+        //$GLOBALS['ADODB_FETCH_MODE'] = $previous_fetch_mode;
+
+        $records = array();
+        while ($record = $result->FetchRow()) {
+            $records[] = $record;
         }
-        $GLOBALS['ADODB_FETCH_MODE'] = $previous_fetch_mode;
-        return empty($results) ? null : $results;
+        return $records;
     }
     
 
@@ -5112,6 +5108,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         $sql .= empty($options['order']) ? '' : " ORDER BY {$options['order']} ";
+        $this->_db->addLimitAndOffset($sql, $options);
         $sql .= $use_workaround ? ')' : '';
         return $sql;
     }
@@ -5122,7 +5119,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _executeSimpleCalculation($operation, $column_name, $column, $options)
     {
-        $value = $this->sqlSelectValue($this->_constructCalculationSql($operation, $column_name, $options), empty($options['limit']) ? false : $options['limit'], !isset($options['offset']) ? false : $options['offset']);
+        $value = $this->sqlSelectValue($this->_constructCalculationSql($operation, $column_name, $options));
         return $this->_typeCastCalculatedValue($value, $column, $operation);
     }
 
@@ -5131,12 +5128,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _executeGroupedCalculation($operation, $column_name, $column, $options)
     {
-        $group_attr  = $options['group'];
         $group_field = $options['group'];
         $group_alias = $this->_getColumnAliasFor($group_field);
         $group_column = $this->_getColumnFor($group_field);
-        $sql = $this->_constructCalculationSql($operation, $column_name, array_merge(array('group_field' => $group_field, 'group_alias' => $group_alias),$options));
-        $calculated_data = $this->sqlSelectAll($sql, empty($options['limit']) ? false : $options['limit'], !isset($options['offset']) ? false : $options['offset']);
+        $options = array_merge(array('group_field' => $group_field, 'group_alias' => $group_alias),$options);
+        $sql = $this->_constructCalculationSql($operation, $column_name, $options);
+        $calculated_data = $this->sqlSelectAll($sql);
         $aggregate_alias = $this->_getColumnAliasFor($operation, $column_name);
 
         $all = array();

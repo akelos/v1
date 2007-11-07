@@ -12,7 +12,7 @@ class test_AkActiveRecord_locking extends  AkUnitTest
         $this->installAndIncludeModels(array('BankAccount'=>'id,balance,lock_version int'));
         $Account = new BankAccount(array('balance'=>2000));
         $Account->save();
-        $this->assertError("Deprecated warning: Column lock_version should have a default setting. Assumed '1'.");
+        $this->assertError("DEPRECATED WARNING: Column lock_version should have a default setting. Assumed '1'.");
     } 
         
     function test_start()
