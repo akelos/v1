@@ -42,5 +42,17 @@ class AkDbAdapter_mysql extends AkDbAdapter
     {
         return 'mysql';
     }
+
+    function addLimitAndOffset(&$sql,$options)
+    {
+        if (isset($options['limit']) && $limit = $options['limit']){
+            if (isset($options['offset']) && $offset = $options['offset'])
+                $sql .= " LIMIT $offset, $limit";
+            else
+                $sql .= " LIMIT $limit";
+        }
+        return $sql;
+    }
+    
 }
 ?>

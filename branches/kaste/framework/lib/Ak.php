@@ -67,6 +67,21 @@ class Ak
         if (empty($dsn) || !is_array($dsn)) $dsn = array();
         return AkDbAdapter::getConnection($dsn);
     }
+    
+    /**
+     * @param string $message
+     * @param [OPTIONAL] $fatal triggers even in production-mode
+     */
+    function DeprecateWarning($message,$fatal=false)
+    {
+        if (!$fatal && AK_ENVIRONMENT == 'production') return;
+        if (is_array($message)){
+            //$args = func_get_args();
+            //$message = array_shift($message);
+            trigger_error(Ak::t("DEPRECATED WARNING: ".array_shift($message),$message), E_USER_NOTICE);    
+        } else
+            trigger_error(Ak::t("DEPRECATED WARNING: ".$message), E_USER_NOTICE);    
+    }
 
     /**
     * Gets a cache object singleton instance

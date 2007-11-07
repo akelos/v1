@@ -986,9 +986,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
     
         if((!empty($options['include']) && $this->hasAssociations())){
-            $result =& $this->findWithAssociations($options,  $limit, $offset);
+            $result =& $this->findWithAssociations($options);
         }else{
-            $result =& $this->findBySql($sql, $limit, $offset);
+            $result =& $this->findBySql($sql);
         }
     
         if(!empty($result) && is_array($result)){
@@ -1129,40 +1129,21 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function &findBySql($sql, $limit = null, $offset = null, $bindings = null)
     {
+        if ($limit || $offset){
+            Ak::DeprecateWarning("You're calling AR::findBySql with \$limit or \$offset parameters. This has been deprecated.");
+            $this->_db->addLimitAndOffset($sql, array('limit'=>$limit,'offset'=>$offset));
+        }
         if(!isset($this->_activeRecordHasBeenInstantiated)){
             return Ak::handleStaticCall();
         }
-        if(is_array($sql)){
-            $sql_query = array_shift($sql);
-            $bindings = is_array($sql) && count($sql) > 0 ? $sql : array($sql);
-            $sql = $sql_query;
-        }
-        //$this->setConnection();
-        
-        AK_LOG_EVENTS ? $this->_startSqlBlockLog() : null;
-                
+
         $objects = array();
-        if(is_integer($limit)){
-            if(is_integer($offset)){
-                $results = !empty($bindings) ? $this->_db->SelectLimit($sql, $limit, $offset, $bindings) : $this->_db->SelectLimit($sql, $limit, $offset);
-            }else {
-                $results = !empty($bindings) ? $this->_db->SelectLimit($sql, $limit, -1, $bindings) : $this->_db->SelectLimit($sql, $limit);
-            }
-        }else{
-            $results = !empty($bindings) ? $this->_db->Execute($sql, $bindings) : $this->_db->Execute($sql);
-        }
+        $results = $this->_db->sqlexecute ($sql,'selecting');
+        if (!$results) return $objects;
         
-        AK_LOG_EVENTS ? $this->_endSqlBlockLog() : null;
-
-        if(!$results){
-            AK_DEBUG ? trigger_error($this->_db->ErrorMsg(), E_USER_NOTICE) : null;
-        }else{
-            $objects = array();
-            while ($record = $results->FetchRow()) {
-                $objects[] =& $this->instantiate($this->getOnlyAvailableAtrributes($record), false);
-            }
+        while ($record = $results->FetchRow()) {
+            $objects[] =& $this->instantiate($this->getOnlyAvailableAtrributes($record), false);
         }
-
         return $objects;
     }
 
@@ -1374,6 +1355,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         $sql  .= !empty($options['order']) ? ' ORDER BY  '.$options['order'] : '';
+        
+        $this->_db->addLimitAndOffset($sql,$options);
 
         return $sql;
     }

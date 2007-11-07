@@ -182,6 +182,17 @@ class AkDbAdapter
         Ak::getLogger()->message($message);
     }
     
+    function addLimitAndOffset(&$sql,$options)
+    {
+        if (isset($options['limit']) && $limit = $options['limit']){
+            $sql .= " LIMIT $limit";
+            if (isset($options['offset']) && $offset = $options['offset']){
+                $sql .= " OFFSET $offset";
+            }
+        }
+        return $sql;
+    }
+    
     /* DATABASE STATEMENTS - CRUD */
     
     function sqlexecute($sql,$message = '')
