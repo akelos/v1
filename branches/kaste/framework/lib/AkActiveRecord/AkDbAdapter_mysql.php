@@ -54,5 +54,14 @@ class AkDbAdapter_mysql extends AkDbAdapter
         return $sql;
     }
     
+    /* SCHEMA */
+    
+    function renameColumn($table_name,$column_name,$new_name)
+    {
+        $column_details = $this->selectOne("SHOW COLUMNS FROM $table_name = '$column_name'");
+        $column_type_definition = $column_details['type'];
+        $this->sqlexecute("ALTER TABLE $table_name CHANGE COLUMN $column_name $new_name $column_type_definition");
+    }
+    
 }
 ?>

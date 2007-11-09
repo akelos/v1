@@ -237,6 +237,13 @@ class AkDbAdapter
         return ($result) ? $this->affected_rows() : false;
     }
     
+    /* SCHEMA */
+    
+    function renameColumn($table_name,$column_name,$new_name)
+    {
+        trigger_error(Ak::t('renameColumn is not available for your DbAdapter. Using %db_type.',array('%db_type'=>$this->type())));
+    }
+    
 }
 
 ?>
