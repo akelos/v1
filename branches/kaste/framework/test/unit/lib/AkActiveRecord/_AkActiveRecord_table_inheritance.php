@@ -62,10 +62,6 @@ class test_AkActiveRecord_table_inheritance extends  AkUnitTest
         foreach ($scheds as $schedule){
             $this->assertEqual($schedule->event->getType(),$expected[$schedule->getId()]);
         }
-        
-        
-        
-        
     }
 }
 

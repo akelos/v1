@@ -16,21 +16,23 @@ $partial_tests = array(
 'AkActiveRecord_1',
 'AkActiveRecord_2',
 'AkActiveRecord_3',
-'AkActiveRecord_finders',
-'AkActiveRecord_locking',
-'AkActiveRecord_table_inheritance',
-'AkActiveRecord_i18n',
-'AkActiveRecord_multiple_inclussion',
 'AkActiveRecord_accessible_attributes',
-'AkActiveRecord_calculations',
 'AkActiveRecord_associated_inclusion',
+'AkActiveRecord_calculations',
+'AkActiveRecord_callbacks',
+'AkActiveRecord_connection_handling',
+'AkActiveRecord_finders',
 'AkActiveRecord_findOrCreateBy',
+'AkActiveRecord_i18n',
+'AkActiveRecord_locking',
+'AkActiveRecord_multiple_inclussion',
+'AkActiveRecord_table_inheritance',
+'AkActiveRecord_type_casting',
 );
 
 foreach ($partial_tests as $partial_test){
     $test->addTestFile(AK_LIB_TESTS_DIRECTORY.DS.'AkActiveRecord'.DS.'_'.$partial_test.'.php');
 }
-
 // Acts as, Validators, Associations and Observer tests
 if(!ALL_TESTS_RUNNER){
     foreach (Ak::dir(AK_LIB_TESTS_DIRECTORY.DS.'AkActiveRecord') as $active_record_test){

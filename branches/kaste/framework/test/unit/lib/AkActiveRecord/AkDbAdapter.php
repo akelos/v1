@@ -24,7 +24,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
     
     function test_execute_should_handle_bindings()
     {
-        $db =& new AkDbAdapter(array());
+        $db =& new AkDbAdapter(array());  // no conection details, we're using a Mock
         Mock::generate('ADOConnection');
         $connection =& new MockADOConnection();
         $connection->setReturnValue('Execute',true);
@@ -66,6 +66,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
         $mysql_db->addLimitAndOffset($sql,array('limit'=>10));
         $this->assertEqual('SELECT * FROM articles LIMIT 10',$sql);
     }
+    
 }
 
 ak_test('AkDbAdapter_TestCase',true);

@@ -83,6 +83,7 @@ class AkDbAdapter
                     E_USER_ERROR);
         } else {
             $this->connection->debug = AK_DEBUG == 2;
+            //$this->connection->SetFetchMode(ADODB_FETCH_ASSOC);
             defined('AK_DATABASE_CONNECTION_AVAILABLE') ? null : define('AK_DATABASE_CONNECTION_AVAILABLE', true);
         }
     }
@@ -228,6 +229,7 @@ class AkDbAdapter
     function insert($sql,$id=null,$pk=null,$table=null,$message = '')
     {
         $result = $this->sqlexecute($sql,$message);
+        if (!$result) return false;
         return is_null($id) ? $this->last_inserted($table,$pk) : $id;
     }
     
@@ -236,6 +238,76 @@ class AkDbAdapter
         $result = $this->sqlexecute($sql,$message);
         return ($result) ? $this->affected_rows() : false;
     }
+    
+    function delete($sql,$message = '')
+    {
+        $result = $this->sqlexecute($sql,$message);
+        return ($result) ? $this->affected_rows() : false;
+    }
+    
+    /**
+     * Returns a record array with the column names as keys and column values
+     * as values.
+     */
+    function selectOne($sql)
+    {
+        $result = $this->select($sql);
+        return  !is_null($result) ? array_shift($result) : null;
+    }
+
+    /**
+    * Returns a single value from a record
+    */
+    function selectValue($sql)
+    {
+        $result = $this->selectOne($sql);
+        return !is_null($result) ? array_shift($result) : null;
+    }
+
+    /**
+     * Returns an array of the values of the first column in a select:
+     *   sqlSelectValues("SELECT id FROM companies LIMIT 3") => array(1,2,3)
+     */
+    function selectValues($sql)
+    {
+        $values = array();
+        if($results = $this->select($sql)){
+            foreach ($results as $result){
+                //$values[] = array_slice(array_values($result),0,1); ?? 
+                $values[] = array_shift($result); 
+            }
+        }
+        return $values;
+    }
+
+    /**
+     * alias for select
+     */
+    function selectAll($sql)
+    {
+        return $this->select($sql);
+    }
+
+    /**
+    * Returns an array of record hashes with the column names as keys and
+    * column values as values.
+    */
+    function select($sql,$message = '')
+    {
+        //$previous_fetch_mode = $GLOBALS['ADODB_FETCH_MODE'];
+        //$GLOBALS['ADODB_FETCH_MODE'] = ADODB_FETCH_ASSOC;
+        $result = $this->sqlexecute($sql,$message);
+        if (!$result) return array();     
+        //$GLOBALS['ADODB_FETCH_MODE'] = $previous_fetch_mode;
+
+        $records = array();
+        while ($record = $result->FetchRow()) {
+            $records[] = $record;
+        }
+        $result->Close();
+        return $records;
+    }
+      
     
     /* SCHEMA */
     
