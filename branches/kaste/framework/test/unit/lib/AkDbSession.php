@@ -16,6 +16,15 @@ class Test_of_AkDbSession_Class extends  WebTestCase
 {
     var $sessionLife = NULL;
    
+    function test_install_db_tables()
+    {
+        require_once(dirname(__FILE__).'/../../fixtures/app/installers/framework_installer.php');
+        $installer =& new FrameworkInstaller();
+        $installer->uninstall();
+        $installer->install();
+        
+    }
+
     function setUp()
     {   
         $this->_test_script = str_replace('/fixtures/public','',trim(AK_TESTING_URL,'/')).
@@ -39,7 +48,7 @@ class Test_of_AkDbSession_Class extends  WebTestCase
         $this->get("$this->_test_script?key=test_key&value=$expected");
         $this->get("$this->_test_script?key=test_key");        
         $this->assertWantedText($expected,'Session is not storing values on database correctly when calling '.
-        $this->_test_script.'?key=test_key');
+            $this->_test_script.'?key=test_key');
     }
         
     function Test_destroy()

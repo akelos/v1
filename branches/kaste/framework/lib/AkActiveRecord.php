@@ -578,10 +578,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $this->setConnection();
         }
         
-        AK_LOG_EVENTS ? ($this->Logger->message($this->getModelName().' executing SQL: '.$sql)) : null;
-        $rs = $this->_db->Execute($sql);
-
-        return @(integer)$rs->fields[0];
+        return (integer)$this->_db->selectValue($sql);
     }
     /*/Counting Records*/
     
@@ -653,9 +650,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         * @todo sanitize sql conditions
         */
         $sql = 'UPDATE '.$this->getTableName().' SET '.$updates;
-        $sql  .= isset($conditions) ? ' WHERE '.$conditions : '';
-        $this->_executeSql($sql);
-        return $this->_db->Affected_Rows();
+        $this->addConditions($sql, $conditions);
+        return $this->_db->update($sql, $this->getModelName().' Update All');
     }
 
 
@@ -739,10 +735,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         * @todo sanitize sql conditions
         */
         $sql = 'DELETE FROM '.$this->getTableName();
-
-        $sql  .= isset($conditions) ? ' WHERE '.$conditions : ($this->_getDatabaseType() == 'sqlite' ? ' WHERE 1' : ''); // (HACK) If where clause is not included sqlite_changes will not get the right result
-        $this->_executeSql($sql);
-        return $this->_db->Affected_Rows() > 0;
+        $this->addConditions($sql,$conditions);
+        return $this->_db->delete($sql,$this->getModelName().' Delete All');
     }
 
 
@@ -758,10 +752,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
 
-        $this->transactionStart();
         $id = func_num_args() > 1 ? func_get_args() : $id;
 
         if(isset($id)){
+            $this->transactionStart();
             $id_arr = is_array($id) ? $id : array($id);
             if($objects = $this->find($id_arr)){
                 $results = count($objects);
@@ -779,38 +773,21 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }else{
             if(!$this->isNewRecord()){
-                if($this->beforeDestroy()){
-                    $this->notifyObservers('beforeDestroy');
+                $this->transactionStart();
+                if($this->beforeDestroy() && $this->notifyObservers('beforeDestroy')){
 
                     $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->qstr($this->getId());
-                    $this->_executeSql($sql);
-                    $had_success = ($this->_db->Affected_Rows() > 0);
-                    if(!$had_success || ($had_success && !$this->afterDestroy())){
+                    $had_success = $this->_db->delete($sql,$this->getModelName().' Destroy');
+                    if(!$had_success || !$this->afterDestroy() || !$this->notifyObservers('afterDestroy')){
                         $this->transactionFail();
-                        $had_success = false;
-                    }else{
-                        $had_success = $this->notifyObservers('afterDestroy') === false ? false : true;
-                    }
-                    $this->transactionComplete();
-                    $this->freeze();
-                    return  $had_success;
+                    } else $this->freeze();
                 }else {
                     $this->transactionFail();
-                    $this->transactionComplete();
-                    return false;
                 }
+                $this->transactionComplete();
+                return !$this->transactionHasFailed();// && $this->freeze();
             }
         }
-
-        if(!$this->afterDestroy()){
-            $this->transactionFail();
-        }else{
-            $this->notifyObservers('afterDestroy');
-        }
-
-        $this->transactionComplete();
-
-        return false;
     }
 
 
@@ -1366,6 +1343,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function addConditions(&$sql, $conditions = null)
     {
         $concat = empty($sql) ? '' : ' WHERE ';
+        if (empty($conditions) && $this->_getDatabaseType() == 'sqlite') $conditions = '1';  // sqlite HACK
         if(!empty($conditions)){
             $sql  .= $concat.$conditions;
             $concat = ' AND ';
@@ -1377,7 +1355,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $sql;
     }
-
 
     /**
     * Gets a sanitized version of the input array. Each element will be escaped
@@ -4839,69 +4816,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     }
     /*/Utilities*/
     
-    
-    /** 
-                        Database statements
-    ====================================================================
-    */
-
-    /**
-     * Returns a record array with the column names as keys and column values
-     * as values.
-     */
-    function sqlSelectOne($sql)
-    {
-        $result = $this->sqlSelect($sql);
-        return  !is_null($result) ? array_shift($result) : null;
-    }
-
-    /**
-    * Returns a single value from a record
-    */
-    function sqlSelectValue($sql)
-    {
-        $result = $this->sqlSelectOne($sql);
-        return !is_null($result) ? array_shift($result) : null;
-    }
-
-    /**
-     * Returns an array of the values of the first column in a select:
-     *   sqlSelectValues("SELECT id FROM companies LIMIT 3") => array(1,2,3)
-     */
-    function sqlSelectValues($sql)
-    {
-        $values = array();
-        if($results = $this->sqlSelectAll($sql)){
-            foreach ($results as $result){
-                $values[] = array_slice(array_values($result),0,1);
-            }
-        }
-    }
-
-    /**
-    * Returns an array of record hashes with the column names as keys and
-    * column values as values.
-    */
-    function sqlSelectAll($sql)
-    {
-        return $this->sqlSelect($sql);
-    }
-
-    function sqlSelect($sql)
-    {
-        //$previous_fetch_mode = $GLOBALS['ADODB_FETCH_MODE'];
-        //$GLOBALS['ADODB_FETCH_MODE'] = ADODB_FETCH_ASSOC;
-        $result = $this->_db->sqlexecute($sql,'selecting');
-        if (!$result) return array();     
-        //$GLOBALS['ADODB_FETCH_MODE'] = $previous_fetch_mode;
-
-        $records = array();
-        while ($record = $result->FetchRow()) {
-            $records[] = $record;
-        }
-        return $records;
-    }
-    
 
     function getAttributeCondition($argument)
     {
@@ -4913,9 +4827,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return '= ?';
         }
     }
-    /*/Database statements*/
 
-
+    
  /** 
                      Calculations
  ====================================================================
@@ -5119,7 +5032,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _executeSimpleCalculation($operation, $column_name, $column, $options)
     {
-        $value = $this->sqlSelectValue($this->_constructCalculationSql($operation, $column_name, $options));
+        $value = $this->_db->selectValue($this->_constructCalculationSql($operation, $column_name, $options));
         return $this->_typeCastCalculatedValue($value, $column, $operation);
     }
 
@@ -5133,7 +5046,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $group_column = $this->_getColumnFor($group_field);
         $options = array_merge(array('group_field' => $group_field, 'group_alias' => $group_alias),$options);
         $sql = $this->_constructCalculationSql($operation, $column_name, $options);
-        $calculated_data = $this->sqlSelectAll($sql);
+        $calculated_data = $this->_db->select($sql);
         $aggregate_alias = $this->_getColumnAliasFor($operation, $column_name);
 
         $all = array();

@@ -300,7 +300,7 @@ class AkInstaller
 
     function dropTable($table_name, $options = array())
     {
-        $result = $this->tableExists($table_name) ? $this->db->Execute('DROP TABLE '.$table_name) : true;
+        $result = $this->tableExists($table_name) ? $this->db->sqlexecute('DROP TABLE '.$table_name) : true;
         if($result){
             unset($this->available_tables[array_search($table_name, $this->available_tables)]);
             if(!empty($options['sequence'])){
@@ -625,7 +625,7 @@ class AkInstaller
 
     function execute($sql)
     {
-        return $this->db->Execute($sql);
+        return $this->db->sqlexecute($sql);
     }
 
 

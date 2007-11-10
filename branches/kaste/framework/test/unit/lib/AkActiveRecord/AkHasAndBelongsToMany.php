@@ -208,7 +208,7 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
 
         $this->assertTrue($Property->destroy());
 
-        $RecordSet = $PropertyInAltea->_db->Execute('SELECT * FROM properties_property_types WHERE property_id = '.$property_id);
+        $RecordSet = $PropertyInAltea->_db->sqlexecute('SELECT * FROM properties_property_types WHERE property_id = '.$property_id);
         $this->assertEqual($RecordSet->RecordCount(), 0);
 
     }
