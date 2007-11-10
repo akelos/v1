@@ -31,7 +31,7 @@ class AkDbAdapter_pgsql extends AkDbAdapter
     
     function renameColumn($table_name,$column_name,$new_name)
     {
-        $this->sqlexecute("ALTER TABLE $table_name RENAME COLUMN $column_name TO $new_name");
+        return $this->sqlexecute("ALTER TABLE $table_name RENAME COLUMN $column_name TO $new_name");
     }
     
 }

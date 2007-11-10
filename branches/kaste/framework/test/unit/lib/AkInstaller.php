@@ -11,13 +11,13 @@ class Test_of_AkInstaller extends  AkUnitTest
 
     function setup()
     {
-        global $ADODB_FETCH_MODE;
+        /*global $ADODB_FETCH_MODE;
         $this->_original_ADODB_FETCH_MODE = $ADODB_FETCH_MODE;
-        $ADODB_FETCH_MODE = ADODB_FETCH_ASSOC;
+        $ADODB_FETCH_MODE = ADODB_FETCH_ASSOC;*/
         $this->Installer = new AkInstaller();
     }
 
-    function tearDown()
+    function __tearDown()
     {
         global $ADODB_FETCH_MODE;
         $ADODB_FETCH_MODE = $this->_original_ADODB_FETCH_MODE;
@@ -243,8 +243,6 @@ class Test_of_AkInstaller extends  AkUnitTest
                 $this->assertEqual($this->expected_for_default_types[$column][$index], $from_datadict[$column]->$index);
             }
         }
-
-        $this->Installer->dropTable('test_defaults');
     }
 
 
@@ -270,11 +268,11 @@ class Test_of_AkInstaller extends  AkUnitTest
         $Thumbnail =& new Thumbnail();
         $this->assertEqual($Thumbnail->get('owner'), 'Picture');
     }
-    /**
-     * @todo implement table renaming
-     */
+
+    // see AkDbAdapter_schema for the tests; this is only a wrapper
     function test_should_rename_columns()
     {
+        $this->Installer->renameColumn('test_defaults','screen_name','real_name');
     }
 
 }

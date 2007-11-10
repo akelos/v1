@@ -233,10 +233,7 @@ class AkInstaller
 
     function renameColumn($table_name, $old_column_name, $new_column_name)
     {
-        if($this->db->type() != 'mysql'){
-            trigger_error(Ak::t('Column renaming is only supported when using MySQL databases'), E_USER_ERROR);
-        }
-        return $this->data_dictionary->ExecuteSQLArray($this->data_dictionary->RenameColumnSQL($table_name, $old_column_name, $new_column_name));
+        return $this->db->renameColumn($table_name,$old_column_name,$new_column_name);
     }
 
 

@@ -20,6 +20,8 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
         $this->mysql_rename($db, $table_name,'namen','name');
         $this->mysql_rename($db, $table_name,'help','nohelp');
         $this->mysql_rename($db, $table_name,'postcunt','postcount');
+        
+        $this->assertError($db->renameColumn($table_name,'not_found','not_here'));
     }
     
     function mysql_rename($db, $table_name,$old_name,$new_name)
@@ -33,6 +35,18 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
         unset($old[0],$old['Field'],$new[0],$new['Field']);
         $this->assertEqual($old,$new);
         
+    }
+    
+    function test_should_rename_column_postgre()
+    {
+        $db =& AkDbAdapter::getConnection();
+        if ($db->type() !== 'postgre') return;
+        
+        $this->installAndIncludeModels(array(
+            'RenameColumn'=>"id,namen string(55),postcunt int not null default 0,help string default 'none'"
+        ));
+        $table_name = 'rename_columns';
+        $db->renameColumn($table_name,'namen','name');
     }
 
 }

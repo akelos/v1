@@ -206,7 +206,7 @@ class AkDbAdapter
             $message .= '['.$this->connection->ErrorNo().'] '.$this->connection->ErrorMsg();
 
             $this->_log($message);
-            if ($this->debug || AK_DEBUG) trigger_error($message, E_USER_NOTICE);
+            if ($this->debug || AK_DEBUG) trigger_error("Tried '$sql'. GOT $message", E_USER_NOTICE);
         }
         return $result;
     }
