@@ -3447,26 +3447,23 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     
     function transactionStart()
     {
-        if(!$this->isConnected()){
-            $this->setConnection();
-        }
-        return $this->_db->StartTrans();
+        return $this->_db->startTransaction();
     }
 
     function transactionComplete()
     {
-        return $this->_db->CompleteTrans();
+        return $this->_db->stopTransaction();
     }
 
     function transactionFail()
     {
-        $this->_db->FailTrans();
+        $this->_db->failTransaction();
         return false;
     }
 
     function transactionHasFailed()
     {
-        return $this->_db->HasFailedTrans();
+        return $this->_db->hasTransactionFailed();
     }
 
     /*/Transactions*/

@@ -39,7 +39,7 @@ class AkDbAdapter
     
     function __destruct()
     {
-        //var_dump(self::$delegated_methods);
+        var_dump(self::$delegated_methods);
         //var_dump(self::$delegated_properties);
     }
     
@@ -83,7 +83,7 @@ class AkDbAdapter
                     E_USER_ERROR);
         } else {
             $this->connection->debug = AK_DEBUG == 2;
-            //$this->connection->SetFetchMode(ADODB_FETCH_ASSOC);
+            $this->connection->SetFetchMode(ADODB_FETCH_ASSOC);
             defined('AK_DATABASE_CONNECTION_AVAILABLE') ? null : define('AK_DATABASE_CONNECTION_AVAILABLE', true);
         }
     }
@@ -246,16 +246,6 @@ class AkDbAdapter
     }
     
     /**
-     * Returns a record array with the column names as keys and column values
-     * as values.
-     */
-    function selectOne($sql)
-    {
-        $result = $this->select($sql);
-        return  !is_null($result) ? array_shift($result) : null;
-    }
-
-    /**
     * Returns a single value from a record
     */
     function selectValue($sql)
@@ -273,11 +263,20 @@ class AkDbAdapter
         $values = array();
         if($results = $this->select($sql)){
             foreach ($results as $result){
-                //$values[] = array_slice(array_values($result),0,1); ?? 
                 $values[] = array_shift($result); 
             }
         }
         return $values;
+    }
+
+    /**
+     * Returns a record array with the column names as keys and column values
+     * as values.
+     */
+    function selectOne($sql)
+    {
+        $result = $this->select($sql);
+        return  !is_null($result) ? array_shift($result) : null;
     }
 
     /**
@@ -316,6 +315,38 @@ class AkDbAdapter
         trigger_error(Ak::t('renameColumn is not available for your DbAdapter. Using %db_type.',array('%db_type'=>$this->type())));
     }
     
+    /* TRANSACTIONS */
+    
+    function startTransaction()
+    {
+        return $this->connection->StartTrans();  
+    }
+
+    function stopTransaction()
+    {
+        return $this->connection->CompleteTrans();    
+    }
+    
+    function failTransaction()
+    {
+        return $this->connection->FailTrans();
+    }
+    
+    function hasTransactionFailed()
+    {
+        return $this->connection->HasFailedTrans();
+    }
+    
+    /* META */
+    function availableTables()
+    {
+        return $this->connection->MetaTables();
+    }
+    
+    function getColumnDetails($table_name)
+    {
+        
+    }
 }
 
 ?>

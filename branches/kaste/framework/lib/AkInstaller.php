@@ -540,22 +540,22 @@ class AkInstaller
     */
     function transactionStart()
     {
-        return $this->db->StartTrans();
+        return $this->db->startTransaction();
     }
 
     function transactionComplete()
     {
-        return $this->db->CompleteTrans();
+        return $this->db->stopTransaction();
     }
 
     function transactionFail()
     {
-        return $this->db->FailTrans();
+        return $this->db->failTransaction();
     }
 
     function transactionHasFailed()
     {
-        return $this->db->HasFailedTrans();
+        return $this->db->hasTransactionFailed();
     }
 
 
