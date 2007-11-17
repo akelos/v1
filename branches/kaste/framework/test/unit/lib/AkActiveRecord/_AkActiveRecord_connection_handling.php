@@ -10,16 +10,35 @@ class AkActiveRecord_connection_handling_TestCase extends  AkUnitTest
 
     function test_should_establish_a_connection()
     {
-        $this->installAndIncludeModels(array('EmptyModel'=>'id'));
+        $this->installAndIncludeModels(array('DummyModel'=>'id'));
         
-        $Model =& $this->EmptyModel;
+        $Model =& $this->DummyModel;
         $default_connection =& AkDbAdapter::getConnection();
+        $available_tables_on_default = $default_connection->availableTables(); 
         unset ($Model->_db);
-        $this->assertTrue($Model->establishConnection()===$default_connection);
-        $this->assertFalse($Model->establishConnection('development')===$default_connection);
-
+        
+        $this->assertReference($Model->establishConnection(),$default_connection);
+        $development_connection =& $Model->establishConnection('development');
+        
+        $available_tables_on_development = $development_connection->availableTables();
+        $this->assertFalse($development_connection===$default_connection);
+        
         $this->assertFalse($Model->establishConnection('not_specified_profile'));
         $this->assertError("Could not find the database profile 'not_specified_profile' in config/config.php.");
+        
+        $check_default_connection =& AkDbAdapter::getConnection();
+        $this->assertReference($default_connection,$check_default_connection);
+        $this->assertReference($default_connection->connection,$check_default_connection->connection);
+
+        //because we dont get two different connections at the same time on PHP if user and password is identical 
+        //thus: !$this->assertEqual($available_tables_on_default,$check_default_connection->availableTables());
+        //we have to:
+        $check_default_connection->connect();
+        //now we get:
+        $this->assertEqual($available_tables_on_default,$check_default_connection->availableTables());
+        //BUT again: !!
+        //$this->assertNotEqual($available_tables_on_development,$development_connection->availableTables());
+        //$this->assertEqual($available_tables_on_default,$development_connection->availableTables());
         
     }
 
