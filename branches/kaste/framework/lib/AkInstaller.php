@@ -370,7 +370,7 @@ class AkInstaller
     function getAvailableTables()
     {
         if(empty($this->available_tables)){
-            $this->available_tables = array_diff((array)$this->db->MetaTables(), array(''));
+            $this->available_tables = $this->db->availableTables();
         }
         return $this->available_tables;
     }

@@ -95,7 +95,7 @@ class AkUnitTest extends UnitTestCase
                 trigger_error(Ak::t('Could not install the table %tablename for the model %modelname',array('%tablename'=>$table_name, '%modelname'=>$model)),E_USER_ERROR);
                 return false;
             }
-            $installer = new AkInstaller();
+            $installer =& new AkInstaller();
             $installer->dropTable($table_name,array('sequence'=>true));
             $installer->createTable($table_name,$table_definition);
         }

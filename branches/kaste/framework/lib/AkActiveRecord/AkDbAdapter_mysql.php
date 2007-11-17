@@ -18,8 +18,6 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
-/* nothing in here, its more a demo */
-
 class AkDbAdapter_mysql extends AkDbAdapter
 {
     
@@ -64,10 +62,17 @@ class AkDbAdapter_mysql extends AkDbAdapter
             return false;
         }
         $column_type_definition = $column_details['Type'];
-        if ($column_details['Null']=='NO') $column_type_definition .= ' not null';
+        if ($column_details['Null']!=='YES') $column_type_definition .= ' not null';
         if (!empty($column_details['Default'])) $column_type_definition .= " default '".$column_details['Default']."'";
         return $this->sqlexecute("ALTER TABLE $table_name CHANGE COLUMN $column_name $new_name $column_type_definition");
     }
+    
+    function availableTables()
+    {
+        return $this->selectValues('SHOW TABLES');
+    }
+    
+    
     
 }
 ?>

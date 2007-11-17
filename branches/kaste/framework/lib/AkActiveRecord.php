@@ -2051,7 +2051,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function hasAttribute ($attribute)
     {
-        empty($this->_columns) ? $this->getColumns() : $this->_columns;
+        empty($this->_columns) ? $this->getColumns() : $this->_columns; // HINT: only used by HasAndBelongsToMany joinObjects, if the table is not present yet!
         return isset($this->_columns[$attribute]) || (!empty($this->_combinedAttributes) && $this->isCombinedAttribute($attribute));
     }
     
@@ -2438,7 +2438,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 }
                 if(empty($_SESSION['__activeRecordColumnsSettingsCache']['available_tables']) || 
                 !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
-                    $_SESSION['__activeRecordColumnsSettingsCache']['available_tables'] = $this->_db->MetaTables();
+                    $_SESSION['__activeRecordColumnsSettingsCache']['available_tables'] = $this->_db->availableTables();
                 }
                 $available_tables = $_SESSION['__activeRecordColumnsSettingsCache']['available_tables'];
             }
@@ -2542,7 +2542,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function _databaseTableInternals($table)
     {
         if(empty($_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals']) || !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
-            $_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals'] = $this->_db->MetaColumns($table);
+            $_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals'] = $this->_db->getColumnDetails($table);
         }
         $cache[$table] = $_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals'];
 

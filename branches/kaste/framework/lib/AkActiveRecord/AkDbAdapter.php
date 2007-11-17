@@ -39,7 +39,7 @@ class AkDbAdapter
     
     function __destruct()
     {
-        var_dump(self::$delegated_methods);
+        //var_dump(self::$delegated_methods);
         //var_dump(self::$delegated_properties);
     }
     
@@ -307,14 +307,6 @@ class AkDbAdapter
         return $records;
     }
       
-    
-    /* SCHEMA */
-    
-    function renameColumn($table_name,$column_name,$new_name)
-    {
-        trigger_error(Ak::t('renameColumn is not available for your DbAdapter. Using %db_type.',array('%db_type'=>$this->type())));
-    }
-    
     /* TRANSACTIONS */
     
     function startTransaction()
@@ -337,7 +329,15 @@ class AkDbAdapter
         return $this->connection->HasFailedTrans();
     }
     
+    /* SCHEMA */
+    
+    function renameColumn($table_name,$column_name,$new_name)
+    {
+        trigger_error(Ak::t('renameColumn is not available for your DbAdapter. Using %db_type.',array('%db_type'=>$this->type())));
+    }
+    
     /* META */
+    
     function availableTables()
     {
         return $this->connection->MetaTables();
@@ -345,8 +345,17 @@ class AkDbAdapter
     
     function getColumnDetails($table_name)
     {
-        
+        return $this->connection->MetaColumns($table_name);
     }
+    
+    /* QUOTING */ 
+    
+    function __quote_string($value)
+    {
+        return $this->connection->qstr($value);
+    }
+    
+    
 }
 
 ?>

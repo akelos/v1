@@ -119,7 +119,7 @@ class Test_of_AkInstaller extends  AkUnitTest
             updated_at datetime
         ");
 
-        $from_datadict = $this->Installer->db->MetaColumns('test_pages');
+        $from_datadict = $this->Installer->db->getColumnDetails('test_pages');
 
         foreach ($this->expected_for_creating_table as $column=>$details){
             foreach ($details as $index=>$value) {
@@ -236,7 +236,7 @@ class Test_of_AkInstaller extends  AkUnitTest
     {
         $this->Installer = new AkInstaller();
         $this->Installer->createTable('test_defaults','id,name,screen_name string,description,*url,owner_id,modified_at,created_on,is_featured,position,lock_version');
-        $from_datadict = $this->Installer->db->MetaColumns('test_defaults');
+        $from_datadict = $this->Installer->db->getColumnDetails('test_defaults');
 
         foreach ($this->expected_for_default_types as $column=>$details){
             foreach ($details as $index=>$value) {
@@ -273,6 +273,7 @@ class Test_of_AkInstaller extends  AkUnitTest
     function test_should_rename_columns()
     {
         $this->Installer->renameColumn('test_defaults','screen_name','real_name');
+        $this->Installer->dropTable('test_defaults');
     }
 
 }
