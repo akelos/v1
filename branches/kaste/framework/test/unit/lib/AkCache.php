@@ -6,10 +6,7 @@ require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 
-//$db =& Ak::db();
-//$db->debug = true;
-
-class Test_of_AkCache_Class extends  UnitTestCase
+class Test_of_AkCache_Class extends  AkUnitTest 
 {
     
     var $_driverInstance = NULL;
@@ -17,6 +14,11 @@ class Test_of_AkCache_Class extends  UnitTestCase
     var $id = 'test case cache id';
     var $group = 'test case group to cacth';
     var $text_to_catch = 'this is the text to catch on the test case of the AkCache class';
+
+    function test_install_db_tables()
+    {
+        $this->resetFrameworkDatabaseTables();
+    }
     
     function setUp()
     {
