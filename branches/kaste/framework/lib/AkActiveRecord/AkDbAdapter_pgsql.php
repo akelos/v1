@@ -29,9 +29,20 @@ class AkDbAdapter_pgsql extends AkDbAdapter
         return 'postgre';
     }
     
+    /* SCHEMA */
+    
     function renameColumn($table_name,$column_name,$new_name)
     {
         return $this->sqlexecute("ALTER TABLE $table_name RENAME COLUMN $column_name TO $new_name");
+    }
+    
+    /* META */
+    
+    function availableTables()
+    {
+        $schema_path = $this->selectValue('SHOW search_path');
+        $schemas = "'".join("', '",split(',',$schema_path))."'";
+        return $this->selectValues("SELECT tablename FROM pg_tables WHERE schemaname IN ($schemas)");
     }
     
 }

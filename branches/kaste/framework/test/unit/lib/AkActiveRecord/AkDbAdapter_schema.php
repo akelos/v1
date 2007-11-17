@@ -17,6 +17,16 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
         $this->assertEqual($old_adodb_style,$new_implementation);                    
     }
     
+    function test_should_return_available_tables_for_postgre()
+    {
+        $db =& AkDbAdapter::getConnection();
+        if ($db->type() !== 'postgre') return;
+        $old = $db->connection->MetaTables();
+        $new = $db->availableTables();
+        sort($new);
+        $this->assertEqual($old,$new);
+    }
+    
     function test_should_return_column_details()
     {
         $this->installAndIncludeModels(array(
