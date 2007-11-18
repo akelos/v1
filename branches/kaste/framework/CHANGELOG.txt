@@ -1,0 +1,76 @@
+SVN
+----------------------
+* AkInstaller::createTable() will now add created_at and updated_at columns automatically unless you have one of 
+  them in your table declaration or set the option 'timestamp' => false
+    
+    function up_1(){
+        $this->createTable('user', 'id, first_name, last_name, email'); // will add created_at, and updated_at
+    }
+
+  to avoid it
+
+    function up_1(){
+          $this->createTable('user', 'id, first_name, last_name, email', array('timestamp'=>false)); // nothing extra
+    }   
+  
+  or
+  
+    function up_1(){
+          $this->createTable('user', 'id, first_name, last_name, email, updated_at'); // nothing extra
+    }   
+      
+* Simplifying unit test calls for models and core tests. Updated generators to reflect this new way of calling tests.
+  If you stick with the convention of prefixing your test cases with TestCase you will no longer need to call ak__test('testcaseclass')
+  
+  Running models test can now be done with simply
+    ./script/test model User
+    
+  Core tests can be called without the full path like
+    ./script/test AkActiveRecord
+
+* Rearranged scripts to include as little code as possible in the application space. This should make updates easier.
+
+* Removed AkInflector::modulize as it had a misleading name, use AkInflector::classify instead [420]
+
+* Added support for HTTP Authentication [412]. Example:
+
+    <?php
+    
+    class PostController extends ApplicationController
+    {
+        var $_authorized_users = array('bermi' => 'secret');
+        
+        function __construct()
+        {
+            $this->beforeFilter(array('authenticate' => array('except' => array('index'))));
+        }
+    
+        function index() 
+        {
+            $this->renderText("Everyone can see me!");
+        }
+    
+        function edit()
+        {
+            $this->renderText("I'm only accessible if you know the password");
+        }
+    
+        function authenticate()
+        {
+            /**
+            * You can either use an array like $this->_authorized_users or
+            * an Model instance that implements an authenticate method like Model::authenticate($user,$pass, $controller);
+            */
+            return $this->_authenticateOrRequestWithHttpBasic('My Blog', $this->_authorized_users);
+        }
+    }
+    
+    ?>
+
+* Added public/500.php and public/404.php for handling errors on production mode.
+
+
+0.8
+----------------------
+
+ * First public release

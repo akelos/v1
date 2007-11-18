@@ -28,6 +28,10 @@ require_once(AK_APP_DIR.DS.'shared_model.php');
 
 class AkUnitTest extends UnitTestCase
 {
+    var $module = '';
+    var $insert_models_data = false;
+    var $instantiate_models = false;
+    
     function resetFrameworkDatabaseTables()
     {
         require_once(AK_APP_DIR.DS.'installers'.DS.'framework_installer.php');
@@ -69,10 +73,10 @@ class AkUnitTest extends UnitTestCase
             $table_definition = is_numeric($key) ? '' : $value;
             $this->_reinstallModel($model,$table_definition);
             $this->_includeOrGenerateModel($model);
-            if(!empty($options['populate'])){
+            if($this->insert_models_data || !empty($options['populate'])){
                 $this->populateTables(AkInflector::tableize($model));
             }
-            if(!empty($options['instantiate'])){
+            if($this->instantiate_models || !empty($options['instantiate'])){
                 $this->instantiateModel($model);
             }
         }
@@ -97,7 +101,7 @@ class AkUnitTest extends UnitTestCase
             }
             $installer =& new AkInstaller();
             $installer->dropTable($table_name,array('sequence'=>true));
-            $installer->createTable($table_name,$table_definition);
+            $installer->createTable($table_name,$table_definition,array('timestamp'=>false));
         }
     }
     
@@ -133,11 +137,11 @@ class AkUnitTest extends UnitTestCase
         $args = func_get_args();
         $tables = !empty($args) ? (is_array($args[0]) ? $args[0] : (count($args) > 1 ? $args : Ak::toArray($args))) : array();
         foreach ($tables as $table){
-            $file = AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.Ak::sanitize_include($table).'.yaml';
+            $file = AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.(empty($this->module)?'':$this->module.DS).Ak::sanitize_include($table).'.yaml';
             if(!file_exists($file)){
                 continue;
             }
-            $class_name = AkInflector::modulize($table);
+            $class_name = AkInflector::classify($table);
             if($this->instantiateModel($class_name)){
                 $items = Ak::convert('yaml','array',file_get_contents($file));
                 foreach ($items as $item){

@@ -6,7 +6,7 @@ require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 
-class Test_of_AkCache_Class extends  AkUnitTest 
+class AkCache_TestCase extends  AkUnitTest 
 {
     
     var $_driverInstance = NULL;
@@ -30,7 +30,15 @@ class Test_of_AkCache_Class extends  AkUnitTest
         unset($this->Cache);
     }
     
-        
+ /*   function test_setup()
+    {
+        require_once(AK_LIB_DIR.DS.'AkInstaller.php');
+        require_once(AK_APP_DIR.DS.'installers'.DS.'framework_installer.php');
+        $installer = new FrameworkInstaller();
+        $installer->uninstall();
+        $installer->install();
+    }
+   */     
     function Testinit()
     {
         //No driver is loaded
@@ -152,6 +160,6 @@ class Test_of_AkCache_Class extends  AkUnitTest
 
 }
 
-ak_test('Test_of_AkCache_Class', true);
+ak_test('AkCache_TestCase',true);
 
 ?>

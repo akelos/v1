@@ -117,7 +117,7 @@ class AkHasAndBelongsToMany extends AkAssociation
     function &addAssociated($association_id, $options = array())
     {
         $default_options = array(
-        'class_name' => empty($options['class_name']) ? AkInflector::modulize($association_id) : $options['class_name'],
+        'class_name' => empty($options['class_name']) ? AkInflector::classify($association_id) : $options['class_name'],
         'table_name' => false,
         'join_table' => false,
         'join_class_name' => false,
@@ -157,7 +157,7 @@ class AkHasAndBelongsToMany extends AkAssociation
         sort($join_tables);
 
         $options['join_table'] = empty($options['join_table']) ? join('_', $join_tables) : $options['join_table'];
-        $options['join_class_name'] = empty($options['join_class_name']) ? join(array_map(array('AkInflector','modulize'),array_map(array('AkInflector','singularize'), $join_tables))) : $options['join_class_name'];
+        $options['join_class_name'] = empty($options['join_class_name']) ? join(array_map(array('AkInflector','classify'),array_map(array('AkInflector','singularize'), $join_tables))) : $options['join_class_name'];
         $options['foreign_key'] = empty($options['foreign_key']) ? AkInflector::underscore($owner_name).'_id' : $options['foreign_key'];
         $options['association_foreign_key'] = empty($options['association_foreign_key']) ? AkInflector::underscore($associated_name).'_id' : $options['association_foreign_key'];
 
@@ -276,7 +276,7 @@ class AkHasAndBelongsToMany extends AkAssociation
         $options = $this->getOptions($this->association_id);
         require_once(AK_LIB_DIR.DS.'AkInstaller.php');
         $Installer =& new AkInstaller();
-        $Installer->createTable($options['join_table'],"id,{$options['foreign_key']},{$options['association_foreign_key']}");
+        $Installer->createTable($options['join_table'],"id,{$options['foreign_key']},{$options['association_foreign_key']}",array('timestamp'=>false));
         return $this->JoinObject->setTableName($options['join_table'],false);
     }
 
@@ -544,6 +544,7 @@ class AkHasAndBelongsToMany extends AkAssociation
     function _relateAssociatedWithOwner(&$Associated)
     {
         if(!$this->Owner->isNewRecord()){
+            $success = true;
             $options = $this->getOptions($this->association_id);
             if(strtolower($options['join_class_name']) != strtolower(get_class($this->JoinObject))){
                 return false;
@@ -560,8 +561,6 @@ class AkHasAndBelongsToMany extends AkAssociation
 
                     $this->JoinObject =& $this->JoinObject->create(array($options['foreign_key']=> $foreign_key, $options['association_foreign_key']=> $association_foreign_key));
                     $success = !$this->JoinObject->isNewRecord();
-                }else{
-                    $success = true;
                 }
             }
             if($success){

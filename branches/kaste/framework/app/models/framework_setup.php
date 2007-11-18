@@ -4,7 +4,7 @@ require_once(AK_LIB_DIR.DS.'AkLogger.php');
 
 class FrameworkSetup extends AkObject
 {
-    var $avaliable_databases = array(
+    var $available_databases = array(
     'mysql' => 'MySQL',
     'pgsql' => 'PostgreSQL',
     'sqlite' => 'SQLite'
@@ -119,7 +119,7 @@ class FrameworkSetup extends AkObject
     function setDatabaseType($database_type)
     {
         $database_type = strtolower($database_type);
-        if(!in_array($database_type, array_keys($this->avaliable_databases))){
+        if(!in_array($database_type, array_keys($this->available_databases))){
             trigger_error(Ak::t('Selected database is not supported yet by the Akelos Framework',array(),'framework_setup'));
         }elseif(!$this->isDatabaseDriverAvalible($database_type)){
             trigger_error(Ak::t('Could not set %database_type as database type. Your current PHP settings do not support %database_type databases', array('%database_type '=>$database_type), 'framework_setup'));
@@ -213,7 +213,7 @@ class FrameworkSetup extends AkObject
     function getAvailableDatabases()
     {
         $databases = array();
-        foreach ($this->avaliable_databases as $type=>$description){
+        foreach ($this->available_databases as $type=>$description){
             if($this->isDatabaseDriverAvalible($type)){
                 $databases[] = array('type' => $type, 'name' => $description);
             }
@@ -737,7 +737,9 @@ CONFIG;
         AK_APP_DIR.DS.'installers'.DS.'database_version.txt',
         AK_APP_DIR.DS.'installers'.DS.'framework_version.txt',
         AK_APP_DIR.DS.'models'.DS.'framework_setup.php',
-        AK_APP_DIR.DS.'controllers'.DS.'framework_setup_controller.php',
+        AK_APP_DIR.DS.'controllers'.DS.'framework_setup_controller.php'
+        ));
+        @array_map(array('Ak','directory_delete'),  array(
         AK_APP_DIR.DS.'views'.DS.'framework_setup',
         AK_APP_DIR.DS.'locales'.DS.'framework_setup'
         ));

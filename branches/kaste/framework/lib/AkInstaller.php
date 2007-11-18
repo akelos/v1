@@ -31,6 +31,8 @@ class AkInstaller
     var $debug = false;
     var $available_tables = array();
     var $vervose = true;
+    var $module;
+    var $warn_if_same_version = true;
 
     function AkInstaller($db_connection = null)
     {
@@ -106,7 +108,7 @@ class AkInstaller
             }
         }
 
-        if($current_version == $version){
+        if($this->warn_if_same_version && $current_version == $version){
             echo Ak::t("Can't go $action to version %version, you're already on version %version", array('%version'=>$version));
             return false;
         }
@@ -172,7 +174,7 @@ class AkInstaller
     function _versionPath($options = array())
     {
         $mode = empty($options['mode']) ? AK_ENVIRONMENT : $options['mode'];
-        return AK_APP_INSTALLERS_DIR.DS.'versions'.DS.$mode.'_'.$this->getInstallerName().'_version.txt';
+        return AK_APP_INSTALLERS_DIR.DS.(empty($this->module)?'':$this->module.DS).'versions'.DS.$mode.'_'.$this->getInstallerName().'_version.txt';
     }
 
 
@@ -239,16 +241,12 @@ class AkInstaller
 
     function createTable($table_name, $column_options = null, $table_options = array())
     {
-        static $created_tables = array();
-        
-        if(in_array($table_name, $created_tables)){
-            //return false;
-        }
         if($this->tableExists($table_name)){
             trigger_error(Ak::t('Table %table_name already exists on the database', array('%table_name'=>$table_name)), E_USER_NOTICE);
             return false;
         }
-        $created_tables[] = $table_name;
+        $this->timestamps = (!isset($table_options['timestamp']) || (isset($table_options['timestamp']) && $table_options['timestamp'])) && 
+                            (!strstr($column_options, 'created') && !strstr($column_options, 'updated'));
         return $this->_createOrModifyTable($table_name, $column_options, $table_options);
     }
 
@@ -414,19 +412,16 @@ class AkInstaller
 
     function _setColumnDefaults($columns)
     {
-        $columns = str_replace("\t",' ', $columns);
-        if(is_string($columns)){
-            if(strstr($columns,"\n")){
-                $columns = explode("\n",$columns);
-            }elseif(strstr($columns,',')){
-                $columns = explode(',',$columns);
-            }
-        }
+        $columns = Ak::toArray($columns);
         foreach ((array)$columns as $column){
-            $column = trim($column, "\n\r, ");
+            $column = trim($column, "\n\t\r, ");
             if(!empty($column)){
                 $single_columns[$column] = $this->_setColumnDefault($column);
             }
+        }
+        if(!empty($this->timestamps) && !isset($single_columns['created_at']) &&  !isset($single_columns['updated_at'])){
+            $single_columns['updated_at'] = $this->_setColumnDefault('updated_at');
+            $single_columns['created_at'] = $this->_setColumnDefault('created_at');
         }
         return join(",\n", $single_columns);
     }
@@ -614,7 +609,7 @@ class AkInstaller
         'attribute_names','combined_subattributes','available_combined_attributes','connection','connection','primary_key',
         'table_name','table_name','only_available_atrributes','columns_for_atrributes','columns_with_regex_boundaries','columns',
         'column_settings','column_settings','akelos_data_type','class_for_database_table_mapping','display_field','display_field',
-        'internationalized_columns','avaliable_locales','current_locale','attribute_by_locale','attribute_locales',
+        'internationalized_columns','available_locales','current_locale','attribute_by_locale','attribute_locales',
         'attribute_by_locale','attribute_locales','attributes_before_type_cast','attribute_before_type_cast','serialize_attribute',
         'available_attributes_quoted','attributes_quoted','column_type','value_for_date_column','observable_state',
         'observable_state','observers','errors','base_errors','errors_on','full_error_messages','array_from_ak_string',

@@ -264,7 +264,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function init($attributes = array())
     {
         AK_LOG_EVENTS ? ($this->Logger =& Ak::getLogger()) : null;
-        $this->_internationalize = is_null($this->_internationalize) && AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT ? count($this->getAvaliableLocales()) > 1 : $this->_internationalize;
+        $this->_internationalize = is_null($this->_internationalize) && AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT ? count($this->getAvailableLocales()) > 1 : $this->_internationalize;
 
         @$this->_instatiateDefaultObserver();
 
@@ -1551,7 +1551,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
          $table_name = $this->getTableName();
          $available_types = array_merge(array($this->getModelName()),$this->getSubclasses());
          foreach ($available_types as $subclass){
-             $type_condition[] = ' '.$table_name.'.'.$inheritance_column.' = \''.AkInflector::demodulize($subclass).'\' ';
+             $type_condition[] = ' '.$table_name.'.'.$inheritance_column.' = \''.AkInflector::humanize(AkInflector::underscore($subclass)).'\' ';
          }
          return empty($type_condition) ? '' : '('.join('OR',$type_condition).') ';
      }
@@ -1678,7 +1678,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 }
             }
             $value = $this->{'get'.AkInflector::camelize($attribute)}();
-            return $this->getInheritanceColumn() === $attribute ? AkInflector::demodulize($value) : $value;
+            return $this->getInheritanceColumn() === $attribute ? AkInflector::humanize(AkInflector::underscore($value)) : $value;
         }
         if(isset($this->$attribute) || (!isset($this->$attribute) && $this->isCombinedAttribute($attribute))){
             if($this->hasAttribute($attribute)){
@@ -2941,7 +2941,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         static $cache;
         $model = $this->getModelName();
-        $available_locales = $this->getAvaliableLocales();
+        $available_locales = $this->getAvailableLocales();
         if(empty($cache[$model])){
             $cache[$model] = array();
             foreach ($this->getColumnSettings() as $column_name=>$details){
@@ -2960,7 +2960,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $cache[$model];
     }
 
-    function getAvaliableLocales()
+    function getAvailableLocales()
     {
         static $available_locales;
         if(empty($available_locales)){
@@ -2978,7 +2978,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         static $current_locale;
         if(empty($current_locale)){
             $current_locale = Ak::lang();
-            $available_locales = $this->getAvaliableLocales();
+            $available_locales = $this->getAvailableLocales();
             if(!in_array($current_locale, $available_locales)){
                 $current_locale = array_shift($available_locales);
             }
@@ -2998,7 +2998,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function getAttributeLocales($attribute)
     {
         $attribute_locales = array();
-        foreach ($this->getAvaliableLocales() as $locale){
+        foreach ($this->getAvailableLocales() as $locale){
             if($this->hasColumn($locale.'_'.$attribute)){
                 $attribute_locales[$locale] = $this->getAttributeByLocale($attribute, $locale);
             }
@@ -3037,7 +3037,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function _isInternationalizeCandidate($column_name)
     {
         $pos = strpos($column_name,'_');
-        return $pos === 2 && in_array(substr($column_name,0,$pos),$this->getAvaliableLocales());
+        return $pos === 2 && in_array(substr($column_name,0,$pos),$this->getAvailableLocales());
     }
     
     /**
@@ -3238,7 +3238,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
         foreach ($date_attributes as $attribute=>$date){
-            $params[$attribute] = Ak::getDate(Ak::getTimestamp(trim(@$date[1].'-'.@$date[2].'-'.@$date[3].' '.@$date[4].':'.@$date[5],' :-')));
+            $params[$attribute] = Ak::getDate(Ak::getTimestamp(trim(@$date[1].'-'.@$date[2].'-'.@$date[3].' '.@$date[4].':'.@$date[5].':'.@$date[6],' :-')));
         }
     }
     
