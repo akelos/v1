@@ -107,10 +107,25 @@ class AkUnitTest extends UnitTestCase
             require_once(AK_MODELS_DIR.DS.AkInflector::underscore($model_name).'.php');
         } else {
             if (class_exists($model_name)) return true;
-            $model_source_code = "class ".$model_name." extends ActiveRecord { }";
+            $model_source_code = "class ".$model_name." extends ActiveRecord { ";
+            if (!AK_PHP5) $model_source_code .= $this->__fix_for_PHP4($model_name);
+            $model_source_code .= "}";
             $has_errors = @eval($model_source_code) === false;
             if ($has_errors) trigger_error(Ak::t('Could not declare the model %modelname.',array('%modelname'=>$model_name)),E_USER_ERROR);
         }
+    }
+    
+    function __fix_for_PHP4($model_name)
+    {
+        $table_name = AkInflector::tableize($model_name);
+        return "function $model_name()
+    {
+        \$this->setModelName('$model_name');
+        \$attributes = (array)func_get_args();
+        \$this->setTableName('$table_name');
+        \$this->init(\$attributes);
+    }";
+        
     }
     
     function populateTables()

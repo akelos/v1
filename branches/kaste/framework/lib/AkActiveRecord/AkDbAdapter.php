@@ -18,15 +18,18 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
-class AkDbAdapter
+require_once(AK_LIB_DIR.DS.'AkObject.php');
+
+class AkDbAdapter extends AkObject 
 {
 
     var $connection;
     var $settings;
     var $dictionary;
     var $debug=false;
-    static $delegated_methods = array();
-    static $delegated_properties = array();
+    var $logger;
+    //static $delegated_methods = array();
+    //static $delegated_properties = array();
     
     /**
      * @param array $database_settings
@@ -43,7 +46,7 @@ class AkDbAdapter
         //var_dump(self::$delegated_properties);
     }
     
-    function __call($method,$args)
+/*    function __call($method,$args)
     {
         if (!in_array($method,self::$delegated_methods)) {
             self::$delegated_methods[] = $method;
@@ -63,7 +66,7 @@ class AkDbAdapter
             return $this->connection->{$property};
         }
     }
-    
+  */  
     function connect()
     {
         $dsn = $this->_constructDsn($this->settings);
@@ -139,10 +142,11 @@ class AkDbAdapter
         return join(':',$settings);
     }
 
-    function getDictionary()
+    function &getDictionary()
     {
         if (empty($this->dictionary)){
             if (!$this->connected()) $this->connect();
+            require_once(AK_CONTRIB_DIR.DS.'adodb'.DS.'adodb.inc.php');
             $this->dictionary =& NewDataDictionary($this->connection);
         }
         return $this->dictionary;
@@ -180,7 +184,8 @@ class AkDbAdapter
     function _log($message)
     {
         if (!AK_LOG_EVENTS) return;
-        Ak::getLogger()->message($message);
+        if (!$this->logger) $this->logger =& Ak::getLogger();
+        $this->logger->message($message);
     }
     
     function addLimitAndOffset(&$sql,$options)
@@ -348,13 +353,39 @@ class AkDbAdapter
         return $this->connection->MetaColumns($table_name);
     }
     
+    function getIndexes($table_name)
+    {
+        return $this->connection->MetaIndexes($table_name);
+    }
+    
     /* QUOTING */ 
     
-    function __quote_string($value)
+    function quote_string($value)
     {
         return $this->connection->qstr($value);
     }
     
+    function quote_datetime($value)
+    {
+        return $this->connection->DBTimeStamp($value);
+    }
+    
+    function quote_date($value)
+    {
+        return $this->connection->DBDate($value);
+    }
+    
+    // will be moved to postgre
+    function escape_blob($value)
+    {
+        return $this->connection->BlobEncode($value);
+    }
+    
+    // will be moved to postgre
+    function unescape_blob($value)
+    {
+        return $this->connection->BlobDecode($value);
+    }
     
 }
 

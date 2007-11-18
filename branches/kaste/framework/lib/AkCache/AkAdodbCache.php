@@ -225,13 +225,13 @@ class AkAdodbCache
         $query_result = $this->_db->selectValue('
             SELECT cache_data 
             FROM cache 
-            WHERE id = '.$this->_db->qstr($cache_hash).' 
-            AND cache_group = '.$this->_db->qstr($this->_group).' 
-            AND expire > '.$this->_db->DBTimeStamp($this->_refreshTime)
+            WHERE id = '.$this->_db->quote_string($cache_hash).' 
+            AND cache_group = '.$this->_db->quote_string($this->_group).' 
+            AND expire > '.$this->_db->quote_datetime($this->_refreshTime)
         );
         if (!$query_result) return false;
 
-        $data = $this->_db->BlobDecode($query_result);
+        $data = $this->_db->unescape_blob($query_result);
 
         if($this->_automaticSerialization == true){
             $data = unserialize($data);
@@ -269,10 +269,10 @@ class AkAdodbCache
         // TODO replace with AkDbAdapter statement
         $ret = $this->_db->connection->Replace(
         'cache', array(
-        'id'=>$this->_db->qstr($cache_hash),
-        'cache_data'=>$this->_db->qstr($this->_db->BlobEncode($data)),
-        'cache_group'=>$this->_db->qstr($this->_group),
-        'expire'=>$this->_db->DBTimeStamp(time() + $this->_lifeTime)),
+        'id'=>$this->_db->quote_string($cache_hash),
+        'cache_data'=>$this->_db->quote_string($this->_db->escape_blob($data)),
+        'cache_group'=>$this->_db->quote_string($this->_group),
+        'expire'=>$this->_db->quote_datetime(time() + $this->_lifeTime)),
         'id');
 
         if($ret == 0){
@@ -300,7 +300,7 @@ class AkAdodbCache
         if (isset($this->_memoryCachingArray[$cache_hash])) {
             unset($this->_memoryCachingArray[$cache_hash]);
         }
-        return (bool)$this->_db->delete('DELETE FROM cache WHERE id = '.$this->_db->qstr($cache_hash));
+        return (bool)$this->_db->delete('DELETE FROM cache WHERE id = '.$this->_db->quote_string($cache_hash));
     }
 
     /**
@@ -325,11 +325,11 @@ class AkAdodbCache
     {
         switch ($mode) {
             case 'ingroup':
-                return (bool)$this->_db->delete('DELETE FROM cache WHERE cache_group = '.$this->_db->qstr($group));
+                return (bool)$this->_db->delete('DELETE FROM cache WHERE cache_group = '.$this->_db->quote_string($group));
             case 'notingroup':
-                return (bool)$this->_db->delete('DELETE FROM cache WHERE cache_group NOT LIKE '.$this->_db->qstr($group));
+                return (bool)$this->_db->delete('DELETE FROM cache WHERE cache_group NOT LIKE '.$this->_db->quote_string($group));
             case 'old':
-                return (bool)$this->_db->delete('DELETE FROM cache WHERE expire < '.$this->_db->DBTimeStamp(time()));
+                return (bool)$this->_db->delete('DELETE FROM cache WHERE expire < '.$this->_db->quote_datetime(time()));
             default:
             return true;
         }

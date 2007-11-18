@@ -138,7 +138,7 @@ class AkDbSession extends AkObject
     */
     function _read($id)
     {
-        $result = $this->_db->selectValue("SELECT value FROM sessions WHERE id = ".$this->_db->qstr($id));
+        $result = $this->_db->selectValue("SELECT value FROM sessions WHERE id = ".$this->_db->quote_string($id));
         return is_null($result) ? '' : (string)$result;
     }
 
@@ -155,7 +155,7 @@ class AkDbSession extends AkObject
         // We don't want to hit the db if nothing has changed
         if($this->_original_sess_value != $data){
             // TODO: replace with dbAdapter-method
-            $ret = $this->_db->connection->Replace('sessions', array('id'=>$this->_db->qstr($id),'expire'=>$this->_db->DBTimeStamp(time()),'value'=>$this->_db->qstr($data)), 'id');
+            $ret = $this->_db->connection->Replace('sessions', array('id'=>$this->_db->quote_string($id),'expire'=>$this->_db->quote_datetime(time()),'value'=>$this->_db->quote_string($data)), 'id');
             if($ret == 0){
                 return false;
             }else{
@@ -175,7 +175,7 @@ class AkDbSession extends AkObject
     */
     function _destroy($id)
     {
-        return (bool)$this->_db->delete('DELETE FROM sessions WHERE id = '.$this->_db->qstr($id));
+        return (bool)$this->_db->delete('DELETE FROM sessions WHERE id = '.$this->_db->quote_string($id));
     }
 
     /**
@@ -186,7 +186,7 @@ class AkDbSession extends AkObject
     */
     function _gc()
     {
-        return (bool)$this->_db->delete('DELETE FROM sessions WHERE expire < '.$this->_db->DBTimeStamp(time()-$this->sessionLife));
+        return (bool)$this->_db->delete('DELETE FROM sessions WHERE expire < '.$this->_db->quote_datetime(time()-$this->sessionLife));
     }
 
 

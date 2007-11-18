@@ -111,7 +111,7 @@ if(AK_ENVIRONMENT != 'setup'){
 
 @ini_set("include_path",(AK_LIB_DIR.PATH_SEPARATOR.AK_MODELS_DIR.PATH_SEPARATOR.AK_CONTRIB_DIR.DS.'pear'.PATH_SEPARATOR.ini_get("include_path")));
 defined('AK_PHP5') ? null : define('AK_PHP5', version_compare(PHP_VERSION, '5', '>=') == 1 ? true : false);
-/* +++++++++++++ PHP5 ++++++++++++  */ if (!AK_PHP5) die('This branch is PHP5 only right now!');
+/* +++++++++++++ PHP5 ++++++++++++  */ //if (!AK_PHP5) die('This branch is PHP5 only right now!');
 
 if(!AK_CLI && AK_WEB_REQUEST){
 
@@ -212,7 +212,7 @@ defined('AK_MODE_DATABASE') ? null : define('AK_MODE_DATABASE', 8);
 defined('AK_MODE_DIE') ? null : define('AK_MODE_DIE', 16);
 
 defined('AK_LOG_DIR') ? null : define('AK_LOG_DIR', AK_BASE_DIR.DS.'log');
-defined('AK_LOG_EVENTS') ? null : define('AK_LOG_EVENTS', false);
+defined('AK_LOG_EVENTS') ? null : define('AK_LOG_EVENTS', true);
 
 defined('AK_ROUTES_MAPPING_FILE') ? null : define('AK_ROUTES_MAPPING_FILE', AK_CONFIG_DIR.DS.'routes.php');
 defined('AK_OS') ? null : define('AK_OS', (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'WINDOWS' : 'UNIX'));

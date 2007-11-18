@@ -33,10 +33,10 @@ class Test_of_AkUnitTest extends  AkUnitTest
     function test_should_instantiate_Model()
     {
         $unit_tester = new AkUnitTest();
-        $this->assertFalse(isset($unit_tester->Article));     
-        $unit_tester->instantiateModel('Article');
-        $this->assertTrue(isset($unit_tester->Article));
-        $this->assertTrue(AkActiveRecord::descendsFromActiveRecord($unit_tester->Article));
+        $this->assertFalse(isset($unit_tester->Account));
+        $unit_tester->instantiateModel('Account');
+        $this->assertTrue(isset($unit_tester->Account));
+        $this->assertTrue(AkActiveRecord::descendsFromActiveRecord($unit_tester->Account));
         
         $this->assertFalse($unit_tester->instantiateModel('AnotherModel'));
         $this->assertError('Could not instantiate AnotherModel');
@@ -72,7 +72,7 @@ class Test_of_AkUnitTest extends  AkUnitTest
         $this->assertTrue($AllRecords = $TheModel->find());
         $yaml = $TheModel->toYaml($AllRecords);
         $this->assertFalse(file_exists(AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'the_models.yaml'));
-        file_put_contents(AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'the_models.yaml',$yaml);
+        Ak::file_put_contents(AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'the_models.yaml',$yaml);
         
         $unit_tester->installAndIncludeModels(array('TheModel'=>'id,name'));
         $this->assertFalse($TheModel->find());

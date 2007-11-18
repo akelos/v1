@@ -11,14 +11,28 @@ $callbacks_during_save = array('beforeCreate','beforeValidation','beforeValidati
 
 function createClass ($classname, $parent, $functions, $function_body){
     $class_code = "class $classname extends $parent {";
+    if (!AK_PHP5 && $parent=='ActiveRecord') $class_code .= __fix_for_PHP4($classname);
     foreach ($functions as $function){
         $class_code .= "function $function(){".$function_body."}";
     }
     $class_code .= "}";
     eval($class_code);
 }
+function __fix_for_PHP4($model_name)
+{
+    $table_name = AkInflector::tableize($model_name);
+    return "function $model_name()
+{
+    \$this->setModelName('$model_name');
+    \$attributes = (array)func_get_args();
+    \$this->setTableName('$table_name');
+    \$this->init(\$attributes);
+}";
+    
+}
 
-createClass('TestCallbacks','ActiveRecord',$callbacks_during_save,'$this->__called[]=__FUNCTION__;return true;');
+
+createClass('TestCallback','ActiveRecord',$callbacks_during_save,'$this->__called[]=__FUNCTION__;return true;');
 createClass('TestObserver','AkObserver',$callbacks_during_save,'$this->__called[]=__FUNCTION__;return true;');
 
 /* Test */
@@ -26,8 +40,8 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
 {
     function test_start()
     {
-        $this->installAndIncludeModels(array('TestCallbacks'=>'id,name'));
-        if (!isset($this->Observer)) $this->Observer =& new TestObserver(&$this->TestCallbacks);
+        $this->installAndIncludeModels(array('TestCallback'=>'id,name'));
+        if (!isset($this->Observer)) $this->Observer =& new TestObserver(&$this->TestCallback);
     }
     
     function tearDown()
@@ -37,7 +51,7 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
 
     function test_implementation_of_the_singleton_pattern()
     {
-        $ObservedModel =& new TestCallbacks();
+        $ObservedModel =& new TestCallback();
         $observers =& $ObservedModel->getObservers();
         $this->assertReference($this->Observer,$observers[0]);
     }
@@ -45,8 +59,9 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
     function test_callbacks_on_create()
     {
         $expected = array ('beforeSave','beforeCreate','afterCreate','afterSave');
+        if (!AK_PHP5) $expected = array_map('strtolower',$expected);
         
-        $CreateTest =& new TestCallbacks(array('name'=>'A Name'));
+        $CreateTest =& new TestCallback(array('name'=>'A Name'));
         $CreateTest->save(false);
 
         $this->assertEqual($CreateTest->__called,$expected);
@@ -56,8 +71,9 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
     function test_callbacks_on_create_with_validation()
     {
         $expected = array ('beforeSave','beforeValidation','afterValidation','beforeValidationOnCreate','afterValidationOnCreate','beforeCreate','afterCreate','afterSave');
+        if (!AK_PHP5) $expected = array_map('strtolower',$expected);
         
-        $CreateTest =& new TestCallbacks(array('name'=>'Another Name'));
+        $CreateTest =& new TestCallback(array('name'=>'Another Name'));
         $CreateTest->save(true);
 
         $this->assertEqual($CreateTest->__called,$expected);
@@ -67,8 +83,9 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
     function test_callbacks_on_update()
     {
         $expected = array ('beforeSave','beforeUpdate','afterUpdate','afterSave');
+        if (!AK_PHP5) $expected = array_map('strtolower',$expected);
         
-        $UpdateTest =& $this->TestCallbacks->find('first',array('name'=>'A Name'));
+        $UpdateTest =& $this->TestCallback->find('first',array('name'=>'A Name'));
         $UpdateTest->save(false);
 
         $this->assertEqual($UpdateTest->__called,$expected);
@@ -78,8 +95,9 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
     function test_callbacks_on_update_with_validation()
     {
         $expected = array ('beforeSave','beforeValidation','afterValidation','beforeValidationOnUpdate','afterValidationOnUpdate','beforeUpdate','afterUpdate','afterSave');
+        if (!AK_PHP5) $expected = array_map('strtolower',$expected);
         
-        $UpdateTest =& $this->TestCallbacks->find('first',array('name'=>'Another Name'));
+        $UpdateTest =& $this->TestCallback->find('first',array('name'=>'Another Name'));
         $UpdateTest->save(true);
 
         $this->assertEqual($UpdateTest->__called,$expected);
@@ -89,8 +107,9 @@ class TestCase_AkActiveRecord_callbacks extends  AkUnitTest
     function test_callbacks_on_destroy()
     {
         $expected = array('beforeDestroy','afterDestroy');
+        if (!AK_PHP5) $expected = array_map('strtolower',$expected);
         
-        $DestroyTest =& $this->TestCallbacks->find('first',array('name'=>'Another Name'));
+        $DestroyTest =& $this->TestCallback->find('first',array('name'=>'Another Name'));
         $DestroyTest->destroy();
         
         $this->assertEqual($DestroyTest->__called,$expected);

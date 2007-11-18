@@ -264,7 +264,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function init($attributes = array())
     {
         AK_LOG_EVENTS ? ($this->Logger =& Ak::getLogger()) : null;
-        
         $this->_internationalize = is_null($this->_internationalize) && AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT ? count($this->getAvaliableLocales()) > 1 : $this->_internationalize;
 
         @$this->_instatiateDefaultObserver();
@@ -776,7 +775,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $this->transactionStart();
                 if($this->beforeDestroy() && $this->notifyObservers('beforeDestroy')){
 
-                    $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->qstr($this->getId());
+                    $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->quote_string($this->getId());
                     $had_success = $this->_db->delete($sql,$this->getModelName().' Destroy');
                     if(!$had_success || !$this->afterDestroy() || !$this->notifyObservers('afterDestroy')){
                         $this->transactionFail();
@@ -961,7 +960,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
             $sql = array_merge(array($sql),$options['bind']);
         }
-    
+   
         if((!empty($options['include']) && $this->hasAssociations())){
             $result =& $this->findWithAssociations($options);
         }else{
@@ -995,10 +994,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             case 1 :
                 $table_name = !empty($options['include']) && $this->hasAssociations() ? '__owner' : $this->getTableName();
                 $options['conditions'] = $table_name.'.'.$this->getPrimaryKey().' = '.$ids[0].$conditions;
-    
                 $result =& $this->_find_every($options);
                 if (!$expects_array && $result !== false){ 
-                    $result =& $result[0];
+                    return $result[0];
                 }
                 return  $result;
                 break;
@@ -1111,11 +1109,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if(!isset($this->_activeRecordHasBeenInstantiated)){
             return Ak::handleStaticCall();
         }
-
         $objects = array();
         $results = $this->_db->sqlexecute ($sql,'selecting');
         if (!$results) return $objects;
-        
         while ($record = $results->FetchRow()) {
             $objects[] =& $this->instantiate($this->getOnlyAvailableAtrributes($record), false);
         }
@@ -1473,7 +1469,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 array('%class_name'=>$inheritance_model_name, '%column'=>$this->getInheritanceColumn())),E_USER_ERROR);
             }
         }
-
         $model_name = isset($inheritance_model_name) ? $inheritance_model_name : $this->getModelName();
         $object =& new $model_name('attributes', $record);
 
@@ -1673,7 +1668,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if($attribute[0] == '_'){
             return false;
         }
-
         if($inspect_for_callback_child_method === true && method_exists($this,'get'.AkInflector::camelize($attribute))){
             static $watchdog;
             $watchdog[@$attribute] = @$watchdog[$attribute]+1;
@@ -3152,11 +3146,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     function castAttributeForDatabase($column_name, $value, $add_quotes = true)
     {
-        $result = '';//$add_quotes ? "''" : ''; // $result = $add_quotes ? $this->_db->qstr('') : '';
+        $result = '';//$add_quotes ? "''" : ''; // $result = $add_quotes ? $this->_db->quote_string('') : '';
         switch ($this->getColumnType($column_name)) {
             case 'datetime':
             if(!empty($value)){
-                $date_time = $this->_db->DBTimeStamp($this->getValueForDateColumn($column_name, $value));
+                $date_time = $this->_db->quote_datetime($this->getValueForDateColumn($column_name, $value));
                 $result = $add_quotes ? $date_time : trim($date_time ,"'");
             }else{
                 $result = 'null';
@@ -3165,7 +3159,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
             case 'date':
             if(!empty($value)){
-                $date = $this->_db->DBDate($this->getValueForDateColumn($column_name, $value));
+                $date = $this->_db->quote_date($this->getValueForDateColumn($column_name, $value));
                 $result = $add_quotes ? $date : trim($date, "'");
             }else{
                 $result = 'null';
@@ -3179,9 +3173,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             case 'binary':
 
             if($this->_getDatabaseType() == 'postgre'){
-                $result =  " '".$this->_db->BlobEncode($value)."'::bytea ";
+                $result =  " '".$this->_db->escape_blob($value)."'::bytea ";
             }else{
-                $result = $add_quotes ? $this->_db->qstr($value) : $value;
+                $result = $add_quotes ? $this->_db->quote_string($value) : $value;
             }
 
             break;
@@ -3190,12 +3184,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             case 'integer':
                 $value = is_null($value) ? null : (integer)$value;
             case 'float':
-            $result = (empty($value) && $value !== 0) ? 'null' : (is_numeric($value) ? $value : $this->_db->qstr($value));
+            $result = (empty($value) && $value !== 0) ? 'null' : (is_numeric($value) ? $value : $this->_db->quote_string($value));
             $result = !empty($this->_columns[$column_name]['notNull']) && $result == 'null' && $this->_getDatabaseType() == 'sqlite' ? '0' : $result;
             break;
 
             default:
-            $result = $add_quotes ? $this->_db->qstr($value) : $value;
+            $result = $add_quotes ? $this->_db->quote_string($value) : $value;
             break;
         }
 
@@ -3216,7 +3210,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 }elseif (!empty($value) && 'datetime' == $column_type && substr($value,0,10) == '0000-00-00'){
                     return null;
                 }elseif ('binary' == $column_type && $this->_getDatabaseType() == 'postgre'){
-                    return $this->_db->BlobDecode($value);
+                    return $this->_db->unescape_blob($value);
                 }
             }
         }

@@ -162,7 +162,7 @@ class Test_of_AkInstaller extends  AkUnitTest
         $this->Installer->createTable('test_1','id int auto key,body string(32) index,author string(32)');
         $this->assertTrue($this->Installer->tableExists('test_1'));
 
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertTrue(isset($avail_indices['idx_test_1_body']));
         $this->assertFalse($avail_indices['idx_test_1_body']['unique']);
         $this->assertTrue($avail_indices['idx_test_1_body']['columns'][0]=='body');
@@ -172,7 +172,7 @@ class Test_of_AkInstaller extends  AkUnitTest
         $this->Installer->createTable('test_1','id int auto key,body string(32) index');
         $this->assertTrue($this->Installer->tableExists('test_1'));
 
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertTrue(isset($avail_indices['idx_test_1_body']));
         $this->assertFalse($avail_indices['idx_test_1_body']['unique']);
         $this->assertTrue($avail_indices['idx_test_1_body']['columns'][0]=='body');
@@ -183,7 +183,7 @@ class Test_of_AkInstaller extends  AkUnitTest
         $this->Installer->createTable('test_1','id int auto key,body string(32) unique');
         $this->assertTrue($this->Installer->tableExists('test_1'));
 
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertTrue(isset($avail_indices['idx_test_1_body UNIQUE']));
         $this->assertTrue($avail_indices['idx_test_1_body UNIQUE']['unique']);
         $this->assertTrue($avail_indices['idx_test_1_body UNIQUE']['columns'][0]=='body');
@@ -203,29 +203,29 @@ class Test_of_AkInstaller extends  AkUnitTest
 
         $this->Installer->createTable('test_1','id int auto key,free string(32),beer string(23)');
 
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
 
         $this->assertFalse($this->_hasIndexes($avail_indices));
 
         $this->Installer->addIndex('test_1','beer, free UNIQUE');
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertTrue($this->_hasIndexes($avail_indices));
         $this->assertTrue($this->_hasIndexes($avail_indices, 'idx_test_1_beer, free UNIQUE'));
         $this->assertTrue($avail_indices['idx_test_1_beer, free UNIQUE']['unique']);
 
         $this->Installer->removeIndex('test_1','beer, free UNIQUE');
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertFalse(isset($avail_indices['idx_test_1_beer, free UNIQUE']));
 
         $this->Installer->addIndex('test_1','beer, free UNIQUE','freebeer');
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertTrue(isset($avail_indices['freebeer']));
         $this->assertTrue($avail_indices['freebeer']['unique']);
         $this->assertTrue($avail_indices['freebeer']['columns'][0]=='beer');
         $this->assertTrue($avail_indices['freebeer']['columns'][1]=='free');
 
         $this->Installer->dropIndex('test_1','freebeer');
-        $avail_indices = $this->Installer->db->MetaIndexes('test_1');
+        $avail_indices = $this->Installer->db->getIndexes('test_1');
         $this->assertFalse($this->_hasIndexes($avail_indices));
 
         $this->Installer->dropTable('test_1');
@@ -273,6 +273,7 @@ class Test_of_AkInstaller extends  AkUnitTest
     function test_should_rename_columns()
     {
         $this->Installer->renameColumn('test_defaults','screen_name','real_name');
+        if ($this->Installer->db->type()=='sqlite') $this->assertError();
         $this->Installer->dropTable('test_defaults');
     }
 

@@ -18,7 +18,7 @@ class HasAndBelongsToManyTestCase extends  AkUnitTest
     
     function test_getAssociatedModelInstance_should_return_a_single_instance()  // bug-fix
     {
-        $this->assertTrue($this->Post->tag->getAssociatedModelInstance()===$this->Post->tag->getAssociatedModelInstance());
+        $this->assertReference($this->Post->tag->getAssociatedModelInstance(),$this->Post->tag->getAssociatedModelInstance());
     }
 
 

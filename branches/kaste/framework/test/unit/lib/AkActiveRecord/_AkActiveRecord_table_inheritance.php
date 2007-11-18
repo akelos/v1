@@ -8,6 +8,15 @@ require_once(dirname(__FILE__).'/../../../fixtures/config/config.php');
 class Schedule extends ActiveRecord
 {
     var $belongs_to = 'event';
+    
+    //ugly PHP4 hack
+    function __construct()
+    {
+        $this->setModelName('Schedule');
+        $this->setTableName('schedules');
+        $attributes = (array)func_get_args();
+        $this->init($attributes);
+     }
 }
 
 class test_AkActiveRecord_table_inheritance extends  AkUnitTest

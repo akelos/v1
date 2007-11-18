@@ -336,7 +336,7 @@ class AkInstaller
     function removeIndex($table_name, $columns_or_index_name)
     {
         if(!$this->tableExists($table_name)) return false;
-        $available_indexes =& $this->db->MetaIndexes($table_name);
+        $available_indexes = $this->db->getIndexes($table_name);
         $index_name = isset($available_indexes[$columns_or_index_name]) ? $columns_or_index_name : 'idx_'.$table_name.'_'.$columns_or_index_name;
         if(!isset($available_indexes[$index_name])){
             trigger_error(Ak::t('Index %index_name does not exist.', array('%index_name'=>$index_name)), E_USER_NOTICE);
@@ -352,14 +352,14 @@ class AkInstaller
 
     function createSequence($table_name)
     {
-        $result = $this->tableExists('seq_'.$table_name) ? false : $this->db->CreateSequence('seq_'.$table_name);
+        $result = $this->tableExists('seq_'.$table_name) ? false : $this->db->connection->CreateSequence('seq_'.$table_name);
         $this->available_tables[] = 'seq_'.$table_name;
         return $result;
     }
 
     function dropSequence($table_name)
     {
-        $result = $this->tableExists('seq_'.$table_name) ? $this->db->DropSequence('seq_'.$table_name) : true;
+        $result = $this->tableExists('seq_'.$table_name) ? $this->db->connection->DropSequence('seq_'.$table_name) : true;
         if($result){
             unset($this->available_tables[array_search('seq_'.$table_name, $this->available_tables)]);
 
