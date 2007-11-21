@@ -67,6 +67,55 @@ class AkDbAdapter_TestCase extends  AkUnitTest
         $this->assertEqual('SELECT * FROM articles LIMIT 10',$sql);
     }
     
+    function test_should_quote_strings_for_mysql()
+    {
+        $db =& AkDbAdapter::getConnection();
+        if ($db->type() != 'mysql') return;
+        
+        $this->assertEqual("'Hello'",$db->quote_string('Hello'));
+        $this->assertEqual("'Hel\\\"lo'",$db->quote_string('Hel"lo'));
+        $this->assertEqual("'Hel\'\'lo'",$db->quote_string("Hel''lo"));
+        $this->assertEqual("'Hel\\\lo'",$db->quote_string("Hel\lo"));
+        $this->assertEqual("'Hel\\\lo'",$db->quote_string("Hel\\lo"));
+    }
+
+    function test_should_quote_strings_for_postgre()
+    {
+        $db =& AkDbAdapter::getConnection();
+        if ($db->type() != 'postgre') return;
+        
+        $this->assertEqual("'Hello'",$db->quote_string('Hello'));
+        $this->assertEqual("'Hel\"lo'",$db->quote_string('Hel"lo'));
+        $this->assertEqual("'Hel''''lo'",$db->quote_string("Hel''lo"));
+        $this->assertEqual("'Hel''lo'",$db->quote_string("Hel'lo"));
+        $this->assertEqual("'Hel\\\lo'",$db->quote_string("Hel\lo"));
+        $this->assertEqual("'Hel\\\lo'",$db->quote_string("Hel\\lo"));
+    }
+    
+    function test_should_quote_strings_for_sqlite()
+    {
+        $db =& AkDbAdapter::getConnection();
+        if ($db->type() != 'sqlite') return;
+        
+        $this->assertEqual("'Hello'",$db->quote_string('Hello'));
+        $this->assertEqual("'Hel\"lo'",$db->quote_string('Hel"lo'));
+        $this->assertEqual("'Hel''''lo'",$db->quote_string("Hel''lo"));
+        $this->assertEqual("'Hel''lo'",$db->quote_string("Hel'lo"));
+        $this->assertEqual("'Hel\lo'",$db->quote_string("Hel\lo"));
+        $this->assertEqual("'Hel\lo'",$db->quote_string("Hel\\lo"));
+    }
+    
+    function _test_investigate_DBTimeStamp()
+    {
+        $db =& AkDbAdapter::getConnection();
+        
+        var_dump($db->DBTimeStamp('2007.11.17'));
+        var_dump($db->DBTimeStamp('2007-11-17'));
+        var_dump($db->DBTimeStamp('2007-11-17 17:40:23'));
+        var_dump($db->DBTimeStamp('2007-11-17 8:40:23'));
+        var_dump($db->DBTimeStamp('17-11-2007'));
+        var_dump($db->DBTimeStamp(time()));
+    }
 }
 
 ak_test('AkDbAdapter_TestCase',true);
