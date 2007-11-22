@@ -457,7 +457,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $this->setAttribute('lock_version',1);
         } // end
         
-        $attributes = $this->getColumnsForAtrributes($this->getAttributes());
+        $attributes = $this->getColumnsForAttributes($this->getAttributes());
         foreach ($attributes as $column=>$value){
             $attributes[$column] = $this->castAttributeForDatabase($column,$value);
         }
@@ -1112,7 +1112,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $objects = array();
         $records = $this->_db->select ($sql,'selecting');
         foreach ($records as $record){
-            $objects[] =& $this->instantiate($this->getOnlyAvailableAtrributes($record), false);
+            $objects[] =& $this->instantiate($this->getOnlyAvailableAttributes($record), false);
         }
         return $objects;
     }
@@ -2450,7 +2450,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     }
 
     
-    function getOnlyAvailableAtrributes($attributes)
+    function getOnlyAvailableAttributes($attributes)
     {
         $table_name = $this->getTableName();
         $ret_attributes = array();
@@ -2469,7 +2469,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $ret_attributes;
     }
 
-    function getColumnsForAtrributes($attributes)
+    function getColumnsForAttributes($attributes)
     {
         $ret_attributes = array();
         $table_name = $this->getTableName();
@@ -3149,7 +3149,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         switch ($this->getColumnType($column_name)) {
             case 'datetime':
             if(!empty($value)){
-                $date_time = $this->_db->quote_datetime($this->getValueForDateColumn($column_name, $value));
+                $date_time = $this->_db->quote_datetime(Ak::getTimestamp($value));
                 $result = $add_quotes ? $date_time : trim($date_time ,"'");
             }else{
                 $result = 'null';
@@ -3158,7 +3158,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
             case 'date':
             if(!empty($value)){
-                $date = $this->_db->quote_date($this->getValueForDateColumn($column_name, $value));
+                $date = $this->_db->quote_date(Ak::getTimestamp($value));
                 $result = $add_quotes ? $date : trim($date, "'");
             }else{
                 $result = 'null';
@@ -3247,7 +3247,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     * @access private
     */
     function _addBlobQueryStack($column_name, $blob_value)
-    {
+    {echo "HERE   ";
         $this->_BlobQueryStack[$column_name] = $blob_value;
     }
 
@@ -3255,30 +3255,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     * @access private
     */
     function _updateBlobFields($condition)
-    {
+    {echo "HERE   ";
         if(!empty($this->_BlobQueryStack) && is_array($this->_BlobQueryStack)){
             foreach ($this->_BlobQueryStack as $column=>$value){
                 $this->_db->UpdateBlob($this->getTableName(), $column, $value, $condition);
             }
             $this->_BlobQueryStack = null;
         }
-    }
-
-
-
-    function getValueForDateColumn($column_name, $value)
-    {
-        if(!$this->isNewRecord()){
-            if(($column_name == 'updated_on' || $column_name == 'updated_at') && empty($value)){
-                return null;
-            }
-        }elseif(($column_name == 'created_on' || $column_name == 'created_at') && empty($value)){
-            return Ak::time();
-        }elseif($column_name == 'expires_on' || $column_name == 'expires_at'){
-            return empty($value) ? Ak::getTimestamp('9999-12-31 23:59:59') : Ak::getTimestamp($value);
-        }
-
-        return Ak::getTimestamp($value);
     }
     
     /*/Type Casting*/

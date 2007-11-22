@@ -489,21 +489,21 @@ class test_AkActiveRecord extends  AkUnitTest
     }
 
 
-    function Test_of_getOnlyAvailableAtrributes()
+    function Test_of_getOnlyAvailableAttributes()
     {
         $User = new AkTestUser();
         $User->addCombinedAttributeConfiguration('name', "%s %s", 'first_name', 'last_name');
         $attributes = array('name'=>'Bermi Ferrer', 'email' => 'bermi@example.com', 'invalid_field'=>'value');
-        $attributes = $User->getOnlyAvailableAtrributes($attributes);
+        $attributes = $User->getOnlyAvailableAttributes($attributes);
         $this->assertEqual($attributes,array('name'=>'Bermi Ferrer', 'email' => 'bermi@example.com'));
     }
     
-    function Test_of_getColumnsForAtrributes()
+    function Test_of_getColumnsForAttributes()
     {
         $User = new AkTestUser();
         $User->addCombinedAttributeConfiguration('name', "%s %s", 'first_name', 'last_name');
         $attributes = array('name'=>'Bermi Ferrer', 'email' => 'bermi@example.com', 'invalid_field'=>'value');
-        $attributes = $User->getColumnsForAtrributes($attributes);
+        $attributes = $User->getColumnsForAttributes($attributes);
         $this->assertEqual($attributes,array('email' => 'bermi@example.com'));
     }
 
