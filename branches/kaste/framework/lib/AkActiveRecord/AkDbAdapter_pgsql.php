@@ -18,8 +18,6 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
-/* nothing in here, its more a demo */
-
 class AkDbAdapter_pgsql extends AkDbAdapter
 {
     
@@ -33,7 +31,7 @@ class AkDbAdapter_pgsql extends AkDbAdapter
     
     function renameColumn($table_name,$column_name,$new_name)
     {
-        return $this->sqlexecute("ALTER TABLE $table_name RENAME COLUMN $column_name TO $new_name");
+        return $this->execute("ALTER TABLE $table_name RENAME COLUMN $column_name TO $new_name");
     }
     
     /* META */

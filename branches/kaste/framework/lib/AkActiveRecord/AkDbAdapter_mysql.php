@@ -65,7 +65,7 @@ class AkDbAdapter_mysql extends AkDbAdapter
         $column_type_definition = $column_details['Type'];
         if ($column_details['Null']!=='YES') $column_type_definition .= ' not null';
         if (!empty($column_details['Default'])) $column_type_definition .= " default '".$column_details['Default']."'";
-        return $this->sqlexecute("ALTER TABLE $table_name CHANGE COLUMN $column_name $new_name $column_type_definition");
+        return $this->execute("ALTER TABLE $table_name CHANGE COLUMN $column_name $new_name $column_type_definition");
     }
     
     function availableTables()

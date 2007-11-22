@@ -465,7 +465,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $pk = $this->getPrimaryKey();
         $table = $this->getTableName();
 
-        $id = $this->_db->auto_increments_primary_key() ? null : $this->_db->getNextSequenceValueFor($table);     
+        $id = $this->_db->incrementsPrimaryKeyAutomatically() ? null : $this->_db->getNextSequenceValueFor($table);     
         $attributes[$pk] = $id;
             
         $attributes = array_diff($attributes, array('',"''"));
@@ -1110,9 +1110,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return Ak::handleStaticCall();
         }
         $objects = array();
-        $results = $this->_db->sqlexecute ($sql,'selecting');
-        if (!$results) return $objects;
-        while ($record = $results->FetchRow()) {
+        $records = $this->_db->select ($sql,'selecting');
+        foreach ($records as $record){
             $objects[] =& $this->instantiate($this->getOnlyAvailableAtrributes($record), false);
         }
         return $objects;

@@ -17,7 +17,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
     {
         $db =& AkDbAdapter::getConnection();
         $db->debug();
-        $db->sqlexecute('selct wrong sql statement');
+        $db->execute('selct wrong sql statement');
         $this->assertError();
         //$db->debug(false);
     }
@@ -31,8 +31,8 @@ class AkDbAdapter_TestCase extends  AkUnitTest
         $connection->expectAt(0,'Execute',array('SELECT * FROM articles WHERE id=1'));
         $connection->expectAt(1,'Execute',array('SELECT * FROM articles WHERE id=?',array(1)));
         $db->connection =& $connection;
-        $db->sqlexecute('SELECT * FROM articles WHERE id=1');
-        $db->sqlexecute(array('SELECT * FROM articles WHERE id=?',1));
+        $db->execute('SELECT * FROM articles WHERE id=1');
+        $db->execute(array('SELECT * FROM articles WHERE id=?',1));
     }
     
     function test_should_add_limit_and_offset_mysql_style()

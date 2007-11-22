@@ -339,7 +339,7 @@ class AkAssociatedActiveRecord extends AkBaseModel
     function &_findBySqlWithAssociations($sql, $included_associations = array(), $virtual_limit = false)
     {
         $objects = array();
-        $results = $this->_db->sqlexecute ($sql,'find with associations');
+        $results = $this->_db->execute ($sql,'find with associations');
         if (!$results) return $objects;
 
         $i = 0;

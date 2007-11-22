@@ -18,8 +18,6 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
-/* nothing in here, its more a demo */
-
 class AkDbAdapter_sqlite extends AkDbAdapter
 {
     
@@ -42,7 +40,7 @@ class AkDbAdapter_sqlite extends AkDbAdapter
 
     /* DATABASE STATEMENTS - CRUD */
     
-    function auto_increments_primary_key(){
+    function incrementsPrimaryKeyAutomatically(){
         return false;
     }
     

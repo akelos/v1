@@ -28,8 +28,6 @@ class AkDbAdapter extends AkObject
     var $dictionary;
     var $debug=false;
     var $logger;
-    //static $delegated_methods = array();
-    //static $delegated_properties = array();
     
     /**
      * @param array $database_settings
@@ -38,35 +36,13 @@ class AkDbAdapter extends AkObject
     {
         $this->settings = $database_settings;
         if ($auto_connect) $this->connect();
+        if (AK_LOG_EVENTS) $this->logger =& Ak::getLogger();
     }
     
     function __destruct()
     {
-        //var_dump(self::$delegated_methods);
-        //var_dump(self::$delegated_properties);
     }
     
-/*    function __call($method,$args)
-    {
-        if (!in_array($method,self::$delegated_methods)) {
-            self::$delegated_methods[] = $method;
-        }
-        if (method_exists($this->connection,$method)) {
-            $result =& call_user_func_array(array(&$this->connection,$method),$args);
-            return $result;
-        }
-    }
-    
-    function __get($property)
-    {
-        if (!in_array($property,self::$delegated_properties)) {
-            self::$delegated_properties[] = $property;
-        }
-        if (property_exists($this->connection,$property)) {
-            return $this->connection->{$property};
-        }
-    }
-  */  
     function connect()
     {
         $dsn = $this->_constructDsn($this->settings);
@@ -107,12 +83,9 @@ class AkDbAdapter extends AkObject
         if (empty($defaults)) {
             global $database_settings;
             $defaults = $database_settings[AK_DEFAULT_DATABASE_PROFILE];
-            //$database_specifications = $database_settings[AK_DEFAULT_DATABASE_PROFILE];
         } 
         if (empty($database_specifications)){
             $database_specifications = $defaults;
-            //$return =& $defaults;
-            //return $return;
         }
         
         $settings_hash = AkDbAdapter::_hash($database_specifications);
@@ -127,7 +100,6 @@ class AkDbAdapter extends AkObject
                 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.$class_name.'.php');
             }
             $connections[$settings_hash] =& new $class_name($database_specifications,$auto_connect);
-            //if (empty($defaults)) $defaults = $connections[$settings_hash];
         }
         return $connections[$settings_hash];
     }
@@ -184,7 +156,6 @@ class AkDbAdapter extends AkObject
     function _log($message)
     {
         if (!AK_LOG_EVENTS) return;
-        if (!$this->logger) $this->logger =& Ak::getLogger();
         $this->logger->message($message);
     }
     
@@ -201,57 +172,54 @@ class AkDbAdapter extends AkObject
     
     /* DATABASE STATEMENTS - CRUD */
     
-    function sqlexecute($sql,$message = '')
+    function execute($sql,$message = 'SQL')
     {
-        $this->_log( (empty($message) ? 'SQL' : $message).": $sql");
-        //$result = $this->connection->Execute($sql);
+        $this->_log($message.': '.$sql);
         $result = is_array($sql) ? $this->connection->Execute(array_shift($sql),$sql) : $this->connection->Execute($sql);
         if (!$result){
-            $message = !empty($message) ? "On '".$message."' got: " : 'SQL Error: ';
-            $message .= '['.$this->connection->ErrorNo().'] '.$this->connection->ErrorMsg();
-
-            $this->_log($message);
-            if ($this->debug || AK_DEBUG) trigger_error("Tried '$sql'. GOT $message", E_USER_NOTICE);
+            $error_message = '['.$this->connection->ErrorNo().'] '.$this->connection->ErrorMsg();
+            $this->_log('SQL Error: '.$error_message);
+            if ($this->debug || AK_DEBUG) trigger_error("Tried '$sql'. Got: $error_message", E_USER_NOTICE);
         }
         return $result;
     }
     
-    function auto_increments_primary_key()
+    function incrementsPrimaryKeyAutomatically()
     {
         return true;
     }
     
-    function last_inserted($table,$pk)
+    function getLastInsertedId($table,$pk)
     {
         return $this->connection->Insert_ID($table,$pk);
     }
 
-    function affected_rows()
+    function getAffectedRows()
     {
         return $this->connection->Affected_Rows();
     }
     
     function insert($sql,$id=null,$pk=null,$table=null,$message = '')
     {
-        $result = $this->sqlexecute($sql,$message);
+        $result = $this->execute($sql,$message);
         if (!$result) return false;
-        return is_null($id) ? $this->last_inserted($table,$pk) : $id;
+        return is_null($id) ? $this->getLastInsertedId($table,$pk) : $id;
     }
     
     function update($sql,$message = '')
     {
-        $result = $this->sqlexecute($sql,$message);
-        return ($result) ? $this->affected_rows() : false;
+        $result = $this->execute($sql,$message);
+        return ($result) ? $this->getAffectedRows() : false;
     }
     
     function delete($sql,$message = '')
     {
-        $result = $this->sqlexecute($sql,$message);
-        return ($result) ? $this->affected_rows() : false;
+        $result = $this->execute($sql,$message);
+        return ($result) ? $this->getAffectedRows() : false;
     }
     
     /**
-    * Returns a single value from a record
+    * Returns a single value, the first column from the first row, from a record
     */
     function selectValue($sql)
     {
@@ -275,7 +243,7 @@ class AkDbAdapter extends AkObject
     }
 
     /**
-     * Returns a record array with the column names as keys and column values
+     * Returns a record array of the first row with the column names as keys and column values
      * as values.
      */
     function selectOne($sql)
@@ -300,7 +268,7 @@ class AkDbAdapter extends AkObject
     {
         //$previous_fetch_mode = $GLOBALS['ADODB_FETCH_MODE'];
         //$GLOBALS['ADODB_FETCH_MODE'] = ADODB_FETCH_ASSOC;
-        $result = $this->sqlexecute($sql,$message);
+        $result = $this->execute($sql,$message);
         if (!$result) return array();     
         //$GLOBALS['ADODB_FETCH_MODE'] = $previous_fetch_mode;
 
