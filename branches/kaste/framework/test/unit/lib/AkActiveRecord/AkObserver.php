@@ -18,7 +18,7 @@ class test_AkActiveRecord_observer extends  AkUnitTest
         Ak::import('TestAuditor','ObservedPersonObserver');
     }
 
-    function Test_of__instatiateDefaultObserver()
+    function Test_of__instantiateDefaultObserver()
     {
         $Observed = new ObservedPerson();
         $ObeserversReference =& $Observed->getObservers();

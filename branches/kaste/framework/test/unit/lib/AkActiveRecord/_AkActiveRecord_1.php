@@ -640,51 +640,6 @@ class test_AkActiveRecord extends  AkUnitTest
         $this->assertTrue($AkTestField->get('boolean_field'));
     }
 
-    function Test_of_incrementAttribute()
-    {
-        $AkTestField = new AkTestField();
-        $AkTestField->set('integer_field', 10);
-        $this->assertTrue($AkTestField->integer_field === 10);
-        $this->assertTrue($AkTestField->get('integer_field') === 10);
-
-        $AkTestField->incrementAttribute('integer_field');
-        $this->assertTrue($AkTestField->integer_field === 11);
-        $this->assertTrue($AkTestField->get('integer_field') === 11);
-
-        $AkTestField->incrementAttribute('decimal_field');
-        $this->assertTrue($AkTestField->decimal_field === 0);
-        $this->assertTrue($AkTestField->get('decimal_field') === 0);
-
-        $AkTestField->incrementAttribute('decimal_field');
-        $this->assertTrue($AkTestField->decimal_field === 1);
-        $this->assertTrue($AkTestField->get('decimal_field') === 1);
-    }
-
-
-    function Test_of_decrementAttribute()
-    {
-        $AkTestField = new AkTestField();
-        $AkTestField->set('integer_field', 10);
-        $this->assertTrue($AkTestField->integer_field === 10);
-        $this->assertTrue($AkTestField->get('integer_field') === 10);
-
-        $AkTestField->decrementAttribute('integer_field');
-        $this->assertTrue($AkTestField->integer_field === 9);
-        $this->assertTrue($AkTestField->get('integer_field') === 9);
-
-        $AkTestField->decrementAttribute('decimal_field');
-        $this->assertTrue($AkTestField->decimal_field === 0);
-        $this->assertTrue($AkTestField->get('decimal_field') === 0);
-
-        $AkTestField->decrementAttribute('decimal_field');
-        $this->assertTrue($AkTestField->decimal_field === -1);
-        $this->assertTrue($AkTestField->get('decimal_field') === -1);
-    }
-
-
-
-
-
     function Test_of_get_and_set_DisplayField()
     {
         $AkTestField = new AkTestField();

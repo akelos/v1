@@ -266,7 +266,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         AK_LOG_EVENTS ? ($this->Logger =& Ak::getLogger()) : null;
         $this->_internationalize = is_null($this->_internationalize) && AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT ? count($this->getAvailableLocales()) > 1 : $this->_internationalize;
 
-        @$this->_instatiateDefaultObserver();
+        @$this->_instantiateDefaultObserver();
 
         $this->setConnection();
 
@@ -611,13 +611,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     /**
     * Updates a single attribute and saves the record. This is especially useful for boolean flags on existing records. 
-    * Note: Make sure that updates made with this method doesn't get subjected to validation checks. 
-    * Hence, attributes can be updated even if the full object isn't valid.
     */
-    function updateAttribute($name, $value)
+    function updateAttribute($name, $value, $should_validate=true)
     {
         $this->setAttribute($name, $value);
-        return $this->save(false);
+        return $this->save($should_validate);
     }
 
 
@@ -1759,6 +1757,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $new_value = $value ? false : true;
         $this->setAttribute($attribute, $new_value);
         return $new_value;
+        if (!isset($this->$attribute)){
+            $this->$attribute = false;
+        }
+        return $this->$attribute != $this->$attribute;
     }
 
 
@@ -1772,6 +1774,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return $value;
         }
         return null;
+        return $this->updateAttribute($attribute,$this->toggleAttribute($attribute));
     }
 
     /*/Toggling Attributes*/
@@ -1792,11 +1795,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function incrementCounter($counter_name, $id, $difference = 1)
     {
-        $new_value = $this->getAttribute($counter_name) + $difference;
-        if($this->updateAll($counter_name.' = '.$new_value, $this->getPrimaryKey().' = '.$this->castAttributeForDatabase($this->getPrimaryKey(), $id)) === 0){
-            return false;
-        }
-        return $new_value;
+        return $this->updateAll("$counter_name = $counter_name + $difference", $this->getPrimaryKey().' = '.$this->castAttributeForDatabase($this->getPrimaryKey(), $id)) === 1;
     }
 
     /**
@@ -1804,12 +1803,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function decrementCounter($counter_name, $id, $difference = 1)
     {
-        $new_value = $this->getAttribute($counter_name) - $difference;
-
-        if(!$this->updateAll($counter_name.' = '.$new_value, $this->getPrimaryKey().' = '.$this->castAttributeForDatabase($this->getPrimaryKey(), $id)) === 0){
-            return false;
-        }
-        return $new_value;
+        return $this->updateAll("$counter_name = $counter_name - $difference", $this->getPrimaryKey().' = '.$this->castAttributeForDatabase($this->getPrimaryKey(), $id)) === 1;
     }
     
     /**
@@ -1817,14 +1811,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function decrementAttribute($attribute)
     {
-        if(!isset($this->$attribute)){
-            $this->setAttribute($attribute, 0);
-            return 0;
-        }else {
-            $value = $this->getAttribute($attribute) -1;
-            $this->setAttribute($attribute, $value);
-            return $value;
+        if (!isset($this->$attribute)){
+            $this->$attribute = 0;
         }
+        return $this->$attribute -= 1;
     }
 
     /**
@@ -1832,11 +1822,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function decrementAndSaveAttribute($attribute)
     {
-        $value = $this->decrementAttribute($attribute);
-        if($this->updateAttribute($attribute, $value)){
-            return $value;
-        }
-        return false;
+        return $this->updateAttribute($attribute,$this->decrementAttribute($attribute));
     }
 
 
@@ -1845,14 +1831,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function incrementAttribute($attribute)
     {
-        if(!isset($this->$attribute)){
-            $this->setAttribute($attribute, 0);
-            return 0;
-        }else {
-            $value = $this->getAttribute($attribute) +1;
-            $this->setAttribute($attribute, $value);
-            return $value;
+        if (!isset($this->$attribute)){
+            $this->$attribute = 0;
         }
+        return $this->$attribute += 1;
     }
 
     /**
@@ -1860,11 +1842,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function incrementAndSaveAttribute($attribute)
     {
-        $value = $this->incrementAttribute($attribute);
-        if($this->updateAttribute($attribute, $value)){
-            return $value;
-        }
-        return false;
+        return $this->updateAttribute($attribute,$this->incrementAttribute($attribute));
     }
     
     /*/Counting Attributes*/
@@ -3241,13 +3219,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
     }
     
-    
-    
     /**
     * @access private
     */
     function _addBlobQueryStack($column_name, $blob_value)
-    {echo "HERE   ";
+    {
         $this->_BlobQueryStack[$column_name] = $blob_value;
     }
 
@@ -3255,7 +3231,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     * @access private
     */
     function _updateBlobFields($condition)
-    {echo "HERE   ";
+    {
         if(!empty($this->_BlobQueryStack) && is_array($this->_BlobQueryStack)){
             foreach ($this->_BlobQueryStack as $column=>$value){
                 $this->_db->UpdateBlob($this->getTableName(), $column, $value, $condition);
@@ -4119,7 +4095,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     /**
     * @access private
     */
-    function _instatiateDefaultObserver()
+    function _instantiateDefaultObserver()
     {
         $default_observer_name = ucfirst($this->getModelName().'Observer');
         if(class_exists($default_observer_name)){

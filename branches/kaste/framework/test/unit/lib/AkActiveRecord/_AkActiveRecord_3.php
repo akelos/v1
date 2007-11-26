@@ -20,85 +20,16 @@ class test_AkActiveRecord_3 extends  AkUnitTest
                     created_at T,updated_at T,expires_on T'));
     }
     
-    function Test_of_incrementCounter()
+    function Test_of_toggleAttributeAndSave()
     {
         $AkTestFields = new AkTestField();
 
         $AkTestFields->transactionStart();
-        for ($i=1; $i < 10; $i++){
+        for ($i=1; $i <= 10; $i++){
             $AkTestFields->create(array('varchar_field' => 'test field '.$i));
         }
         $AkTestFields->transactionComplete();
 
-        $AkTestFields->integer_field = $AkTestFields->incrementCounter('integer_field', 5);
-
-        $AkTestField = $AkTestFields->find(5);
-        $this->assertEqual($AkTestField->integer_field, 1);
-
-        $AkTestFields->integer_field = $AkTestFields->incrementCounter('integer_field', 5);
-
-        $AkTestField = $AkTestFields->find(5);
-        $this->assertEqual($AkTestField->integer_field, 2);
-
-        $AkTestFields->integer_field = $AkTestFields->incrementCounter('integer_field', 5, 50);
-
-        $AkTestField = $AkTestFields->find(5);
-        $this->assertEqual($AkTestField->integer_field, 52);
-    }
-
-
-    function Test_of_decrementCounter()
-    {
-
-        $AkTestFields = new AkTestField();
-        $AkTestFields = $AkTestFields->find(5);
-
-        $AkTestFields->integer_field = $AkTestFields->decrementCounter('integer_field', 5);
-
-        $AkTestField = $AkTestFields->find(5);
-        $this->assertEqual($AkTestField->integer_field, 51);
-
-        $AkTestFields->integer_field = $AkTestFields->decrementCounter('integer_field', 6);
-
-        $AkTestField = $AkTestFields->find(6);
-        $this->assertEqual($AkTestField->integer_field, 50);
-
-        $AkTestFields->integer_field = $AkTestFields->decrementCounter('integer_field', 2, 10);
-
-        $AkTestField = $AkTestFields->find(2);
-        $this->assertEqual($AkTestField->integer_field, 40);
-
-    }
-
-
-    function Test_of_incrementAndSaveAttribute()
-    {
-        $AkTestField = new AkTestField();
-        $AkTestField->incrementAndSaveAttribute('integer_field');
-
-        $AkTestField = $AkTestField->find(10);
-        $AkTestField->incrementAndSaveAttribute('integer_field');
-        $AkTestField->incrementAndSaveAttribute('integer_field');
-
-        $AkTestField = $AkTestField->find(10);
-        $this->assertEqual($AkTestField->integer_field, 2);
-    }
-
-
-    function Test_of_decrementAndSaveAttribute()
-    {
-        $AkTestField = new AkTestField();
-        $AkTestField = $AkTestField->find(2);
-
-        $AkTestField->decrementAndSaveAttribute('integer_field');
-
-        $AkTestField = $AkTestField->find(2);
-        $this->assertEqual($AkTestField->integer_field, 39);
-    }
-
-
-    function Test_of_toggleAttributeAndSave()
-    {
         $AkTestField = new AkTestField();
         $AkTestField = $AkTestField->find(2);
         $AkTestField->set('boolean_field', false);
