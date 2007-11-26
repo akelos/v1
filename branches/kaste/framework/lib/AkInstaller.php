@@ -24,6 +24,37 @@ defined('AK_APP_INSTALLERS_DIR') ? null : define('AK_APP_INSTALLERS_DIR', AK_APP
 // Install scripts might use more RAM than normal requests.
 @ini_set('memory_limit', -1);
 
+/**
+ * 
+ * == Default settings for columns
+ * 
+ * AkInstaller suggests some default values for the column-details.
+ * 
+ * So
+ * <code>
+ *     $this->createTable('Post','title,body,created_at,is_draft');
+ * </code>
+ * 
+ * will actually create something like this: (the exact SQL-Query depends of course on the used Adapter)
+ * 
+ *     title => string(255), body => text, created_at => datetime, is_draft => boolean not null default 0 index
+ *   
+ * 
+ * column_name                    | default setting
+ * -------------------------------+--------------------------------------------
+ * id                             | integer not null auto_increment primary_key
+ * *_id,*_by                      | integer index
+ * description,content,body       | text
+ * position                       | integer index
+ * *_count                        | integer default 0
+ * lock_version                   | integer default 1
+ * *_at                           | datetime
+ * *_on                           | date
+ * is_*,has_*,do_*,does_*,are_*   | boolean not null default 0 index
+ * *somename                      | => en_somename, es_somename
+ * default                        | string
+ * 
+ */
 class AkInstaller
 {
     var $db;
