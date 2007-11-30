@@ -72,26 +72,30 @@ class AkDbAdapter extends AkObject
         return !empty($this->connection);
     }
     
-    /* static */
     /**
      * @param array $database_settings
-     * @return object 
      */
-    function &getConnection($database_specifications = null,$auto_connect = true)
+    /* static */
+    function &getConnection($database_specifications = AK_DEFAULT_DATABASE_PROFILE,$auto_connect = true)
     {
-        static $connections,$defaults;
-        if (empty($defaults)) {
-            global $database_settings;
-            $defaults = $database_settings[AK_DEFAULT_DATABASE_PROFILE];
-        } 
-        if (empty($database_specifications)){
-            $database_specifications = $defaults;
-        }
+        static $connections;
         
-        $settings_hash = AkDbAdapter::_hash($database_specifications);
+        $settings_hash = is_string($database_specifications) ? $database_specifications : AkDbAdapter::_hash($database_specifications);
+        
         if (empty($connections[$settings_hash])){
-        //var_dump($database_specifications);
-        //var_dump($settings_hash);
+            if (is_string($database_specifications)){
+                global $database_settings;
+                if (!empty($database_settings[$database_specifications])){
+                    $database_specifications = $database_settings[$database_specifications];     
+                } else {
+                    trigger_error(Ak::t("Could not find the database profile '%profile_name' in config/config.php.",array('%profile_name'=>$database_specifications)),E_USER_ERROR);
+                    $return = false; 
+                    return $return;
+                } 
+            }
+            //var_dump($settings_hash);
+            //var_dump($database_specifications);
+            
             $available_adapters = array('mysql','pgsql','sqlite');
             $class_name = 'AkDbAdapter';
             $designated_database = strtolower($database_specifications['type']);
@@ -174,12 +178,18 @@ class AkDbAdapter extends AkObject
     
     function execute($sql,$message = 'SQL')
     {
-        $this->_log($message.': '.$sql);
-        $result = is_array($sql) ? $this->connection->Execute(array_shift($sql),$sql) : $this->connection->Execute($sql);
+        if (is_array($sql)) {
+            $sql_string = array_shift($sql);
+            $bindings = $sql; 
+        } else $sql_string = $sql;
+        
+        $this->_log($message.': '.$sql_string);
+        $result = isset($bindings) ? $this->connection->Execute($sql_string,$bindings) : $this->connection->Execute($sql_string);
+        //$result = is_array($sql) ? $this->connection->Execute(array_shift($sql),$sql) : $this->connection->Execute($sql);
         if (!$result){
             $error_message = '['.$this->connection->ErrorNo().'] '.$this->connection->ErrorMsg();
             $this->_log('SQL Error: '.$error_message);
-            if ($this->debug || AK_DEBUG) trigger_error("Tried '$sql'. Got: $error_message", E_USER_NOTICE);
+            if ($this->debug || AK_DEBUG) trigger_error("Tried '$sql_string'. Got: $error_message", E_USER_NOTICE);
         }
         return $result;
     }

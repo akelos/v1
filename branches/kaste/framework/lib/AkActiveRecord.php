@@ -2308,25 +2308,15 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     *       )
     *     )
     */
-    function &establishConnection($spec = AK_DEFAULT_DATABASE_PROFILE)
+    function &establishConnection($specification_or_profile = AK_DEFAULT_DATABASE_PROFILE)
     {
-        if (is_string($spec)){
-            global $database_settings;
-            if (!empty($database_settings[$spec])){
-                $spec = $database_settings[$spec];     
-            } else {
-                trigger_error(Ak::t("Could not find the database profile '%profile_name' in config/config.php.",array('%profile_name'=>$spec)),E_USER_ERROR);
-                unset ($this->_db);
-                $return = false; return $return;
-            }     
-        }
-        $this->setConnection($spec);
-        return $this->_db;
+        $adapter =& AkDbAdapter::getConnection($specification_or_profile);
+        return $this->setConnection(&$adapter); 
     }
 
 
     /**
-    * Returns true if a connection that?s accessible to this class have already been opened.
+    * Returns true if a connection that's accessible to this class have already been opened.
     */ 
     function isConnected()
     {
@@ -2343,11 +2333,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     }
 
     /**
-    * Set the connection for the class.
+    * Sets the connection for the class.
     */
-    function setConnection($db_specification = null)
+    function &setConnection($db_adapter = null)
     {
-        $this->_db =& AkDbAdapter::getConnection($db_specification);
+        if (is_null($db_adapter)){
+            $db_adapter =& AkDbAdapter::getConnection();
+        }
+        return $this->_db =& $db_adapter;
     }
     
     /**
