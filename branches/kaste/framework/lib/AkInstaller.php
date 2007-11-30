@@ -26,7 +26,7 @@ defined('AK_APP_INSTALLERS_DIR') ? null : define('AK_APP_INSTALLERS_DIR', AK_APP
 
 /**
  * 
- * == Default settings for columns
+ * == Default settings for columns ==
  * 
  * AkInstaller suggests some default values for the column-details.
  * 
@@ -35,7 +35,7 @@ defined('AK_APP_INSTALLERS_DIR') ? null : define('AK_APP_INSTALLERS_DIR', AK_APP
  *     $this->createTable('Post','title,body,created_at,is_draft');
  * </code>
  * 
- * will actually create something like this: (the exact SQL-Query depends of course on the used Adapter)
+ * will actually create something like this: 
  * 
  *     title => string(255), body => text, created_at => datetime, is_draft => boolean not null default 0 index
  *   
@@ -51,7 +51,7 @@ defined('AK_APP_INSTALLERS_DIR') ? null : define('AK_APP_INSTALLERS_DIR', AK_APP
  * *_at                           | datetime
  * *_on                           | date
  * is_*,has_*,do_*,does_*,are_*   | boolean not null default 0 index
- * *somename                      | => en_somename, es_somename
+ * *somename                      | multilingual column => en_somename, es_somename
  * default                        | string
  * 
  */
@@ -489,8 +489,8 @@ class AkInstaller
         return array(
         '/^\*(.*)$/i' => array(&$this,'_castToMultilingualColumn'),
         '/^(description|content|body)$/i' => '\1 text',
-        '/^(lock_version)$/i' => '\1 integer default 1',
-        '/^(.+_count)$/i' => '\1 integer default 0',
+        '/^(lock_version)$/i' => '\1 integer default \'1\'',
+        '/^(.+_count)$/i' => '\1 integer default \'0\'',
         '/^(id)$/i' => 'id integer not null auto_increment primary_key',
         '/^(.+)_(id|by)$/i' => '\1_\2 integer index',
         '/^(position)$/i' => '\1 integer index',

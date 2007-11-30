@@ -10,7 +10,7 @@ class test_AkActiveRecord_attribute_incrementing extends  AkUnitTest
          $this->installAndIncludeModels(array('Post'));
      }
      
-     function test_should_increment_null_value_of_numeric_attribute()
+     function test_should_increment_default_null_value_of_numeric_attribute()
      {
          $Post =& new Post(array('title'=>'title of a Post','body'=>'The Body'));
          
@@ -23,6 +23,7 @@ class test_AkActiveRecord_attribute_incrementing extends  AkUnitTest
          $Post =& new Post(array('title'=>'title of a Post','body'=>'The Body'));
          
          $this->assertEqual($Post->incrementAttribute('comments_count'),1);
+         $this->assertEqual($Post->incrementAttribute('comments_count'),2);
      }
 
      function test_should_decrement_null_value_of_numeric_attribute()
@@ -38,6 +39,7 @@ class test_AkActiveRecord_attribute_incrementing extends  AkUnitTest
          $Post =& new Post(array('title'=>'title of a Post','body'=>'The Body'));
          
          $this->assertEqual($Post->decrementAttribute('comments_count'),-1);
+         $this->assertEqual($Post->decrementAttribute('comments_count'),-2);
      }
      
     function test_should_increment_and_save_numeric_attribute()
@@ -60,27 +62,16 @@ class test_AkActiveRecord_attribute_incrementing extends  AkUnitTest
          $this->assertEqual($Reloaded->hip_factor,-1);
     }
     
-    function __test_should_not_save_when_invalid()
+    function test_should_not_save_when_invalid()
     {
          $Post =& $this->Post->create(array('title'=>'title of a Post','body'=>'The Body'));
 
-         $this->assertFalse($Post->decrementAndSaveAttribute('comments_count'),'Save fails');
+         $this->assertFalse($Post->decrementAndSaveAttribute('comments_count'));
          
          $Reload =& $this->Post->find($Post->getId());
-         $this->assertEqual($Reload->comments_count,0,'therefore default value of 0');
-         
+         $this->assertEqual($Reload->comments_count,0);
     }
     
-    function test_return_value_when_nothing_found()
-    {
-//        $Post =& $this->Post->find(10);
-  //      var_dump($Post);
-        
-        $Post = new Post();
-        $Post = $Post->find(10);
-        var_dump($Post);
-    }
-     
 }
 
 ak_test('test_AkActiveRecord_attribute_incrementing',true);
