@@ -10,12 +10,12 @@ class AkDbAdapter_TestCase extends  AkUnitTest
 
     function test_should_generate_sequence_ids()
     {
-        $db =& AkDbAdapter::getConnection(array('type'=>'sqlite'),false);
+        $db =& AkDbAdapter::getInstance(array('type'=>'sqlite'),false);
     }
     
     function test_should_report_errors()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         $db->debug();
         $db->execute('selct wrong sql statement');
         $this->assertError();
@@ -37,7 +37,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
     
     function test_should_add_limit_and_offset_mysql_style()
     {
-        $mysql_db =& AkDbAdapter::getConnection(array('type'=>'mysql'),false);
+        $mysql_db =& AkDbAdapter::getInstance(array('type'=>'mysql'),false);
         $sql = 'SELECT * FROM articles';
         $mysql_db->addLimitAndOffset($sql,array('limit'=>2,'offset'=>10));
         $this->assertEqual('SELECT * FROM articles LIMIT 10, 2',$sql);
@@ -53,7 +53,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
 
     function test_should_add_limit_and_offset_common_style()
     {
-        $mysql_db =& AkDbAdapter::getConnection(array('type'=>'postgre'),false);
+        $mysql_db =& AkDbAdapter::getInstance(array('type'=>'postgre'),false);
         $sql = 'SELECT * FROM articles';
         $mysql_db->addLimitAndOffset($sql,array('limit'=>2,'offset'=>10));
         $this->assertEqual('SELECT * FROM articles LIMIT 2 OFFSET 10',$sql);
@@ -69,7 +69,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
     
     function test_should_quote_strings_for_mysql()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() != 'mysql') return;
         
         $this->assertEqual("'Hello'",$db->quote_string('Hello'));
@@ -81,7 +81,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
 
     function test_should_quote_strings_for_postgre()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() != 'postgre') return;
         
         $this->assertEqual("'Hello'",$db->quote_string('Hello'));
@@ -94,7 +94,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
     
     function test_should_quote_strings_for_sqlite()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() != 'sqlite') return;
         
         $this->assertEqual("'Hello'",$db->quote_string('Hello'));
@@ -107,7 +107,7 @@ class AkDbAdapter_TestCase extends  AkUnitTest
     
     function _test_investigate_DBTimeStamp()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         
         var_dump($db->DBTimeStamp('2007.11.17'));
         var_dump($db->DBTimeStamp('2007-11-17'));

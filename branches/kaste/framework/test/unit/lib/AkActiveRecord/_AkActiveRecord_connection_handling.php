@@ -13,7 +13,7 @@ class AkActiveRecord_connection_handling_TestCase extends  AkUnitTest
         $this->installAndIncludeModels(array('DummyModel'=>'id'));
         
         $Model =& $this->DummyModel;
-        $default_connection =& AkDbAdapter::getConnection();
+        $default_connection =& AkDbAdapter::getInstance();
         $available_tables_on_default = $default_connection->availableTables(); 
         unset ($Model->_db);
         
@@ -26,7 +26,7 @@ class AkActiveRecord_connection_handling_TestCase extends  AkUnitTest
         $this->assertFalse($Model->establishConnection('not_specified_profile'));
         $this->assertError("Could not find the database profile 'not_specified_profile' in config/config.php.");
         
-        $check_default_connection =& AkDbAdapter::getConnection();
+        $check_default_connection =& AkDbAdapter::getInstance();
         $this->assertReference($default_connection,$check_default_connection);
         $this->assertReference($default_connection->connection,$check_default_connection->connection);
 

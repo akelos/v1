@@ -68,7 +68,7 @@ class AkInstaller
     function AkInstaller($db_connection = null)
     {
         if(empty($db_connection)){
-            $this->db =& AkDbAdapter::getConnection();
+            $this->db =& AkDbAdapter::getInstance();
         }else {
             $this->db =& $db_connection;
         }

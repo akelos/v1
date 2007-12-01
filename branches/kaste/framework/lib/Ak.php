@@ -64,8 +64,8 @@ class Ak
     function &db($dsn = null)
     {
         require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
-        if (empty($dsn) || !is_array($dsn))   return AkDbAdapter::getConnection();
-        return AkDbAdapter::getConnection($dsn);
+        if (empty($dsn) || !is_array($dsn))   return AkDbAdapter::getInstance();
+        return AkDbAdapter::getInstance($dsn);
     }
     
     /**

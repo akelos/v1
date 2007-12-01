@@ -10,7 +10,7 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
 
     function test_should_return_available_tables_for_mysql()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() !== 'mysql') return;
         $old_adodb_style = $db->connection->MetaTables();
         $new_implementation = $db->availableTables();
@@ -19,7 +19,7 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
     
     function test_should_return_available_tables_for_postgre()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() !== 'postgre') return;
         $old = $db->connection->MetaTables();
         $new = $db->availableTables();
@@ -32,7 +32,7 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
         $this->installAndIncludeModels(array(
             'AkTestUser'=>'id,user_name string(32),email string(150), visits int default 1, taken bool, created_at, updated_at, expires_on'
         ));
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         $old_adodb_style = $db->connection->MetaColumns('ak_test_users');
         $new_implementation = $db->getColumnDetails('ak_test_users');
         $this->assertEqual($old_adodb_style,$new_implementation);
@@ -43,7 +43,7 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
         $this->installAndIncludeModels(array(
             'AkTestUser'=>'id,user_name string(32),email string(150), visits int default 1, taken bool, created_at, updated_at, expires_on'
         ));
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         $processed_return = $db->getColumnDetails('ak_test_users');
         $expected_return = $this->AkTestUser->getColumns();
         $this->assertEqual($processed_return,$expected_return);
@@ -51,7 +51,7 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
     
     function test_should_rename_columns_for_mysql()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() !== 'mysql') return;
         
         $this->installAndIncludeModels(array(
@@ -80,7 +80,7 @@ class AkDbAdapter_schema_TestCase extends  AkUnitTest
     
     function test_should_rename_columns_for_postgre()
     {
-        $db =& AkDbAdapter::getConnection();
+        $db =& AkDbAdapter::getInstance();
         if ($db->type() !== 'postgre') return;
         
         $this->installAndIncludeModels(array(

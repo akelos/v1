@@ -2310,7 +2310,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function &establishConnection($specification_or_profile = AK_DEFAULT_DATABASE_PROFILE)
     {
-        $adapter =& AkDbAdapter::getConnection($specification_or_profile);
+        $adapter =& AkDbAdapter::getInstance($specification_or_profile);
         return $this->setConnection(&$adapter); 
     }
 
@@ -2338,7 +2338,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function &setConnection($db_adapter = null)
     {
         if (is_null($db_adapter)){
-            $db_adapter =& AkDbAdapter::getConnection();
+            $db_adapter =& AkDbAdapter::getInstance();
         }
         return $this->_db =& $db_adapter;
     }

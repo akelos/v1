@@ -76,7 +76,7 @@ class AkDbAdapter extends AkObject
      * @param array $database_settings
      */
     /* static */
-    function &getConnection($database_specifications = AK_DEFAULT_DATABASE_PROFILE,$auto_connect = true)
+    function &getInstance($database_specifications = AK_DEFAULT_DATABASE_PROFILE,$auto_connect = true)
     {
         static $connections;
         
