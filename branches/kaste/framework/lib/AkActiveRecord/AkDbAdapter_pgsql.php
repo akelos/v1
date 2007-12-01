@@ -42,6 +42,16 @@ class AkDbAdapter_pgsql extends AkDbAdapter
         $schemas = "'".join("', '",split(',',$schema_path))."'";
         return $this->selectValues("SELECT tablename FROM pg_tables WHERE schemaname IN ($schemas)");
     }
+
+    /* QUOTING */ 
+    
+    function quote_string($value)
+    {
+        if (AK_PHP5) {
+            return "'".pg_escape_string($this->connection->_connectionID,$value)."'";
+        } else
+            return "'".pg_escape_string($value)."'";
+    }
     
 }
 ?>

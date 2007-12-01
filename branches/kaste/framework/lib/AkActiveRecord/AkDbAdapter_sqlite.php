@@ -48,5 +48,14 @@ class AkDbAdapter_sqlite extends AkDbAdapter
         $sequence_table = 'seq_'.$table;
         return $this->connection->GenID($sequence_table);
     }
+    
+    /* QUOTING */ 
+    
+    function quote_string($value)
+    {
+        return "'".sqlite_escape_string($value)."'";
+    }
+    
+    
 }
 ?>

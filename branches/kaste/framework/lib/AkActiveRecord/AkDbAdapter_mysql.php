@@ -73,7 +73,12 @@ class AkDbAdapter_mysql extends AkDbAdapter
         return $this->selectValues('SHOW TABLES');
     }
     
+    /* QUOTING */ 
     
+    function quote_string($value)
+    {
+        return "'".mysql_real_escape_string($value,$this->connection->_connectionID)."'";
+    }
     
 }
 ?>
