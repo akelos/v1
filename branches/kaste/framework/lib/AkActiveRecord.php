@@ -908,19 +908,19 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         switch ($fetch) {
             case 'first':
                 // HACK: php4 pass by ref
-                $result =& $this->_find_initial($options);
+                $result =& $this->_findInitial($options);
                 return $result;
                 break;
 
             case 'all':
                 // HACK: php4 pass by ref
-                $result =& $this->_find_every($options);
+                $result =& $this->_findEvery($options);
                 return $result;
                 break;
 
             default:
                 // HACK: php4 pass by ref
-                $result =& $this->_find_from_ids($args, $options);
+                $result =& $this->_findFromIds($args, $options);
                 return $result;
                 break;
         }
@@ -928,12 +928,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $result;
     }
     
-    function &_find_initial($options)
+    function &_findInitial($options)
     {
         // TODO: virtual_limit is a hack 
         // actually we fetch_all and return only the first row
         $options = array_merge($options, array((!empty($options['include']) ?'virtual_limit':'limit')=>1));
-        $result =& $this->_find_every($options);
+        $result =& $this->_findEvery($options);
     
         if(!empty($result) && is_array($result)){
             $_result =& $result[0];
@@ -946,7 +946,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     
     }
 
-    function &_find_every($options)
+    function &_findEvery($options)
     {
         $limit = isset($options['limit']) ? $options['limit'] : null;
         $offset = isset($options['offset']) ? $options['offset'] : null;
@@ -974,7 +974,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         
     }
     
-    function &_find_from_ids($ids,$options)
+    function &_findFromIds($ids,$options)
     {
         $expects_array = is_array($ids[0]);
         $ids = array_unique($expects_array ? (isset($ids[1]) ? array_merge($ids[0],$ids) : $ids[0]) : $ids);
@@ -992,7 +992,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             case 1 :
                 $table_name = !empty($options['include']) && $this->hasAssociations() ? '__owner' : $this->getTableName();
                 $options['conditions'] = $table_name.'.'.$this->getPrimaryKey().' = '.$ids[0].$conditions;
-                $result =& $this->_find_every($options);
+                $result =& $this->_findEvery($options);
                 if (!$expects_array && $result !== false){ 
                     return $result[0];
                 }
@@ -1004,7 +1004,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $ids_condition = $this->getPrimaryKey().' IN ('.join(', ',$ids).')';
                 $options['conditions'] = $ids_condition.$conditions;
     
-                $result =& $this->_find_every($options);
+                $result =& $this->_findEvery($options);
                 if(is_array($result) && (count($result) != $num_ids && $without_conditions)){
                     $result = false;
                 }
