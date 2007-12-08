@@ -22,10 +22,10 @@ class test_AkActiveRecord_validators extends  AkUnitTest
                 state string(40), 
                 email string(150), 
                 country string(2), 
-                age int(3), 
+                age int, 
                 password string(32), 
                 tos boolean, 
-                score int(3)' 
+                score int' 
             ));
         
         $this->installAndIncludeModels(array('Picture', 'Landlord'));

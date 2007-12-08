@@ -34,18 +34,35 @@ class ADODB2_sqlite extends ADODB_DataDict {
 		case 'D': return 'DATE';
 		case 'T': return 'DATE';
 		
-		case 'L': return 'TINYINT';
-		case 'I': return 'DECIMAL(10)';
-		case 'I1': return 'DECIMAL(3)';
-		case 'I2': return 'DECIMAL(5)';
-		case 'I4': return 'DECIMAL(10)';
-		case 'I8': return 'DECIMAL(20)';
+		case 'L': return 'BOOLEAN';
+		case 'I': return 'INTEGER';
+		case 'I1': return 'INTEGER';
+		case 'I2': return 'INTEGER';
+		case 'I4': return 'INTEGER';
+		case 'I8': return 'INTEGER';
 		
-		case 'F': return 'DOUBLE';
+		case 'F': return 'FLOAT';
 		case 'N': return 'DECIMAL';
 		default:
 			return $meta;
 		}
+	}
+	
+    function MetaType($t,$len=-1,$fieldobj=false)
+	{
+        if (is_object($t)) {
+            $fieldobj = $t;
+            $t = $fieldobj->type;
+            $len = $fieldobj->max_length;
+        }
+        switch (strtoupper($t)) {
+            case 'TEXT':
+                return 'X';
+            case 'FLOAT':
+            case 'DOUBLE':
+                return 'F';
+        }
+        return parent::MetaType($t,$len,$fieldobj);
 	}
 
 	function AlterColumnSQL($tabname, $flds)

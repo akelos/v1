@@ -26,6 +26,19 @@ defined('AK_APP_INSTALLERS_DIR') ? null : define('AK_APP_INSTALLERS_DIR', AK_APP
 
 /**
  * 
+ * == Column Types ==
+ * 
+ * Akelos natively supports the following column data types.
+ * 
+ * integer|int, float, decimal, 
+ * string, text,
+ * datetime|timestamp, date,
+ * binary,
+ * boolean
+ * 
+ * Caution: Because boolean is virtual tinyint on mysql, you can't use tinyint for other things! 
+ * 
+ *  
  * == Default settings for columns ==
  * 
  * AkInstaller suggests some default values for the column-details.
@@ -419,6 +432,7 @@ class AkInstaller
         '/([ \n\r,]+)default([ =]+)([^\'^,^\n]+)/i'=> ' DEFAULT \'\3\'',
         '/([ \n\r,]+)(integer|int)([( \n\r,]+)/'=> '\1 I \3',
         '/([ \n\r,]+)float([( \n\r,]+)/'=> '\1 F \2',
+        '/([ \n\r,]+)decimal([( \n\r,]+)/'=> '\1 N \2',
         '/([ \n\r,]+)datetime([( \n\r,]+)/'=> '\1 T \2',
         '/([ \n\r,]+)date([( \n\r,]+)/'=> '\1 D \2',
         '/([ \n\r,]+)timestamp([( \n\r,]+)/'=> '\1 T \2',
@@ -426,7 +440,7 @@ class AkInstaller
         '/([ \n\r,]+)text([( \n\r,]+)/'=> '\1 XL \2',
         '/([ \n\r,]+)string([( \n\r,]+)/'=> '\1 C \2',
         '/([ \n\r,]+)binary([( \n\r,]+)/'=> '\1 B \2',
-        '/([ \n\r,]+)boolean([( \n\r,]+)/'=> '\1 L(1) \2',
+        '/([ \n\r,]+)boolean([( \n\r,]+)/'=> '\1 L \2',
         '/ NOT( |_)?NULL/i'=> ' NOTNULL',
         '/ AUTO( |_)?INCREMENT/i'=> ' AUTO ',
         '/ +/'=> ' ',

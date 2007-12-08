@@ -1,5 +1,28 @@
 SVN
 ----------------------
+* Datatypes for PostgreSQL changed. You need to update/change your table schemas! Run migrations!
+  Before this, we kinda hacked Mysql-behavior into PostgreSQL. Thus we didnt used features of Postgre on one side.
+  In the long run we had to fix - better now than later - since the design problems only "multiply" when time goes by. 
+  At this point we wanted to implement the decimal/numeric datatype. And so we had to decide whether to hack further or
+  to solve the underlying issue. This means we HAD to correct a wrong implementation. 
+  
+     (simplified type>) Akelos      Postgre (<Actual Type)
+  Until now we had:     boolean  => numeric(1)
+                        integer  => numeric(X,0)
+                      
+  From now on we have:  boolean  => bool
+                        integer  => integer  (int4)
+                        decimal  => numeric
+                                  
+  To guide you through this we'll have a test at test/unit/lib/AkActiveRecord/_PostgreSQL_datatype_migration.php.
+  First make you comfortably with this test and make it pass. This is a test against a dummy-table of course. (When you're
+  on Postgre 7 you have to modify this test. But you'll see that.) 
+  Next write appropriate migrations/installers for your real tables. (Again: You should always begin with a test.)
+  
+  Keep in mind that we typecast TINYINT as boolean on MySQL. So you cannot use tinyint for other things.                                             
+  
+* Boolean columns now actually have three possible states: true, false and null. Before that null=>false!
+
 * AkInstaller::createTable() will now add created_at and updated_at columns automatically unless you have one of 
   them in your table declaration or set the option 'timestamp' => false
     

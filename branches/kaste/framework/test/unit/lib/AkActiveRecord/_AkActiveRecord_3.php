@@ -25,17 +25,23 @@ class test_AkActiveRecord_3 extends  AkUnitTest
         $AkTestFields = new AkTestField();
 
         $AkTestFields->transactionStart();
+        //$AkTestFields->_db->debug();
         for ($i=1; $i <= 10; $i++){
-            $AkTestFields->create(array('varchar_field' => 'test field '.$i));
+            $this->assertTrue($AkTestFields->create(array('varchar_field' => 'test field '.$i)));
         }
         $AkTestFields->transactionComplete();
 
         $AkTestField = new AkTestField();
         $AkTestField = $AkTestField->find(2);
+        $this->assertEqual($AkTestField->boolean_field,null);
+        
         $AkTestField->set('boolean_field', false);
+        $this->assertEqual($AkTestField->boolean_field,false);
         $AkTestField->toggleAttributeAndSave('boolean_field');
+        $this->assertEqual($AkTestField->boolean_field,true);
 
         $AkTestField = $AkTestField->find(2);
+        $this->assertEqual($AkTestField->boolean_field,true);
         $this->assertTrue($AkTestField->boolean_field);
 
         $AkTestField->toggleAttributeAndSave('boolean_field');
@@ -293,7 +299,7 @@ class test_AkActiveRecord_3 extends  AkUnitTest
             'clob_field'=>"$i text",
             'nvarchar2000_field'=>"$i text",
             'nvarchar_field'=>"$i",
-            'decimal1_field'=>"$i",
+            //'decimal1_field'=>"$i",
             'decimal3_field'=>$i,
             'decimal5_field'=>$i,
             'decimal10_field'=>"$i",
@@ -304,7 +310,7 @@ class test_AkActiveRecord_3 extends  AkUnitTest
             $AkTestField = new AkTestField($details);
             $this->assertTrue($AkTestField->save());
         }
-
+        
     }
 
     function Test_of_findBy()

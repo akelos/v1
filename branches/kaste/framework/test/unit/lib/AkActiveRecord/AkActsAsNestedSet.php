@@ -13,7 +13,7 @@ class test_AkActiveRecord_actsAsNestedSet extends  AkUnitTest
     function test_start()
     {
         $this->installAndIncludeModels(array(
-            'NestedCategory'=>'id,lft int(11),rgt int(11),parent_id,description,department string(25)'
+            'NestedCategory'=>'id,lft int,rgt int,parent_id,description,department string(25)'
             ));
     }
 

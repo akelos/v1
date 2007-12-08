@@ -153,12 +153,10 @@ class AkUnitTest extends UnitTestCase
 
     function instantiateModel($model_name)
     {
-        if(empty($this->$model_name)){
-            if(class_exists($model_name) || Ak::import($model_name)){
-                $this->$model_name =& new $model_name();
-            } else
-                trigger_error(Ak::t('Could not instantiate %modelname',array('%modelname'=>$model_name)),E_USER_ERROR);
-        }
+        if(class_exists($model_name) || Ak::import($model_name)){
+            $this->$model_name =& new $model_name();
+        } else
+            trigger_error(Ak::t('Could not instantiate %modelname',array('%modelname'=>$model_name)),E_USER_ERROR);
         return !empty($this->$model_name) && is_object($this->$model_name) && strtolower(get_class($this->$model_name)) == strtolower($model_name);
     }
 }

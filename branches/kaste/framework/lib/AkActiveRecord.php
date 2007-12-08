@@ -1194,7 +1194,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         foreach ($requested_args as $k=>$v){
             switch ($this->getColumnType($v)) {
                 case 'boolean':
-                    $query_values[$k] = in_array($query_values[$k],$true_bool_values) ? 1 : 0;
+                    $query_values[$k] = in_array($query_values[$k],$true_bool_values) ? true : false;
                     break;
     
                 case 'date':
@@ -2810,7 +2810,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         'I4' => 'integer', // 4-byte integer
         'I8' => 'integer', // 8-byte integer
         'F' => 'float', // Floating point number
-        'N' => 'integer' //  Numeric or decimal number
+        'N' => 'decimal' //  Numeric or decimal number
         );
 
         $result = !isset($adodb_data_types[$meta_type]) ?
@@ -2824,7 +2824,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         if($this->_getDatabaseType() == 'mysql'){
-            if($result == 'integer' && (int)$adodb_column_object->max_length === 1 &&
+            if($result == 'integer' /*&& (int)$adodb_column_object->max_length === 1 */&&
             stristr($adodb_column_object->type, 'TINYINT')){
                 return 'boolean';
             }
@@ -2833,9 +2833,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $adodb_column_object->max_length = 19;
             }
 
-            if($result == 'boolean' && (int)$adodb_column_object->max_length !== 1 && stristr($adodb_column_object->type, 'NUMERIC')){
+            /*if($result == 'boolean' && (int)$adodb_column_object->max_length !== 1 && stristr($adodb_column_object->type, 'NUMERIC')){
                 return 'integer';
-            }
+            }*/
         }elseif($this->_getDatabaseType() == 'sqlite'){
             if($result == 'integer' && (int)$adodb_column_object->max_length === 1 && stristr($adodb_column_object->type, 'TINYINT')){
                 return 'boolean';
@@ -3137,22 +3137,27 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             break;
 
             case 'boolean':
-            $result = !empty($value) ? '1' : '0';
+                $result = is_null($value) ? null : (!empty($value) ? "'1'" : "'0'");
             break;
 
             case 'binary':
+                if($this->_getDatabaseType() == 'postgre'){
+                    $result =  " '".$this->_db->escape_blob($value)."'::bytea ";
+                }else{
+                    $result = $add_quotes ? $this->_db->quote_string($value) : $value;
+                }
+            break;
 
-            if($this->_getDatabaseType() == 'postgre'){
-                $result =  " '".$this->_db->escape_blob($value)."'::bytea ";
-            }else{
-                $result = $add_quotes ? $this->_db->quote_string($value) : $value;
-            }
-
+            case 'decimal':
+                $result = is_null($value) ? null : $add_quotes ? $this->_db->quote_string($value) : $value;
             break;
 
             case 'serial':
             case 'integer':
-                $value = is_null($value) ? null : (integer)$value;
+                $result = is_null($value) ? 'null' : (integer)$value;
+                //$result = is_null($value) ? 'null' : $add_quotes ? $this->_db->quote_string($value) : $value;  // this could be a bigint-"solution"
+            break;
+                
             case 'float':
             $result = (empty($value) && $value !== 0) ? 'null' : (is_numeric($value) ? $value : $this->_db->quote_string($value));
             $result = !empty($this->_columns[$column_name]['notNull']) && $result == 'null' && $this->_getDatabaseType() == 'sqlite' ? '0' : $result;
@@ -3173,7 +3178,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             if($column_type){
                 if('integer' == $column_type){
                     return is_null($value) ? null : (integer)$value;
+                    //return is_null($value) ? null : $value;    // maybe for bigint we can do this
                 }elseif('boolean' == $column_type){
+                    if (is_null($value)) return null;
+                    if ($this->_getDatabaseType()=='postgre'){
+                        return $value=='t' ? true : false;   
+                    }
                     return (integer)$value === 1 ? true : false;
                 }elseif(!empty($value) && 'date' == $column_type && strstr(trim($value),' ')){
                     return substr($value,0,10) == '0000-00-00' ? null : str_replace(substr($value,strpos($value,' ')), '', $value);
@@ -3970,13 +3980,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
 
             if($this->_set_default_attribute_values_automatically){
-                $this->_setDefaultAttributeValuesAutomatically();
+                //$this->_setDefaultAttributeValuesAutomatically();
             }
 
             $this->validate();
 
             if($this->_automated_validators_enabled){
-                $this->_runAutomatedValidators();
+                //$this->_runAutomatedValidators();
             }
 
             $this->afterValidation();
@@ -5112,6 +5122,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             if(preg_match("/^'(.*)'::/", $default, $match)){
                 return $match[1];
             }
+            // a postgre HACK; we dont know the column-type here
+            if ($default=='true') return true;
+            if ($default=='false') return false;
         }
         return $default;
     }

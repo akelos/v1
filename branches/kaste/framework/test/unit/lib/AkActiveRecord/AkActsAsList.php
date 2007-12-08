@@ -13,7 +13,7 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
     function test_AkActiveRecord_actsAsList()
     {
         $this->installAndIncludeModels(array(
-            'TodoItem'=>'id, position int(20), task text, due_time datetime, created_at, expires datetime, updated_at,new_position int(10)'
+            'TodoItem'=>'id, position int, task text, due_time datetime, created_at, expires datetime, updated_at,new_position int'
         ));
     }
 
@@ -587,6 +587,7 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
 
         $ListA =& new TodoList(array('name' => 'A'));
         $this->assertTrue($ListA->save());
+        
         $ListA->task->create(array('details' => 1));
 
         $ListB =& new TodoList(array('name' => 'B'));
@@ -594,16 +595,15 @@ class AkActiveRecord_actsAsListTestCase extends  AkUnitTest
         $ListB->task->create(array('details' => 2));
         $TodoTask =& $ListB->task->create(array('details' => 3));
 
-        $Task1 =& $TodoTask->findFirstBy('details', 1);
+        $Task1 =& $TodoTask->find('first',array('details'=>1));
 
         $Task1->list->removeFromList();
         $this->assertTrue($Task1->save());
         $Task1->todo_list->assign($ListB);
         $this->assertTrue($Task1->save());
-        //$Task1->reload();
         $Task1->list->insertAt(2);
 
-        $ListB =& $ListB->findFirstBy('name', 'B', array('include'=>'tasks'));
+        $ListB =& $ListB->find('first',array('name'=>'B'), array('include'=>'tasks'));
 
         foreach (array_keys($ListB->tasks) as $k){
             $this->assertEqual($ListB->tasks[$k]->get('position'), $k+1);

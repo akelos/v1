@@ -11,13 +11,14 @@ class test_AkActiveRecord extends  AkUnitTest
         $this->installAndIncludeModels(array(
             'AkTestUser'=>'id I AUTO KEY, user_name C(32), first_name C(200), last_name C(200), email C(150), country I, password C(32), created_at T, updated_at T, expires_on T',
             'AkTestMember'=>'ak_test_user_id I, role C(25)',
-            'AkTestComment'=>'id I AUTO KEY, ak_test_user_id I, private_comment L(1), birth_date T',
+            'AkTestComment'=>'id I AUTO KEY, ak_test_user_id I, private_comment L, birth_date T',
             'AkTestField'=>'id I AUTO KEY,varchar_field C(255),longtext_field XL,text_field X,logblob_field B,date_field D, 
-                    datetime_field T,tinyint_field L(2),integer_field I,smallint_field I2,bigint_field I8,double_field F,
+                    datetime_field T,tinyint_field I2,integer_field I,smallint_field I2,bigint_field I8,double_field F,
                     numeric_field N,bytea_field B,timestamp_field T,
-                    boolean_field L(1),int2_field I2,int4_field I4,int8_field I8,foat_field F,varchar4000_field X, 
+                    boolean_field L,int2_field I2,int4_field I4,int8_field I8,foat_field F,varchar4000_field X, 
                     clob_field XL,nvarchar2000_field X2,blob_field B,nvarchar_field C2(255),
-                    decimal1_field L(2),decimal3_field I1,decimal5_field I2,decimal10_field I4,decimal20_field I8,decimal_field N,
+                    decimal1_field L,'.//*decimal3_field I1,
+                    'decimal5_field I2,decimal10_field I4,decimal20_field I8,decimal_field N,
                     created_at T,updated_at T,expires_on T'));
     }
 
@@ -141,7 +142,7 @@ class test_AkActiveRecord extends  AkUnitTest
 
         $columns = array('id','varchar_field','longtext_field','text_field','logblob_field','date_field','datetime_field','tinyint_field','integer_field','smallint_field',
         'bigint_field','double_field','numeric_field','bytea_field','timestamp_field','boolean_field','int2_field','int4_field',
-        'int8_field','foat_field','varchar4000_field','clob_field','nvarchar2000_field','blob_field','nvarchar_field','decimal1_field','decimal3_field',
+        'int8_field','foat_field','varchar4000_field','clob_field','nvarchar2000_field','blob_field','nvarchar_field','decimal1_field',//'decimal3_field',
         'decimal5_field','decimal10_field','decimal20_field','decimal_field','created_at','updated_at','expires_on'
         );
 
@@ -163,7 +164,7 @@ class test_AkActiveRecord extends  AkUnitTest
 
         $columns = array('id','varchar_field','longtext_field','text_field','logblob_field','date_field','datetime_field','tinyint_field','integer_field','smallint_field',
         'bigint_field','double_field','numeric_field','bytea_field','timestamp_field','boolean_field','int2_field','int4_field',
-        'int8_field','foat_field','varchar4000_field','clob_field','nvarchar2000_field','blob_field','nvarchar_field','decimal1_field','decimal3_field',
+        'int8_field','foat_field','varchar4000_field','clob_field','nvarchar2000_field','blob_field','nvarchar_field','decimal1_field',//'decimal3_field',
         'decimal5_field','decimal10_field','decimal20_field','decimal_field','created_at','updated_at','expires_on'
         );
 
@@ -210,7 +211,7 @@ class test_AkActiveRecord extends  AkUnitTest
     function Test_of_getColumnNames()
     {
         $AkTestField = new AkTestField();
-        $expected = array ( 'id' => 'Id', 'varchar_field' => 'Varchar field', 'longtext_field' => 'Longtext field', 'text_field' => 'Text field', 'logblob_field' => 'Logblob field', 'date_field' => 'Date field', 'datetime_field' => 'Datetime field', 'tinyint_field' => 'Tinyint field', 'integer_field' => 'Integer field', 'smallint_field' => 'Smallint field', 'bigint_field' => 'Bigint field', 'double_field' => 'Double field', 'numeric_field' => 'Numeric field', 'bytea_field' => 'Bytea field', 'timestamp_field' => 'Timestamp field', 'boolean_field' => 'Boolean field', 'int2_field' => 'Int2 field', 'int4_field' => 'Int4 field', 'int8_field' => 'Int8 field', 'foat_field' => 'Foat field', 'varchar4000_field' => 'Varchar4000 field', 'clob_field' => 'Clob field', 'nvarchar2000_field' => 'Nvarchar2000 field', 'blob_field' => 'Blob field', 'nvarchar_field' => 'Nvarchar field', 'decimal1_field' => 'Decimal1 field', 'decimal3_field' => 'Decimal3 field', 'decimal5_field' => 'Decimal5 field', 'decimal10_field' => 'Decimal10 field', 'decimal20_field' => 'Decimal20 field', 'decimal_field' => 'Decimal field', 'created_at' => 'Created at', 'updated_at' => 'Updated at', 'expires_on' => 'Expires on' );
+        $expected = array ( 'id' => 'Id', 'varchar_field' => 'Varchar field', 'longtext_field' => 'Longtext field', 'text_field' => 'Text field', 'logblob_field' => 'Logblob field', 'date_field' => 'Date field', 'datetime_field' => 'Datetime field', 'tinyint_field' => 'Tinyint field', 'integer_field' => 'Integer field', 'smallint_field' => 'Smallint field', 'bigint_field' => 'Bigint field', 'double_field' => 'Double field', 'numeric_field' => 'Numeric field', 'bytea_field' => 'Bytea field', 'timestamp_field' => 'Timestamp field', 'boolean_field' => 'Boolean field', 'int2_field' => 'Int2 field', 'int4_field' => 'Int4 field', 'int8_field' => 'Int8 field', 'foat_field' => 'Foat field', 'varchar4000_field' => 'Varchar4000 field', 'clob_field' => 'Clob field', 'nvarchar2000_field' => 'Nvarchar2000 field', 'blob_field' => 'Blob field', 'nvarchar_field' => 'Nvarchar field', 'decimal1_field' => 'Decimal1 field', /*'decimal3_field' => 'Decimal3 field',*/ 'decimal5_field' => 'Decimal5 field', 'decimal10_field' => 'Decimal10 field', 'decimal20_field' => 'Decimal20 field', 'decimal_field' => 'Decimal field', 'created_at' => 'Created at', 'updated_at' => 'Updated at', 'expires_on' => 'Expires on' );
         $this->assertEqual($AkTestField->getColumnNames(), $expected);
     }
 
@@ -265,7 +266,7 @@ class test_AkActiveRecord extends  AkUnitTest
         'smallint_field'=>'integer',
         'bigint_field'=>'integer',
         'double_field'=>'float',
-        'numeric_field'=>'integer',
+        'numeric_field'=>'decimal',
         'bytea_field'=>'binary',
         'timestamp_field'=>'datetime',
         'boolean_field'=>'boolean',
@@ -278,12 +279,12 @@ class test_AkActiveRecord extends  AkUnitTest
         'nvarchar2000_field'=>'text',
         'blob_field'=>'binary',
         'nvarchar_field'=>'string',
-        'decimal1_field'=>'integer',
-        'decimal3_field'=>'integer',
+        'decimal1_field'=>'boolean',
+        //'decimal3_field'=>'integer',
         'decimal5_field'=>'integer',
         'decimal10_field'=>'integer',
         'decimal20_field'=>'integer',
-        'decimal_field'=>'integer',
+        'decimal_field'=>'decimal',
         'created_at'=>'datetime',
         'updated_at'=>'datetime',
         'expires_on'=>'date'

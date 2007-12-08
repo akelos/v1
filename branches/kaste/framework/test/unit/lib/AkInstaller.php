@@ -33,7 +33,7 @@ class Test_of_AkInstaller extends  AkUnitTest
                 'ID' => array('type'=>'int4','not_null'=>1,'default_value'=>"nextval('test_pages_id_seq'::regclass)",'primary_key' => 1),
                 'TITLE' => array('max_length'=>255,'has_default'=>null,'type'=>'varchar'),
                 'BODY' => array('max_length'=>-1,'has_default'=>null,'type'=>'text'),
-                'PARENT_ID' => array('max_length'=>11,'has_default'=>1,'default_value'=>0,'not_null'=>1,'type'=>'numeric'),
+                'PARENT_ID' => array('max_length'=>4,'has_default'=>1,'default_value'=>0,'not_null'=>1,'type'=>'int4'),
                 'CREATED_AT' => array('type'=>'timestamp', 'max_length'=> 8,'has_default'=>null),
                 'UPDATED_AT' => array('type'=>'timestamp', 'max_length'=> 8,'has_default'=>null),
                 );
@@ -45,13 +45,13 @@ class Test_of_AkInstaller extends  AkUnitTest
                 'DESCRIPTION' => array('max_length'=>-1,'has_default'=>null),
                 'EN_URL' => array('max_length'=>255,'has_default'=>null),
                 'ES_URL' => array('max_length'=>255,'has_default'=>null),
-                'OWNER_ID' => array('type'=>'numeric', 'max_length'=>-1),
+                'OWNER_ID' => array('type'=>'int4', 'max_length'=>4),
                 'MODIFIED_AT' => array('type'=>'timestamp'),
                 'CREATED_ON' => array('type'=>'date'),
-                'IS_FEATURED' => array('max_length'=>1,'type'=>'numeric'),
-                'POSITION' => array('max_length'=>-1),
-                'LOCK_VERSION' => array('type'=>'numeric', 'max_length'=>-1,'default_value' => 1),
-                'EDIT_COUNT' => array('type'=>'numeric', 'max_length'=>-1,'default_value' => 0),
+                'IS_FEATURED' => array('max_length'=>1,'type'=>'bool'),
+                'POSITION' => array('max_length'=>4),
+                'LOCK_VERSION' => array('type'=>'int4', 'max_length'=>4,'default_value' => 1),
+                'EDIT_COUNT' => array('type'=>'int4', 'max_length'=>4,'default_value' => 0),
                 );
 
 
@@ -59,26 +59,26 @@ class Test_of_AkInstaller extends  AkUnitTest
 
             case 'sqlite':
                 $this->expected_for_creating_table = array(
-                'ID' => array('type'=>'DECIMAL', 'max_length'=>10,'not_null'=>1,'auto_increment'=>1),
+                'ID' => array('type'=>'INTEGER', 'max_length'=>-1,'not_null'=>1,'auto_increment'=>1),
                 'TITLE' => array('max_length'=>255,'not_null'=>null),
                 'BODY' => array('max_length'=>-1,'not_null'=>null,'type'=>'TEXT'),
                 'PARENT_ID' => array('has_default'=>1,'default_value'=>0,'not_null'=>1),
                 'CREATED_AT' => array('type'=>'DATE'),
                 );
                 $this->expected_for_default_types = array(
-                'ID' => array('type'=>'DECIMAL', 'max_length'=>10,'not_null'=>1,'auto_increment'=>1,'primary_key'=>1),
+                'ID' => array('type'=>'INTEGER', 'max_length'=>-1,'not_null'=>1,'auto_increment'=>1,'primary_key'=>1),
                 'NAME' => array('max_length'=>255,'not_null'=>null),
                 'SCREEN_NAME' => array('max_length'=>255,'not_null'=>null),
                 'DESCRIPTION' => array('max_length'=>-1,'not_null'=>null),
                 'EN_URL' => array('max_length'=>255,'not_null'=>null),
                 'ES_URL' => array('max_length'=>255,'not_null'=>null),
-                'OWNER_ID' => array('type'=>'DECIMAL', 'max_length'=>10),
+                'OWNER_ID' => array('type'=>'INTEGER', 'max_length'=>-1),
                 'MODIFIED_AT' => array('type'=>'DATE'),
                 'CREATED_ON' => array('type'=>'DATE'),
-                'IS_FEATURED' => array('max_length'=>1,'type'=>'TINYINT'),
-                'POSITION' => array('max_length'=>10),
-                'LOCK_VERSION' => array('type'=>'DECIMAL', 'max_length'=>10, 'default_value' => 1),
-                'EDIT_COUNT' => array('type'=>'DECIMAL', 'max_length'=>10,'default_value' => 0),
+                'IS_FEATURED' => array('max_length'=>-1,'type'=>'BOOLEAN'),
+                'POSITION' => array('max_length'=>-1),
+                'LOCK_VERSION' => array('type'=>'INTEGER', 'max_length'=>-1, 'default_value' => 1),
+                'EDIT_COUNT' => array('type'=>'INTEGER', 'max_length'=>-1,'default_value' => 0),
                 );
 
                 break;
@@ -114,10 +114,10 @@ class Test_of_AkInstaller extends  AkUnitTest
     function Test_for_creating_table()
     {
         $this->Installer->createTable('test_pages', "
-            id integer(11) not null auto_increment primary_key,
+            id integer not null auto_increment primary_key,
             title string(255),
             body text,
-            parent_id integer(11) not null default '0',
+            parent_id integer not null default '0',
             created_at datetime,
             updated_at datetime
         ");
@@ -134,19 +134,19 @@ class Test_of_AkInstaller extends  AkUnitTest
             id integer not null auto_increment primary_key,
             name string(255),
             description text,
-            parent_id integer(11) not null default '0'
+            parent_id integer not null default '0'
         ", array('timestamp'=>false));
 
 
         $this->Installer->createTable('test_categories_pages', "
-            category_id integer(11) not null,
-            page_id integer(11) not null
+            category_id integer not null,
+            page_id integer not null
         ", array('timestamp'=>false));
 
         $this->Installer->createTable('test_nice_urls', "
             id integer not null auto_increment primary_key,
             url string(255),
-            context_id integer(11) not null,
+            context_id integer not null,
             context string(255) not null default 'page'
         ", array('timestamp'=>false));
 
