@@ -771,22 +771,23 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }else{
             if(!$this->isNewRecord()){
                 $this->transactionStart();
-                if($this->beforeDestroy() && $this->notifyObservers('beforeDestroy')){
-
-                    $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->quote_string($this->getId());
-                    $had_success = $this->_db->delete($sql,$this->getModelName().' Destroy');
-                    if(!$had_success || !$this->afterDestroy() || !$this->notifyObservers('afterDestroy')){
-                        $this->transactionFail();
-                    } else $this->freeze();
-                }else {
-                    $this->transactionFail();
-                }
+                $return = $this->_destroy() && $this->freeze();
                 $this->transactionComplete();
-                return !$this->transactionHasFailed();// && $this->freeze();
+                return $return;
             }
         }
     }
 
+    function _destroy()
+    {
+        if(!$this->beforeDestroy() || !$this->notifyObservers('beforeDestroy')) return $this->transactionFail();
+        
+        $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->quote_string($this->getId());
+        if ($this->_db->delete($sql,$this->getModelName().' Destroy') !== 1)    return $this->transactionFail();
+
+        if (!$this->afterDestroy() || !$this->notifyObservers('afterDestroy'))  return $this->transactionFail();
+        return true;        
+    }
 
     /**
     * Destroys the objects for all the records that matches the condition by instantiating 
@@ -5078,7 +5079,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function freeze()
     {
-        $this->_freeze = true;
+        return $this->_freeze = true;
     }
 
     function isFrozen()
