@@ -31,6 +31,12 @@ class DiffHelper extends AkActionViewHelper
 
     function diff($from_text, $to_text, $options = array())
     {
+        $default_options = array(
+            'insert_class' => '',
+            'delete_class' => '',
+        );
+        $options = array_merge($default_options, $options);
+    
         require_once('PEAR'.DS.'Text'.DS.'Diff.php');
         require_once('PEAR'.DS.'Text'.DS.'Diff'.DS.'Renderer.php');
         require_once('PEAR'.DS.'Text'.DS.'Diff'.DS.'Renderer'.DS.'inline.php');
@@ -41,6 +47,8 @@ class DiffHelper extends AkActionViewHelper
         array_pop($from_text);
 
         $Renderer =& new Text_Diff_Renderer_inline();
+        $Renderer->_ins_prefix = empty($options['insert_class']) ? '<ins>' : '<ins class="'.$options['insert_class'].'">';
+        $Renderer->_del_prefix = empty($options['delete_class']) ? '<del>' : '<del class="'.$options['delete_class'].'">';
         return trim($Renderer->render(new Text_Diff($from_text, $to_text)),"\n");
 
     }

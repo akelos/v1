@@ -24,6 +24,16 @@ class DiffHelperTestCase extends AkUnitTest
         $this->assertEqual($generated_diff, $expected_diff);
     }
 
+    function test_should_add_classes_to_insert_and_delete_tags()
+    {
+        $original = 'open source';
+        $modified = 'Open Source';
+        $expected_diff = '<del class="version-1">open source</del><ins class="version-2">Open Source</ins>';
+
+        $generated_diff = $this->diff_helper->diff($original, $modified, array('insert_class'=>'version-2','delete_class'=>'version-1'));
+        $this->assertEqual($generated_diff, $expected_diff);
+    }
+
     function test_should_return_diff_html()
     {
         $original = file_get_contents(dirname(__FILE__).DS.'..'.DS.'test'.DS.'original.txt');
