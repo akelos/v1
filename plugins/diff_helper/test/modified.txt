@@ -1,0 +1,7 @@
+The Akelos PHP Framework is a PHP port of the Web application framework Ruby on Rails. Akelos claims to simplify and improve the process of developing database driven web applications.
+
+It allows to create applications writing less code than other similar frameworks, requiring little or no configuration.
+
+Also known as Akelos, is an Open Source project written using the programming language PHP which is easier to deploy than Ruby. Applications written using Akelos follow the Model View Controller (MVC) design pattern.
+
+Other features include:
