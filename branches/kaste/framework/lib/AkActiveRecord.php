@@ -3138,7 +3138,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             break;
 
             case 'boolean':
-                $result = is_null($value) ? null : (!empty($value) ? "'1'" : "'0'");
+                $result = is_null($value) ? 'null' : (!empty($value) ? "'1'" : "'0'");
             break;
 
             case 'binary':
@@ -3150,7 +3150,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             break;
 
             case 'decimal':
-                $result = is_null($value) ? null : $add_quotes ? $this->_db->quote_string($value) : $value;
+                $result = is_null($value) ? 'null' : $add_quotes ? $this->_db->quote_string($value) : $value;
             break;
 
             case 'serial':
@@ -3168,8 +3168,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $result = $add_quotes ? $this->_db->quote_string($value) : $value;
             break;
         }
-
-        return empty($this->_columns[$column_name]['notNull']) ? ($result === '' ? "''" : $result) : ($result == 'null' ? '' : $result);
+        //  !! null vs. not null !!
+        return empty($this->_columns[$column_name]['notNull']) ? ($result === '' ? "''" : $result) : ($result === 'null' ? '' : $result);
     }
 
     function castAttributeFromDatabase($column_name, $value)

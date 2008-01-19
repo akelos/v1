@@ -95,6 +95,14 @@ class test_AkActiceRecord_datatypes extends  AkUnitTest
         $this->assertNull($Celebrity->celebrity);
     }
     
+    function test_should_save_NULL_on_boolean_column()
+    {
+        $Celebrity =& $this->Hybrid->create(array('title'=>'Franko','celebrity'=>true));
+        $Celebrity->updateAttribute('celebrity',null);
+        $Celebrity->reload();
+        $this->assertNull($Celebrity->celebrity);
+    }
+    
     function test_findBy_should_cast_booleans()
     {
         $Celebrity =& $this->Hybrid->findBy('celebrity','true');
@@ -121,7 +129,7 @@ class test_AkActiceRecord_datatypes extends  AkUnitTest
         
         $Product =& $this->Hybrid->create(array('title'=>'Dollar','price'=>9876543210));
         $Product =& $this->Hybrid->findFirst(array('title'=>'Dollar'));
-        $this->assertEqual($Product->price,9876543210);
+        $this->assertEqual($Product->price,9876543210,'PENDING');
     }
     
     
