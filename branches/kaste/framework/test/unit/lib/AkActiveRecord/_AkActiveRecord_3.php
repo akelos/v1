@@ -3,23 +3,23 @@
 defined('AK_TEST_DATABASE_ON') ? null : define('AK_TEST_DATABASE_ON', true);
 require_once(dirname(__FILE__).'/../../../fixtures/config/config.php');
 
-class test_AkActiveRecord_3 extends  AkUnitTest 
+class test_AkActiveRecord_3 extends  AkUnitTest
 {
     function _test_AkActiveRecord()  // dont reinstall, this test relies on _AkActiveRecord_1.php
     {
         $this->installAndIncludeModels(array(
-            'AkTestUser'=>'id I AUTO KEY, user_name C(32), first_name C(200), last_name C(200), email C(150), country I, password C(32), created_at T, updated_at T, expires_on T',
-            'AkTestMember'=>'ak_test_user_id I, role C(25)',
-            'AkTestComment'=>'id I AUTO KEY, ak_test_user_id I, private_comment L(1), birth_date T',
-            'AkTestField'=>'id I AUTO KEY,varchar_field C(255),longtext_field XL,text_field X,logblob_field B,date_field D, 
+        'AkTestUser'=>'id I AUTO KEY, user_name C(32), first_name C(200), last_name C(200), email C(150), country I, password C(32), created_at T, updated_at T, expires_on T',
+        'AkTestMember'=>'ak_test_user_id I, role C(25)',
+        'AkTestComment'=>'id I AUTO KEY, ak_test_user_id I, private_comment L(1), birth_date T',
+        'AkTestField'=>'id I AUTO KEY,varchar_field C(255),longtext_field XL,text_field X,logblob_field B,date_field D,
                     datetime_field T,tinyint_field L(2),integer_field I,smallint_field I2,bigint_field I8,double_field F,
                     numeric_field N,bytea_field B,timestamp_field T,
-                    boolean_field L(1),int2_field I2,int4_field I4,int8_field I8,foat_field F,varchar4000_field X, 
+                    boolean_field boolean,int2_field I2,int4_field I4,int8_field I8,foat_field F,varchar4000_field X, 
                     clob_field XL,nvarchar2000_field X2,blob_field B,nvarchar_field C2(255),
                     decimal1_field L(2),decimal3_field I1,decimal5_field I2,decimal10_field I4,decimal20_field I8,decimal_field N,
                     created_at T,updated_at T,expires_on T'));
     }
-    
+
     function Test_of_toggleAttributeAndSave()
     {
         $AkTestFields = new AkTestField();
@@ -34,7 +34,7 @@ class test_AkActiveRecord_3 extends  AkUnitTest
         $AkTestField = new AkTestField();
         $AkTestField = $AkTestField->find(2);
         $this->assertEqual($AkTestField->boolean_field,null);
-        
+
         $AkTestField->set('boolean_field', false);
         $this->assertEqual($AkTestField->boolean_field,false);
         $AkTestField->toggleAttributeAndSave('boolean_field');
@@ -310,7 +310,7 @@ class test_AkActiveRecord_3 extends  AkUnitTest
             $AkTestField = new AkTestField($details);
             $this->assertTrue($AkTestField->save());
         }
-        
+
     }
 
     function Test_of_findBy()
@@ -335,17 +335,17 @@ class test_AkActiveRecord_3 extends  AkUnitTest
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findBy("user_name AND password",'tim_oreilly'));
 
         //$Users->findBy("user_name AND password",'tim_oreilly','1234');
-        
+
         $AkTestFields = new AkTestField();
 
         $this->assertTrue($AkTestField = $AkTestFields->findBy('numeric_field:< AND boolean_field',4,'yes'));
         $this->assertEqual($AkTestField[0]->varchar_field, '2 string');
         $this->assertEqual(count($AkTestField), 1);
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findBy('varchar_field:begins',2));
         $this->assertEqual($AkTestField[0]->varchar_field, '2 string');
         $this->assertEqual(count($AkTestField), 1);
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findBy('(varchar_field:begins OR int8_field OR timestamp_field:<) AND tinyint_field:>=', 2,3,'2005/05/04 23:00:00',2));
         $this->assertEqual($AkTestField[0]->varchar_field, '2 string');
         $this->assertEqual($AkTestField[1]->varchar_field, '3 string');
@@ -376,17 +376,17 @@ class test_AkActiveRecord_3 extends  AkUnitTest
 
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findAllBy("username",'tim_oreilly'));
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findAllBy("user_name AND password",'tim_oreilly'));
-        
+
         $AkTestFields = new AkTestField();
 
         $this->assertTrue($AkTestField = $AkTestFields->findAllBy('numeric_field:< AND boolean_field',4,'yes'));
         $this->assertEqual($AkTestField[0]->varchar_field, '2 string');
         $this->assertEqual(count($AkTestField), 1);
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findAllBy('varchar_field:begins',2));
         $this->assertEqual($AkTestField[0]->varchar_field, '2 string');
         $this->assertEqual(count($AkTestField), 1);
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findAllBy('(varchar_field:begins OR int8_field OR timestamp_field:<) AND tinyint_field:>=', 2,3,'2005/05/04 23:00:00',2));
         $this->assertEqual($AkTestField[0]->varchar_field, '2 string');
         $this->assertEqual($AkTestField[1]->varchar_field, '3 string');
@@ -400,7 +400,7 @@ class test_AkActiveRecord_3 extends  AkUnitTest
         $this->assertEqual($AkTestField[2]->varchar_field, '2 string');
         $this->assertEqual(count($AkTestField), 3);
     }
-    
+
     function Test_of_findFirstBy()
     {
         $Users = new AkTestUser();
@@ -416,15 +416,15 @@ class test_AkActiveRecord_3 extends  AkUnitTest
 
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findFirstBy("username",'tim_oreilly'));
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findFirstBy("user_name AND password",'tim_oreilly'));
-        
+
         $AkTestFields = new AkTestField();
 
         $this->assertTrue($AkTestField = $AkTestFields->findFirstBy('numeric_field:< AND boolean_field',4,'yes'));
         $this->assertEqual($AkTestField->varchar_field, '2 string');
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findFirstBy('varchar_field:begins',2));
         $this->assertEqual($AkTestField->varchar_field, '2 string');
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findFirstBy('(varchar_field:begins OR int8_field OR timestamp_field:<) AND tinyint_field:>=', 2,3,'2005/05/04 23:00:00',2));
         $this->assertEqual($AkTestField->varchar_field, '2 string');
 
@@ -432,16 +432,16 @@ class test_AkActiveRecord_3 extends  AkUnitTest
         array('order'=>'numeric_field DESC')));
         $this->assertEqual($AkTestField->varchar_field, '4 string');
     }
-    
+
     function Test_of_findLastBy()
     {
         $Users = new AkTestUser();
-        
+
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findLastBy("username",'tim_oreilly'));
         $this->assertErrorPattern('/Argument list did not match expected set/',$Users->findLastBy("user_name AND password",'tim_oreilly'));
-        
+
         $AkTestFields = new AkTestField();
-        
+
         $this->assertTrue($AkTestField = $AkTestFields->findLastBy('(varchar_field:begins OR int8_field OR timestamp_field:<) AND tinyint_field:>=', 2,3,'2005/05/04 23:00:00',2));
         $this->assertEqual($AkTestField->varchar_field, '4 string');
 

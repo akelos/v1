@@ -154,7 +154,9 @@ class AkDbSession extends AkObject
     {
         // We don't want to hit the db if nothing has changed
         if($this->_original_sess_value != $data){
-            // TODO: replace with dbAdapter-method
+            /**
+            * @todo replace with dbAdapter-method
+            */
             $ret = $this->_db->connection->Replace('sessions', array('id'=>$this->_db->quote_string($id),'expire'=>$this->_db->quote_datetime(time()),'value'=>$this->_db->quote_string($data)), 'id');
             if($ret == 0){
                 return false;
@@ -176,7 +178,7 @@ class AkDbSession extends AkObject
     function _destroy($id)
     {
         return (bool)$this->_db->delete('DELETE FROM sessions WHERE id = '.$this->_db->quote_string($id));
-    }
+        }
 
     /**
     * Session garbage collection handler
@@ -187,7 +189,7 @@ class AkDbSession extends AkObject
     function _gc()
     {
         return (bool)$this->_db->delete('DELETE FROM sessions WHERE expire < '.$this->_db->quote_datetime(time()-$this->sessionLife));
-    }
+        }
 
 
 }

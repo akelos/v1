@@ -154,7 +154,7 @@ class AkActsAsNestedSet extends AkObserver
     {
         if (!empty($this->variable_scope_condition)){
             return $this->_ActiveRecordInstance->_getVariableSqlCondition($this->variable_scope_condition);
-            
+
             // True condition in case we don't have a scope
         }elseif(empty($this->scope_condition) && empty($this->scope)){
             $this->scope_condition = ($this->_ActiveRecordInstance->_db->type() == 'postgre') ? 'true' : '1';

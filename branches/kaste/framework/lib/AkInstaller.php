@@ -72,7 +72,6 @@ class AkInstaller
 {
     var $db;
     var $data_dictionary;
-    var $debug = false;
     var $available_tables = array();
     var $vervose = true;
     var $module;
@@ -85,10 +84,6 @@ class AkInstaller
         }else {
             $this->db =& $db_connection;
         }
-
-
-        $this->db->connection->debug = $this->debug;
-        //$this->db->debug = $this->debug;
 
         $this->data_dictionary =& $this->db->getDictionary();
         $this->available_tables = $this->getAvailableTables();
@@ -105,7 +100,6 @@ class AkInstaller
         return $this->_upgradeOrDowngrade('up', $version, $options);
     }
 
-
     function uninstall($version = null, $options = array())
     {
         $version = (is_null($version)) ? 0 : $version;
@@ -117,13 +111,12 @@ class AkInstaller
         return $this->_upgradeOrDowngrade('down', $version, $options);
     }
 
-
     function _upgradeOrDowngrade($action, $version = null, $options = array())
     {
         if(in_array('quiet',$options) && AK_ENVIRONMENT == 'development'){
             $this->vervose = false;
         }elseif(!empty($this->vervose) && AK_ENVIRONMENT == 'development'){
-            $this->db->connection->debug = true;
+            $this->debug(true);
         }
 
         $current_version = $this->getInstalledVersion($options);
@@ -145,7 +138,7 @@ class AkInstaller
             $versions = range($current_version, empty($version) ? 1 : $version+1);
 
             if($current_version == 0){
-            	return true;
+                return true;
             }elseif($current_version < $version){
                 echo Ak::t("You can't downgrade to version %version, when you just have installed version %current_version", array('%version'=>$version,'%current_version'=>$current_version));
                 return false;
@@ -173,7 +166,6 @@ class AkInstaller
 
         return true;
     }
-
 
     function installVersion($version, $options = array())
     {
@@ -214,7 +206,6 @@ class AkInstaller
         return str_replace('installer','',strtolower(get_class($this)));
     }
 
-
     function _versionPath($options = array())
     {
         $mode = empty($options['mode']) ? AK_ENVIRONMENT : $options['mode'];
@@ -225,7 +216,7 @@ class AkInstaller
     function getInstalledVersion($options = array())
     {
         $version_file = $this->_versionPath($options);
-        
+
         if(!is_file($version_file)){
             $this->setInstalledVersion(0, $options);
         }
@@ -289,8 +280,8 @@ class AkInstaller
             trigger_error(Ak::t('Table %table_name already exists on the database', array('%table_name'=>$table_name)), E_USER_NOTICE);
             return false;
         }
-        $this->timestamps = (!isset($table_options['timestamp']) || (isset($table_options['timestamp']) && $table_options['timestamp'])) && 
-                            (!strstr($column_options, 'created') && !strstr($column_options, 'updated'));
+        $this->timestamps = (!isset($table_options['timestamp']) || (isset($table_options['timestamp']) && $table_options['timestamp'])) &&
+        (!strstr($column_options, 'created') && !strstr($column_options, 'updated'));
         return $this->_createOrModifyTable($table_name, $column_options, $table_options);
     }
 
@@ -304,7 +295,7 @@ class AkInstaller
         }
 
         $column_options = is_string($column_options) ? array('columns'=>$column_options) : $column_options;
-        
+
         $default_column_options = array(
         'sequence_table' => false
         );
@@ -315,12 +306,16 @@ class AkInstaller
         //'REPLACE'
         );
         $table_options = array_merge($default_table_options, $table_options);
-        
+
         $column_string = $this->_getColumnsAsAdodbDataDictionaryString($column_options['columns']);
-        $result = $this->data_dictionary->ExecuteSQLArray($this->data_dictionary->ChangeTableSQL($table_name, str_replace(array(' UNIQUE', ' INDEX', ' FULLTEXT', ' HASH'), '', $column_string), $table_options));
+
+        $create_or_alter_table_sql = $this->data_dictionary->ChangeTableSQL($table_name, str_replace(array(' UNIQUE', ' INDEX', ' FULLTEXT', ' HASH'), '', $column_string), $table_options);
+        $result = $this->data_dictionary->ExecuteSQLArray($create_or_alter_table_sql, false);
 
         if($result){
             $this->available_tables[] = $table_name;
+        }else{
+            trigger_error(Ak::t("Could not create or alter table %name using the SQL \n--------\n%sql\n--------\n", array('%name'=>$table_name, '%sql'=>$create_or_alter_table_sql[0])), E_USER_ERROR);
         }
 
         $columns_to_index = $this->_getColumnsToIndex($column_string);
@@ -377,7 +372,9 @@ class AkInstaller
 
     function removeIndex($table_name, $columns_or_index_name)
     {
-        if(!$this->tableExists($table_name)) return false;
+        if(!$this->tableExists($table_name)){
+            return false;
+        }
         $available_indexes = $this->db->getIndexes($table_name);
         $index_name = isset($available_indexes[$columns_or_index_name]) ? $columns_or_index_name : 'idx_'.$table_name.'_'.$columns_or_index_name;
         if(!isset($available_indexes[$index_name])){
@@ -440,7 +437,7 @@ class AkInstaller
         '/([ \n\r,]+)text([( \n\r,]+)/'=> '\1 XL \2',
         '/([ \n\r,]+)string([( \n\r,]+)/'=> '\1 C \2',
         '/([ \n\r,]+)binary([( \n\r,]+)/'=> '\1 B \2',
-        '/([ \n\r,]+)boolean([( \n\r,]+)/'=> '\1 L \2',
+        '/([ \n\r,]+)boolean([( \n\r,]+)/'=> '\1 L'.($this->db->type()=='mysql'?'(1)':'').' \2',
         '/ NOT( |_)?NULL/i'=> ' NOTNULL',
         '/ AUTO( |_)?INCREMENT/i'=> ' AUTO ',
         '/ +/'=> ' ',
@@ -669,6 +666,10 @@ class AkInstaller
         return $this->db->execute($sql);
     }
 
+    function debug($toggle = null)
+    {
+        $this->db->connection->debug = $toggle === null ? !$this->db->connection->debug : $toggle;
+    }
 
     function usage()
     {

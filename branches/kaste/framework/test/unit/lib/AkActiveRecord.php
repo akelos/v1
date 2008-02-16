@@ -22,14 +22,16 @@ $partial_tests = array(
 foreach ($partial_tests as $partial_test){
     $test->addTestFile(AK_LIB_TESTS_DIRECTORY.DS.'AkActiveRecord'.DS.$partial_test);
 }
+
 // Acts as, Validators, Associations and Observer tests
 if(!ALL_TESTS_RUNNER){
     foreach (Ak::dir(AK_LIB_TESTS_DIRECTORY.DS.'AkActiveRecord') as $active_record_test){
-        if(!is_array($active_record_test) && !in_array($active_record_test,$partial_tests)){
+        if(!is_array($active_record_test) && !in_array($active_record_test, $partial_tests)){
             $test->addTestFile(AK_LIB_TESTS_DIRECTORY.DS.'AkActiveRecord'.DS.$active_record_test);
         }
     }
 }
+
 
 if(!ALL_TESTS_RUNNER){
     if (TextReporter::inCli()) {

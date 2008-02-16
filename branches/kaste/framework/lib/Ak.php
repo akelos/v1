@@ -64,23 +64,26 @@ class Ak
     function &db($dsn = null)
     {
         require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
-        if (empty($dsn) || !is_array($dsn))   return AkDbAdapter::getInstance();
+        if (empty($dsn) || !is_array($dsn)){
+            return AkDbAdapter::getInstance();
+        }
         return AkDbAdapter::getInstance($dsn);
     }
-    
+
     /**
      * @param string $message
      * @param [OPTIONAL] $fatal triggers even in production-mode
      */
-    function DeprecateWarning($message,$fatal=false)
+    function DeprecateWarning($message, $fatal=false)
     {
-        if (!$fatal && AK_ENVIRONMENT == 'production') return;
+        if (!$fatal && AK_ENVIRONMENT == 'production'){
+            return;
+        }
         if (is_array($message)){
-            //$args = func_get_args();
-            //$message = array_shift($message);
-            trigger_error(Ak::t("DEPRECATED WARNING: ".array_shift($message),$message), E_USER_NOTICE);    
-        } else
-            trigger_error(Ak::t("DEPRECATED WARNING: ".$message), E_USER_NOTICE);    
+            trigger_error(Ak::t("DEPRECATED WARNING: ".array_shift($message),$message), E_USER_NOTICE);
+        } else {
+            trigger_error(Ak::t("DEPRECATED WARNING: ".$message), E_USER_NOTICE);
+        }
     }
 
     /**
@@ -493,7 +496,7 @@ class Ak
 
         $origin = Ak::_getRestrictedPath($origin, $options);
         $target = Ak::_getRestrictedPath($target, $options);
-        
+
         if(empty($origin) || empty($target)){
             return false;
         }
@@ -543,7 +546,7 @@ class Ak
         if($options['ftp']){
             $path = trim(str_replace(array(DS,'//'),array('/','/'), $path),'/');
         }
-        
+
         return $path;
     }
 
@@ -805,7 +808,7 @@ class Ak
             require_once(AK_LIB_DIR.DS.'AkLogger.php');
             $Logger = new AkLogger();
         }
-        $return =& $Logger; 
+        $return =& $Logger;
         return $Logger;
     }
 
@@ -854,19 +857,19 @@ class Ak
                 ([0-9]{2}):? # minute
                 ([0-9\.]{0,4}) # seconds
             )?/x", ($iso_date_or_hour), $rr)){
-            if (preg_match("|^(([0-9]{1,2}):?([0-9]{1,2}):?([0-9\.]{1,4}))?|", ($iso_date_or_hour), $rr)){
-                return empty($rr[0]) ? Ak::time() : mktime($rr[2],$rr[3],$rr[4]);
-            }
-        }else{
-            if($rr[1]>=2038 || $rr[1]<=1970){
-                require_once(AK_CONTRIB_DIR.DS.'adodb'.DS.'adodb-time.inc.php');
-                return isset($rr[5]) ? adodb_mktime($rr[5],$rr[6],(int)$rr[7],$rr[2],$rr[3],$rr[1]) : adodb_mktime(0,0,0,$rr[2],$rr[3],$rr[1]);
-            }else{
-                return isset($rr[5]) ? mktime($rr[5],$rr[6],(int)$rr[7],$rr[2],$rr[3],$rr[1]) : mktime(0,0,0,$rr[2],$rr[3],$rr[1]);
-            }
+        if (preg_match("|^(([0-9]{1,2}):?([0-9]{1,2}):?([0-9\.]{1,4}))?|", ($iso_date_or_hour), $rr)){
+            return empty($rr[0]) ? Ak::time() : mktime($rr[2],$rr[3],$rr[4]);
         }
-        trigger_error(Ak::t('Invalid ISO date. You must supply date in one of the following formats: "year-month-day hour:min:sec", "year-month-day", "hour:min:sec"'));
-        return false;
+            }else{
+                if($rr[1]>=2038 || $rr[1]<=1970){
+                    require_once(AK_CONTRIB_DIR.DS.'adodb'.DS.'adodb-time.inc.php');
+                    return isset($rr[5]) ? adodb_mktime($rr[5],$rr[6],(int)$rr[7],$rr[2],$rr[3],$rr[1]) : adodb_mktime(0,0,0,$rr[2],$rr[3],$rr[1]);
+                }else{
+                    return isset($rr[5]) ? mktime($rr[5],$rr[6],(int)$rr[7],$rr[2],$rr[3],$rr[1]) : mktime(0,0,0,$rr[2],$rr[3],$rr[1]);
+                }
+            }
+            trigger_error(Ak::t('Invalid ISO date. You must supply date in one of the following formats: "year-month-day hour:min:sec", "year-month-day", "hour:min:sec"'));
+            return false;
     }
 
     /**
@@ -1649,26 +1652,14 @@ class Ak
 
         return $sorted_array;
     }
-
-
+  
     function mime_content_type($file)
     {
         static $mime_types;
         ak_compat('mime_content_type');
-
-        $mime = @mime_content_type($file);
-
-        if (AK_OS == 'WINDOWS' && $mime == 'application/octet-stream' && is_file($file)){
-            $mime = false;
-        }
-        
-        if(empty($mime)){
-            empty($mime_types) ? require(AK_LIB_DIR.DS.'utils'.DS.'mime_types.php') : null;
-            $file_extension = substr($file,strrpos($file,'.')+1);
-            $mime = !empty($mime_types[$file_extension]) ? $mime_types[$file_extension] : false;
-        }
-
-        return $mime;
+        empty($mime_types) ? require(AK_LIB_DIR.DS.'utils'.DS.'mime_types.php') : null;
+        $file_extension = substr($file,strrpos($file,'.')+1);
+        return !empty($mime_types[$file_extension]) ? $mime_types[$file_extension] : false;
     }
 
     function stream($path, $buffer_size = 4096)
@@ -1816,7 +1807,7 @@ class Ak
         }
         return strtr($html, $translation_table_or_quote_style);
     }
-    
+
     /**
     * Loads the plugins found at app/vendor/plugins
     */
@@ -1853,18 +1844,18 @@ function ak_test($test_case_name, $use_sessions = false)
 
 function ak_compat($function_name)
 {
-	if(!function_exists($function_name)){
+    if(!function_exists($function_name)){
         require_once(AK_VENDOR_DIR.DS.'pear'.DS.'PHP'.DS.'Compat'.DS.'Function'.DS.$function_name.'.php');
     }
 }
 
 function ak_generate_mock($name)
 {
-	static $Mock;
-	if(empty($Mock)){
-		$Mock = new Mock();
-	}
-	$Mock->generate($name);
+    static $Mock;
+    if(empty($Mock)){
+        $Mock = new Mock();
+    }
+    $Mock->generate($name);
 }
 
 /**

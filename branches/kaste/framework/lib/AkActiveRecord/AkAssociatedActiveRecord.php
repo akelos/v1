@@ -50,7 +50,7 @@ class AkAssociatedActiveRecord extends AkBaseModel
     {
         if(empty($this->$association_type) && in_array($association_type, array('hasOne','belongsTo','hasMany','hasAndBelongsToMany'))){
             $association_handler_class_name = 'Ak'.ucfirst($association_type);
-            require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.$association_handler_class_name.'.php');
+            require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkAssociations'.DS.$association_handler_class_name.'.php');
             $this->$association_type =& new $association_handler_class_name($this);
         }
         return !empty($this->$association_type);
@@ -272,7 +272,6 @@ class AkAssociatedActiveRecord extends AkBaseModel
         }
 
         $sql = trim($this->constructFinderSqlWithAssociations($options));
-        //$sql = substr($sql, -5) == 'AND =' ? substr($sql, 0,-5) : $sql; // never called!
 
         if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
             $sql = array_merge(array($sql),$options['bind']);
@@ -310,9 +309,9 @@ class AkAssociatedActiveRecord extends AkBaseModel
             foreach (array_keys($this->getColumns()) as $column_name){
                 $selection .= '__owner.'.$column_name.' AS __owner_'.$column_name.', ';
             }
-            $selection .= @$options['selection'].' ';
+            $selection .= (isset($options['selection']) ? $options['selection'].' ' : '');
             $selection = trim($selection,', ').' '; // never used by the unit tests
-        }else{ 
+        }else{
             // used only by HasOne::findAssociated
             $selection .= $options['selection'].'.* ';
         }
@@ -327,7 +326,7 @@ class AkAssociatedActiveRecord extends AkBaseModel
             $options['order'] = $options['sort'];
         }
         $sql  .= !empty($options['order']) ? ' ORDER BY  '.$options['order'] : '';
-        
+
         $this->_db->addLimitAndOffset($sql,$options);
         return $sql;
     }
@@ -340,8 +339,10 @@ class AkAssociatedActiveRecord extends AkBaseModel
     {
         $objects = array();
         $results = $this->_db->execute ($sql,'find with associations');
-        if (!$results) return $objects;
-
+        if (!$results){
+            return $objects;
+        }
+        
         $i = 0;
         $associated_ids = $this->getAssociatedIds();
         $number_of_associates = count($associated_ids);

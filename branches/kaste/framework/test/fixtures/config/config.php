@@ -40,13 +40,11 @@ if(AK_TESTING_REWRITE_BASE){
 }
 
 if(defined('AK_TEST_DATABASE_ON')){
-    $last_arg = $argv[count($argv)-1];
-    $default_profile = array_key_exists($last_arg,$database_settings) ? array_pop($argv) : AK_ENVIRONMENT;
-    //echo "Using Database-Profile: $default_profile\n\r";
-    define('AK_DEFAULT_DATABASE_PROFILE',$default_profile);
+    $default_profile = array_key_exists($argv[count($argv)-1], $database_settings) ? array_pop($argv) : AK_ENVIRONMENT;
+    define('AK_DEFAULT_DATABASE_PROFILE', $default_profile);
     include_once(AK_LIB_DIR.DS.'Ak.php');
     Ak::db();
-    unset($last_arg,$default_profile);
+    unset($default_profile);
 }
 
 

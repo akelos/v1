@@ -22,15 +22,15 @@ require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkAssociatedActiveRecord.php');
 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
 
 /**#@+
- * Constants
- */
+* Constants
+*/
 // Akelos args is a short way to call functions that is only intended for fast prototyping
-defined('AK_ENABLE_AKELOS_ARGS') ? null : define('AK_ENABLE_AKELOS_ARGS', false); 
+defined('AK_ENABLE_AKELOS_ARGS') ? null : define('AK_ENABLE_AKELOS_ARGS', false);
 // Use setColumnName if available when using set('column_name', $value);
-defined('AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT') ? null : define('AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT', true); 
-defined('AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS') ? null : define('AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS', false); 
-defined('AK_ACTIVE_RECORD_ENABLE_CALLBACK_SETTERS') ? null : define('AK_ACTIVE_RECORD_ENABLE_CALLBACK_SETTERS', AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS); 
-defined('AK_ACTIVE_RECORD_ENABLE_CALLBACK_GETTERS') ? null : define('AK_ACTIVE_RECORD_ENABLE_CALLBACK_GETTERS', AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS); 
+defined('AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT') ? null : define('AK_ACTIVE_RECORD_INTERNATIONALIZE_MODELS_BY_DEFAULT', true);
+defined('AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS') ? null : define('AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS', false);
+defined('AK_ACTIVE_RECORD_ENABLE_CALLBACK_SETTERS') ? null : define('AK_ACTIVE_RECORD_ENABLE_CALLBACK_SETTERS', AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS);
+defined('AK_ACTIVE_RECORD_ENABLE_CALLBACK_GETTERS') ? null : define('AK_ACTIVE_RECORD_ENABLE_CALLBACK_GETTERS', AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS);
 defined('AK_ACTIVE_RECORD_ENABLE_PERSISTENCE') ? null : define('AK_ACTIVE_RECORD_ENABLE_PERSISTENCE', AK_ENVIRONMENT != 'testing');
 defined('AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA') ? null : define('AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA', AK_ACTIVE_RECORD_ENABLE_PERSISTENCE && AK_ENVIRONMENT != 'development');
 defined('AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA_LIFE') ? null : define('AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA_LIFE', 300);
@@ -189,7 +189,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     //var $disableAutomatedAssociationLoading = true;
     var $_tableName;
     var $_db;
-    //var $_db_settings = ;
     var $_newRecord;
     var $_freeze;
     var $_dataDictionary;
@@ -252,9 +251,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     );
 
     var $__activeRecordObject = true;
-    
+
     /**#@-*/
-    
+
     function __construct()
     {
         $attributes = (array)func_get_args();
@@ -382,7 +381,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
 
 
-    /** 
+    /**
                          Creating records
     ====================================================================
     */
@@ -415,16 +414,16 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $this->isNewRecord() ? $this->_create() : $this->_update();
     }
-    
+
     function &findOrCreateBy()
     {
         $args = func_get_args();
         $Item =& Ak::call_user_func_array(array(&$this,'findFirstBy'), $args);
         if(!$Item){
             $attributes = array();
-            
+
             list($sql, $columns) = $this->_getFindBySqlAndColumns(array_shift($args), $args);
-            
+
             if(!empty($columns)){
                 foreach ($columns as $column){
                     $attributes[$column] = array_shift($args);
@@ -447,16 +446,18 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _create()
     {
-        if (!$this->beforeCreate() || !$this->notifyObservers('beforeCreate')) return $this->transactionFail();
-        
+        if (!$this->beforeCreate() || !$this->notifyObservers('beforeCreate')){
+            return $this->transactionFail();
+        }
+
         $this->_setRecordTimestamps();
-        
+
         // deprecated section
         if($this->isLockingEnabled() && is_null($this->get('lock_version'))){
             Ak::DeprecateWarning(array("Column %lock_version_column should have a default setting. Assumed '1'.",'%lock_version_column'=>'lock_version'));
             $this->setAttribute('lock_version',1);
         } // end
-        
+
         $attributes = $this->getColumnsForAttributes($this->getAttributes());
         foreach ($attributes as $column=>$value){
             $attributes[$column] = $this->castAttributeForDatabase($column,$value);
@@ -465,28 +466,35 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $pk = $this->getPrimaryKey();
         $table = $this->getTableName();
 
-        $id = $this->_db->incrementsPrimaryKeyAutomatically() ? null : $this->_db->getNextSequenceValueFor($table);     
+        $id = $this->_db->incrementsPrimaryKeyAutomatically() ? null : $this->_db->getNextSequenceValueFor($table);
         $attributes[$pk] = $id;
-            
+
         $attributes = array_diff($attributes, array('',"''"));
 
         $sql = 'INSERT INTO '.$table.' '.
-               '('.join(', ',array_keys($attributes)).') '.
-               'VALUES ('.join(',',array_values($attributes)).')';
+        '('.join(', ',array_keys($attributes)).') '.
+        'VALUES ('.join(',',array_values($attributes)).')';
 
-        $inserted_id = $this->_db->insert($sql,$id,$pk,$table,'Create '.$this->getModelName());
-        if ($this->transactionHasFailed()) return false;
+        $inserted_id = $this->_db->insert($sql, $id, $pk, $table, 'Create '.$this->getModelName());
+        if ($this->transactionHasFailed()){
+            return false;
+        }
         $this->setId($inserted_id);
 
-        if (!$this->afterCreate() || !$this->notifyObservers('afterCreate')) return $this->transactionFail();
-
         $this->_newRecord = false;
+        
+        if (!$this->afterCreate() || !$this->notifyObservers('afterCreate')){
+            return $this->transactionFail();
+        }
+        
         return true;
     }
-    
+
     function _setRecordTimestamps()
     {
-        if (!$this->_recordTimestamps) return;
+        if (!$this->_recordTimestamps){
+            return;
+        }
         if ($this->_newRecord){
             if ($this->hasColumn('created_at')){
                 $this->setAttribute('created_at', Ak::getDate());
@@ -494,7 +502,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             if ($this->hasColumn('created_on')){
                 $this->setAttribute('created_on', Ak::getDate(null, 'Y-m-d'));
             }
-        } else {
+        }else{
             if ($this->hasColumn('updated_at')){
                 $this->setAttribute('updated_at', Ak::getDate());
             }
@@ -502,7 +510,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $this->setAttribute('updated_on', Ak::getDate(null, 'Y-m-d'));
             }
         }
-        
+
         if($this->_newRecord && isset($this->expires_on)){
             if(isset($this->expires_at) && $this->hasColumn('expires_at')){
                 $this->setAttribute('expires_at',Ak::getDate(strtotime($this->expires_at) + (defined('AK_TIME_DIFFERENCE') ? AK_TIME_DIFFERENCE*60 : 0)));
@@ -510,13 +518,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $this->setAttribute('expires_on',Ak::getDate(strtotime($this->expires_on) + (defined('AK_TIME_DIFFERENCE') ? AK_TIME_DIFFERENCE*60 : 0), 'Y-m-d'));
             }
         }
-        
+
     }
 
     /*/Creating records*/
 
 
-    /** 
+    /**
                          Saving records
     ====================================================================
     */
@@ -548,18 +556,18 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         $result = $this->transactionHasFailed() ? false : $result;
         $this->transactionComplete();
-        
+
         return $result;
     }
-    
+
     /*/Saving records*/
-    
-    /** 
+
+    /**
                             Counting Records
     ====================================================================
     See also: Counting Attributes.
     */
-    
+
     /**
       * Returns the result of an SQL statement that should only include a COUNT(*) in the SELECT part.
       * 
@@ -576,17 +584,17 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if(!$this->isConnected()){
             $this->setConnection();
         }
-        
+
         return (integer)$this->_db->selectValue($sql);
     }
     /*/Counting Records*/
-    
-    /** 
+
+    /**
                           Updating records
     ====================================================================
     See also: Callbacks.
     */
-    
+
     /**
     * Finds the record from the passed id, instantly saves it with the passed attributes (if the validation permits it), 
     * and returns it. If the save fail under validations, the unsaved object is still returned.
@@ -660,7 +668,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _update()
     {
-        if(!$this->beforeUpdate() || !$this->notifyObservers('beforeUpdate')) return $this->transactionFail();
+        if(!$this->beforeUpdate() || !$this->notifyObservers('beforeUpdate')){
+            return $this->transactionFail();
+        }
 
         $this->_setRecordTimestamps();
 
@@ -673,11 +683,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         $quoted_attributes = $this->getAvailableAttributesQuoted();
         $sql = 'UPDATE '.$this->getTableName().' '.
-               'SET '.join(', ', $quoted_attributes) .' '.
-               'WHERE '.$this->getPrimaryKey().'='.$this->quotedId().$lock_check_sql;
+        'SET '.join(', ', $quoted_attributes) .' '.
+        'WHERE '.$this->getPrimaryKey().'='.$this->quotedId().$lock_check_sql;
 
         $affected_rows = $this->_db->update($sql,'Updating '.$this->getModelName());
-        if($this->transactionHasFailed()) return false;
+        if($this->transactionHasFailed()){
+            return false;
+        }
 
         if ($this->isLockingEnabled() && $affected_rows != 1){
             $this->setAttribute('lock_version', $previous_value);
@@ -685,21 +697,23 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return $this->transactionFail();
         }
 
-        if(!$this->afterUpdate() || !$this->notifyObservers('afterUpdate')) return $this->transactionFail();
+        if(!$this->afterUpdate() || !$this->notifyObservers('afterUpdate')){
+            return $this->transactionFail();
+        }
 
         return true;
     }
-    
+
     /*/Updating records*/
-    
-    
-    
-    /** 
+
+
+
+    /**
                           Deleting records
     ====================================================================
     See also: Callbacks.
     */
-    
+
     /**
     * Deletes the record with the given id without instantiating an object first. If an array of 
     * ids is provided, all of them are deleted.
@@ -780,13 +794,19 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     function _destroy()
     {
-        if(!$this->beforeDestroy() || !$this->notifyObservers('beforeDestroy')) return $this->transactionFail();
-        
-        $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->quote_string($this->getId());
-        if ($this->_db->delete($sql,$this->getModelName().' Destroy') !== 1)    return $this->transactionFail();
+        if(!$this->beforeDestroy() || !$this->notifyObservers('beforeDestroy')){
+            return $this->transactionFail();
+        }
 
-        if (!$this->afterDestroy() || !$this->notifyObservers('afterDestroy'))  return $this->transactionFail();
-        return true;        
+        $sql = 'DELETE FROM '.$this->getTableName().' WHERE '.$this->getPrimaryKey().' = '.$this->_db->quote_string($this->getId());
+        if ($this->_db->delete($sql,$this->getModelName().' Destroy') !== 1){
+            return $this->transactionFail();
+        }
+
+        if (!$this->afterDestroy() || !$this->notifyObservers('afterDestroy')){
+            return $this->transactionFail();
+        }
+        return true;
     }
 
     /**
@@ -812,13 +832,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return false;
         }
     }
-    
+
     /*/Deleting records*/
 
 
 
-    
-    /** 
+
+    /**
                           Finding records
     ====================================================================
     */
@@ -885,23 +905,23 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         $args = func_get_args();
-        
+
         $options = $this->_extractOptionsFromArgs($args);
         list($fetch,$options) = $this->_extractConditionsFromArgs($args,$options);
-        
+
         //$this->santizeSql(conditions);
         if(!empty($options['conditions']) && is_array($options['conditions'])){
             if (isset($options['conditions'][0]) && strstr($options['conditions'][0], '?') && count($options['conditions']) > 1){
-            //array('conditions' => array("name=?",$name))
+                //array('conditions' => array("name=?",$name))
                 $pattern = array_shift($options['conditions']);
                 $options['bind'] = array_values($options['conditions']);
                 $options['conditions'] = $pattern;
             }elseif (isset($options['conditions'][0])){
-            //array('conditions' => array("user_name = :user_name", ':user_name' => 'hilario')
+                //array('conditions' => array("user_name = :user_name", ':user_name' => 'hilario')
                 $pattern = array_shift($options['conditions']);
                 $options['conditions'] = str_replace(array_keys($options['conditions']), array_values($this->getSanitizedConditionsArray($options['conditions'])),$pattern);
             }else{
-            //array('conditions' => array('user_name'=>'Hilario'))
+                //array('conditions' => array('user_name'=>'Hilario'))
                 $options['conditions'] = join(' AND ',(array)$this->getAttributesQuoted($options['conditions']));
             }
         }
@@ -928,14 +948,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $result = false;
         return $result;
     }
-    
+
     function &_findInitial($options)
     {
-        // TODO: virtual_limit is a hack 
+        // TODO: virtual_limit is a hack
         // actually we fetch_all and return only the first row
         $options = array_merge($options, array((!empty($options['include']) ?'virtual_limit':'limit')=>1));
         $result =& $this->_findEvery($options);
-    
+
         if(!empty($result) && is_array($result)){
             $_result =& $result[0];
         }else{
@@ -944,67 +964,64 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             //$_result = array();
         }
         return  $_result;
-    
+
     }
 
     function &_findEvery($options)
     {
         $limit = isset($options['limit']) ? $options['limit'] : null;
         $offset = isset($options['offset']) ? $options['offset'] : null;
-        // dirty postgre HACK to get ordered-by-id lists  
-        //if(/*empty($options['conditions']) &&*/ empty($options['order'])/* && is_null($offset)*/ && $this->_getDatabaseType() == 'postgre'){
-        //    $options['order'] = $this->getPrimaryKey();
-        //}
+
         $sql = $this->constructFinderSql($options);
         if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
             $sql = array_merge(array($sql),$options['bind']);
         }
-   
+
         if((!empty($options['include']) && $this->hasAssociations())){
             $result =& $this->findWithAssociations($options);
         }else{
             $result =& $this->findBySql($sql);
         }
-    
+
         if(!empty($result) && is_array($result)){
             $_result =& $result;
         }else{
             $_result = false;
         }
         return  $_result;
-        
+
     }
-    
-    function &_findFromIds($ids,$options)
+
+    function &_findFromIds($ids, $options)
     {
         $expects_array = is_array($ids[0]);
         $ids = array_unique($expects_array ? (isset($ids[1]) ? array_merge($ids[0],$ids) : $ids[0]) : $ids);
-    
+
         $num_ids = count($ids);
-    
+
         //at this point $options['conditions'] can't be an array
         $conditions = !empty($options['conditions']) ? ' AND '.$options['conditions'] : '';
-    
+
         switch ($num_ids){
             case 0 :
                 trigger_error($this->t('Couldn\'t find %object_name without an ID%conditions',array('%object_name'=>$this->getModelName(),'%conditions'=>$conditions)), E_USER_ERROR);
                 break;
-    
+
             case 1 :
                 $table_name = !empty($options['include']) && $this->hasAssociations() ? '__owner' : $this->getTableName();
                 $options['conditions'] = $table_name.'.'.$this->getPrimaryKey().' = '.$ids[0].$conditions;
                 $result =& $this->_findEvery($options);
-                if (!$expects_array && $result !== false){ 
+                if (!$expects_array && $result !== false){
                     return $result[0];
                 }
                 return  $result;
                 break;
-    
+
             default:
                 $without_conditions = empty($options['conditions']) ? true : false;
                 $ids_condition = $this->getPrimaryKey().' IN ('.join(', ',$ids).')';
                 $options['conditions'] = $ids_condition.$conditions;
-    
+
                 $result =& $this->_findEvery($options);
                 if(is_array($result) && (count($result) != $num_ids && $without_conditions)){
                     $result = false;
@@ -1012,39 +1029,46 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 return $result;
                 break;
         }
-        
+
     }
-    
+
     function _extractOptionsFromArgs(&$args)
     {
         $last_arg = count($args)-1;
         return isset($args[$last_arg]) && is_array($args[$last_arg]) && $this->_isOptionsHash($args[$last_arg]) ? array_pop($args) : array();
     }
-    
+
     function _isOptionsHash($options)
     {
-        if (isset($options[0])) return false;
-        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
+        if (isset($options[0])){
+            return false;
+        }
+        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'sort', 'bind', 'select','select_prefix', 'readonly');
         foreach (array_keys($options) as $key){
-            if (!in_array($key,$valid_keys)) return false;
+            if (!in_array($key,$valid_keys)){
+                return false;
+            }
         }
         return true;
     }
-    
+
     function _extractConditionsFromArgs($args, $options)
     {
-        if(empty($args)) $fetch = 'all';
-            else         $fetch = $args[0];
+        if(empty($args)){
+            $fetch = 'all';
+        } else {
+            $fetch = $args[0];
+        }
         $num_args = count($args);
-        
+
         // deprecated: acts like findFirstBySQL
         if ($num_args === 1 && !is_numeric($args[0]) && is_string($args[0]) && $args[0] != 'all' && $args[0] != 'first'){
-        //  $Users->find("last_name = 'Williams'");    => find('first',"last_name = 'Williams'");
+            //  $Users->find("last_name = 'Williams'");    => find('first',"last_name = 'Williams'");
             Ak::DeprecateWarning(array("AR::find('%sql') is ambiguous and therefore deprecated, use AR::find('first',%sql) instead", '%sql'=>$args[0]));
             $options = array('conditions'=> $args[0]);
             return array('first',$options);
         } //end
-        
+
         // set fetch_mode to 'all' if none is given
         if (!is_numeric($fetch) && !is_array($fetch) && $fetch != 'all' && $fetch != 'first') {
             array_unshift($args, 'all');
@@ -1064,7 +1088,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         return array($fetch,$options);
     }
-    
+
     function _validateFindOptions(&$options)
     {
         $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
@@ -1072,7 +1096,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             if (!in_array($key,$valid_keys)) unset($options[$key]);
         }
     }
-        
+
     function &findFirst()
     {
         if(!isset($this->_activeRecordHasBeenInstantiated)){
@@ -1176,50 +1200,52 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }else{
             $fetch = 'all';
         }
-    
-        $options = $this->_extractOptionsFromArgs($args);
 
+        $options = $this->_extractOptionsFromArgs($args);
+        
         $query_values = $args;
         $query_arguments_count = count($query_values);
-    
+
         list($sql, $requested_args) = $this->_getFindBySqlAndColumns($find_by_sql, $query_values);
-    
+
         if($query_arguments_count != count($requested_args)){
             trigger_error(Ak::t('Argument list did not match expected set. Requested arguments are:').join(', ',$requested_args),E_USER_ERROR);
             $false = false;
             return $false;
         }
-    
+
         $true_bool_values = array(true,1,'true','True','TRUE','1','y','Y','yes','Yes','YES','s','Si','SI','V','v','T','t');
-    
+
         foreach ($requested_args as $k=>$v){
             switch ($this->getColumnType($v)) {
                 case 'boolean':
                     $query_values[$k] = in_array($query_values[$k],$true_bool_values) ? true : false;
                     break;
-    
+
                 case 'date':
                 case 'datetime':
                     $query_values[$k] = str_replace('/','-', $this->castAttributeForDatabase($k,$query_values[$k],false));
                     break;
-    
+
                 default:
                     break;
             }
         }
-    
+
         $conditions = array($sql);
         foreach ($query_values as $bind_value){
             $conditions[] = $bind_value;
         }
-        // TODO: merge_conditions
+        /**
+        * @todo merge_conditions
+        */
         $options['conditions'] = $conditions;
-        
+
         $result =& Ak::call_user_func_array(array(&$this,'find'), array($fetch,$options));
         return $result;
     }
-    
-    
+
+
     function _getFindBySqlAndColumns($find_by_sql, &$query_values)
     {
         $sql = str_replace(array('(',')','||','|','&&','&','  '),array(' ( ',' ) ',' OR ',' OR ',' AND ',' AND ',' '), $find_by_sql);
@@ -1228,7 +1254,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $pieces = array_diff($pieces,array(' ',''));
         $params = array_diff($pieces,$operators);
         $operators = array_diff($pieces,$params);
-    
+
         $new_sql = '';
         $parameter_count = 0;
         $requested_args = array();
@@ -1238,7 +1264,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $requested_args[$parameter_count] = $piece;
                 $parameter_count++;
             }elseif (!in_array($piece,$operators)){
-    
+
                 if(strstr($piece,':')){
                     $_tmp_parts = explode(':',$piece);
                     if($this->hasColumn($_tmp_parts[0])){
@@ -1287,11 +1313,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 $new_sql .= $piece.' ';
             }
         }
-        
+
         return array($new_sql, $requested_args);
     }
-    
-    
+
+
     /**
      *  Given a condition that uses bindings like "user = ?  AND created_at > ?" will return a
      * string replacing the "?" bindings with the column values for current Active Record
@@ -1309,7 +1335,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return trim(preg_replace('/('.join('|',array_keys($replacements)).')\s+([^\?]+)\s+\?/e', "isset(\$replacements['\\1']) ? '\\1 \\2 '.\$replacements['\\1']:'\\1 \\2 null'", $sql));
     }
-   
+
 
     function constructFinderSql($options, $select_from_prefix = 'default')
     {
@@ -1324,7 +1350,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         $sql  .= !empty($options['order']) ? ' ORDER BY  '.$options['order'] : '';
-        
+
         $this->_db->addLimitAndOffset($sql,$options);
 
         return $sql;
@@ -1467,6 +1493,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 array('%class_name'=>$inheritance_model_name, '%column'=>$this->getInheritanceColumn())),E_USER_ERROR);
             }
         }
+
         $model_name = isset($inheritance_model_name) ? $inheritance_model_name : $this->getModelName();
         $object =& new $model_name('attributes', $record);
 
@@ -1476,89 +1503,89 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         return $object;
     }
-    
+
     /*/Finding records*/
-    
 
 
-     /** 
+
+    /**
                            Table inheritance
      ====================================================================
      */
-     function descendsFromActiveRecord(&$object)
-     {
-         if(substr(strtolower(get_parent_class($object)),-12) == 'activerecord'){
-             return true;
-         }
-         if(!method_exists($object, 'getInheritanceColumn')){
-             return false;
-         }
-         $inheritance_column = $object->getInheritanceColumn();
-         return !empty($inheritance_column);
-     }
+    function descendsFromActiveRecord(&$object)
+    {
+        if(substr(strtolower(get_parent_class($object)),-12) == 'activerecord'){
+            return true;
+        }
+        if(!method_exists($object, 'getInheritanceColumn')){
+            return false;
+        }
+        $inheritance_column = $object->getInheritanceColumn();
+        return !empty($inheritance_column);
+    }
 
-     /**
+    /**
      * Gets the column name for use with single table inheritance. Can be overridden in subclasses.
     */
-     function getInheritanceColumn()
-     {
-         return empty($this->_inheritanceColumn) ? ($this->hasColumn('type') ? 'type' : false ) : $this->_inheritanceColumn;
-     }
+    function getInheritanceColumn()
+    {
+        return empty($this->_inheritanceColumn) ? ($this->hasColumn('type') ? 'type' : false ) : $this->_inheritanceColumn;
+    }
 
-     /**
+    /**
      * Defines the column name for use with single table inheritance. Can be overridden in subclasses.
      */
-     function setInheritanceColumn($column_name)
-     {
-         if(!$this->hasColumn($column_name)){
-             trigger_error(Ak::t('Could not set "%column_name" as the inheritance column as this column is not available on the database.',array('%column_name'=>$column_name)), E_USER_NOTICE);
-             return false;
-         }elseif($this->getColumnType($column_name) != 'string'){
-             trigger_error(Ak::t('Could not set %column_name as the inheritance column as this column type is "%column_type" instead of "string".',array('%column_name'=>$column_name,'%column_type'=>$this->getColumnType($column_name))), E_USER_NOTICE);
-             return false;
-         }else{
-             $this->_inheritanceColumn = $column_name;
-             return true;
-         }
-     }
+    function setInheritanceColumn($column_name)
+    {
+        if(!$this->hasColumn($column_name)){
+            trigger_error(Ak::t('Could not set "%column_name" as the inheritance column as this column is not available on the database.',array('%column_name'=>$column_name)), E_USER_NOTICE);
+            return false;
+        }elseif($this->getColumnType($column_name) != 'string'){
+            trigger_error(Ak::t('Could not set %column_name as the inheritance column as this column type is "%column_type" instead of "string".',array('%column_name'=>$column_name,'%column_type'=>$this->getColumnType($column_name))), E_USER_NOTICE);
+            return false;
+        }else{
+            $this->_inheritanceColumn = $column_name;
+            return true;
+        }
+    }
 
 
-     function getSubclasses()
-     {
-         $current_class = get_class($this);
-         $subclasses = array();
-         $classes = get_declared_classes();
+    function getSubclasses()
+    {
+        $current_class = get_class($this);
+        $subclasses = array();
+        $classes = get_declared_classes();
 
-         while ($class = array_shift($classes)) {
-             $parent_class = get_parent_class($class);
-             if($parent_class == $current_class || in_array($parent_class,$subclasses)){
-                 $subclasses[] = $class;
-             }elseif(!empty($parent_class)){
-                 $classes[] = $parent_class;
-             }
-         }
-         $subclasses = array_unique(array_map(array(&$this,'_getModelName'),$subclasses));
-         return $subclasses;
-     }
-
-
-     function typeCondition()
-     {
-         $inheritance_column = $this->getInheritanceColumn();
-         $type_condition = array();
-         $table_name = $this->getTableName();
-         $available_types = array_merge(array($this->getModelName()),$this->getSubclasses());
-         foreach ($available_types as $subclass){
-             $type_condition[] = ' '.$table_name.'.'.$inheritance_column.' = \''.AkInflector::humanize(AkInflector::underscore($subclass)).'\' ';
-         }
-         return empty($type_condition) ? '' : '('.join('OR',$type_condition).') ';
-     }
-
-     /*/Table inheritance*/
+        while ($class = array_shift($classes)) {
+            $parent_class = get_parent_class($class);
+            if($parent_class == $current_class || in_array($parent_class,$subclasses)){
+                $subclasses[] = $class;
+            }elseif(!empty($parent_class)){
+                $classes[] = $parent_class;
+            }
+        }
+        $subclasses = array_unique(array_map(array(&$this,'_getModelName'),$subclasses));
+        return $subclasses;
+    }
 
 
+    function typeCondition()
+    {
+        $inheritance_column = $this->getInheritanceColumn();
+        $type_condition = array();
+        $table_name = $this->getTableName();
+        $available_types = array_merge(array($this->getModelName()),$this->getSubclasses());
+        foreach ($available_types as $subclass){
+            $type_condition[] = ' '.$table_name.'.'.$inheritance_column.' = \''.AkInflector::humanize(AkInflector::underscore($subclass)).'\' ';
+        }
+        return empty($type_condition) ? '' : '('.join('OR',$type_condition).') ';
+    }
 
-    /** 
+    /*/Table inheritance*/
+
+
+
+    /**
                          Setting Attributes
     ====================================================================
     See also: Getting Attributes, Model Attributes, Toggling Attributes, Counting Attributes.
@@ -1641,7 +1668,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
     }
 
-    
+
     function setId($value)
     {
         if($this->isFrozen()){
@@ -1651,21 +1678,22 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $this->$pk = $value;
         return true;
     }
-    
-    
+
+
     /*/Setting Attributes*/
 
-    /** 
+    /**
                          Getting Attributes
     ====================================================================
     See also: Setting Attributes, Model Attributes, Toggling Attributes, Counting Attributes.
     */
-    
+
     function getAttribute($attribute, $inspect_for_callback_child_method = AK_ACTIVE_RECORD_ENABLE_CALLBACK_GETTERS)
     {
         if($attribute[0] == '_'){
             return false;
         }
+
         if($inspect_for_callback_child_method === true && method_exists($this,'get'.AkInflector::camelize($attribute))){
             static $watchdog;
             $watchdog[@$attribute] = @$watchdog[$attribute]+1;
@@ -1730,7 +1758,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         return $attributes;
     }
-    
+
 
     /**
     * Every Active Record class must use "id" as their primary ID. This getter overwrites the native id method, which isn't being used in this context.
@@ -1744,13 +1772,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
 
 
-    /** 
+    /**
                          Toggling Attributes
     ====================================================================
     See also: Setting Attributes, Getting Attributes.
     */
     /**
-    * Turns an attribute that?s currently true into false and vice versa. Returns attribute value.
+    * Turns an attribute that's currently true into false and vice versa. Returns attribute value.
     */
     function toggleAttribute($attribute)
     {
@@ -1758,10 +1786,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $new_value = $value ? false : true;
         $this->setAttribute($attribute, $new_value);
         return $new_value;
-        if (!isset($this->$attribute)){
-            $this->$attribute = false;
-        }
-        return $this->$attribute != $this->$attribute;
     }
 
 
@@ -1775,13 +1799,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return $value;
         }
         return null;
-        return $this->updateAttribute($attribute,$this->toggleAttribute($attribute));
     }
 
     /*/Toggling Attributes*/
-    
-    
-    /** 
+
+
+    /**
                          Counting Attributes
     ====================================================================
     See also: Counting Records, Setting Attributes, Getting Attributes.
@@ -1806,13 +1829,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return $this->updateAll("$counter_name = $counter_name - $difference", $this->getPrimaryKey().' = '.$this->castAttributeForDatabase($this->getPrimaryKey(), $id)) === 1;
     }
-    
+
     /**
     * Initializes the attribute to zero if null and subtracts one. Only makes sense for number-based attributes. Returns attribute value.
     */
     function decrementAttribute($attribute)
     {
-        if (!isset($this->$attribute)){
+        if(!isset($this->$attribute)){
             $this->$attribute = 0;
         }
         return $this->$attribute -= 1;
@@ -1832,7 +1855,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function incrementAttribute($attribute)
     {
-        if (!isset($this->$attribute)){
+        if(!isset($this->$attribute)){
             $this->$attribute = 0;
         }
         return $this->$attribute += 1;
@@ -1845,14 +1868,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return $this->updateAttribute($attribute,$this->incrementAttribute($attribute));
     }
-    
+
     /*/Counting Attributes*/
 
-    /** 
+    /**
                          Protecting attributes
     ====================================================================
     */
-    
+
     /**
     * If this macro is used, only those attributed named in it will be accessible 
     * for mass-assignment, such as new ModelName($attributes) and $this->attributes($attributes). 
@@ -1896,7 +1919,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $args = func_get_args();
         $this->_protectedAttributes = array_unique(array_merge((array)$this->_protectedAttributes, $args));
     }
-    
+
     function removeAttributesProtectedFromMassAssignment($attributes)
     {
         if(!empty($this->_accessibleAttributes) && is_array($this->_accessibleAttributes) &&  is_array($attributes)){
@@ -1914,11 +1937,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $attributes;
     }
-    
+
     /*/Protecting attributes*/
 
 
-     /** 
+    /**
                           Model Attributes
      ====================================================================
      See also: Getting Attributes, Setting Attributes.
@@ -1935,12 +1958,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return array_merge($this->getColumns(), $this->getAvailableCombinedAttributes());
     }
-    
+
     function getAttributeCaption($attribute)
     {
         return $this->t(AkInflector::humanize($attribute));
     }
-    
+
     /**
      * This function is useful in case you need to know if attributes have been assigned to an object.
      */
@@ -1949,7 +1972,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $attributes = join('',$this->getAttributes());
         return empty($attributes);
     }
-    
+
 
     /**
     * Returns the primary key field.
@@ -2014,7 +2037,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $value = $this->getAttribute($attribute);
         return !empty($value);
     }
-    
+
     /**
     * Returns true if given attribute exists for this Model.
     *
@@ -2026,11 +2049,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         empty($this->_columns) ? $this->getColumns() : $this->_columns; // HINT: only used by HasAndBelongsToMany joinObjects, if the table is not present yet!
         return isset($this->_columns[$attribute]) || (!empty($this->_combinedAttributes) && $this->isCombinedAttribute($attribute));
     }
-    
+
     /*/Model Attributes*/
 
 
-    /** 
+    /**
                           Combined attributes
     ====================================================================
     *
@@ -2151,7 +2174,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
     }
-    
+
     function composeCombinedAttribute($combined_attribute)
     {
         if($this->isCombinedAttribute($combined_attribute)){
@@ -2273,13 +2296,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return !empty($this->_combinedAttributes) && is_array($this->_combinedAttributes) ? $combined_attributes : array();
     }
-    
+
     /*/Combined attributes*/
 
 
 
 
-    /** 
+    /**
                          Database connection
     ====================================================================
     */
@@ -2312,7 +2335,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function &establishConnection($specification_or_profile = AK_DEFAULT_DATABASE_PROFILE)
     {
         $adapter =& AkDbAdapter::getInstance($specification_or_profile);
-        return $this->setConnection(&$adapter); 
+        return $this->setConnection(&$adapter);
     }
 
 
@@ -2343,7 +2366,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $this->_db =& $db_adapter;
     }
-    
+
     /**
     * @access private
     */
@@ -2352,14 +2375,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $this->_db->type();
     }
     /*/Database connection*/
-    
-    
-    /** 
+
+
+    /**
                            Table Settings
     ====================================================================
     See also: Database Reflection.
     */
-    
+
     /**
     * Defines the primary key field ? can be overridden in subclasses.
     */
@@ -2401,7 +2424,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 if(!isset($this->_db)){
                     $this->setConnection();
                 }
-                if(empty($_SESSION['__activeRecordColumnsSettingsCache']['available_tables']) || 
+                if(empty($_SESSION['__activeRecordColumnsSettingsCache']['available_tables']) ||
                 !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
                     $_SESSION['__activeRecordColumnsSettingsCache']['available_tables'] = $this->_db->availableTables();
                 }
@@ -2421,14 +2444,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return true;
     }
 
-    
+
     function getOnlyAvailableAttributes($attributes)
     {
         $table_name = $this->getTableName();
         $ret_attributes = array();
         if(!empty($attributes) && is_array($attributes)){
             $available_attributes = $this->getAvailableAttributes();
-            
+
             $keys = array_keys($attributes);
             $size = sizeOf($keys);
             for ($i=0; $i < $size; $i++){
@@ -2456,7 +2479,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $ret_attributes;
     }
-    
+
     /**
     * Returns true if given attribute exists for this Model.
     *
@@ -2471,13 +2494,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
 
     /*/Table Settings*/
-    
-    /** 
+
+    /**
                            Database Reflection
     ====================================================================
     See also: Table Settings, Type Casting.
     */
-    
+
 
     /**
     * Initializes the attributes array with keys matching the columns from the linked table and
@@ -2522,7 +2545,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $columns;
     }
-    
+
 
     /**
     * If is the first time we use a model this function will run the installer for the model if it exists
@@ -2552,7 +2575,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return false;
     }
 
-    
+
     /**
     * Returns an array of column objects for the table associated with this class.
     */
@@ -2580,7 +2603,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $this->setConnection();
         }
         $this->_columnsSettings = $force_reload ? null : $this->_getPersistedTableColumnSettings();
-        
+
         if(empty($this->_columnsSettings) || !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
             if(empty($this->_dataDictionary)){
                 $this->_dataDictionary =& $this->_db->getDictionary();
@@ -2635,6 +2658,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         if(!empty($column_object->max_length) && $column_object->max_length > 0){
             $this->_columnsSettings[$column_name]['maxLength'] = $column_object->max_length;
+        }
+        if(!empty($column_object->scale) && $column_object->scale > 0){
+            $this->_columnsSettings[$column_name]['scale'] = $column_object->scale;
         }
         if(isset($column_object->default_value)){
             $this->_columnsSettings[$column_name]['defaultValue'] = $column_object->default_value;
@@ -2733,7 +2759,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $_SESSION['__activeRecordColumnsSettingsCache'] = array();
         }
     }
-    
+
 
     function initiateAttributeToNull($attribute)
     {
@@ -2825,18 +2851,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
 
         if($this->_getDatabaseType() == 'mysql'){
-            if($result == 'integer' /*&& (int)$adodb_column_object->max_length === 1 */&&
-            stristr($adodb_column_object->type, 'TINYINT')){
+            if($result == 'integer' && stristr($adodb_column_object->type, 'TINYINT')){
                 return 'boolean';
             }
         }elseif($this->_getDatabaseType() == 'postgre'){
             if($adodb_column_object->type == 'timestamp' || $result == 'datetime'){
                 $adodb_column_object->max_length = 19;
             }
-
-            /*if($result == 'boolean' && (int)$adodb_column_object->max_length !== 1 && stristr($adodb_column_object->type, 'NUMERIC')){
-                return 'integer';
-            }*/
         }elseif($this->_getDatabaseType() == 'sqlite'){
             if($result == 'integer' && (int)$adodb_column_object->max_length === 1 && stristr($adodb_column_object->type, 'TINYINT')){
                 return 'boolean';
@@ -2895,19 +2916,19 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
 
 
-    
+
     /*/Database Reflection*/
 
-    /** 
+    /**
                                Localization
     ====================================================================
     */
-    
+
     function t($string, $array = null)
     {
         return Ak::t($string, $array, AkInflector::underscore($this->getModelName()));
     }
-    
+
     function getInternationalizedColumns()
     {
         static $cache;
@@ -3001,7 +3022,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return $this->_isInternationalizeCandidate($attribute) ? substr($attribute,3) : $attribute;
     }
-    
+
     /**
     * @access private
     */
@@ -3010,7 +3031,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $pos = strpos($column_name,'_');
         return $pos === 2 && in_array(substr($column_name,0,$pos),$this->getAvailableLocales());
     }
-    
+
     /**
     * @access private
     */
@@ -3019,7 +3040,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $this->_columnsSettings[$column_name]['i18n'] = true;
     }
 
-    
+
     /**
      * Adds an internationalized attribute to an array containing other locales for the same column name
      * 
@@ -3042,13 +3063,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
     }
-    
+
     /*/Localization*/
-    
 
 
 
-    /** 
+
+    /**
                              Type Casting
     ====================================================================
     See also: Database Reflection.
@@ -3075,7 +3096,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return null;
     }
-    
+
     function quotedId()
     {
         return $this->castAttributeForDatabase($this->getPrimaryKey(), $this->getId());
@@ -3114,32 +3135,37 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return empty($this->_columns[$column_name]['type']) ? false : $this->_columns[$column_name]['type'];
     }
 
+    function getColumnScale($column_name)
+    {
+        empty($this->_columns) ? $this->getColumns() : null;
+        return empty($this->_columns[$column_name]['scale']) ? false : $this->_columns[$column_name]['scale'];
+    }
 
     function castAttributeForDatabase($column_name, $value, $add_quotes = true)
     {
-        $result = '';//$add_quotes ? "''" : ''; // $result = $add_quotes ? $this->_db->quote_string('') : '';
+        $result = '';
         switch ($this->getColumnType($column_name)) {
             case 'datetime':
-            if(!empty($value)){
-                $date_time = $this->_db->quote_datetime(Ak::getTimestamp($value));
-                $result = $add_quotes ? $date_time : trim($date_time ,"'");
-            }else{
-                $result = 'null';
-            }
-            break;
+                if(!empty($value)){
+                    $date_time = $this->_db->quote_datetime(Ak::getTimestamp($value));
+                    $result = $add_quotes ? $date_time : trim($date_time ,"'");
+                }else{
+                    $result = 'null';
+                }
+                break;
 
             case 'date':
-            if(!empty($value)){
-                $date = $this->_db->quote_date(Ak::getTimestamp($value));
-                $result = $add_quotes ? $date : trim($date, "'");
-            }else{
-                $result = 'null';
-            }
-            break;
+                if(!empty($value)){
+                    $date = $this->_db->quote_date(Ak::getTimestamp($value));
+                    $result = $add_quotes ? $date : trim($date, "'");
+                }else{
+                    $result = 'null';
+                }
+                break;
 
             case 'boolean':
                 $result = is_null($value) ? 'null' : (!empty($value) ? "'1'" : "'0'");
-            break;
+                break;
 
             case 'binary':
                 if($this->_getDatabaseType() == 'postgre'){
@@ -3147,26 +3173,32 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 }else{
                     $result = $add_quotes ? $this->_db->quote_string($value) : $value;
                 }
-            break;
+                break;
 
             case 'decimal':
-                $result = is_null($value) ? 'null' : $add_quotes ? $this->_db->quote_string($value) : $value;
-            break;
+                if(is_null($value)){
+                    $result = 'null';
+                }else{
+                    if($scale = $this->getColumnScale($column_name)){
+                        $value = number_format($value, $scale);
+                    }
+                }
+                $result = $add_quotes ? $this->_db->quote_string($value) : $value;
+                break;
 
             case 'serial':
             case 'integer':
                 $result = is_null($value) ? 'null' : (integer)$value;
-                //$result = is_null($value) ? 'null' : $add_quotes ? $this->_db->quote_string($value) : $value;  // this could be a bigint-"solution"
-            break;
-                
+                break;
+
             case 'float':
-            $result = (empty($value) && $value !== 0) ? 'null' : (is_numeric($value) ? $value : $this->_db->quote_string($value));
-            $result = !empty($this->_columns[$column_name]['notNull']) && $result == 'null' && $this->_getDatabaseType() == 'sqlite' ? '0' : $result;
-            break;
+                $result = (empty($value) && $value !== 0) ? 'null' : (is_numeric($value) ? $value : $this->_db->quote_string($value));
+                $result = !empty($this->_columns[$column_name]['notNull']) && $result == 'null' && $this->_getDatabaseType() == 'sqlite' ? '0' : $result;
+                break;
 
             default:
-            $result = $add_quotes ? $this->_db->quote_string($value) : $value;
-            break;
+                $result = $add_quotes ? $this->_db->quote_string($value) : $value;
+                break;
         }
         //  !! null vs. not null !!
         return empty($this->_columns[$column_name]['notNull']) ? ($result === '' ? "''" : $result) : ($result === 'null' ? '' : $result);
@@ -3181,9 +3213,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                     return is_null($value) ? null : (integer)$value;
                     //return is_null($value) ? null : $value;    // maybe for bigint we can do this
                 }elseif('boolean' == $column_type){
-                    if (is_null($value)) return null;
+                    if (is_null($value)) {
+                        return null;
+                    }
                     if ($this->_getDatabaseType()=='postgre'){
-                        return $value=='t' ? true : false;   
+                        return $value=='t' ? true : false;
                     }
                     return (integer)$value === 1 ? true : false;
                 }elseif(!empty($value) && 'date' == $column_type && strstr(trim($value),' ')){
@@ -3222,7 +3256,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $params[$attribute] = Ak::getDate(Ak::getTimestamp(trim(@$date[1].'-'.@$date[2].'-'.@$date[3].' '.@$date[4].':'.@$date[5].':'.@$date[6],' :-')));
         }
     }
-    
+
     /**
     * @access private
     */
@@ -3243,10 +3277,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $this->_BlobQueryStack = null;
         }
     }
-    
+
     /*/Type Casting*/
-    
-    /** 
+
+    /**
                              Optimistic Locking
     ====================================================================
     *
@@ -3277,7 +3311,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     /*/Optimistic Locking*/
 
 
-    /** 
+    /**
                                     Callbacks
     ====================================================================
     See also: Observers.
@@ -3362,7 +3396,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     *
     * @access public
     */
-    
+
     function beforeCreate(){return true;}
     function beforeValidation(){return true;}
     function beforeValidationOnCreate(){return true;}
@@ -3377,11 +3411,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function afterDestroy(){return true;}
     function beforeDestroy(){return true;}
     function afterSave(){return true;}
-    
+
     /*/Callbacks*/
 
-    
-    /** 
+
+    /**
                                     Transactions
     ====================================================================
     *
@@ -3400,7 +3434,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     *
     *   $User->transactionComplete();
     */
-    
+
     function transactionStart()
     {
         return $this->_db->startTransaction();
@@ -3427,7 +3461,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
 
 
-    /** 
+    /**
                                     Validators
     ====================================================================
     See also: Error Handling.
@@ -3662,61 +3696,61 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         // Ensure that one and only one range option is specified.
         switch (count($range_options)) {
             case 0:
-            trigger_error(Ak::t('Range unspecified.  Specify the "within", "maximum", "minimum, or "is" option.'), E_USER_ERROR);
-            return false;
-            break;
+                trigger_error(Ak::t('Range unspecified.  Specify the "within", "maximum", "minimum, or "is" option.'), E_USER_ERROR);
+                return false;
+                break;
             case 1:
-            $options = array_merge($default_options, $options);
-            break;
+                $options = array_merge($default_options, $options);
+                break;
             default:
-            trigger_error(Ak::t('Too many range options specified.  Choose only one.'), E_USER_ERROR);
-            return false;
-            break;
+                trigger_error(Ak::t('Too many range options specified.  Choose only one.'), E_USER_ERROR);
+                return false;
+                break;
         }
 
 
         switch ($option) {
             case 'within':
             case 'in':
-            if(empty($option_value) || !is_array($option_value) || count($option_value) != 2 || !is_numeric($option_value[0]) || !is_numeric($option_value[1])){
-                trigger_error(Ak::t('%option must be a Range (array(min, max))',array('%option',$option)), E_USER_ERROR);
-                return false;
-            }
-            $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
-            foreach ($attribute_names as $attribute_name){
-                if((!empty($option['allow_null']) && !isset($this->$attribute_name)) || (Ak::size($this->$attribute_name)) < $option_value[0]){
-                    $this->addError($attribute_name, sprintf($options['too_short'], $option_value[0]));
-                }elseif((!empty($option['allow_null']) && !isset($this->$attribute_name)) || (Ak::size($this->$attribute_name)) > $option_value[1]){
-                    $this->addError($attribute_name, sprintf($options['too_long'], $option_value[1]));
+                if(empty($option_value) || !is_array($option_value) || count($option_value) != 2 || !is_numeric($option_value[0]) || !is_numeric($option_value[1])){
+                    trigger_error(Ak::t('%option must be a Range (array(min, max))',array('%option',$option)), E_USER_ERROR);
+                    return false;
                 }
-            }
-            break;
+                $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
+                foreach ($attribute_names as $attribute_name){
+                    if((!empty($option['allow_null']) && !isset($this->$attribute_name)) || (Ak::size($this->$attribute_name)) < $option_value[0]){
+                        $this->addError($attribute_name, sprintf($options['too_short'], $option_value[0]));
+                    }elseif((!empty($option['allow_null']) && !isset($this->$attribute_name)) || (Ak::size($this->$attribute_name)) > $option_value[1]){
+                        $this->addError($attribute_name, sprintf($options['too_long'], $option_value[1]));
+                    }
+                }
+                break;
 
             case 'is':
             case 'minimum':
             case 'maximum':
 
-            if(empty($option_value) || !is_numeric($option_value) || $option_value <= 0){
-                trigger_error(Ak::t('%option must be a nonnegative Integer',array('%option',$option_value)), E_USER_ERROR);
-                return false;
-            }
-
-            // Declare different validations per option.
-            $validity_checks = array('is' => "==", 'minimum' => ">=", 'maximum' => "<=");
-            $message_options = array('is' => 'wrong_length', 'minimum' => 'too_short', 'maximum' => 'too_long');
-
-            $message = sprintf(!empty($options['message']) ? $options['message'] : $options[$message_options[$option]],$option_value);
-
-            $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
-            foreach ($attribute_names as $attribute_name){
-                if((!$options['allow_null'] && !isset($this->$attribute_name)) ||
-                eval("return !(".Ak::size(@$this->$attribute_name)." {$validity_checks[$option]} $option_value);")){
-                    $this->addError($attribute_name, $message);
+                if(empty($option_value) || !is_numeric($option_value) || $option_value <= 0){
+                    trigger_error(Ak::t('%option must be a nonnegative Integer',array('%option',$option_value)), E_USER_ERROR);
+                    return false;
                 }
-            }
-            break;
+
+                // Declare different validations per option.
+                $validity_checks = array('is' => "==", 'minimum' => ">=", 'maximum' => "<=");
+                $message_options = array('is' => 'wrong_length', 'minimum' => 'too_short', 'maximum' => 'too_long');
+
+                $message = sprintf(!empty($options['message']) ? $options['message'] : $options[$message_options[$option]],$option_value);
+
+                $attribute_names = is_array($attribute_names) ? $attribute_names : array($attribute_names);
+                foreach ($attribute_names as $attribute_name){
+                    if((!$options['allow_null'] && !isset($this->$attribute_name)) ||
+                    eval("return !(".Ak::size(@$this->$attribute_name)." {$validity_checks[$option]} $option_value);")){
+                        $this->addError($attribute_name, $message);
+                    }
+                }
+                break;
             default:
-            break;
+                break;
         }
 
         return true;
@@ -3992,7 +4026,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
             $this->afterValidation();
             $this->notifyObservers('afterValidation');
-            
+
             if ($this->isNewRecord()){
                 if($this->beforeValidationOnCreate()){
                     $this->notifyObservers('beforeValidationOnCreate');
@@ -4026,11 +4060,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         foreach ($this->_columns as $column_name=>$column_settings){
             if($this->_automated_max_length_validator &&
-                empty($column_settings['primaryKey']) &&
-                !empty($this->$column_name) &&
-                !empty($column_settings['maxLength']) && $column_settings['maxLength'] > 0 &&
-                strlen($this->$column_name) > $column_settings['maxLength']){
-                    $this->addError($column_name, sprintf($this->_defaultErrorMessages['too_long'], $column_settings['maxLength']));
+            empty($column_settings['primaryKey']) &&
+            !empty($this->$column_name) &&
+            !empty($column_settings['maxLength']) && $column_settings['maxLength'] > 0 &&
+            strlen($this->$column_name) > $column_settings['maxLength']){
+                $this->addError($column_name, sprintf($this->_defaultErrorMessages['too_long'], $column_settings['maxLength']));
             }elseif($this->_automated_not_null_validator && empty($column_settings['primaryKey']) && !empty($column_settings['notNull']) && (!isset($this->$column_name) || is_null($this->$column_name))){
                 $this->addError($column_name,'empty');
             }
@@ -4083,12 +4117,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     /*/Validators*/
 
 
-    /** 
+    /**
                                   Observers
     ====================================================================
     See also: Callbacks.
     */
-    
+
     /**
     * $state store the state of this observable object
     *
@@ -4174,18 +4208,18 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $observers =& $this->addObserver(&$this, false);
         return $observers;
     }
-    
+
     /*/Observers*/
 
 
 
 
-    /** 
+    /**
                                     Error Handling
     ====================================================================
     See also: Validators.
     */
-    
+
 
     /**
     * Returns the Errors array that holds all information about attribute error messages.
@@ -4405,12 +4439,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $result;
     }
-    
+
     /*/Error Handling*/
-    
 
 
-    /** 
+
+    /**
                             Act as Behaviours
     ====================================================================
     See also: Acts as List, Acts as Tree, Acts as Nested Set.
@@ -4442,7 +4476,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function _getActAsClassName($behaviour)
     {
         $class_name = AkInflector::camelize($behaviour);
-        return file_exists(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkActsAs'.$class_name.'.php') && !class_exists('ActsAs'.$class_name) ? 
+        return file_exists(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkActsAsBehaviours'.DS.'AkActsAs'.$class_name.'.php') && !class_exists('ActsAs'.$class_name) ?
         'AkActsAs'.$class_name : 'ActsAs'.$class_name;
     }
 
@@ -4453,14 +4487,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         if(!class_exists($class_name)){
             if(substr($class_name,0,2) == 'Ak'){
-                include_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.$class_name.'.php');
+                include_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkActsAsBehaviours'.DS.$class_name.'.php');
             }else{
                 include_once(AK_APP_PLUGINS_DIR.DS.AkInflector::underscore($class_name).DS.'lib'.DS.$class_name.'.php');
             }
         }
         if(!class_exists($class_name)){
             trigger_error(Ak::t('The class %class used for handling an "act_as %class" does not exist',array('%class'=>$class_name)), E_USER_ERROR);
-            $false = false; 
+            $false = false;
             return $false;
         }else{
             $ActAsInstance =& new $class_name($this, $options);
@@ -4504,20 +4538,21 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     /*/Act as Behaviours*/
 
-    /** 
+    /**
                             Debugging
     ====================================================================
     */
+
     
     function dbug()
     {
         if(!$this->isConnected()){
             $this->setConnection();
         }
-        //$this->_db->connection->debug = !$this->_db->connection->debug;// ? false : true;
-        $this->_db->debug();
+        $this->_db->connection->debug = $this->_db->connection->debug ? false : true;
+        $this->db_debug =& $this->_db->connection->debug;
     }
-    
+
     function toString($print = false)
     {
         $result = '';
@@ -4557,8 +4592,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return !empty($this->_db->debug);
     }
-    
-    
+
+
 
     function debug ($data = 'active_record_class', $_functions=0)
     {
@@ -4625,12 +4660,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
     }
-    
+
     /*/Debugging*/
 
 
 
-    /** 
+    /**
                         Utilities
     ====================================================================
     */
@@ -4651,14 +4686,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         $resulting_array = array();
         if(!empty($source_array) && is_array($source_array) && func_num_args() > 1) {
-            (array)$args = array_filter(array_slice(func_get_args(),1),array($this,'hasColumn'));
-            foreach ($source_array as $source_item){
-                $item_fields = array();
-                foreach ($args as $arg){
-                    $item_fields[$arg] =& $source_item->get($arg);
-                }
-                $resulting_array[] =& $item_fields;
+        (array)$args = array_filter(array_slice(func_get_args(),1),array($this,'hasColumn'));
+        foreach ($source_array as $source_item){
+            $item_fields = array();
+            foreach ($args as $arg){
+                $item_fields[$arg] =& $source_item->get($arg);
             }
+            $resulting_array[] =& $item_fields;
+        }
         }
         return $resulting_array;
     }
@@ -4694,7 +4729,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return Ak::toJson($this->getAttributes());
     }
-    
+
     /**
      * converts to yaml-strings 
      * 
@@ -4708,7 +4743,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return Ak::convert('active_record', 'yaml', empty($data) ? $this : $data);
     }
-    
+
 
     /**
     * Parses an special formated array as a list of keys and values
@@ -4768,7 +4803,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return strstr($string,'|') ? explode('|', $string) : array($string);
     }
     /*/Utilities*/
-    
+
 
     function getAttributeCondition($argument)
     {
@@ -4781,8 +4816,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
     }
 
-    
- /** 
+
+    /**
                      Calculations
  ====================================================================
  */
@@ -5020,7 +5055,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             trigger_error(Ak::t('%options are not valid calculation options.', array('%options'=>join(', ',$invalid_options))), E_USER_ERROR);
         }
     }
-    
+
     /**
     * Converts a given key to the value that the database adapter returns as
     * as a usable column name.
@@ -5064,14 +5099,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             return empty($column) ? $value : AkActiveRecord::castAttributeFromDatabase($column, $value);
         }
     }
-    
+
     /*/Calculations*/
 
     function hasBeenModified()
     {
         return Ak::objectHasBeenModified($this);
     }
-    
+
     /**
     * Just freeze the attributes hash, such that associations are still accessible even on destroyed records.
     * 
@@ -5086,7 +5121,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return !empty($this->_freeze);
     }
-    
+
     /**
     * Alias for getModelName()
     */
@@ -5094,7 +5129,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return $this->getModelName();
     }
-    
+
     function &objectCache()
     {
         static $cache;
@@ -5108,9 +5143,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $cache[$args[0]];
     }
-    
-    
-    /** 
+
+
+    /**
                         Connection adapters
     ====================================================================
     Right now Akelos uses phpAdodb for bd abstraction. This are functionalities not
@@ -5124,12 +5159,16 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 return $match[1];
             }
             // a postgre HACK; we dont know the column-type here
-            if ($default=='true') return true;
-            if ($default=='false') return false;
+            if ($default=='true') {
+                return true;
+            }
+            if ($default=='false') {
+                return false;
+            }
         }
         return $default;
     }
-    
+
 
 }
 

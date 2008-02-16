@@ -47,18 +47,18 @@ class AkActsAsList extends AkObserver
     var $scope = '';
     var $scope_condition;
     /**
-* Configuration options are:
-* 
-* * +column+ - specifies the column name to use for keeping the position integer (default: position)
-* * +scope+ - restricts what is to be considered a list. 
-*   Example: 
-* 
-* class TodoTask extends ActiveRecord
-* {
-*   var $acts_as = array('list'=> array('scope'=> array('todo_list_id','completed = 0')));
-*   var $belongs_to = 'todo_list';
-* }
-*/
+    * Configuration options are:
+    * 
+    * * +column+ - specifies the column name to use for keeping the position integer (default: position)
+    * * +scope+ - restricts what is to be considered a list. 
+    *   Example: 
+    * 
+    * class TodoTask extends ActiveRecord
+    * {
+    *   var $acts_as = array('list'=> array('scope'=> array('todo_list_id','completed = 0')));
+    *   var $belongs_to = 'todo_list';
+    * }
+    */
     var $_ActiveRecordInstance;
     function AkActsAsList(&$ActiveRecordInstance)
     {
@@ -157,7 +157,7 @@ class AkActsAsList extends AkObserver
         $this->_ActiveRecordInstance->transactionComplete();
         return true;
     }
-    
+
     function moveLower()
     {
         $this->_ActiveRecordInstance->transactionStart();
@@ -202,7 +202,7 @@ class AkActsAsList extends AkObserver
         }
         return false;
     }
-    
+
     function moveToTop()
     {
         if($this->isInList()){
@@ -217,7 +217,7 @@ class AkActsAsList extends AkObserver
         }
         return false;
     }
-    
+
     function assumeBottomPosition()
     {
         return $this->_ActiveRecordInstance->updateAttribute($this->column, $this->getBottomPosition($this->_ActiveRecordInstance->getId()) + 1);
@@ -250,7 +250,7 @@ class AkActsAsList extends AkObserver
     {
         return !empty($this->_ActiveRecordInstance->{$this->column});
     }
-    
+
     /**
     * This has the effect of moving all the higher items up one.
     */
@@ -282,7 +282,7 @@ class AkActsAsList extends AkObserver
         }
         return false;
     }
-    
+
     /**
     * This has the effect of moving all the lower items down one.
     */
@@ -295,7 +295,7 @@ class AkActsAsList extends AkObserver
     {
         return $this->_ActiveRecordInstance->updateAll("{$this->column} = ({$this->column} + 1)",  $this->getScopeCondition());
     }
-    
+
     function removeFromList()
     {
         if($this->isInList()){
@@ -369,8 +369,8 @@ class AkActsAsList extends AkObserver
     {
         if (!empty($this->variable_scope_condition)){
             return $this->_ActiveRecordInstance->_getVariableSqlCondition($this->variable_scope_condition);
-            
-        // True condition in case we don't have a scope
+
+            // True condition in case we don't have a scope
         }elseif(empty($this->scope_condition) && empty($this->scope)){
             $this->scope_condition = ($this->_ActiveRecordInstance->_db->type() == 'postgre') ? 'true' : '1';
         }elseif (!empty($this->scope)){
@@ -378,7 +378,6 @@ class AkActsAsList extends AkObserver
         }
         return  $this->scope_condition;
     }
-
 
     function setScopeCondition($scope_condition)
     {

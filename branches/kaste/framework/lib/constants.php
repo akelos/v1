@@ -20,18 +20,11 @@ defined('AK_CONFIG_DIR') ? null : define('AK_CONFIG_DIR', AK_BASE_DIR.DS.'config
 // If you need to customize the framework default settings or specify internationalization options,
 // edit the files config/testing.php, config/development.php, config/production.php
 if(AK_ENVIRONMENT != 'setup'){        
-    //$GLOBALS['default_database_settings'] = $database_settings[strtolower(AK_ENVIRONMENT)];
-    /*$dsn = $akdb['type'] == 'sqlite' ?
-    'sqlite://'.urlencode($akdb['database_file']).'/?persist' :
-    $akdb['type'].'://'.$akdb['user'].':'.$akdb['password'].'@'.$akdb['host'].
-    (empty($akdb['port'])?'':':'.$akdb['port']).
-    '/'.$akdb['database_name'].
-    (!empty($akdb['options'])?'?'.$akdb['options']:'');
-*/
     require_once(AK_CONFIG_DIR.DS.'environments'.DS.AK_ENVIRONMENT.'.php');
 }
+
 if (!defined('AK_TEST_DATABASE_ON')) {
-    defined('AK_DEFAULT_DATABASE_PROFILE') ? null : define('AK_DEFAULT_DATABASE_PROFILE',AK_ENVIRONMENT);
+    defined('AK_DEFAULT_DATABASE_PROFILE') ? null : define('AK_DEFAULT_DATABASE_PROFILE', AK_ENVIRONMENT);
 }
 
 // Locale settings ( you must create a file at /config/locales/ using en.php as departure point)
@@ -111,7 +104,6 @@ if(AK_ENVIRONMENT != 'setup'){
 
 @ini_set("include_path",(AK_LIB_DIR.PATH_SEPARATOR.AK_MODELS_DIR.PATH_SEPARATOR.AK_CONTRIB_DIR.DS.'pear'.PATH_SEPARATOR.ini_get("include_path")));
 defined('AK_PHP5') ? null : define('AK_PHP5', version_compare(PHP_VERSION, '5', '>=') == 1 ? true : false);
-/* +++++++++++++ PHP5 ++++++++++++  */ //if (!AK_PHP5) die('This branch is PHP5 only right now!');
 
 if(!AK_CLI && AK_WEB_REQUEST){
 
@@ -212,7 +204,7 @@ defined('AK_MODE_DATABASE') ? null : define('AK_MODE_DATABASE', 8);
 defined('AK_MODE_DIE') ? null : define('AK_MODE_DIE', 16);
 
 defined('AK_LOG_DIR') ? null : define('AK_LOG_DIR', AK_BASE_DIR.DS.'log');
-defined('AK_LOG_EVENTS') ? null : define('AK_LOG_EVENTS', true);
+defined('AK_LOG_EVENTS') ? null : define('AK_LOG_EVENTS', false);
 
 defined('AK_ROUTES_MAPPING_FILE') ? null : define('AK_ROUTES_MAPPING_FILE', AK_CONFIG_DIR.DS.'routes.php');
 defined('AK_OS') ? null : define('AK_OS', (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'WINDOWS' : 'UNIX'));
@@ -222,6 +214,6 @@ defined('AK_ACTION_CONTROLLER_DEFAULT_REQUEST_TYPE') ? null : define('AK_ACTION_
 defined('AK_ACTION_CONTROLLER_DEFAULT_ACTION') ? null : define('AK_ACTION_CONTROLLER_DEFAULT_ACTION', 'index');
 
 defined('AK_ERROR_REPORTING_ON_SCRIPTS') ? null : define('AK_ERROR_REPORTING_ON_SCRIPTS', E_ALL);
-defined('AK_BEEP_ON_ERRORS_WHEN_TESTING') ? null : define('AK_BEEP_ON_ERRORS_WHEN_TESTING',false);
+defined('AK_BEEP_ON_ERRORS_WHEN_TESTING') ? null : define('AK_BEEP_ON_ERRORS_WHEN_TESTING', false);
 
 ?>

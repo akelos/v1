@@ -11,9 +11,6 @@ class Test_of_AkInstaller extends  AkUnitTest
 
     function setup()
     {
-        /*global $ADODB_FETCH_MODE;
-        $this->_original_ADODB_FETCH_MODE = $ADODB_FETCH_MODE;
-        $ADODB_FETCH_MODE = ADODB_FETCH_ASSOC;*/
         $this->Installer = new AkInstaller();
     }
 
@@ -243,7 +240,7 @@ class Test_of_AkInstaller extends  AkUnitTest
 
         foreach ($this->expected_for_default_types as $column=>$details){
             foreach ($details as $index=>$value) {
-                $this->assertEqual($this->expected_for_default_types[$column][$index], $from_datadict[$column]->$index);
+                $this->assertEqual($this->expected_for_default_types[$column][$index], $from_datadict[$column]->$index, "Column '$column', attribute $index = '{$from_datadict[$column]->$index}' instead of expected '{$this->expected_for_default_types[$column][$index]}'");
             }
         }
     }
@@ -276,7 +273,9 @@ class Test_of_AkInstaller extends  AkUnitTest
     function test_should_rename_columns()
     {
         $this->Installer->renameColumn('test_defaults','screen_name','real_name');
-        if ($this->Installer->db->type()=='sqlite') $this->assertError();
+        if ($this->Installer->db->type()=='sqlite') {
+            $this->assertError();
+        }
         $this->Installer->dropTable('test_defaults');
     }
 

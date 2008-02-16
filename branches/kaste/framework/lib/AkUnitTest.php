@@ -31,7 +31,7 @@ class AkUnitTest extends UnitTestCase
     var $module = '';
     var $insert_models_data = false;
     var $instantiate_models = false;
-    
+
     function resetFrameworkDatabaseTables()
     {
         require_once(AK_APP_DIR.DS.'installers'.DS.'framework_installer.php');
@@ -59,19 +59,19 @@ class AkUnitTest extends UnitTestCase
     {
         $args = func_get_args();
         $last_arg = count($args)-1;
-        
+
         if (isset($args[$last_arg]) && is_array($args[$last_arg]) && (isset($args[$last_arg]['instantiate']) || isset($args[$last_arg]['populate']))){
-               $options = array_pop($args);
+            $options = array_pop($args);
         } else $options = array();
         $default_options = array('instantiate' => true);
         $options = array_merge($default_options, $options);
-        
+
         $models = !empty($args) ? (is_array($args[0]) ? array_shift($args) : (count($args) > 1 ? $args : Ak::toArray($args[0]))) : array();
 
         foreach ($models as $key=>$value){                               // handle array('Tag','Article')   <= array
             $model = is_numeric($key) ? $value : $key;                   //  or    array('Tag'=>'id,name'); <= a hash!
             $table_definition = is_numeric($key) ? '' : $value;
-            $this->_reinstallModel($model,$table_definition);
+            $this->_reinstallModel($model, $table_definition);
             $this->_includeOrGenerateModel($model);
             if($this->insert_models_data || !empty($options['populate'])){
                 $this->populateTables(AkInflector::tableize($model));
@@ -84,16 +84,10 @@ class AkUnitTest extends UnitTestCase
             unset($_SESSION['__activeRecordColumnsSettingsCache']);
         }
     }
-    
-    function _reinstallModel($model,$table_definition = '')
+
+    function _reinstallModel($model, $table_definition = '')
     {
-        if (file_exists(AK_APP_DIR.DS.'installers'.DS.AkInflector::underscore($model).'_installer.php')){
-            require_once(AK_APP_DIR.DS.'installers'.DS.AkInflector::underscore($model).'_installer.php');
-            $installer_name = $model.'Installer';
-            $installer = new $installer_name();
-            $installer->uninstall();
-            $installer->install();
-        }else{
+        if (!$this->uninstallAndInstallMigration($model)){
             $table_name = AkInflector::tableize($model);
             if (empty($table_definition)) {
                 trigger_error(Ak::t('Could not install the table %tablename for the model %modelname',array('%tablename'=>$table_name, '%modelname'=>$model)),E_USER_ERROR);
@@ -104,13 +98,28 @@ class AkUnitTest extends UnitTestCase
             $installer->createTable($table_name,$table_definition,array('timestamp'=>false));
         }
     }
-    
+
+    function uninstallAndInstallMigration($installer_name)
+    {
+        if (file_exists(AK_APP_DIR.DS.'installers'.DS.AkInflector::underscore($installer_name).'_installer.php')){
+            require_once(AK_APP_DIR.DS.'installers'.DS.AkInflector::underscore($installer_name).'_installer.php');
+            $installer_class_name = $installer_name.'Installer';
+            $Installer =& new $installer_class_name();
+            $Installer->uninstall();
+            $Installer->install();
+            return true;
+        }
+        return false;
+    }
+
     function _includeOrGenerateModel($model_name)
     {
         if (file_exists(AK_MODELS_DIR.DS.AkInflector::underscore($model_name).'.php')){
             require_once(AK_MODELS_DIR.DS.AkInflector::underscore($model_name).'.php');
         } else {
-            if (class_exists($model_name)) return true;
+            if (class_exists($model_name)){
+                return true;
+            }
             $model_source_code = "class ".$model_name." extends ActiveRecord { ";
             if (!AK_PHP5) $model_source_code .= $this->__fix_for_PHP4($model_name);
             $model_source_code .= "}";
@@ -118,7 +127,7 @@ class AkUnitTest extends UnitTestCase
             if ($has_errors) trigger_error(Ak::t('Could not declare the model %modelname.',array('%modelname'=>$model_name)),E_USER_ERROR);
         }
     }
-    
+
     function __fix_for_PHP4($model_name)
     {
         $table_name = AkInflector::tableize($model_name);
@@ -129,9 +138,9 @@ class AkUnitTest extends UnitTestCase
         \$this->setTableName('$table_name');
         \$this->init(\$attributes);
     }";
-        
+
     }
-    
+
     function populateTables()
     {
         $args = func_get_args();
@@ -155,9 +164,23 @@ class AkUnitTest extends UnitTestCase
     {
         if(class_exists($model_name) || Ak::import($model_name)){
             $this->$model_name =& new $model_name();
-        } else
+        } else {
             trigger_error(Ak::t('Could not instantiate %modelname',array('%modelname'=>$model_name)),E_USER_ERROR);
+        }
         return !empty($this->$model_name) && is_object($this->$model_name) && strtolower(get_class($this->$model_name)) == strtolower($model_name);
+    }
+
+    /**
+     * Includes and instantiates given models
+     */
+    function includeAndInstatiateModels()
+    {
+        $args = func_get_args();
+        $models = isset($args[1]) ? (array)$args : Ak::toArray($args[0]);
+        foreach ($models as $model){
+            $this->_includeOrGenerateModel($model);
+            $this->instantiateModel($model);
+        }
     }
 }
 

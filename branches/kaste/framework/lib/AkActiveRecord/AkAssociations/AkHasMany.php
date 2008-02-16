@@ -607,11 +607,11 @@ class AkHasMany extends AkAssociation
     function &getAssociatedModelInstance()
     {
         static $ModelInstances;
-        $class_name = $this->getOption($this->association_id, 'class_name');
+            $class_name = $this->getOption($this->association_id, 'class_name');
         if(empty($ModelInstances[$class_name])){  
             Ak::import($class_name);
             $ModelInstances[$class_name] =& new $class_name();
-        } 
+        }
         return $ModelInstances[$class_name];
     }
 

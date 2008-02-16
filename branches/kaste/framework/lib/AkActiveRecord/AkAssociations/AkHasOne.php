@@ -242,8 +242,9 @@ class AkHasOne extends AkAssociation
 
     function &findAssociated($association_id)
     {
-        if(!$this->Owner->getId()) return false;
-
+        if(!$this->Owner->getId()){
+            return false;
+        }
         if(empty($this->Owner->$association_id->__activeRecordObject)){
             $this->build($association_id, array(), false);
         }
@@ -256,8 +257,10 @@ class AkHasOne extends AkAssociation
         'joins' => trim($this->Owner->$association_id->_addTableAliasesToAssociatedSql($table_name, $this->constructSql($association_id))),
         'order' => trim($this->Owner->$association_id->_addTableAliasesToAssociatedSql($table_name, $this->Owner->$association_id->getAssociationOption('order')))
         );
-
-        // TODO: we will use a select statement later
+        
+        /**
+        * todo we will use a select statement later
+        */
         $sql = $this->Owner->constructFinderSqlWithAssociations($finder_options, false);//.' LIMIT 1';
         if($results =& $this->Owner->$association_id->findBySql($sql)){
             $result =& $results[0];

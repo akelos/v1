@@ -17,9 +17,6 @@
  */
 
 
-//if(!defined('AK_ADODBCACHE_CLASS_INCLUDED')){ define('AK_ADODBCACHE_CLASS_INCLUDED',true); // Class overriding trick
-
-// ---- Required Files ---- //
 require_once(AK_LIB_DIR.'/Ak.php');
 
 
@@ -228,20 +225,20 @@ class AkAdodbCache
             WHERE id = '.$this->_db->quote_string($cache_hash).' 
             AND cache_group = '.$this->_db->quote_string($this->_group).' 
             AND expire > '.$this->_db->quote_datetime($this->_refreshTime)
-        );
-        if (!$query_result) return false;
+            );
+            if (!$query_result) return false;
 
-        $data = $this->_db->unescape_blob($query_result);
+            $data = $this->_db->unescape_blob($query_result);
 
-        if($this->_automaticSerialization == true){
-            $data = unserialize($data);
-        }
+            if($this->_automaticSerialization == true){
+                $data = unserialize($data);
+            }
 
-        if($this->_memoryCaching){
-            $this->_memoryCachingArray[$cache_hash] = $data;
-        }
+            if($this->_memoryCaching){
+                $this->_memoryCachingArray[$cache_hash] = $data;
+            }
 
-        return $data;
+            return $data;
     }
 
     /**
@@ -331,12 +328,11 @@ class AkAdodbCache
             case 'old':
                 return (bool)$this->_db->delete('DELETE FROM cache WHERE expire < '.$this->_db->quote_datetime(time()));
             default:
-            return true;
+                return true;
         }
     }
 
 }
 
-//}// End of if(!defined('AK_ADODBCACHE_CLASS_INCLUDED')){
 
 ?>

@@ -217,14 +217,17 @@ class AkHasAndBelongsToMany extends AkAssociation
         $options = $this->getOptions($this->association_id);
 
         if (class_exists($options['join_class_name']) || $this->_loadJoinClass($options['join_class_name']) || $this->_createJoinClass()) {
-            $this->JoinObject =& new $options['join_class_name']();
-            //if($this->JoinObject->setTableName($options['join_table'], true, true) || $this->_createJoinTable()){
+                $this->JoinObject =& new $options['join_class_name']();
             if($this->_tableExists($options['join_table']) || $this->_createJoinTable()){
                 $this->JoinObject->setPrimaryKey($options['foreign_key']);
                 return true;
                 
-            } else trigger_error(Ak::t('Could not find join table %table_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_table'],'id'=>$this->association_id)),E_USER_ERROR);
-        } else     trigger_error(Ak::t('Could not find join model %model_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_class_name'],'id'=>$this->association_id)),E_USER_ERROR); return false;
+            } else {
+                trigger_error(Ak::t('Could not find join table %table_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_table'],'id'=>$this->association_id)),E_USER_ERROR);
+            }
+        } else {
+            trigger_error(Ak::t('Could not find join model %model_name for hasAndBelongsToMany association %id',array('%table_name'=>$options['join_class_name'],'id'=>$this->association_id)),E_USER_ERROR); return false;
+        }
         return false;
     }
 
@@ -244,9 +247,9 @@ class AkHasAndBelongsToMany extends AkAssociation
     {
         $options = $this->getOptions($this->association_id);
 
-        $class_file_code = "<?php \n\n//This code was generated automatically by the active record hasAndBelongsToMany Method\n\n";
-        $class_code =
-        "class {$options['join_class_name']} extends {$options['join_class_extends']} {
+            $class_file_code = "<?php \n\n//This code was generated automatically by the active record hasAndBelongsToMany Method\n\n";
+            $class_code =
+            "class {$options['join_class_name']} extends {$options['join_class_extends']} {
     var \$_avoidTableNameValidation = true;
     function {$options['join_class_name']}()
     {
@@ -256,13 +259,13 @@ class AkHasAndBelongsToMany extends AkAssociation
         \$this->init(\$attributes);
     }
 }";
-        $class_file_code .= $class_code. "\n\n?>";
-        $join_file = AkInflector::toModelFilename($options['join_class_name']);
-        if($this->_automatically_create_join_model_files && !file_exists($join_file) && @Ak::file_put_contents($join_file, $class_file_code)){
-            require_once($join_file);
-        }else{
-            eval($class_code);
-        }
+            $class_file_code .= $class_code. "\n\n?>";
+            $join_file = AkInflector::toModelFilename($options['join_class_name']);
+            if($this->_automatically_create_join_model_files && !file_exists($join_file) && @Ak::file_put_contents($join_file, $class_file_code)){
+                require_once($join_file);
+            }else{
+                eval($class_code);
+            }
         return class_exists($options['join_class_name']);
     }
 
@@ -594,11 +597,11 @@ class AkHasAndBelongsToMany extends AkAssociation
         if(empty($options['finder_sql'])){
             $is_sqlite = $this->Owner->_db->type() == 'sqlite';
             $options['finder_sql'] = "SELECT {$options['table_name']}.* FROM {$options['table_name']} ".
-                $this->associationJoin().
-                "WHERE ".$this->Owner->getTableName().'.'.$this->Owner->getPrimaryKey()." ".
+            $this->associationJoin().
+            "WHERE ".$this->Owner->getTableName().'.'.$this->Owner->getPrimaryKey()." ".
                 ($is_sqlite ? ' LIKE ' : ' = ').' '.$this->Owner->quotedId(); // (HACK FOR SQLITE) Otherwise returns wrong data
-                $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
-                $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
+            $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
+            $options['finder_sql'] .= !empty($options['conditions']) ? ' AND '.$options['conditions'].' ' : '';
         }
         if(empty($options['counter_sql'])){
             $options['counter_sql'] = substr_replace($options['finder_sql'],'SELECT COUNT(*)',0,strpos($options['finder_sql'],'*')+1);
@@ -744,11 +747,11 @@ class AkHasAndBelongsToMany extends AkAssociation
     function &getAssociatedModelInstance()
     {
         static $ModelInstances;
-        $class_name = $this->getOption($this->association_id, 'class_name');
+            $class_name = $this->getOption($this->association_id, 'class_name');
         if(empty($ModelInstances[$class_name])){  
             Ak::import($class_name);
             $ModelInstances[$class_name] =& new $class_name();
-        } 
+        }
         return $ModelInstances[$class_name];
     }
 

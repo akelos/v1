@@ -474,7 +474,6 @@ class ADODB_DataDict {
 
                         }
                 }
-   
                 $this->autoIncrement = false;
                 $lines = array();
                 $pkey = array();
