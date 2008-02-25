@@ -469,7 +469,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $id = $this->_db->incrementsPrimaryKeyAutomatically() ? null : $this->_db->getNextSequenceValueFor($table);
         $attributes[$pk] = $id;
 
-        $attributes = array_diff($attributes, array('',"''"));
+        $attributes = array_diff($attributes, array(''));
+        
 
         $sql = 'INSERT INTO '.$table.' '.
         '('.join(', ',array_keys($attributes)).') '.
@@ -2827,7 +2828,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         'B' => 'binary', // BLOB (binary large object)
 
-        'D' => array('datetime', 'date'), //  Date (some databases do not support this, so we return a datetime type)
+        'D' => array('date'), //  Date
         'T' =>  array('datetime', 'timestamp'), //Datetime or Timestamp
         'L' => 'boolean', // Integer field suitable for storing booleans (0 or 1)
         'R' => 'serial', // Serial Integer
@@ -3182,13 +3183,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                     if($scale = $this->getColumnScale($column_name)){
                         $value = number_format($value, $scale);
                     }
+                    $result = $add_quotes ? $this->_db->quote_string($value) : $value;
                 }
-                $result = $add_quotes ? $this->_db->quote_string($value) : $value;
                 break;
 
             case 'serial':
             case 'integer':
-                $result = is_null($value) ? 'null' : (integer)$value;
+                $result = (is_null($value) || $value==='') ? 'null' : (integer)$value;
                 break;
 
             case 'float':
@@ -3197,10 +3198,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 break;
 
             default:
-                $result = $add_quotes ? $this->_db->quote_string($value) : $value;
+                $result = is_null($value) ? 'null' : ($add_quotes ? $this->_db->quote_string($value) : $value);
                 break;
         }
-        //  !! null vs. not null !!
+        //  !! nullable vs. not nullable !!
         return empty($this->_columns[$column_name]['notNull']) ? ($result === '' ? "''" : $result) : ($result === 'null' ? '' : $result);
     }
 
@@ -3249,11 +3250,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         foreach ($params as $k=>$v) {
             if(preg_match('/^([A-Za-z0-9_]+)\(([1-5]{1})i\)$/',$k,$match)){
                 $date_attributes[$match[1]][$match[2]] = $v;
+                $this->$k = $v;
                 unset($params[$k]);
             }
         }
         foreach ($date_attributes as $attribute=>$date){
-            $params[$attribute] = Ak::getDate(Ak::getTimestamp(trim(@$date[1].'-'.@$date[2].'-'.@$date[3].' '.@$date[4].':'.@$date[5].':'.@$date[6],' :-')));
+            $params[$attribute] = trim(@$date[1].'-'.@$date[2].'-'.@$date[3].' '.@$date[4].':'.@$date[5].':'.@$date[6],' :-');
         }
     }
 

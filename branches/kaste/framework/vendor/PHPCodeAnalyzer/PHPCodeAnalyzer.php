@@ -204,7 +204,7 @@ class PHPCodeAnalyzer
             else
             {
                 list($id, $text) = $token;
-                if (isseT($handleMap[$id]))
+                if (isset($handleMap[$id]))
                 {
                     $call = $handleMap[$id];
                     $this->$call($id,$text);
@@ -263,6 +263,8 @@ class PHPCodeAnalyzer
                 break;
             case "=":
             case ";":
+            case "?":
+            case ":":
                 if ($this->inNew !== false)
                 {
                     $this->classInstantiated();
@@ -278,6 +280,10 @@ class PHPCodeAnalyzer
                 $this->currentString = null;
                 $this->currentStrings = null;
                 break;
+                
+            case ']':
+            $this->useMemberVar(false);
+            break;
         }
     }
 
@@ -466,15 +472,16 @@ class PHPCodeAnalyzer
 	* we used a member variable record it
 	* @access private
 	*/
-    function useMemberVar()
+    function useMemberVar($reset = true)
     {
-        if (!isset($this->usedMemberVariables[$this->currentVar][$this->currentString]))
-        {
+        if (!isset($this->usedMemberVariables[$this->currentVar][$this->currentString])){
             $this->usedMemberVariables[$this->currentVar][$this->currentString] = array();
         }
         $this->usedMemberVariables[$this->currentVar][$this->currentString][] = $this->lineNumber;
-        $this->currentVar = false;
-        $this->currentString = null;
+        if($reset){
+            $this->currentVar = false;
+            $this->currentString = null;
+        }
     }
 
     /**
