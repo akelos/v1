@@ -1,0 +1,29 @@
+WARNING!
+======================
+
+This plugin is experimental and has not been tested on production yet.
+
+USE ONLY ON FRESH AKELOS INSTALLATIONS AS IT MIGHT OVERRIDE YOUR EXISTING FILES!!!
+
+
+
+
+
+Admin Plugin
+===================================
+
+
+This plugin assists you to create a basic admin with RBAC permission, role and user management.
+
+It is not meant to be used as a fit all solution but as a simple to adapt/modify base for your applications.
+
+As Akelos itself the Admin plugin it's based on simple conventions for building navigation and handling user permissions.
+
+The user permission interface is heavily inspired by Drupal.
+
+Installation
+--------------------------------
+
+    ./script/install admin
+
+
