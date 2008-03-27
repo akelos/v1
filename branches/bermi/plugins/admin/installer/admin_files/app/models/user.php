@@ -28,7 +28,7 @@ class User extends ActiveRecord
      * 
      * @param string $email
      * @param string $password
-     * @return False if not found or not enabled, User instance is succedes
+     * @return False if not found or not enabled, User instance if succedes
      */
     function authenticate($email, $password)
     {

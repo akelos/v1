@@ -8,7 +8,7 @@ class UserTestCase extends AkUnitTest
 
     function test_setup()
     {
-        $this->uninstallAndInstallMigration('Admin');
+        $this->uninstallAndInstallMigration('AdminPlugin');
         $this->includeAndInstatiateModels('User', 'Role', 'Permission');
     }
 
@@ -139,21 +139,30 @@ class UserTestCase extends AkUnitTest
         $this->assertFalse($Bermi->get('is_enabled'));
     }
 
+    function test_should_only_authenticate_users_with_roles()
+    {
+        $Bermi =& $this->User->findFirstBy('email', 'bermi@example.com');
+        $Bermi->enable();
+        $this->assertFalse(User::authenticate('bermi@example.com', 'abcde'));
+        $Bermi->role->add(new Role(array('name'=>'Tmp Role')));
+        $Bermi->save();
+        $this->assertTrue(User::authenticate('bermi@example.com', 'abcde'));
+    }
+
+
     function test_should_only_authenticate_enabled_users()
     {
         $Bermi =& $this->User->findFirstBy('email', 'bermi@example.com');
-
-        $this->assertFalse(User::authenticate('bermi@example.com', 'abcde'));
-
-        $Bermi->enable();
-        $this->assertFalse($Bermi->hasErrors());
 
         $this->assertTrue($User = User::authenticate('bermi@example.com', 'abcde'));
 
         $Bermi->disable();
         $this->assertFalse(User::authenticate('bermi@example.com', 'abcde'));
-    }
 
+        $Role =& new Role();
+        $Role =& $Role->findFirstBy('name', 'Tmp Role');
+        $Role->destroy();
+    }
 
 
     function test_should_get_roles()
@@ -222,6 +231,7 @@ class UserTestCase extends AkUnitTest
         $this->assertEqual($Salavert->roles[0]->id, $Visitor->id);
     }
 
+    /**/
     function _createRoles()
     {
         $Administrator =& $this->Role->create(array('name' => 'Administrator'));
