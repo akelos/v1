@@ -82,11 +82,11 @@ class AdminInstaller extends AkInstaller
         echo "\n".$message.(empty($options['default'])?'': ' ['.$options['default'].']').': ';
         $user_input = fgets($f, 25600);
         $value = trim($user_input,"\n\r\t ");
-
+        $value = empty($value) ? $options['default'] : $value;
         if(empty($value) && empty($options['optional'])){
             echo "\n\nThis setting is not optional.";
             fclose($f);
-            return $this->_promtUserVar($message, $options);
+            return $this->promtUserVar($message, $options);
         }
         fclose($f);
         return empty($value) ? $options['default'] : $value;
