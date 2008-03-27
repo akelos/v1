@@ -63,7 +63,7 @@ class AdminInstaller extends AkInstaller
         );
 
         echo "Running the admin plugin migration\n";
-        $Installer->uninstall();
+        //$Installer->uninstall();
         $Installer->install();
 
 
