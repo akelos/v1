@@ -4,13 +4,16 @@ define('AK_ADMIN_PLUGIN_FILES_DIR', AK_APP_PLUGINS_DIR.DS.'admin'.DS.'installer'
 
 class AdminInstaller extends AkInstaller
 {
-    function install()
+    function up_1()
     {
         $this->files = Ak::dir(AK_ADMIN_PLUGIN_FILES_DIR, array('recurse'=> true));
-        empty($this->options['force']) ? $this->check_for_collisions($this->files) : null;
-        $this->copy_admin_files();
-        $this->modify_routes();
-        $this->promt_for_credentials();
+        empty($this->options['force']) ? $this->checkForCollisions($this->files) : null;
+        $this->copyAdminFiles();
+
+        echo "\nWe need some details for setting up the admin.\n\n ";
+        $this->modifyRoutes();
+        $this->runMigration();
+        echo "\n\nInstallation completed\n";
     }
 
     function down_1()
@@ -18,7 +21,7 @@ class AdminInstaller extends AkInstaller
     }
 
 
-    function check_for_collisions($directory_structure, $base_path = AK_ADMIN_PLUGIN_FILES_DIR)
+    function checkForCollisions($directory_structure, $base_path = AK_ADMIN_PLUGIN_FILES_DIR)
     {
         foreach ($directory_structure as $k=>$node){
             $path = str_replace(AK_ADMIN_PLUGIN_FILES_DIR, AK_BASE_DIR, $base_path.DS.$node);
@@ -29,30 +32,64 @@ class AdminInstaller extends AkInstaller
                 foreach ($node as $dir=>$items){
                     $path = $base_path.DS.$dir;
                     if(is_dir($path)){
-                        $this->check_for_collisions($items, $path);
+                        $this->checkForCollisions($items, $path);
                     }
                 }
             }
         }
     }
 
-    function copy_admin_files()
+    function copyAdminFiles()
     {
         $this->_copyFiles($this->files);
     }
 
-    function modify_routes()
+    function modifyRoutes()
     {
+        $preffix = '/'.trim($this->promtUserVar('Admin url preffix',  array('default'=>'/admin/')), "\t /").'/';
         $path = AK_CONFIG_DIR.DS.'routes.php';
-        Ak::file_put_contents($path, str_replace('<?php',"<?php \n\n \$Map->connect('/admin/:controller/:action/:id', array('controller' => 'dashboard', 'action' => 'index', 'module' => 'admin'));",Ak::file_get_contents($path)));
-        //
+        Ak::file_put_contents($path, str_replace('<?php',"<?php \n\n \$Map->connect('$preffix:controller/:action/:id', array('controller' => 'dashboard', 'action' => 'index', 'module' => 'admin'));",Ak::file_get_contents($path)));
+
     }
 
-    function promt_for_credentials()
+    function runMigration()
     {
-        $command = AK_SCRIPT_DIR.DS.'migrate admin install';
-        echo "Running command $command\n";
-        echo `$command`;
+        include_once(AK_APP_INSTALLERS_DIR.DS.'admin_plugin_installer.php');
+        $Installer =& new AdminPluginInstaller();
+
+        $Installer->root_details = array(
+        'email' => $this->promtUserVar('Master account login. Must be a valid email',  array('default'=>'root@example.com')),
+        'password' => $this->promtUserVar('Root password.', array('default'=>'admin')),
+        );
+
+        echo "Running the admin plugin migration\n";
+        $Installer->uninstall();
+        $Installer->install();
+
+
+    }
+
+    function promtUserVar($message, $options = array())
+    {
+        $f = fopen("php://stdin","r");
+        $default_options = array(
+        'default' => null,
+        'optional' => false,
+        );
+
+        $options = array_merge($default_options, $options);
+
+        echo "\n".$message.(empty($options['default'])?'': ' ['.$options['default'].']').': ';
+        $user_input = fgets($f, 25600);
+        $value = trim($user_input,"\n\r\t ");
+
+        if(empty($value) && empty($options['optional'])){
+            echo "\n\nThis setting is not optional.";
+            fclose($f);
+            return $this->_promtUserVar($message, $options);
+        }
+        fclose($f);
+        return empty($value) ? $options['default'] : $value;
     }
 
 

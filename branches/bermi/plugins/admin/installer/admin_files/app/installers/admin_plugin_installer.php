@@ -1,6 +1,6 @@
 <?php
 
-class AdminInstaller extends AkInstaller
+class AdminPluginInstaller extends AkInstaller
 {
     function up_1()
     {
@@ -80,12 +80,9 @@ class AdminInstaller extends AkInstaller
     function createAdministrator()
     {
         $Role =& new Role();
-        $ApplicationOwner =& new User(array('email'=>'root@example.com', 'password'=>'admin', 'password_confirmation'=>'admin'));
+        $ApplicationOwner =& new User(array('email'=>$this->root_details['email'], 'password'=> $this->root_details['password'], 'password_confirmation'=>$this->root_details['password']));
         $ApplicationOwner->role->add($Role->findFirstBy('name', 'Application owner'));
         $ApplicationOwner->save();
-        $Administrator =& new User(array('email'=>'admin@example.com', 'password'=>'admin', 'password_confirmation'=>'admin'));
-        $Administrator->role->add($Role->findFirstBy('name', 'Administrator'));
-        $Administrator->save();
     }
 }
 
