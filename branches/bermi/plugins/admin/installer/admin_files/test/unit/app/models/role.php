@@ -6,7 +6,7 @@ class RoleTestCase extends AkUnitTest
 
     function test_setup()
     {
-        $this->uninstallAndInstallMigration('Admin');
+        $this->uninstallAndInstallMigration('AdminPlugin');
         $this->includeAndInstatiateModels('User', 'Role', 'Permission');
     }
 
@@ -51,7 +51,7 @@ class RoleTestCase extends AkUnitTest
         $Developer->save();
 
         $Bermi->reload();
-        $Bermi->role->load();
+        $Bermi->role->load(true);
 
         $this->assertEqual($Bermi->roles[0]->getAttributes(), $Developer->getAttributes());
 
@@ -115,6 +115,8 @@ class RoleTestCase extends AkUnitTest
         array('create user', 'edit'));
 
     }
+
+    /**/
 
     function _getPermissionDescriptionsForRole(&$Role)
     {

@@ -1,0 +1,26 @@
+<div id="content_menu">
+    <ul class="menu">
+        <li><?php  echo '<%='?> link_to _('Create new <?php  echo AkInflector::humanize($singular_name)?>'), :action => 'add' %></li>
+        <li class="primary"><?php  echo '<%='?> link_to _('Edit <?php  echo AkInflector::humanize($singular_name)?>'), :action => 'edit', :id => <?php  echo $singular_name?>.id %></li>
+        <li class="active"><?php  echo '<%='?> link_to _('Showing <?php  echo AkInflector::humanize($singular_name)?>'), :action => 'show', :id => <?php  echo $singular_name?>.id %></li>
+        <li><?php  echo '<%='?> link_to _('Delete <?php  echo AkInflector::humanize($singular_name)?>'), :action => 'destroy', :id => <?php  echo $singular_name?>.id %></li>
+        <li><?php  echo '<%='?> link_to _('Show available <?php  echo AkInflector::humanize($plural_name)?>'), :action => 'listing' %></li>
+    </ul>
+    <p class="information">{_controller_information}</p>
+</div>
+
+
+<div id="content">
+  <h1>_{<?php  echo AkInflector::humanize($singular_name)?> details}</h1>
+
+    <?php  echo '<?php  '?>$content_columns = array_keys($<?php  echo $model_name?>->getContentColumns()); ?>
+    
+    <dl>
+    {loop content_columns}
+      <dt><?php  echo '<%='?> translate( humanize( content_column ) ) %>:</dt>
+      <dd><?php  echo '<?php  echo '?> $<?php  echo $singular_name?>->get($content_column) ?>&nbsp;</dd>
+    {end}
+    </dl>
+
+    <p class="operations"><?php  echo '<%='?> link_to_edit <?php  echo AkInflector::camelize($singular_name)?> %> _{or} <?php  echo '<%='?> link_to_destroy <?php  echo AkInflector::camelize($singular_name)?> %> _{<?php  echo $singular_name?>} </p>
+</div>

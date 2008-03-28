@@ -55,7 +55,7 @@ class Makelos
 }
 
 $Makelos = new Makelos();
-$Makelos->$task($argv);
+$Makelos->$task(@$argv);
 
 
 ?>
