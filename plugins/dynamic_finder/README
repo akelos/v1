@@ -1,0 +1,6 @@
+Dynamic Finders Plugin (PHP5 only)
+===================================
+
+Enables magic finders like $Model->find_by_user_and_name('John', 'Smith') on your Active Record models.
+
+If modifies your application ActiveRecord located in app/shared_model.php by adding a __call method which handles missing methods.
