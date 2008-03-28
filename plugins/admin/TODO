@@ -1,0 +1,8 @@
+Submit your contributions to http://trac.akelos.org
+
+* Implement non-http authentication screens.
+* Implement password retrieval system.
+* Implement simple user sign-up system.
+* Implement simple and flexible user details system.
+* Implement Simple user preferences system.
+* Stop adding features :)
