@@ -36,11 +36,11 @@ To start you off, SifrHelper comes with the Xpressive font in the folder sample_
 Easy!  Add two calls to your layout:
 
   <head>
-  <%= sifr_head_generator -%>
+  <%= sifr_head_generator %>
   </head>
   <body>
   ...
-  <%= sifr_body_generator -%>
+  <%= sifr_body_generator %>
   </body>
 
 That's all you need for setup.  Now, say you had a view with text like so:
@@ -49,7 +49,7 @@ That's all you need for setup.  Now, say you had a view with text like so:
 
 To change this from default font of boringness to the much cooler Xpressive font face, you'd put the following at the top of your view:
 
-  <% sifr_replace('.cool_font', :xpressive) -%>
+  <%= sifr_replace('.cool_font', 'xpressive') %>
 
 That's it!  The helper sets up the sIFR javascript options, includes the needed stylesheets, and handles locating it all for you.  You can
 use any valid CSS selector in sifr_replace's first parameter, so go nuts.

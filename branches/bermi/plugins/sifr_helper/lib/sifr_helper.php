@@ -79,7 +79,7 @@ class SifrHelper extends AkActionViewHelper
         if (!empty($this->sifr)){
             $result = "<script type=\"text/javascript\">\n//<![CDATA[\nif(typeof sIFR == \"function\"){\n";
             foreach ($this->sifr as $k => $v){
-                $url = $this->_compute_public_path($source, 'fonts', 'swf');
+                $url = $this->_compute_public_path($v['font'], 'fonts', 'swf');
                 $result .= "sIFR.replaceElement(named({\n".
                 "sSelector:\"$k\",\n" .
                 "sFlashSrc:\"$url\",\n".
@@ -101,7 +101,7 @@ class SifrHelper extends AkActionViewHelper
     *
     * *Usage*: Add a call in your view for each CSS element & font pair you want sIFR-ized, like so:
     *
-    *   <% sifr_replace('.some_class', :my_font, :color => '#ff0000') %>
+    *   <%= sifr_replace('.some_class', 'my_font', :color => '#ff0000') %>
     *
     * *Arguments*:
     *
@@ -122,6 +122,7 @@ class SifrHelper extends AkActionViewHelper
     */
     function sifr_replace($selector, $font, $options = array())
     {
+        $options['font'] = $font;
         $this->sifr[$selector] = $options;
     }
 
