@@ -1,0 +1,62 @@
+SifrHelper is an Akelos version of the Ruby on Rails plugin created by Rob Morris that allows simple, drop-in use of the sIFR 2.0
+font-replacement technique in your Akelos views.  Use it to bring any TrueType font to your website in a cross-platform,
+browser neutral manner.  Rails SifrHelper's home is at: http://thecodingway.com/code/sifrhelper
+
+
+== What is sIFR?  
+The full story can be found here: http://www.mikeindustries.com/sifr
+
+The quick version is that sIFR is a drop-in, accessible, gracefully degrading technique for 
+richer typography (aka more fonts) in your web designs.  
+Using flash swf files containing a given font definition, a set of Javascript 
+functions cleverly overlay a Flash object over specified
+text elements, injecting the text on the way, and rescaling to fit as best as possible.
+
+Simply put, sIFR lets you use TrueType fonts on any platform - without rendered images or other nastiness.
+
+
+== Installing the plugin
+Install the SifrHelper plugin using the following command.
+
+  ./script/plugin install http://svn.akelos.org/branches/bermi/plugins/sifrhelper
+
+
+== Installing a font
+sIFR requires a swf file for every font you want to use on your site.  To generate these font files, you need a working copy of
+Flash MX or similar, and the sIFR source bundle.  Follow the directions on the main sIFR site about how to build the swf files. 
+You can also go to http://thecodingway.com/code/sifrfonts to download pre-built font files that Rob Morris has created, or google for
+"sifr fonts".  Go nuts!
+
+Once you have a valid swf, just drop it in your ./public/fonts/ directory, named "<font face>.swf".  That's it.
+
+To start you off, SifrHelper comes with the Xpressive font in the folder sample_fonts.  This is a 2.0.5 font file.
+
+
+== OK, now how do I use a font?
+Easy!  Add two calls to your layout:
+
+  <head>
+  <%= sifr_head_generator -%>
+  </head>
+  <body>
+  ...
+  <%= sifr_body_generator -%>
+  </body>
+
+That's all you need for setup.  Now, say you had a view with text like so:
+
+  <h1 class="cool_font">Some Header Text</h1>
+
+To change this from default font of boringness to the much cooler Xpressive font face, you'd put the following at the top of your view:
+
+  <% sifr_replace('.cool_font', :xpressive) -%>
+
+That's it!  The helper sets up the sIFR javascript options, includes the needed stylesheets, and handles locating it all for you.  You can
+use any valid CSS selector in sifr_replace's first parameter, so go nuts.
+
+
+== License
+This work incorporates the sIFR library, which is licensed under the GNU Lesser General Public License.
+
+As such, SifrHelper is also licensed under the GNU LGPL.  Details in the files LICENSE and LGPL.  Share and enjoy!
+
