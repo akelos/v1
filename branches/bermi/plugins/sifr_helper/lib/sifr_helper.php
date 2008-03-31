@@ -33,10 +33,11 @@
 * text elements, injecting the text on the way, and rescaling to fit as best as possible.
 *
 * Simply put, sIFR lets you use TrueType fonts on any platform - without rendered images or other nastiness.
+* You can find some legal fonts collected by Fontsmack.com on the Akelos repository at:
+* http://svn.akelos.org/extras/fonts/sifr
 */
 class SifrHelper extends AkActionViewHelper
 {
-    var $sifr = array();
     var $options = array();
     /**
     * Includes all needed CSS and Javascript libraries, and adds dynamically generated tweaks as needed.  
@@ -48,7 +49,7 @@ class SifrHelper extends AkActionViewHelper
     */
     function sifr_head_generator()
     {
-        if (!empty($this->sifr)){
+        if ($this->usesSifr()){
             $ath =& $this->_controller->asset_tag_helper;
             $result = $ath->stylesheet_link_tag('sIFR-screen', array('media' => 'screen'))."\n".
             $ath->stylesheet_link_tag('sIFR-print', array('media' => 'print'))."\n".
@@ -58,7 +59,7 @@ class SifrHelper extends AkActionViewHelper
             // They simply help with the layout during size calculations.  I've found 'tweak_size' to be
             // more useful here.
             $result .= "<style type=\"text/css\" media=\"screen\">\n";
-            foreach ($this->sifr as $k => $v){
+            foreach ($this->getSifr() as $k => $v){
                 $result .= ".sIFR-hasFlash $k {\n".
                 "  visibility: hidden;\n".
                 (empty($v['tweak_size'])?'':"  font-size: {$v['tweak_size']}px;\n").
@@ -76,10 +77,10 @@ class SifrHelper extends AkActionViewHelper
      */
     function sifr_body_generator()
     {
-        if (!empty($this->sifr)){
+        if ($this->usesSifr()){
             $result = "<script type=\"text/javascript\">\n//<![CDATA[\nif(typeof sIFR == \"function\"){\n";
-            foreach ($this->sifr as $k => $v){
-                $url = $this->_compute_public_path($v['font'], 'fonts', 'swf');
+            foreach ($this->getSifr() as $k => $v){
+                $url = $this->_computePublicPath($v['font'], 'fonts', 'swf');
                 $result .= "sIFR.replaceElement(named({\n".
                 "sSelector:\"$k\",\n" .
                 "sFlashSrc:\"$url\",\n".
@@ -123,13 +124,18 @@ class SifrHelper extends AkActionViewHelper
     function sifr_replace($selector, $font, $options = array())
     {
         $options['font'] = $font;
-        $this->sifr[$selector] = $options;
+        $this->setSifr($selector, $options);
     }
 
-    function _compute_public_path($source, $dir = '', $ext = '')
+    function _computePublicPath($source, $dir = '', $ext = '')
     {
         $source = $source[0] != '/' && !strstr($source,':') ? "/$dir/$source" : $source;
         $source = !strstr($source,'.') ? "$source.$ext" : $source;
+
+        if(AK_DEV_MODE && !strstr($source, '//') && strstr($source, '/fonts/')){
+            $this->_verifyFontExistence($source);
+        }
+
         $source = !preg_match('/^[-a-z]+:\/\//',$source) ? AK_ASSET_URL_PREFIX.$source : $source;
         $source = strstr($source,':') ? $source : $this->_controller->asset_host.$source;
         $source = substr($source,0,2) == '//' ? substr($source,1) : $source;
@@ -137,6 +143,38 @@ class SifrHelper extends AkActionViewHelper
         return $source;
     }
 
+
+    function setSifr($selector, $options = array())
+    {
+        static $_cache = array();
+        if($selector === false){
+            return $_cache;
+        }
+        $_cache[$selector] = $options;
+    }
+
+    function getSifr()
+    {
+        return $this->setSifr(false);
+    }
+
+    function usesSifr()
+    {
+        return count($this->getSifr()) > 0;
+    }
+
+    function _verifyFontExistence($font)
+    {
+        $font_name = str_replace('/fonts/', '',$font);
+        if(!file_exists(AK_PUBLIC_DIR.DS.$font) && !file_exists(AK_PUBLIC_DIR.DS.$font.'.error.txt')){
+            $remote_font = @Ak::url_get_contents('http://svn.akelos.org/extras/fonts/sifr/'.$font_name, array('timeout'=>30));
+            if(empty($remote_font)){
+                Ak::file_put_contents(AK_PUBLIC_DIR.DS.$font.'.error.txt', 'Could not download '.'http://svn.akelos.org/extras/sifr_fonts/'.$font_name);
+            }else{
+                Ak::file_put_contents(AK_PUBLIC_DIR.DS.$font, $remote_font);
+            }
+        }
+    }
 }
 
 ?>
