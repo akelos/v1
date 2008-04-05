@@ -8,6 +8,7 @@ class PostInstaller extends AkInstaller
           id,
           title,
           body,
+          data binary,
           created_at,
           updated_at
         ");  

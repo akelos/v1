@@ -34,14 +34,17 @@ class ActsAsVersionedTestCase extends AkUnitTest
 
     function test_should_save_the_first_version_only_once()
     {
+        //$this->Post->dbug();
         $Post =& $this->Post->create(array('title' => 'The first', 'body' => 'This is the first post'));
         $this->assertFalse($Post->isNewRecord());
-
         $Post->reload();
 
         $this->assertEqual($Post->get('version'), 1);
 
         $Post =& $Post->find($Post->getId());
+        
+        $this->assertEqual($Post->versioned->getChangedAttributes(), array());
+        
         $Post->save();
 
         $Post->reload();
@@ -191,13 +194,13 @@ class ActsAsVersionedTestCase extends AkUnitTest
         $this->assertTrue($Post =& $this->Post->findFirstBy('title', 'Post 3.5'));
         $Post->versioned->load();
         $expected_versions_count = count($Post->versions);
-        
+
         $this->assertTrue($Post =& $this->Post->findFirstBy('title', 'Post 3.5'));
         $this->assertTrue($Post->save());
         $Post->versioned->load();
         $this->assertEqual(count($Post->versions), $expected_versions_count);
     }
-    
+
     function test_should_drop_versioned_table()
     {
         $this->Post->versioned->dropVersionedTable();

@@ -234,9 +234,12 @@ class $class_name extends ActiveRecord
         $Versioned =& $this->getInstance();
         $filtered_attributes = array();
         unset($attributes[$Versioned->getPrimaryKey()]);
-        foreach ($attributes as $column => $value){
+        foreach (array_keys($attributes) as $column){
             // Uncast the versioned so we can get properly casted fields on the original owner.
-            $value = $this->_ActiveRecordInstance->castAttributeFromDatabase($column, $Versioned->castAttributeForDatabase($column, $value, false));
+            $casted_attribute = $Versioned->castAttributeForDatabase($column, $attributes[$column], false);
+            $casted_attribute = $casted_attribute == 'null' ? null : $casted_attribute;
+            $value = $this->_ActiveRecordInstance->castAttributeFromDatabase($column, $casted_attribute);
+
             if($this->options['foreign_key'] == $column){
                 $filtered_attributes = array_merge(array($this->_ActiveRecordInstance->getPrimaryKey() => $value), $filtered_attributes);
             }else{
