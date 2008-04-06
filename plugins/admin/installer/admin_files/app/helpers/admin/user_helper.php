@@ -12,7 +12,7 @@ class UserHelper extends AkActionViewHelper
 
     function save_button()
     {
-        return '<input type="submit" value="'.$this->_controller->t('Save').'" class="primary" />';
+        return '<input type="submit" value="'.$this->_controller->t('Save').'" class="primary" tabindex="10" />';
     }
 
     function confirm_delete()

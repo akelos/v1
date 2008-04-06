@@ -71,7 +71,10 @@ class AdminController extends ApplicationController
         if($this->CurrentUser->role->load()){
             $this->Roles = array();
             foreach (array_keys($this->CurrentUser->roles) as $k){
-                $this->Roles = array_merge($this->CurrentUser->roles[$k]->nested_set->getFullSet(), $this->Roles);
+                $this->Roles[$this->CurrentUser->roles[$k]->getId()] = $this->CurrentUser->roles[$k];
+                foreach ($this->CurrentUser->roles[$k]->nested_set->getFullSet() as $Role){
+                    $this->Roles[$Role->getId()] = $Role;
+                }
             }
         }
         if (empty($this->Roles)){

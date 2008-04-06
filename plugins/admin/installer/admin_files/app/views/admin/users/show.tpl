@@ -11,6 +11,7 @@
 
 <div class="content">
     <dl>
+        <dt>_{Login}:</dt><dd>{User.login}</dd>
         <dt>_{Email}:</dt><dd><%= mail_to User.email %></dd>
         <dt>_{Status}:</dt><dd>{?User.is_enabled}_{active}{else}_{blocked}{end}</dd>
         <dt>_{Last access}:</dt><dd>{?User.last_login_at}<%= _("#{time_ago_in_words(User.last_login_at)} ago") %> – <span class="information"><%= locale_date_time User.last_login_at %></span>{else}_{never}{end}</dd>

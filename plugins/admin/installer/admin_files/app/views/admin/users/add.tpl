@@ -14,7 +14,7 @@
     <%= render :partial => 'form' %>
    <fieldset>
        <ul><li>
-        <%= input 'user', 'is_enabled', :tabindex => '7' %> 
+        <%= input 'user', 'is_enabled', :tabindex => '8' %> 
         <label for="user_is_enabled">
             _{Enable account?} – <span class="information">_{Uncheck this option to revoke user access}</span>
         </label>

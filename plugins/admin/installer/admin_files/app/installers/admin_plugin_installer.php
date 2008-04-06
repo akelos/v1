@@ -6,6 +6,7 @@ class AdminPluginInstaller extends AkInstaller
     {
         $this->createTable('users', '
           id,
+          login string(40) not null idx,
           email string(50) not null idx,
           password string(40) not null,
           password_salt string(16) not null,
@@ -27,6 +28,14 @@ class AdminPluginInstaller extends AkInstaller
         $this->createTable('permissions_roles', 'id, permission_id, role_id', array('timestamp' => false));
         $this->createTable('extensions', 'id, name, is_core, is_enabled');
         $this->createTable('permissions', 'id, name, extension_id');
+
+        if(AK_ENVIRONMENT != 'testing'){
+        $this->root_details = array(
+                'login' => $this->promtUserVar('Master account login.',  array('default'=>'admin')),
+                'email' => $this->promtUserVar('Master account email.',  array('default'=>'root@example.com')),
+                'password' => $this->promtUserVar('Root password.', array('default'=>'admin')),
+            );
+        }
 
         $this->addDefaults();
     }
@@ -80,7 +89,11 @@ class AdminPluginInstaller extends AkInstaller
     function createAdministrator()
     {
         $Role =& new Role();
-        $ApplicationOwner =& new User(array('email'=>$this->root_details['email'], 'password'=> $this->root_details['password'], 'password_confirmation'=>$this->root_details['password']));
+        $ApplicationOwner =& new User(array(
+        'login'=>$this->root_details['login'], 
+        'email'=>$this->root_details['email'], 
+        'password'=> $this->root_details['password'], 
+        'password_confirmation'=>$this->root_details['password']));
         $ApplicationOwner->role->add($Role->findFirstBy('name', 'Application owner'));
         $ApplicationOwner->save();
     }

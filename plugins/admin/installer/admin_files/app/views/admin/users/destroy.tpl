@@ -16,6 +16,7 @@
 <%= start_form_tag :action => 'destroy', :id => User.id %>
     <div class="form">  
         <dl>
+        <dt>_{Login}:</dt><dd>{User.login}</dd>
         <dt>_{Email}:</dt><dd><%= mail_to User.email %></dd>
         <dt>_{Enabled}:</dt><dd>{!User.is_enabled}_{User disabled}{else}_{User enabled}{end}</dd>
         {?User.roles}

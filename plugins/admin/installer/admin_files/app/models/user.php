@@ -5,7 +5,7 @@ defined('AK_DEFAULT_USER_ROLE') ? null : define('AK_DEFAULT_USER_ROLE', 'Registe
 class User extends ActiveRecord
 {
     var $habtm = array('roles' => array('unique'=>true));
-
+    
     /**
      * @access private
      */
@@ -26,14 +26,14 @@ class User extends ActiveRecord
     /**
      * Main authentication method
      * 
-     * @param string $email
+     * @param string $login
      * @param string $password
      * @return False if not found or not enabled, User instance if succedes
      */
-    function authenticate($email, $password)
+    function authenticate($login, $password)
     {
         $UserInstance =& new User();
-        if($User =& $UserInstance->find('first', array('conditions'=>array('email = ? AND __owner.is_enabled = ? AND _roles.is_enabled = ?', $email, true, true), 'include'=>'role')) && $User->isValidPassword($password)){
+        if($User =& $UserInstance->find('first', array('conditions'=>array('login = ? AND __owner.is_enabled = ? AND _roles.is_enabled = ?', $login, true, true), 'include'=>'role')) && $User->isValidPassword($password)){
             $User->set('last_login_at', Ak::getDate());
             $User->save();
             return $User;
@@ -48,8 +48,10 @@ class User extends ActiveRecord
     function validate()
     {
         $this->validatesUniquenessOf('email', array('message'=>$this->t('email %email already in use', array('%email'=>$this->get('email')))));
-        $this->validatesPresenceOf(array('email'));
+        $this->validatesUniquenessOf('login', array('message'=>$this->t('login %login already in use', array('%login'=>$this->get('login')))));
+        $this->validatesPresenceOf(array('login','email'));
         $this->validatesFormatOf('email', AK_EMAIL_REGULAR_EXPRESSION, $this->t('Invalid email address'));
+        $this->validatesLengthOf('login', array('in'=>array(3, 40), 'too_long' => $this->t('pick a shorter login'), 'too_short' => $this->t('pick a longer name')));
         $this->validatesLengthOf('password', array('in'=>array(4, 40), 'too_long' => $this->t('pick a shorter password'), 'too_short' => $this->t('pick a longer password')));
     }
 
@@ -71,20 +73,20 @@ class User extends ActiveRecord
         return empty($this->_byspass_email_validation);
     }
 
-    function validatesExistanceOfOriginalPasswordWhenUpdatingEmail()
+    function validatesExistanceOfOriginalPasswordWhenUpdatingLogin()
     {
-        if($this->hasAttributeBeenModified('email')){
+        if($this->hasAttributeBeenModified('login')){
             if(!$this->isValidPassword($this->get('password'), true, true)){
-                $this->addError('email', $this->t('can\' be modified unless you provide a valid password.'));
+                $this->addError('login', $this->t('can\' be modified unless you provide a valid password.'));
             }else{
                 $this->set('password_confirmation', $this->get('password'));
             }
         }
     }
 
-    function isValidPassword($password, $hash_password = true, $hash_using_original_email = false)
+    function isValidPassword($password, $hash_password = true, $hash_using_original_name = false)
     {
-        return $this->getPreviousValueForAttribute('password') == ($hash_password ? $this->sha1($password, $hash_using_original_email) : $password);
+        return $this->getPreviousValueForAttribute('password') == ($hash_password ? $this->sha1($password, $hash_using_original_name) : $password);
     }
 
 
@@ -105,7 +107,7 @@ class User extends ActiveRecord
 
     function beforeUpdate()
     {
-        $this->validatesExistanceOfOriginalPasswordWhenUpdatingEmail();
+        $this->validatesExistanceOfOriginalPasswordWhenUpdatingLogin();
         $this->validatesPassword();
         $this->_encryptPasswordUnlessEmptyOrUnchanged();
         return !$this->hasErrors();
@@ -171,16 +173,16 @@ class User extends ActiveRecord
         $this->set('password', $this->sha1($this->get('password')));
     }
 
-    function sha1($phrase, $use_original_email = false)
+    function sha1($phrase, $use_original_login = false)
     {
-        $email = $use_original_email ? $this->getPreviousValueForAttribute('email') : $this->get('email');
+        $login = $use_original_login ? $this->getPreviousValueForAttribute('login') : $this->get('login');
         empty($this->password_salt) ? $this->set('password_salt', Ak::randomString(16)) : null;
-        return sha1($this->password_salt.$phrase.$email);
+        return sha1($this->get('password_salt').$phrase.$login);
     }
 
     function getToken()
     {
-        return $this->sha1($this->sha1($this->get('updated_at').$this->get('email')).$this->get('password'));
+        return $this->sha1($this->sha1($this->get('updated_at').$this->get('login')).$this->get('password'));
     }
 
     function isTokenValid($token)

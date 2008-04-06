@@ -43,7 +43,7 @@ class RoleTestCase extends AkUnitTest
 
     function test_should_not_duplicate_roles_for_user()
     {
-        $Bermi =& $this->User->create(array('email'=>'bermi@example.com','password'=>'pass', 'password_confirmation'=>'pass'));
+        $Bermi =& $this->User->create(array('email'=>'bermi@example.com', 'login'=>'bermi', 'password'=>'pass', 'password_confirmation'=>'pass'));
         $this->assertFalse($Bermi->isNewRecord());
         $Developer =& $this->Role->createUnder('Auditor', 'Developer');
 
