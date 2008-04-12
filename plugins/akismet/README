@@ -1,0 +1,44 @@
+Akismet
+=======
+
+Uses Akismet service to filter comment spam.
+
+
+Installation:
+
+./script/plugin install akismet
+
+
+You will need to add the key and site to your config/config.php file like:
+
+    define('AK_AKISMET_API_KEY', 'here the key you can get at wordpress.org (signup and say you just want the just the key)');
+    define('AK_AKISMET_SITE_URL', 'http://the-url-you-signed-up-for');
+
+Now you'll have an "akismet_helper" instance available in your controller with these methods:
+
+* isSpam($comment_content, $options)
+* reportSpam($comment_content, $options)
+* reportHam($comment_content, $options)
+
+where $options can be:
+
+* blog or site_url  (required. Defaults to http://AK_HOST)
+    Your application "home page".. 
+* user_ip (required. Defaults to AK_REMOTE_IP)
+    IP address of the comment submitter.
+* user_agent (required. Defaults to $_SERVER['HTTP_USER_AGENT'].)
+    User agent information.
+* referrer (note spelling. Defaults to $_SERVER['HTTP_REFERER'].)
+    The content of the HTTP_REFERER header should be sent here.
+* permalink (Defaults to AK_URL.)
+    The permanent location of the entry the comment was submitted to.
+* comment_type (Defaults to comment)
+    May be blank, comment, trackback, pingback, or a made up value like "registration".
+* comment_author or author
+    Submitted name with the comment
+* comment_author_email or email
+    Submitted email address
+* comment_author_url or author_url
+    Commenter URL.
+
+ 
