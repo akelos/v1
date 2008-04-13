@@ -1,0 +1,30 @@
+= acts_as_lucene
+
+This ActiveRecord plugin adds full text search capabilities to any Akeos model.
+
+
+== Installation
+
+=== Installation inside your Akelos project via script/plugin
+
+./script/plugin install acts_as_lucene
+
+
+== Usage
+
+Include the following in your model class (specifiying the fields you want to get indexed):
+
+    public $acts_as_lucene = array('fields' => array('title', 'description'))
+
+now you can use $ModelClass->lucene->search($query) to find instances of
+your model whose indexed fields match a given query.
+
+== License
+
+Released under the LGPL license.
+
+== Authors
+
+* Bermi Ferrer
+
+
