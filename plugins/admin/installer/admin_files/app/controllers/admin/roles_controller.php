@@ -24,7 +24,8 @@ class Admin_RolesController extends AdminController
     function add()
     {
         $this->_loadCurrentUserRoles();
-        if(!isset($this->Roles[0]) || !$Root =& $this->Roles[0]){
+
+        if(empty($this->Roles) || !isset($this->CurrentUser->roles[0]) || !$Root =& $this->CurrentUser->roles[0]){
             $this->flahs['notice'] = $this->t('Can not create a Role. Parent Role not found.');
             $this->redirectToAction('listing');
         }
