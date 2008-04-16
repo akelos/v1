@@ -352,7 +352,7 @@ div.paginator a:visited.paginationLink {
   clear: both;
 }
 
-div.content {
+#content {
   margin-left: 200px;
 }
 
@@ -447,13 +447,14 @@ span.information {
   font-weight: bold;
 }
 
+
 @media print {
 
   #menu,#content_menu,.operations, .operation, .seccondary, .optional,#operations {
     display: none;
   }
 
-  div.content {
+  #content {
     margin: 30px;
   }
 
