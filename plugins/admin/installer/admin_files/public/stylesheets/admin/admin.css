@@ -352,7 +352,7 @@ div.paginator a:visited.paginationLink {
   clear: both;
 }
 
-#content {
+div.content, #content {
   margin-left: 200px;
 }
 
@@ -454,7 +454,7 @@ span.information {
     display: none;
   }
 
-  #content {
+  div.content, #content {
     margin: 30px;
   }
 
