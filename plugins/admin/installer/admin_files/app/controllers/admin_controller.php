@@ -68,15 +68,7 @@ class AdminController extends ApplicationController
 
     function _loadCurrentUserRoles()
     {
-        if($this->CurrentUser->role->load()){
-            $this->Roles = array();
-            foreach (array_keys($this->CurrentUser->roles) as $k){
-                $this->Roles[$this->CurrentUser->roles[$k]->getId()] = $this->CurrentUser->roles[$k];
-                foreach ($this->CurrentUser->roles[$k]->nested_set->getFullSet() as $Role){
-                    $this->Roles[$Role->getId()] = $Role;
-                }
-            }
-        }
+        $this->Roles =& $this->CurrentUser->getRoles();
         if (empty($this->Roles)){
             $this->flash['notice'] = $this->t('It seems like you don\'t have Roles on your site. Please fill in the form below in order to create your first role.');
             $this->redirectTo(array('controller' => 'role', 'action' => 'add'));

@@ -5,7 +5,7 @@ defined('AK_DEFAULT_USER_ROLE') ? null : define('AK_DEFAULT_USER_ROLE', 'Registe
 class User extends ActiveRecord
 {
     var $habtm = array('roles' => array('unique'=>true));
-    
+
     /**
      * @access private
      */
@@ -232,6 +232,40 @@ class User extends ActiveRecord
         }
         $extension_id = $this->_getExtensionId($extension);
         return (!empty($Permissions[$extension_id]) && in_array($task, $Permissions[$extension_id])) ? true : $this->_addRootPermission($task, $extension_id);
+    }
+
+    function hasRole($role_name, $force_reload = false)
+    {
+        if(!isset($this->_activeRecordHasBeenInstantiated)){
+            $User =& User::getCurrentUser();
+            return $User->hasRole($role_name, $force_reload);
+        }
+        $role_name = strtolower($role_name);
+        $Roles =& $this->getRoles($force_reload);
+        if(!empty($Roles)){
+            foreach(array_keys($Roles) as $k){
+                if(strtolower($Roles[$k]->get('name')) == $role_name){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    function &getRoles($force_reload = false)
+    {
+        if((!isset($this->LoadedRoles) || $force_reload) && $this->role->load()){
+            $this->LoadedRoles = array();
+            foreach (array_keys($this->roles) as $k){
+                $this->LoadedRoles[$this->roles[$k]->getId()] =& $this->roles[$k];
+                foreach ($this->roles[$k]->nested_set->getFullSet() as $Role){
+                    $this->LoadedRoles[$Role->getId()] = $Role;
+                }
+            }
+            return $this->LoadedRoles;
+        }
+        $result = array();
+        return $result;
     }
 
     function hasRootPrivileges()
