@@ -46,7 +46,7 @@ class AdminInstaller extends AkInstaller
 
     function modifyRoutes()
     {
-        $preffix = '/'.trim($this->promtUserVar('Admin url preffix',  array('default'=>'/admin/')), "\t /").'/';
+        $preffix = '/'.trim($this->promptUserVar('Admin url preffix',  array('default'=>'/admin/')), "\t /").'/';
         $path = AK_CONFIG_DIR.DS.'routes.php';
         Ak::file_put_contents($path, str_replace('<?php',"<?php \n\n \$Map->connect('$preffix:controller/:action/:id', array('controller' => 'dashboard', 'action' => 'index', 'module' => 'admin'));",Ak::file_get_contents($path)));
 
@@ -58,8 +58,8 @@ class AdminInstaller extends AkInstaller
         $Installer =& new AdminPluginInstaller();
 
         $Installer->root_details = array(
-        'email' => $this->promtUserVar('Master account login. Must be a valid email',  array('default'=>'root@example.com')),
-        'password' => $this->promtUserVar('Root password.', array('default'=>'admin')),
+        'email' => $this->promptUserVar('Master account login. Must be a valid email',  array('default'=>'root@example.com')),
+        'password' => $this->promptUserVar('Root password.', array('default'=>'admin')),
         );
 
         echo "Running the admin plugin migration\n";
@@ -69,7 +69,7 @@ class AdminInstaller extends AkInstaller
 
     }
 
-    function promtUserVar($message, $options = array())
+    function promptUserVar($message, $options = array())
     {
         $f = fopen("php://stdin","r");
         $default_options = array(
@@ -86,7 +86,7 @@ class AdminInstaller extends AkInstaller
         if(empty($value) && empty($options['optional'])){
             echo "\n\nThis setting is not optional.";
             fclose($f);
-            return $this->promtUserVar($message, $options);
+            return $this->promptUserVar($message, $options);
         }
         fclose($f);
         return empty($value) ? $options['default'] : $value;

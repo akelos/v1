@@ -8,8 +8,8 @@ require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkActionViewHelper.php');
 require_once(AK_LIB_DIR.DS.'AkInstaller.php');
 
 
-!defined('AK_AKISMET_API_KEY') && define('AK_AKISMET_API_KEY', (!empty($argv[1])?$argv[1]:AkInstaller::promtUserVar('Akismet API key')));
-!defined('AK_AKISMET_SITE_URL') && define('AK_AKISMET_SITE_URL', (!empty($argv[2])?$argv[2]:AkInstaller::promtUserVar('Akismet site URL')));
+!defined('AK_AKISMET_API_KEY') && define('AK_AKISMET_API_KEY', (!empty($argv[1])?$argv[1]:AkInstaller::promptUserVar('Akismet API key')));
+!defined('AK_AKISMET_SITE_URL') && define('AK_AKISMET_SITE_URL', (!empty($argv[2])?$argv[2]:AkInstaller::promptUserVar('Akismet site URL')));
 
 require_once(dirname(__FILE__).DS.'..'.DS.'lib'.DS.'akismet_helper.php');
 
