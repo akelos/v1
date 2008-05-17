@@ -57,41 +57,12 @@ class AdminInstaller extends AkInstaller
         include_once(AK_APP_INSTALLERS_DIR.DS.'admin_plugin_installer.php');
         $Installer =& new AdminPluginInstaller();
 
-        $Installer->root_details = array(
-        'email' => $this->promptUserVar('Master account login. Must be a valid email',  array('default'=>'root@example.com')),
-        'password' => $this->promptUserVar('Root password.', array('default'=>'admin')),
-        );
-
         echo "Running the admin plugin migration\n";
         //$Installer->uninstall();
         $Installer->install();
 
 
     }
-
-    function promptUserVar($message, $options = array())
-    {
-        $f = fopen("php://stdin","r");
-        $default_options = array(
-        'default' => null,
-        'optional' => false,
-        );
-
-        $options = array_merge($default_options, $options);
-
-        echo "\n".$message.(empty($options['default'])?'': ' ['.$options['default'].']').': ';
-        $user_input = fgets($f, 25600);
-        $value = trim($user_input,"\n\r\t ");
-        $value = empty($value) ? $options['default'] : $value;
-        if(empty($value) && empty($options['optional'])){
-            echo "\n\nThis setting is not optional.";
-            fclose($f);
-            return $this->promptUserVar($message, $options);
-        }
-        fclose($f);
-        return empty($value) ? $options['default'] : $value;
-    }
-
 
     function _copyFiles($directory_structure, $base_path = AK_ADMIN_PLUGIN_FILES_DIR)
     {
