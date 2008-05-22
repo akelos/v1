@@ -27,6 +27,35 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->drop('unusual_names');
     }
     
+    function testCreateTableUsingAnInstaller()
+    {
+        $this->createTable('Person');
+        
+        $this->assertTrue(self::table_exists('people'));
+        $this->assertTableHasColumns('people',array('id','first_name','last_name','email','created_at'));
+    }
+    
+    function testInstantiateModel()
+    {
+        $this->createTable('Person');
+        $this->instantiateModel('Person');
+        
+        $this->assertType('Person',$this->Person);
+    }
+    
+    function testPopulateModel()
+    {
+        $this->createTable('Person');
+        $Person = $this->instantiateModel('Person');
+        $People = $this->loadFixture('Person');
+        
+        $Sigmund = $Person->find($People['sigmund']->id);
+        $this->assertEquals('Sigmund',$Sigmund->first_name);
+        $this->assertEquals('Freud',$Sigmund->last_name);
+        $this->assertEquals($People['sigmund']->first_name,$Sigmund->first_name);
+        $this->assertEquals($People['sigmund']->last_name,$Sigmund->last_name);
+    }
+    
     function drop($table_name)
     {
         $Installer = new AkInstaller();
