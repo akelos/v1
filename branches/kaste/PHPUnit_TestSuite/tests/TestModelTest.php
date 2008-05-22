@@ -33,6 +33,8 @@ class TestModelTest extends PHPUnit_Model_TestCase
         
         $this->assertTrue(self::table_exists('people'));
         $this->assertTableHasColumns('people',array('id','first_name','last_name','email','created_at'));
+        
+        $this->drop('people');
     }
     
     function testInstantiateModel()
@@ -41,6 +43,8 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->instantiateModel('Person');
         
         $this->assertType('Person',$this->Person);
+
+        $this->drop('people');
     }
     
     function testPopulateModel()

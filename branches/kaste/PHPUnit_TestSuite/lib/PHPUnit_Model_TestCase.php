@@ -40,14 +40,10 @@ class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
     
     function loadFixture($model_name)
     {
-        $fixture_file_name = AkInflector::tableize($model_name).'.yaml';
-        $include_path = array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_APP_DIR.DS.'data');
-        $full_name = PHPUnit_Akelos_autoload::searchFileInIncludePath($include_path,$fixture_file_name);
-
         $Model = new $model_name();
         $Fixture = array();
         
-        $items = Ak::convert('yaml','array',file_get_contents($full_name));
+        $items = Ak::convert('yaml','array',file_get_contents($this->findFixtureForModel($model_name)));
         foreach($items as $id => $item){
             $Record = $Model->create($item);
             #we replace the 'id' with the returned value from the db
@@ -55,6 +51,13 @@ class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
             $Fixture[$id] = new FixtureRecord($item);
         }
         return $this->{AkInflector::pluralize($model_name)} = $Fixture;
+    }
+    
+    function findFixtureForModel($model_name)
+    {
+        $fixture_file_name = AkInflector::tableize($model_name).'.yaml';
+        $include_path = array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_APP_DIR.DS.'data');
+        return PHPUnit_Akelos_autoload::searchFileInIncludePath($include_path,$fixture_file_name);
     }
     
 }
