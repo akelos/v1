@@ -3,10 +3,31 @@
 class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase 
 {
 
+    function useModel($model_name)
+    {
+        @list($model_name,$table_definition) = $this->splitIntoModelNameAndTableDefinition($model_name);
+        
+        $this->createTable($model_name,$table_definition);
+        return array($this->instantiateModel($model_name), $this->loadFixture($model_name));
+    }
+    
     function createTable($model_name,$fields = null)
     {
-        if ($fields) return $this->createTableOnTheFly($model_name,$fields);
-        $this->createTableUsingInstaller($model_name);
+        if ($fields) {
+            $this->createTableOnTheFly($model_name,$fields);
+        }else{
+            $this->createTableUsingInstaller($model_name);
+        }
+        
+        #this is dirty, should be done in AkInstaller
+        $this->resetActiveRecordSchemaCache();
+    }
+    
+    function resetActiveRecordSchemaCache()
+    {
+        if(isset($_SESSION['__activeRecordColumnsSettingsCache'])){
+            unset($_SESSION['__activeRecordColumnsSettingsCache']);
+        }
     }
     
     function createTableUsingInstaller($model_name)
@@ -26,8 +47,14 @@ class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
         $Installer->createTable($table_name,$fields,array('timestamp'=>false));
     }
     
+    function splitIntoModelNameAndTableDefinition($mixed_args)
+    {
+        return array_map('trim',explode('=>',$mixed_args)); 
+    }
+    
     function instantiateModel($model_name)
     {
+        if (!class_exists($model_name)) $this->generateModel($model_name);
         return $this->$model_name = new $model_name();
     }
     
@@ -40,10 +67,12 @@ class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
     
     function loadFixture($model_name)
     {
+        if (!$fixture_file_name = $this->findFixtureForModel($model_name)) return false;
+        
         $Model = new $model_name();
         $Fixture = array();
         
-        $items = Ak::convert('yaml','array',file_get_contents($this->findFixtureForModel($model_name)));
+        $items = Ak::convert('yaml','array',file_get_contents($fixture_file_name));
         foreach($items as $id => $item){
             $Record = $Model->create($item);
             #we replace the 'id' with the returned value from the db

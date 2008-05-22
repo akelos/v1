@@ -47,6 +47,14 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->drop('people');
     }
     
+    function testShouldAutomaticallyGenerateModelOnInstantiation()
+    {
+        $this->createTable('AnotherUnusualName','id,name');
+        $this->instantiateModel('AnotherUnusualName');
+        
+        $this->drop('another_unusual_names');
+    }
+    
     function testPopulateModel()
     {
         $this->createTable('Person');
@@ -58,6 +66,42 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->assertEquals('Freud',$Sigmund->last_name);
         $this->assertEquals($People['sigmund']->first_name,$Sigmund->first_name);
         $this->assertEquals($People['sigmund']->last_name,$Sigmund->last_name);
+
+        $this->drop('people');
+    }
+    
+    function testShouldNotMoanAboutUnpresentFixture()
+    {
+        $this->assertFalse($this->loadFixture('Unknown'));
+    }
+    
+    function testUseModel()
+    {
+        list($Model,$Fixture) = $this->useModel('Person');
+        
+        $this->assertTrue(self::table_exists('people'));
+        $this->assertType('Person',$this->Person);
+        $this->assertTrue(is_array($this->People));
+        
+        $this->assertSame($Model,$this->Person);
+        $this->assertSame($Fixture,$this->People);
+        
+        $this->drop('people');
+    }
+    
+    function testUseModelAndUseTableDefinition()
+    {
+        $this->useModel('Person=>id,new_name');
+        $this->assertTableHasColumns('people',array('id','new_name'));
+
+        $this->drop('people');
+    }
+    
+    function testSplitIntoModelAndDefinition()
+    {
+        $this->assertEquals(array('Artist','id,name'),$this->splitIntoModelNameAndTableDefinition('Artist=>id,name'));
+        $this->assertEquals(array('Artist','id,name'),$this->splitIntoModelNameAndTableDefinition('Artist  => id,name '));
+        $this->assertEquals(array('Artist'),$this->splitIntoModelNameAndTableDefinition('Artist'));
     }
     
     function drop($table_name)
