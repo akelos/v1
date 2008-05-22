@@ -1,6 +1,7 @@
 <?php
 define('AK_PHPUNIT_TESTSUITE_LIB',dirname(__FILE__));
 define('AK_PHPUNIT_TESTSUITE_BASE',dirname(dirname(__FILE__)));
+define('AK_TEST_DATABASE_ON',true);
 
 PHPUnit_Akelos_autoload::ensureConfigFileLoaded();
 spl_autoload_register(array('PHPUnit_Akelos_autoload','__autoload'));
