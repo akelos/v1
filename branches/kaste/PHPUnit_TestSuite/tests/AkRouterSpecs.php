@@ -67,19 +67,31 @@ class AkRouterSpecs extends PHPUnit_Routing_TestCase
     #bug
     function testExplicitCompulsory()
     {
-    	$this->markTestIncomplete('BUG');
-    	$this->connect('/:controller/:action',array('controller'=>'page','action'=>COMPULSORY));
-    	$this->get('blog/index')->resolvesTo('blog','index');
-        $this->get('blog/')     ->doesntResolve();          #fails
+    	$this->markTestIncomplete('BUG #164');
+    	$this->connect('/:controller/:action/:id',array('controller'=>'page','id'=>COMPULSORY));
+    	$this->get('blog/index/1')->resolvesTo('blog','index',1);
+    	$this->get('blog/index')  ->doesntResolve();          #fails
+        $this->get('blog/')       ->doesntResolve();          
+    	#actual is
+        $this->get('blog/index')  ->resolvesTo('blog','index');
+    }
+    
+    function testCompulsoryTestFromBermi()
+    {
+        #works because of the static 'lists' !
+        $this->connect('/lists/:action/:id/:option', array('controller'=>'todo','option'=>COMPULSORY));
+        $this->get('/lists/show/123')->doesntResolve();   
     }
     
     #bug
     function testCompulsoryWithRequirement()
     {
-        $this->markTestIncomplete('BUG');
+        $this->markTestIncomplete('BUG #165');
         $this->connect('/:controller/:action',array('action'=>COMPULSORY),array('action'=>'/[A-Za-z]+/'));
         $this->get('blog/index')->resolvesTo('blog','index');
         $this->get('blog/1')    ->doesntResolve();          #fails
+        #actual is
+        $this->get('blog/1')->resolvesTo('blog',1);
     }
     
     function testVariableListAtTheEnd()
@@ -92,7 +104,7 @@ class AkRouterSpecs extends PHPUnit_Routing_TestCase
     #bug
     function testVariablesListAtTheEndWithExpectedCount()
     {
-        $this->markTestIncomplete('BUG');
+        $this->markTestIncomplete('BUG #166');
         $this->connect('/:controller/*options',array('options'=>3));
         $this->get('/control/this/and/that')    ->resolvesTo('control',array('this','and','that'));
         $this->get('/control/not/this')         ->doesntResolve();    #fails
@@ -118,17 +130,20 @@ class AkRouterSpecs extends PHPUnit_Routing_TestCase
     #bug
     function testVariableListAtTheBeginning()
     {
-        $this->markTestIncomplete('BUG');
+        $this->markTestIncomplete('BUG #168');
         $this->connect('*options/:action',array('controller'=>'options'));
         #both fail
         $this->get('blue/set')      ->resolvesTo(array('blue'),'set','options');
         $this->get('blue/green/set')->resolvesTo(array('blue','green'),'set','options');
+        #actual is
+        $this->get('blue/set')       ->resolvesTo(array('blue','set'),'','options');
+        $this->get('blue/green/set') ->doesntResolve();
     }
 
     #bug
     function testVariablesListAtTheBeginningWithExpectedCount()
     {
-        $this->markTestIncomplete('BUG');
+        $this->markTestIncomplete('BUG #168');
         $this->connect('*options/:action',array('controller'=>'options','options'=>2));
         $this->get('blue/green/set')       ->resolvesTo(array('blue','green'),'set','options');
         $this->get('blue/green/yellow/set')->doesntResolve();
@@ -189,7 +204,7 @@ class AkRouterSpecs extends PHPUnit_Routing_TestCase
                 'day'=>'/(([1-3])?\d{1,2}){2}/')
         );
         $this->get('/2005/10/')->resolvesTo('2005','10','','articles','view_headlines');
-        $this->get('/2006/')->resolvesTo('2006','all','','articles','view_headlines');
+        $this->get('/2006/')   ->resolvesTo('2006','all','','articles','view_headlines');
     }
 }
 ?>
