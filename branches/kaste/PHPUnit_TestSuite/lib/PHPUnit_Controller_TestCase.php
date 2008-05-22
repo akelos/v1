@@ -149,6 +149,11 @@ class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase
         return $this;
     }
     
+    /**
+     * accepts same arguments as AkActionController->redirectTo
+     *
+     * @return PHPUnit_Controller_TestCase
+     */
     function expectRedirectTo($options)
     {
         $this->expectedMethods['redirectTo'] = array($options);
@@ -161,11 +166,39 @@ class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase
         if (!isset($this->Controller->$variable_name)) $this->fail("Variable <$variable_name> not assigned.");
         $this->assertEquals($expected,$this->Controller->$variable_name);
     }
+    
+    function assertFlash($scope,$message)
+    {
+        $this->assertArrayContains($this->Controller->flash,array($scope=>$message));
+    }
+    
+    function assertFlashNow($scope,$message)
+    {
+        $this->assertArrayContains($this->Controller->flash_now,array($scope=>$message));
+    }
 
+    /**
+     * Assert that an array contains another array partially
+     * 
+     * given: array('a'=>'1','b'=>2)
+     * 
+     * you can now assert that the given contains 'b'=>2
+     * 
+     * @param array $array
+     * @param array $partial_array 
+     */
+    function assertArrayContains($array, array $partial_array)
+    {
+        $scope = key($partial_array);
+        $value = current($partial_array);
+        $this->assertArrayHasKey($scope,$array);
+        $this->assertRegExp('/'.$value.'/',$array[$scope]);
+    }
+    
     function getMethodsToMockForController()
     {
         $default_methods = array('_assertExistanceOfTemplateFile','_addInstanceVariablesToAssigns','getControllerName');
-        $default_methods = array('render','getControllerName');
+        $default_methods = array('render','getControllerName','_handleFlashAttribute');
         $methods = array_merge (array_keys($this->expectedMethods),$this->unexpectedMethods,$default_methods);
         return array_unique($methods);
     }

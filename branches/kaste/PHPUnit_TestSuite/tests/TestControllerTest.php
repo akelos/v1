@@ -31,19 +31,13 @@ class TestControllerTest extends PHPUnit_Controller_TestCase
         $this->get('weRenderText');   
     }
     
-    function testAssertsAssignedVariable()
-    {
-        $this->get('weAssignAVariable');
-        $this->assertAssign('AssignedVariable','Hello world.');
-    }
-    
-    function testExpectsFilterInTheChain()
+    function testExpectsFilter()
     {
         $this->expectFilterCalled('before_my_action');
         $this->get('weAreFiltered');
     }
     
-    function testExpectsFilterNotInTheChain()
+    function testExpectsNoFilter()
     {
         $this->expectFilterNotCalled('before_my_action');
         $this->get('weRenderText');
@@ -59,6 +53,23 @@ class TestControllerTest extends PHPUnit_Controller_TestCase
     {
         $this->expectRedirectTo(array('action'=>'here'));
         $this->get('weRedirect');
+    }
+    
+    function testAssertsAssignedVariable()
+    {
+        $this->get('weAssignAVariable');
+        $this->assertAssign('AssignedVariable','Hello world.');
+    }
+    
+    function testAssertFlashNotice()
+    {
+        $this->get('weHaveANotice');
+        $this->assertFlash('notice','You\'ve got m.{3}');
+        $this->assertFlashNow('notice','Wanna read?');
+    }
+    
+    function testCheckSession()
+    {
     }
     
     function saveGlobals()

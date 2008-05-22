@@ -50,5 +50,11 @@ class TestController extends ApplicationController
         #$this->redirectToAction('here');
         $this->redirectTo(array('action'=>'here'));
     }
+    
+    function weHaveANotice()
+    {
+        $this->flash['notice'] = 'You\'ve got mail';
+        $this->flash_now['notice'] = 'Wanna read?';
+    }
 }
 ?>
