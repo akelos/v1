@@ -1,4 +1,5 @@
 <?php
+PHPUnit_Akelos_autoload::addFolder(AK_PHPUNIT_TESTSUITE_FIXTURES);
 
 class TestModelTest extends PHPUnit_Model_TestCase
 {
@@ -31,7 +32,7 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->createTable('Person');
         
         $this->assertTrue(self::table_exists('people'));
-        $this->assertTableHasColumns('people',array('id','first_name','last_name','email','created_at'));
+        $this->assertTableHasColumns('people',array('id','first_name','last_name','updated_at','created_at'));
         
         $this->drop('people');
     }

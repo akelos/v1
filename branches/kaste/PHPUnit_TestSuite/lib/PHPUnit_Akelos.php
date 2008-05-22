@@ -4,7 +4,6 @@ PHPUnit_Akelos_autoload::ensureConfigFileLoaded();
 
 define('AK_PHPUNIT_TESTSUITE_LIB',dirname(__FILE__));
 define('AK_PHPUNIT_TESTSUITE_BASE',dirname(dirname(__FILE__)));
-#define('AK_PHPUNIT_TESTSUITE_FIXTURES','');
 define('AK_PHPUNIT_TESTSUITE_FIXTURES',AK_PHPUNIT_TESTSUITE_BASE.DS.'tests'.DS.'fixtures');
 
 spl_autoload_register(array('PHPUnit_Akelos_autoload','__autoload'));
@@ -26,6 +25,9 @@ class PHPUnit_Akelos_autoload
     	   }
     	   return false;
         }
+        if (self::includeClass(self::$extra_folders,$classname)){
+            return true;
+        }
         if (preg_match('/(Controller$|Installer$|$)/',$classname,$matches)){
             switch ($matches[1]){
                 case 'Controller': 
@@ -40,8 +42,34 @@ class PHPUnit_Akelos_autoload
             }
             return self::includeClass($search_path,$classname);
         }
-        var_dump('******');
         return false;
+    }
+    
+    static $extra_folders = array();
+
+    /**
+     * Adds a folder to the search-path. It will always be used before the standard-path.
+     * But remeber you can't redeclare classes.
+     *
+     * @param string $path
+     * @return array of the registered folders
+     */
+    static function addFolder($path)
+    {
+        foreach (func_get_args() as $path){
+            if (!in_array($path,self::$extra_folders)){
+                if (is_file($path)) $path = dirname($path);
+                
+                self::$extra_folders[] = $path;
+            }
+        }
+
+        return self::$extra_folders;
+    }
+    
+    static function deleteExtraFolders()
+    {
+        return self::$extra_folders = array();
     }
     
     /**
@@ -59,17 +87,17 @@ class PHPUnit_Akelos_autoload
     
     static function CONTROLLER_FOLDERS()
     {
-        return array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_CONTROLLERS_DIR,AK_BASE_DIR.DS.'app'.DS.'controllers');
+        return array(AK_CONTROLLERS_DIR,AK_BASE_DIR.DS.'app'.DS.'controllers');
     }
     
     static function INSTALLER_FOLDERS()
     {
-        return array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_APP_DIR.DS.'installers',AK_BASE_DIR.DS.'app'.DS.'installers');
+        return array(AK_APP_DIR.DS.'installers',AK_BASE_DIR.DS.'app'.DS.'installers');
     }
 
     static function MODEL_FOLDERS()
     {
-        return array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_MODELS_DIR,AK_BASE_DIR.DS.'app'.DS.'models');
+        return array(AK_MODELS_DIR,AK_BASE_DIR.DS.'app'.DS.'models');
     }
     
     static function searchFilenameInPath($folders,$filename)
