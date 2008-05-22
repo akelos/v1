@@ -12,6 +12,7 @@ class ModelTestExample extends PHPUnit_Model_TestCase
         $this->assertType('Person',$this->Person);
         
         # $People and $this->People hold an array of the fixture-data from the data-folder
+        # the filename of this fixture is <plural_name_of_the_model.DOT.yaml>, e.g. <people.yaml>
         # $People['sigmund']->id holds the actual id of the inserted row
         # $People['sigmund']->find() returns the ActiveRecord
         $Sigmund = $People['sigmund']->find();
@@ -23,7 +24,7 @@ class ModelTestExample extends PHPUnit_Model_TestCase
     {
         # if we hadn't neither an Artist-Model nor an Artist-installer
         $this->useModel('Artist=>id,name,tag');
-        # would create the table with the columns 'id' and 'name' and would have created an empty Model. 
+        # would create the table with the columns 'id', 'name' and 'tag' and would have created an 'empty' Model. 
         $this->assertType('ActiveRecord',$this->Artist);
 
         # we can create an Artist by doing 
