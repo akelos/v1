@@ -14,12 +14,12 @@ class PHPUnit_Akelos_autoload
             return true;
         }
         if (preg_match('/(^Ak).*$/',$classname,$matches)){
-    	   $filename = AK_LIB_DIR.DS.$classname.'.php';
-    	   if (is_file($filename)){
-    	       require_once $filename;
-    	       return true;
-    	   }
-    	   return false;
+           $filename = AK_LIB_DIR.DS.$classname.'.php';
+           if (is_file($filename)){
+               require_once $filename;
+               return true;
+           }
+           return false;
         }
         return false; 
     }
