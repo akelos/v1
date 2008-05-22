@@ -89,6 +89,52 @@ abstract class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
         return PHPUnit_Akelos_autoload::searchFileInIncludePath($include_path,$fixture_file_name);
     }
     
+    /**
+     * splits the string <a: something,b: antoher thing> into the array('a'=>'something','b'=>'another thing')
+     */
+    protected function splitIntoDataArray($data_string)
+    {
+        if (empty($data_string)) return array();
+        
+        $data_array = array();
+        # split on <,> but don't split <\,> 
+        $columns = preg_split('/(?<!\\\),/',$data_string); 
+        foreach ($columns as $column){
+            # split on <:> but only on the first one, resulting in two values
+            list ($column_name,$column_value) = array_map('trim',explode(':',$column,2));
+            # replace <\,> with <,>
+            $column_value = str_replace('\\,',',',$column_value);
+            $data_array[$column_name] = $column_value;
+        }
+        return $data_array;
+    }
+    
+    function __call($name,$args)
+    {
+        # createArtist(...) => createRecord('Artist',...);
+        if (preg_match('/^create([A-Z].+)$/',$name,$matches)){
+            array_unshift($args,$matches[1]);
+            return call_user_func_array(array($this,'createRecord'),$args);            
+        }
+        throw new BadMethodCallException("Call to unknown method <$name> in ".__CLASS__.".");
+    }
+    
+    private function createRecord($model_name,$data='')
+    {
+        if (!isset($this->$model_name)) throw new InvalidArgumentException("Can't find model <$model_name> on <\$this->$model_name>.");
+
+        $data = array_merge($this->getDefaultDataForFixedRecord($model_name),$this->splitIntoDataArray($data));
+        return $this->$model_name->create($data);
+    }
+    
+    private function getDefaultDataForFixedRecord($model_name)
+    {
+        $method_name = "default$model_name";
+        if (!method_exists($this,$method_name)) return array();
+        return $this->$method_name();
+    }
+    
+    
 }
 
 ?>
