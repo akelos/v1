@@ -1,5 +1,4 @@
 <?php
-require_once preg_replace('|(tests\\'.DIRECTORY_SEPARATOR.'.*$)|','lib'.DIRECTORY_SEPARATOR.'PHPUnit_Akelos.php',__FILE__);
 
 class RoutingTestExample extends PHPUnit_Routing_TestCase 
 {

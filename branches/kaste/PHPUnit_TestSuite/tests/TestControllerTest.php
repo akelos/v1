@@ -1,5 +1,4 @@
 <?php
-require_once dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'PHPUnit_Akelos.php';
 
 class TestControllerTest extends PHPUnit_Controller_TestCase 
 {
