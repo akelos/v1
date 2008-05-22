@@ -1,6 +1,6 @@
 <?php
 
-class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase 
+abstract class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase 
 {
     var $controller_name;
     
