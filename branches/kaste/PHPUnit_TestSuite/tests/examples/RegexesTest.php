@@ -1,5 +1,5 @@
 <?php
-require_once dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'PHPUnit_Akelos.php';
+require_once preg_replace('|(tests\\'.DIRECTORY_SEPARATOR.'.*$)|','lib'.DIRECTORY_SEPARATOR.'PHPUnit_Akelos.php',__FILE__);
 
 class RegexesTest extends PHPUnit_Regexes_TestCase
 {
