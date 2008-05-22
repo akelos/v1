@@ -22,11 +22,23 @@ class ModelTestExample extends PHPUnit_Model_TestCase
     function testGenerateTheModelAndTheTableOnTheFly()
     {
         # if we hadn't neither an Artist-Model nor an Artist-installer
-        $this->useModel('Artist=>id,name');
+        $this->useModel('Artist=>id,name,tag');
         # would create the table with the columns 'id' and 'name' and would have created an empty Model. 
         $this->assertType('ActiveRecord',$this->Artist);
-        
-        $this->Artist->create(array('name'=>'Supertramp'));
+
+        # we can create an Artist by doing 
+        $Super = $this->createArtist('name: Supertramp, tag: super-goofy');
+        $this->assertEquals('Supertramp', $Super->name);
+        # since this is a comma-seperated list, escape a <,> with <\,> in your strings 
+
+        # the given data will be merged with the array returned by <defaultArtist()>
+        $Duran = $this->createArtist('name: Duran Duran');
+        $this->assertEquals('so-so',$Duran->tag);
+    }
+    
+    function defaultArtist()
+    {
+        return array('tag'=>'so-so');
     }
     
 }
