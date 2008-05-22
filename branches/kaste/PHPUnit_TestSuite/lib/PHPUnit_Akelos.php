@@ -78,12 +78,14 @@ class PHPUnit_Akelos_autoload
     {
         if (defined('AK_ENVIRONMENT')) return true;
 
-        $DS = DIRECTORY_SEPARATOR;
-        $config_file = preg_replace('@((vendor\\'.$DS.'PHPUnit_TestSuite|test\\'.$DS.'unit).*)$@',
-                                    'test'.$DS.'fixtures'.$DS.'config'.$DS.'config.php',
-                                    __FILE__);
+        define(DS,DIRECTORY_SEPARATOR);
+        
+        $quoted_path = preg_quote(DS.'app'.DS.'vendor'.DS);
+        defined(AK_BASE_DIR) ? null : define(AK_BASE_DIR,preg_replace('@'.$quoted_path.'.*$@','',__FILE__));
+
+        $config_file = AK_BASE_DIR.DS.'test'.DS.'fixtures'.DS.'config'.DS.'config.php';
         if (!is_file($config_file) || $config_file == __FILE__) 
-            exit ("Whoa! That didnt start too well. config/config.php not found, tried: $config_file");
+            exit ("Whoa! That didnt start too well. config/config.php not found!\n\r defined AK_BASE_DIR=".AK_BASE_DIR.",\n\r accordingly tried:  $config_file");
             
         require_once $config_file;
         return true;
