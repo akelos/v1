@@ -3,6 +3,28 @@
 abstract class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase 
 {
 
+    /**
+     * Will drop and then create the table for the model, instantiate it and load the fixture if any is present.
+     * 
+     * ->useModel('Person')
+     * will look for an installer-file <person_installer.php> and use it for creating the table. 
+     * It will include the Person-model or genertae an empty/default model if none is found in the include path.
+     * An instance of the model can found at $this->Person. After all it will look for a fixture named
+     * <people.yaml> in the path and create the records/rows in the database. A copy of this data can be found
+     * at $this->People as an associative array. 
+     * Additionally it returns the instance and the fixture-data, so you can do
+     *     list($Person,$People) = $this->useModel('Person'); 
+     * and use these local variables. 
+     * 
+     * ->useModel('Person=>id,name')
+     * will instead of using an installer-file simply use the columns provided. I.e. it will drop and then create
+     * the table <people> with the columns 'id' and 'name'. In fact the table-definition can be the same as in any
+     * installer, so you can really quickly prototype your staff.  
+     *   
+     *
+     * @param string $model_name optionally with table-defintion 
+     * @return array an instance of the model and the fixture-data 
+     */
     function useModel($model_name)
     {
         @list($model_name,$table_definition) = $this->splitIntoModelNameAndTableDefinition($model_name);
@@ -102,13 +124,18 @@ abstract class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
         foreach ($columns as $column){
             # split on <:> but only on the first one, resulting in two values
             list ($column_name,$column_value) = array_map('trim',explode(':',$column,2));
-            # replace <\,> with <,>
+            # finally replace <\,> with <,>
             $column_value = str_replace('\\,',',',$column_value);
             $data_array[$column_name] = $column_value;
         }
         return $data_array;
     }
     
+    /**
+     * catches create<Modelname> and calls ->createRecord(Modelname,args*)
+     * 
+     * @throws BadMethodCallException
+     */
     function __call($name,$args)
     {
         # createArtist(...) => createRecord('Artist',...);
