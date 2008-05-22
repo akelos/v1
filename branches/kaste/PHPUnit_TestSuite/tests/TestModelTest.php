@@ -97,6 +97,16 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->drop('people');
     }
     
+    function testFindOnAFixtureObjectShouldReturnTheActiveRecord()
+    {
+        list($Person,$People) = $this->useModel('Person');
+        $Sigmund = $People['sigmund']->find();
+        
+        $this->assertType('FixedActiveRecord',$People['sigmund']);
+        $this->assertType('ActiveRecord',$Sigmund);
+        $this->assertEquals($Sigmund,$Person->find($People['sigmund']->id));
+    }
+    
     function testSplitIntoModelAndDefinition()
     {
         $this->assertEquals(array('Artist','id,name'),$this->splitIntoModelNameAndTableDefinition('Artist=>id,name'));

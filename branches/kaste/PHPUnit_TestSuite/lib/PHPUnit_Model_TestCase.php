@@ -1,6 +1,6 @@
 <?php
 
-class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase 
+abstract class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase 
 {
 
     function useModel($model_name)
@@ -77,7 +77,7 @@ class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
             $Record = $Model->create($item);
             #we replace the 'id' with the returned value from the db
             $item['id'] = $Record->getId();
-            $Fixture[$id] = new FixtureRecord($item);
+            $Fixture[$id] = new FixedActiveRecord($item, $Model);
         }
         return $this->{AkInflector::pluralize($model_name)} = $Fixture;
     }
@@ -89,21 +89,6 @@ class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
         return PHPUnit_Akelos_autoload::searchFileInIncludePath($include_path,$fixture_file_name);
     }
     
-}
-
-class FixtureRecord
-{
-    private $data;
-    
-    function __construct($data)
-    {
-        $this->data = $data;
-    }
-    
-    function __get($name)
-    {
-        return $this->data[$name];
-    }
 }
 
 ?>
