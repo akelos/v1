@@ -24,7 +24,6 @@ abstract class PHPUnit_Regexes_TestCase extends PHPUnit_Framework_TestCase
     protected function against($url)
     {
         $this->preg_match_result = preg_match($this->given_pattern,$url,$matches);
-        #var_dump($matches);
         $this->resulting_matches = $matches;
         return $this;
     }
@@ -61,24 +60,24 @@ abstract class PHPUnit_Regexes_TestCase extends PHPUnit_Framework_TestCase
     
     /**
      * @param string $pattern
-     * @param string $url
+     * @param string $text
      * @return array matches
      */
-    protected function patternMatches($pattern,$url)
+    protected function patternMatches($pattern,$text)
     {
-        $res = preg_match($pattern,$url,$matches);
-        $this->assertEquals(1,$res,"Unexpected 404."); # matches
+        $result = preg_match($pattern,$text,$matches);
+        $this->assertEquals(1,$result,"Expected match, actual no match.");
         return $matches;
     }
     
     /**
      * @param string $pattern
-     * @param string $url
+     * @param string $text
      */
-    protected function patternDoesNotMatch($pattern,$url)
+    protected function patternDoesNotMatch($pattern,$text)
     {
-        $res = preg_match($pattern,$url,$matches);
-        $this->assertEquals(0,$res,"Unexpected Match."); # doesnt match
+        $result = preg_match($pattern,$text,$matches);
+        $this->assertEquals(0,$result,"Expected no match, actual matched.");
     }
      
     
