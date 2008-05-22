@@ -21,7 +21,7 @@ class RoutingTestExample extends PHPUnit_Routing_TestCase
     
     function testAddAndTestANewRoute()
     {
-        $this->instantiateRouter();
+        $this->instantiateRouter(); # we need a fresh router here
         $this->connect('/:artist/:album',array('controller'=>'artist','action'=>'list'));
 
         $this->get('autechre/quaristice')->resolvesTo('autechre','quaristice','artist','list');
