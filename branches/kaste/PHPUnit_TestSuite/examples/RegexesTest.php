@@ -1,6 +1,6 @@
 <?php
 
-class RegexesTest extends PHPUnit_Regexes_TestCase
+class RegexesTestExample extends PHPUnit_Regexes_TestCase
 {
 
     function testMatchAgainstStaticText()
