@@ -1,9 +1,7 @@
 sigmund:
-  id: 1
   first_name: Sigmund
   last_name:  Freud
   
 melanie:
-  id: 2
   first_name: Melanie
   last_name:  Klein
