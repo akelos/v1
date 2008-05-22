@@ -3,7 +3,7 @@
 /**
  * @method assertParameter($expected)    f.i. assertController('blog') || assertColor('blue') 
  */
-class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase 
+abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase 
 {
 
     /**
@@ -11,17 +11,11 @@ class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
      */
     var $Router;
     
-    private $resolvedRequest;
-    private $used_map;
+    private $params;
 
     function setUp()
     {
         $this->useDefaultMap();
-    }
-    
-    function tearDown()
-    {
-        #unset ($this->Router,$this->resolvedRequest,$this->used_map);
     }
     
     function useDefaultMap()
@@ -32,56 +26,57 @@ class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     function useMap($map_file)
     {
         if (!is_file($map_file)) throw new Exception("Could not find $map_file"); 
-        $this->used_map = $map_file;
         
-        $this->instantiateRouter($map_file);
+        $Map = $this->instantiateRouter();
+        include $map_file;
         #$routes_file_in_test_dir = trim(AK_APP_DIR,strrchr(AK_APP_DIR,DS)).DS.'config'.DS.'routes.php';
         #$default_routes_file = AK_ROUTES_MAPPING_FILE;
     }
     
-    private function instantiateRouter($map_file)
+    function instantiateRouter()
     {
-        $Map = new AkRouter();
-        include $map_file;
-        $this->Router = $Map;
+        return $this->Router = new AkRouter();
     }
     
     function get($url)
     {
-        $this->resolvedRequest = $this->Router->toParams($url);
+        $this->params = $this->Router->toParams($url);
     }
     
     function assert404()
     {
-        if ($this->resolvedRequest) $this->fail("Expected a 404, actually got a match.");
+        $this->ensureNoMatch();
     }
     
-    function ensureRequestIsSolved()
+    private function ensureNoMatch()
     {
-        if (!$this->resolvedRequest) $this->fail("Expected a match, actually got a 404.");
+        if ($this->params) $this->fail("Expected no match, actually got a match.");
+    }
+    
+    private function ensureMatch()
+    {
+        if (!$this->params) $this->fail("Expected a match, actually got no match.");
     }
     
     function assertParameterEquals($expected,$param_name)
     {
-        $this->ensureRequestIsSolved();
+        $this->ensureMatch();
         $this->ensureParameterIsSet($param_name);
-        $this->assertEquals($expected,$this->resolvedRequest[$param_name],"Expected $param_name to be <$expected>, actually is <{$this->resolvedRequest[$param_name]}>.");
+        $this->assertEquals($expected,$this->params[$param_name],"Expected $param_name to be <$expected>, actually is <{$this->params[$param_name]}>.");
     }
     
-    function ensureParameterIsSet($param_name)
+    private function ensureParameterIsSet($param_name)
     {
-        $this->assertArrayHasKey($param_name,$this->resolvedRequest,"Router did not set the parameter $param_name.");
+        $this->assertArrayHasKey($param_name,$this->params,"Router did not set the parameter $param_name.");
     }
     
     function assertParameterNotSet($param_name)
     {
         // we can't use assertArrayNotHasKey because sometimes a parameter is set to an empty string  
-        // $this->assertArrayNotHasKey($param_name,$this->resolvedRequest);
-        
-        if (isset($this->resolvedRequest[$param_name]) && !empty($this->resolvedRequest[$param_name])){
+        // $this->assertArrayNotHasKey($param_name,$this->params);
+        if (isset($this->params[$param_name]) && !empty($this->params[$param_name])){
             $this->fail("Parameter $param_name was set, but was not expected.");
         }
-        
     }
     
     // though __call would match these, we define some basic assertions for type-h(i|u)nting IDE's  
