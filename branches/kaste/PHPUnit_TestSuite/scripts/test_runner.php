@@ -61,25 +61,30 @@ class PHPUnit_TestRunner
                     $this->options['verbose'] = true;
                     break;
                 case '-?':
+                default:
                     $this->drawHelp();
                     break;
             }
         }
     }
     
-    function tryToAddToSuite(&$suite,$file)
+    function tryToAddToSuite(PHPUnit_Framework_TestSuite &$suite,$file)
     {
         if (substr($file,0,1)=='_'){
             return false;
         }elseif (is_file($file)){
-            $suite->addTestFile((string)$file);
+            $suite->addTestFile((string)$file,false);
         }elseif (is_dir($file)){
             $suite->addTestSuite($this->createSuiteForDirectory((string)$file));
         }else{
             return false;
         }
+        return true;
     }
     
+    /**
+     * @return PHPUnit_Framework_TestSuite
+     */
     function createSuiteForDirectory($path)
     {
         $suite = $this->createTestSuite(AkInflector::humanize($path));
@@ -92,7 +97,7 @@ class PHPUnit_TestRunner
     
     function run()
     {
-        return PHPUnit_TextUI_TestRunner::run($this->suite(),array('verbose'=>$this->options['verbose']));
+        return PHPUnit_TextUI_TestRunner::run($this->suite(),$this->options);
     }
     
     function drawHelp()
