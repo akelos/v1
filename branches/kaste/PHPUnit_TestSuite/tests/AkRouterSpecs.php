@@ -1,72 +1,15 @@
 <?php
 require_once dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'PHPUnit_Akelos.php';
 
-class AkRouterSpecs extends PHPUnit_Framework_TestCase 
+class AkRouterSpecs extends PHPUnit_Routing_TestCase 
 {
-    /**
-     * @var AkRouter
-     */
-    var $Router;
-    var $params;
+
     function setUp()
     {
-    	$this->Router = new AkRouter();
-    	
+        $this->instantiateRouter();
     }
     
-    protected function connect($url_pattern, $options = array(), $requirements = null)
-    {
-        $this->Router->connect($url_pattern, $options, $requirements);
-    }
-    
-    /**
-     * @param string $url
-     * @return AkRouterSpec
-     */
-    protected function get($url)
-    {
-        $this->params = $this->Router->toParams($url);
-        return $this;
-    }
-    
-    /**
-     * ->resolvesTo(array('controller'=>'blog','action'=>'index'))
-     * ->resolvesTo('blog','index')
-     * @param mixed a hash (arg[0]) or a list of values (args*)
-     */
-    protected function resolvesTo()
-    {
-        if (!$this->params) $this->fail("Request not resolved. =404");
-
-        $params = func_get_args();
-        if (is_array($params[0]) && !isset($params[0][0])){ // ->resolvesTo(array('controller'=>'blog','action'=>'index'));
-            return $this->assertEquals($params[0],$this->params);
-        }else{                     // ->resolvesTo('blog','index');
-            return $this->assertSameValues($params,$this->params);
-        }
-    }
-    
-    protected function doesntResolve()
-    {
-        if ($this->params) return $this->fail("Expected 404, actual resolved.");
-    }
-
-    protected function assertSameValues($array,$hash)
-    {
-        $k = 0;
-        foreach ($hash as $key=>$value){
-            if (!isset($array[$k])){
-                return $this->fail("Parameter <$key> not expected, but in actual.");
-            }
-            $this->assertEquals($array[$k++],$value);
-        }
-        if ($k < count($array)){
-            return $this->fail("Expected <{$array[$k]}>, not in actual.");
-        }
-        return true;        
-    }
-    
-    function testTestAPI()
+    function testShowsTheTestAPI()
     {
     	$this->connect('/:controller/:action');
     	$this->get('/blog/index');

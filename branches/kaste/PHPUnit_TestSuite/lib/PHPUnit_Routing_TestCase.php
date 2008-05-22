@@ -11,7 +11,7 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
      */
     var $Router;
     
-    private $params;
+    protected $params;
 
     function setUp()
     {
@@ -37,12 +37,44 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     {
         return $this->Router = new AkRouter();
     }
+
+    function connect($url_pattern, $options = array(), $requirements = null)
+    {
+        $this->Router->connect($url_pattern, $options, $requirements);
+    }
     
+    /**
+     * @param string $url
+     * @return AkRouterSpec
+     */
     function get($url)
     {
         $this->params = $this->Router->toParams($url);
+        return $this;
     }
     
+    /**
+     * ->resolvesTo(array('controller'=>'blog','action'=>'index'))
+     * ->resolvesTo('blog','index')
+     * @param mixed a hash (arg[0]) or a list of values (args*)
+     */
+    function resolvesTo()
+    {
+        $this->ensureMatch();
+
+        $params = func_get_args();
+        if ($this->is_hash($params[0])){ // ->resolvesTo(array('controller'=>'blog','action'=>'index'));
+            return $this->assertEquals($params[0],$this->params);
+        }else{                           // ->resolvesTo('blog','index');
+            return $this->assertSameValues($params,$this->params);
+        }
+    }
+    
+    function doesntResolve()
+    {
+        $this->ensureNoMatch();
+    }
+
     function assert404()
     {
         $this->ensureNoMatch();
@@ -58,16 +90,16 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
         if (!$this->params) $this->fail("Expected a match, actually got no match.");
     }
     
+    private function ensureParameterIsSet($param_name)
+    {
+        $this->assertArrayHasKey($param_name,$this->params,"Router did not set the parameter $param_name.");
+    }
+    
     function assertParameterEquals($expected,$param_name)
     {
         $this->ensureMatch();
         $this->ensureParameterIsSet($param_name);
         $this->assertEquals($expected,$this->params[$param_name],"Expected $param_name to be <$expected>, actually is <{$this->params[$param_name]}>.");
-    }
-    
-    private function ensureParameterIsSet($param_name)
-    {
-        $this->assertArrayHasKey($param_name,$this->params,"Router did not set the parameter $param_name.");
     }
     
     function assertParameterNotSet($param_name)
@@ -102,6 +134,29 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
             return $this->assertParameterEquals($args[0],$param);
         }
         throw new BadMethodCallException("Call to unknown method <$method_name> in ".__CLASS__.".");
+    }
+
+    /**
+     * Compares the values of the array and the values of the hash ignoring its keys
+     */
+    function assertSameValues($array,$hash)
+    {
+        $k = 0;
+        foreach ($hash as $key=>$value){
+            if (!isset($array[$k])){
+                return $this->fail("Parameter <$key> not expected, but in actual.");
+            }
+            $this->assertEquals($array[$k++],$value);
+        }
+        if ($k < count($array)){
+            return $this->fail("Expected <{$array[$k]}>, not in actual.");
+        }
+        return true;        
+    }
+
+    private function is_hash($hash)
+    {
+        return is_array($hash) && !isset($hash[0]);
     }
     
 }
