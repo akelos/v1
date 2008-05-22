@@ -19,43 +19,43 @@ class TestControllerTest extends PHPUnit_Controller_TestCase
         $this->assertEquals('Test',$this->Controller->getControllerName());
     }
     
-    function testExpectedView()
+    function testExpectsDefaultRender()
     {
         $this->expectDefaultRender();
         $this->get('index');
     }
     
-    function testExpectedRenderedText()
+    function testExpectsExplicitRender()
     {
         $this->expectRender(array('text'=>'Hello world.'));
         $this->get('weRenderText');   
     }
     
-    function testForAssignedVariable()
+    function testAssertsAssignedVariable()
     {
         $this->get('weAssignAVariable');
         $this->assertAssign('AssignedVariable','Hello world.');
     }
     
-    function testExpectedFilter()
+    function testExpectsFilterInTheChain()
     {
         $this->expectFilterCalled('before_my_action');
         $this->get('weAreFiltered');
     }
     
-    function testFilterNotCalled()
+    function testExpectsFilterNotInTheChain()
     {
         $this->expectFilterNotCalled('before_my_action');
         $this->get('weRenderText');
     }
     
-    function testActionNotCalled()
+    function testExpectsActionNotCalled()
     {
         $this->expectActionNotCalled();
         $this->get('weNeverReach');
     }
     
-    function testRedirect()
+    function testExpectsRedirect()
     {
         $this->expectRedirectTo(array('action'=>'here'));
         $this->get('weRedirect');
