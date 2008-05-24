@@ -20,7 +20,7 @@ class TestModelTest extends PHPUnit_Model_TestCase
         $this->generateModel('UnusualName');
         $this->assertTrue(class_exists('UnusualName',false));
         
-        #we need a table before we can instantiate a ActiveRecord
+        #we need a table before we can instantiate an ActiveRecord
         $this->createTable('UnusualName','id,title');
         $this->assertType('ActiveRecord',new UnusualName());
         
