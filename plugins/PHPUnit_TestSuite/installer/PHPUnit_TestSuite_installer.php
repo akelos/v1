@@ -8,8 +8,8 @@ class PHPUnitTestSuiteInstaller extends AkInstaller
         $target = AK_BASE_DIR.DS.'script'.DS.'phpunit_testsuite.php';
 
         copy($source,$target);
-        $source_file_mode = fileperms($path);
-        $target_file_mode = fileperms($destination_file);
+        $source_file_mode = fileperms($source);
+        $target_file_mode = fileperms($target);
         if($source_file_mode != $target_file_mode){
             chmod($destination_file,$source_file_mode);
         }
