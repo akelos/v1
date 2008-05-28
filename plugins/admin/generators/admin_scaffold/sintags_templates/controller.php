@@ -29,7 +29,7 @@ class <?php echo $controller_class_name?> extends AdminController
    
     function index()
     {
-        $this->renderAction('listing');
+        $this->performAction('listing');
     }
 
 <?php  foreach((array)@$actions as $action) :?>
@@ -40,8 +40,9 @@ class <?php echo $controller_class_name?> extends AdminController
 <?php  endforeach; ?>
     function listing()
     {
-        $this-><?php echo $singular_name?>_pages = $this->pagination_helper->getPaginator($this-><?php echo $model_name?>, array('items_per_page' => 10));        
-        $this-><?php echo $CamelCasePlural?> =& $this-><?php echo $model_name?>->find('all', $this->pagination_helper->getFindOptions($this-><?php echo $model_name?>));
+        $this-><?php echo $singular_name?>_pages = $this->pagination_helper->getPaginator($this-><?php echo $model_name?>, array('items_per_page' => 10));
+        $options = $this->pagination_helper->getFindOptions($this-><?php echo $model_name?>);
+        $this-><?php echo $CamelCasePlural?> =& $this-><?php echo $model_name?>->find('all', $options);
     }
 
     function show()

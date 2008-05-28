@@ -8,10 +8,6 @@
 
 class <?php  echo $model_name?>TestCase extends  AkUnitTest
 {
-<?php 
-echo !empty($module_preffix) ? '    var $module = \''.trim($module_preffix,DS).'\';' : ''
-?>
-
     function test_setup()
     {
         $this->installAndIncludeModels('<?php  echo $model_name?>');
