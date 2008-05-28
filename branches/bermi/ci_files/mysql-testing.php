@@ -1,15 +1,16 @@
 <?php
 
 $database_settings = array(
-    'testing' => array(
-        'type' => 'mysql',
-        'host' => 'localhost',
-        'database_name' => 'framework_tests',
-        'user' => 'root',
-        'password' => '',
-        'options' => ''
-    )
-);
+'testing' => array(
+    'type' => 'mysql',
+    'host' => 'localhost',
+    'database_name' => 'framework_tests',
+    'user' => 'root',
+    'password' => '',
+    'options' => ''
+));
+
+$database_settings['development'] = $database_settings['production'] = $database_settings['testing'];
 
 defined('AK_ENVIRONMENT') ? null : define('AK_ENVIRONMENT', 'testing');
 defined('AK_BASE_DIR') ? null : define('AK_BASE_DIR', str_replace(DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php','',__FILE__));

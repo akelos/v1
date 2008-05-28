@@ -11,6 +11,8 @@ $database_settings = array(
     )
 );
 
+$database_settings['development'] = $database_settings['production'] = $database_settings['testing'];
+
 defined('AK_ENVIRONMENT') ? null : define('AK_ENVIRONMENT', 'testing');
 defined('AK_BASE_DIR') ? null : define('AK_BASE_DIR', str_replace(DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php','',__FILE__));
 defined('AK_TESTING_URL') ? null : define('AK_TESTING_URL', 'http://localhost/framework_tests/test/fixtures/public');
