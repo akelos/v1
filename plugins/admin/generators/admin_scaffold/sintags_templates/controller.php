@@ -29,7 +29,7 @@ class <?php echo $controller_class_name?> extends AdminController
    
     function index()
     {
-        $this->performAction('listing');
+        $this->redirectToAction('listing');
     }
 
 <?php  foreach((array)@$actions as $action) :?>
