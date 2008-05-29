@@ -12,27 +12,50 @@ class AdminInstaller extends AkInstaller
 
         echo "\nWe need some details for setting up the admin.\n\n ";
         $this->modifyRoutes();
+        $this->relativizeStylesheetPaths();
         $this->runMigration();
         echo "\n\nInstallation completed\n";
     }
 
     function down_1()
     {
+        include_once(AK_APP_INSTALLERS_DIR.DS.'admin_plugin_installer.php');
+        $Installer =& new AdminPluginInstaller();
+
+        echo "Uninstalling the admin plugin migration\n";
+        $Installer->uninstall();
     }
 
 
-    function checkForCollisions($directory_structure, $base_path = AK_ADMIN_PLUGIN_FILES_DIR)
+    function checkForCollisions(&$directory_structure, $base_path = AK_ADMIN_PLUGIN_FILES_DIR)
     {
         foreach ($directory_structure as $k=>$node){
+            if(!empty($this->skip_all)){
+                return ;
+            }
             $path = str_replace(AK_ADMIN_PLUGIN_FILES_DIR, AK_BASE_DIR, $base_path.DS.$node);
             if(is_file($path)){
-                trigger_error(Ak::t('File %file exists.', array('%file'=>$path)), E_USER_ERROR);
-                exit;
+                $message = Ak::t('File %file exists.', array('%file'=>$path));
+                $user_response = AkInstaller::promptUserVar($message."\n d (overwrite mine), i (keep mine), a (abort), O (overwrite all), K (keep all)", 'i');
+                if($user_response == 'i'){
+                    unset($directory_structure[$k]);
+                }    elseif($user_response == 'O'){
+                    return false;
+                }    elseif($user_response == 'K'){
+                    $directory_structure = array();
+                    return false;
+                }elseif($user_response != 'd'){
+                    echo "\nAborting\n";
+                    exit;
+                }
             }elseif(is_array($node)){
                 foreach ($node as $dir=>$items){
                     $path = $base_path.DS.$dir;
                     if(is_dir($path)){
-                        $this->checkForCollisions($items, $path);
+                        if($this->checkForCollisions($directory_structure[$k][$dir], $path) === false){
+                            $this->skip_all = true;
+                            return;
+                        }
                     }
                 }
             }
@@ -58,10 +81,29 @@ class AdminInstaller extends AkInstaller
         $Installer =& new AdminPluginInstaller();
 
         echo "Running the admin plugin migration\n";
-        //$Installer->uninstall();
         $Installer->install();
+    }
+    function relativizeStylesheetPaths()
+    {
+        $url_suffix = AkInstaller::promptUserVar(
+        'The admin plugin comes with some fancy CSS background images.
 
+Your aplication might be accesible at /myapp, 
+and your images folder might be at /myapp/public
 
+Insert the relative path where your images folder is
+so you don\'t need to manually edit the CSS files', array('default'=>'/'));
+        
+        $url_suffix =  trim(preg_replace('/\/?images\/admin\/?$/','',$url_suffix),'/');
+        
+        if(!empty($url_suffix)){
+            $stylesheets = array('admin/admin','admin/menu');
+            foreach ($stylesheets as $stylesheet) {
+                $filename = AK_PUBLIC_DIR.DS.'stylesheets'.DS.$stylesheet.'.css';
+                $relativized_css = preg_replace("/url\((\'|\")?\/images/","url($1/$url_suffix/images", @Ak::file_get_contents($filename));
+                !empty($relativized_css) && @Ak::file_put_contents($filename, $relativized_css);
+            }
+        }
     }
 
     function _copyFiles($directory_structure, $base_path = AK_ADMIN_PLUGIN_FILES_DIR)

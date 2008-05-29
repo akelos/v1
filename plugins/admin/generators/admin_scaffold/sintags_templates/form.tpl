@@ -1,7 +1,7 @@
-<?php  echo '<%'?>= error_messages_for '<?php  echo $singular_name?>' %>
+<?php  echo '<%'?>= error_messages_for '<?php  echo $model_name?>' %>
 
 <?php  if(empty($content_columns)) : ?>
-<?php  echo '<%'?>= all_input_tags <?php  echo $model_name?>, '<?php  echo $singular_name?>', {} %>
+<?php  echo '<%'?>= all_input_tags <?php  echo $model_name?>, '<?php  echo $model_name?>', {} %>
 <?php  else : 
         foreach ($content_columns as $column=>$details){
             if($column == 'id'){
@@ -12,7 +12,7 @@
         <label for=\"{$singular_name}_{$column}\">_{".
             AkInflector::humanize($details['name']).
             "}</label> 
-        <%= input '$singular_name', '$column' %>
+        <%= input '$model_name', '$column' %>
     </fieldset>
 
 ";
