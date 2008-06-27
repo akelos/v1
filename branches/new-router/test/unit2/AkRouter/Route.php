@@ -114,28 +114,12 @@ class Route extends AkObject
         return $this->segments = $segments;
     }
     
-    function hasRequirement($name)
-    {
-        return isset($this->requirements[$name]); 
-    }
-    
-    function innerRegExFor($name)
-    {
-        if ($this->hasRequirement($name)) return $this->requirements[$name];
-        return '[^/]*';  //default requirement matches all but stops on dashes
-    }
-    
     function isVariableSegment($name)
     {
         if ($name && $name{0}==':') return true;
         return false;
     }
-    
-    function isOptional($name)
-    {
-        if (isset($this->defaults[$name]) && $this->defaults[$name]===COMPULSORY) return false;
-        return true;
-    }
+
 }
 
 ?>
