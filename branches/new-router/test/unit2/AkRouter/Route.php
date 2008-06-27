@@ -42,7 +42,7 @@ class Route extends AkObject
         
         $segments = explode('/',trim($this->url_pattern,'/'));
         foreach ($segments as &$segment){
-            if ($segment{0}==':'){
+            if ($this->isVariableSegment($segment)){
                 $this->dynamic_segments[] = $name = substr($segment,1);
                 $segment = "(/{$this->innerRegExFor($name)})?";
             }else{
@@ -59,6 +59,12 @@ class Route extends AkObject
     {
         if (isset($this->requirements[$name])) return $this->requirements[$name];
         return '[^/]*';  //default requirement matches all but stops on dashes
+    }
+    
+    function isVariableSegment($name)
+    {
+        if ($name{0}==':') return true;
+        return false;
     }
 }
 
