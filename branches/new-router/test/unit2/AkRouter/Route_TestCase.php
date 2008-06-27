@@ -1,6 +1,6 @@
 <?php
 PHPUnit_Akelos_autoload::addFolder(dirname(__FILE__).DS.'lib');
-require_once dirname(__FILE__).DS.'lib'.DS.'Router.php';
+require_once dirname(__FILE__).DS.'lib'.DS.'AkRouter.php';
 
 abstract class Route_TestCase extends PHPUnit_Framework_TestCase
 {
@@ -10,7 +10,7 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     protected $Request;
     
     /**
-     * @var Route
+     * @var AkRoute
      */
     protected $Route;
 
@@ -37,7 +37,7 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
      */
     function withRoute($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
-        $this->Route = new Route($url_pattern,$defaults,$requirements,$conditions);
+        $this->Route = new AkRoute($url_pattern,$defaults,$requirements,$conditions);
         return $this;
     }
 

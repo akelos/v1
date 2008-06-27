@@ -19,7 +19,7 @@
  */
 
 
-class Segment 
+class AkSegment 
 {
     public     $name;
     protected  $delimiter;

@@ -7,7 +7,7 @@ class ApiOfRouteTestCase extends Route_TestCase
     function testWithRouteInstantiatesARoute()
     {
         $this->withRoute('/person/:name');
-        $this->assertType('Route',$this->Route);
+        $this->assertType('AkRoute',$this->Route);
     }
     
     function testMockedRequestCanBeAskedAboutRequestedUrl()

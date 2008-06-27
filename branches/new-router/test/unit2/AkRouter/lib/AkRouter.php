@@ -23,10 +23,12 @@ define ('COMPULSORY','COMPULSORY');
 define ('OPTIONAL','OPTIONAL');
 define ('ANY','ANY');
 
+require_once 'AkRouter'.DS.'AkRoute.php';
+
 class NoMatchingRouteException extends Exception 
 { }
 
-class Router extends AkObject 
+class AkRouter extends AkObject 
 {
 
     private $routes = array();
@@ -34,7 +36,7 @@ class Router extends AkObject
     function connect($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
         $this->handleDeprecatedApi($defaults,$requirements);
-        return $this->addRoute(null,new Route($url_pattern,$defaults,$requirements,$conditions));
+        return $this->addRoute(null,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
     }
     
     function handleDeprecatedApi(&$defaults,&$requirements)
@@ -82,7 +84,7 @@ class Router extends AkObject
         }
     }
     
-    function addRoute($name = null,Route $route)
+    function addRoute($name = null,AkRoute $route)
     {
         $name ? $this->routes[$name] = $route : $this->routes[] = $route;
         return $route;
@@ -133,7 +135,7 @@ class Router extends AkObject
     private function connectNamed($name,$url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
         $this->handleDeprecatedApi($defaults,$requirements);        
-        return $this->addRoute($name,new Route($url_pattern,$defaults,$requirements,$conditions));
+        return $this->addRoute($name,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
     }
     
     private function urlizeUsingNamedRoute($name,$params)
@@ -149,7 +151,7 @@ class Router extends AkObject
 if (!defined('AK_URL_REWRITE_ENABLED')){
     if (!defined('AK_ENABLE_URL_REWRITE') || AK_ENABLE_URL_REWRITE){
         require_once 'RouterConfig.php';
-        RouterConfig::loadUrlRewriteSettings();
+        AkRouterConfig::loadUrlRewriteSettings();
     }
 }
 

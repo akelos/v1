@@ -19,7 +19,7 @@
  */
 
 
-class VariableSegment extends Segment 
+class AkVariableSegment extends AkSegment 
 {
 
     function getRegEx()

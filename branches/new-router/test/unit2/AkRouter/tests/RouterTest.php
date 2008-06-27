@@ -9,24 +9,24 @@ class RouterTest extends PHPUnit_Framework_TestCase
     private $Router;
     function setUp()
     {
-        $this->Router = new Router();
+        $this->Router = new AkRouter();
     }
 
     function testInstantiateRouter()
     {
-        $Router = new Router();
+        $Router = new AkRouter();
     }
     
     function testAddRoute()
     {
-        $this->Router->addRoute(null,new Route('person/:name'));
+        $this->Router->addRoute(null,new AkRoute('person/:name'));
         $this->assertEquals(1, count($this->Router->getRoutes()));
         $this->assertEquals(array(0),array_keys($this->Router->getRoutes()));
     }
     
     function testAddNamedRoute()
     {
-        $this->Router->addRoute('person',new Route('person/:name'));
+        $this->Router->addRoute('person',new AkRoute('person/:name'));
         $this->assertEquals(1, count($this->Router->getRoutes()));
         $this->assertEquals(array('person'),array_keys($this->Router->getRoutes()));
     }
@@ -50,7 +50,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     function testMatchThrowsAnExcpetionIfRequestCannotBeSolved()
     {
         $Request = new AkRequest();
-        $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
+        $PersonRoute = $this->getMock('AkRoute',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
                     ->method('parametrize')
                     ->with($Request)
@@ -65,12 +65,12 @@ class RouterTest extends PHPUnit_Framework_TestCase
     function testMatchTraversesAllRegisteredRoutesIfFalseIsReturned()
     {
         $Request = new AkRequest();
-        $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
+        $PersonRoute = $this->getMock('AkRoute',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
                     ->method('parametrize')
                     ->with($Request)
                     ->will($this->returnValue(false));
-        $AuthorRoute = $this->getMock('Route',array(),array('author/:name'));
+        $AuthorRoute = $this->getMock('AkRoute',array(),array('author/:name'));
         $AuthorRoute->expects($this->once())
                     ->method('parametrize')
                     ->with($Request)
@@ -85,12 +85,12 @@ class RouterTest extends PHPUnit_Framework_TestCase
     
     function testUrlizeTraversesAllRegisteredRoutesWhileFalseIsReturned()
     {
-        $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
+        $PersonRoute = $this->getMock('AkRoute',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
                     ->method('urlize')
                     ->with(array('name'=>'martin'))
                     ->will($this->returnValue(false));
-        $AuthorRoute = $this->getMock('Route',array(),array('author/:name'));
+        $AuthorRoute = $this->getMock('AkRoute',array(),array('author/:name'));
         $AuthorRoute->expects($this->once())
                     ->method('urlize')
                     ->with(array('name'=>'martin'))
@@ -104,7 +104,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     
     function testUrlizeThrowsAnExceptionIfItCantFindARoute()
     {
-        $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
+        $PersonRoute = $this->getMock('AkRoute',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
                     ->method('urlize')
                     ->with(array('not'=>'found'))
@@ -117,7 +117,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     
     function testUrlizeUsingAnNamedRoute()
     {
-        $AuthorRoute = $this->getMock('Route',array(),array('author/:name'));
+        $AuthorRoute = $this->getMock('AkRoute',array(),array('author/:name'));
         $AuthorRoute->expects($this->once())
                     ->method('urlize')
                     ->with(array('name'=>'martin'))
@@ -130,40 +130,40 @@ class RouterTest extends PHPUnit_Framework_TestCase
     
     function testRequirementsShouldntHaveRegexDelimiters()
     {
-        $Router = $this->getMock('Router',array('addRoute'));
+        $Router = $this->getMock('AkRouter',array('addRoute'));
         $Router->expects($this->once())
                ->method('addRoute')
-               ->with(null,new Route('/author/:name',array(),array('name'=>'[a-z]+')));
+               ->with(null,new AkRoute('/author/:name',array(),array('name'=>'[a-z]+')));
                
        $Router->connect('/author/:name',array(),array('name'=>'/[a-z]+/'));
     }
     
     function testDefaultsShouldntBeUsedForRequirements()
     {
-        $Router = $this->getMock('Router',array('addRoute'));
+        $Router = $this->getMock('AkRouter',array('addRoute'));
         $Router->expects($this->once())
                ->method('addRoute')
-               ->with(null,new Route('/author/:name',array(),array('name'=>'[a-z]+')));
+               ->with(null,new AkRoute('/author/:name',array(),array('name'=>'[a-z]+')));
                
        $Router->connect('/author/:name',array('name'=>'/[a-z]+/'));
     }
 
     function testSegmentsShouldntBeDeclaredOptional()
     {
-        $Router = $this->getMock('Router',array('addRoute'));
+        $Router = $this->getMock('AkRouter',array('addRoute'));
         $Router->expects($this->once())
                ->method('addRoute')
-               ->with(null,new Route('/author/:name',array()));
+               ->with(null,new AkRoute('/author/:name',array()));
                
        $Router->connect('/author/:name',array('name'=>OPTIONAL));
     }
     
     function testDefaultsShouldntBeUsedForRequirementsAsAnExplicitOption()
     {
-        $Router = $this->getMock('Router',array('addRoute'));
+        $Router = $this->getMock('AkRouter',array('addRoute'));
         $Router->expects($this->once())
                ->method('addRoute')
-               ->with(null,new Route('/author/:name',array(),array('name'=>'[a-z]+')));
+               ->with(null,new AkRoute('/author/:name',array(),array('name'=>'[a-z]+')));
                
        $Router->connect('/author/:name',array('requirements'=>array('name'=>'/[a-z]+/')));
     }

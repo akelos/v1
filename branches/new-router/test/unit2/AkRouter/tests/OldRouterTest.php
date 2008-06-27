@@ -22,7 +22,7 @@ class Test_of_AkRouter_Class extends  PHPUnit_Framework_TestCase
 
     function setUp()
     {
-        $this->Router = new Router();
+        $this->Router = new AkRouter();
 
         $this->url_prefix = AK_URL_REWRITE_ENABLED ? '' : '/?ak=';
 
@@ -210,7 +210,7 @@ class Test_for_default_routes extends PHPUnit_Framework_TestCase
 
     function setUp()
     {
-        $this->Router = new Router();
+        $this->Router = new AkRouter();
 
         $this->url_prefix = AK_URL_REWRITE_ENABLED ? '' : '/?ak=';
 
@@ -242,7 +242,7 @@ class Tests_for_url_constants_named_as_url_variables extends PHPUnit_Framework_T
 
     function setUp()
     {
-        $this->Router = new Router();
+        $this->Router = new AkRouter();
         $this->url_prefix = AK_URL_REWRITE_ENABLED ? '' : '/?ak=';
     }
 
@@ -301,7 +301,7 @@ class Test_for_middle_optional_values_when_generating_urls extends PHPUnit_Frame
 
     function setUp()
     {
-        $this->Router =& new Router();
+        $this->Router =& new AkRouter();
         $this->url_prefix = AK_URL_REWRITE_ENABLED ? '' : '/?ak=';
     }
 
@@ -331,7 +331,7 @@ class Test_router_conflicts extends PHPUnit_Framework_TestCase
 
     function setUp()
     {
-        $this->Router = new Router();
+        $this->Router = new AkRouter();
         $this->url_prefix = AK_URL_REWRITE_ENABLED ? '' : '/?ak=';
         $this->Router->connect('/:controller/:action/:value');
     }

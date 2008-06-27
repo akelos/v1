@@ -19,10 +19,11 @@
  */
 
 
-require_once 'VariableSegment.php';
-require_once 'WildcardSegment.php';
+require_once 'AkSegment.php';
+require_once 'AkVariableSegment.php';
+require_once 'AkWildcardSegment.php';
 
-class Route extends AkObject 
+class AkRoute extends AkObject 
 {
 
     private $url_pattern;
@@ -88,7 +89,7 @@ class Route extends AkObject
         $url_pieces = array();
         $omit_defaults = true;
         foreach (array_reverse($segments) as $segment){
-            if ($segment instanceof Segment){
+            if ($segment instanceof AkSegment){
                 $name = $segment->name;
                 if (!isset($params[$name])){
                     if ($segment->isCompulsory()) return false;
@@ -159,10 +160,10 @@ class Route extends AkObject
                 $name = substr($segment,1);
                 switch ($type) {
                 	case ':':
-                        $segment = new VariableSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                        $segment = new AkVariableSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
                     	break;
                 	case '*':
-                        $segment = new WildcardSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                        $segment = new AkWildcardSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
                 	    break;
                 }
                 $this->dynamic_segments[] = $segment;

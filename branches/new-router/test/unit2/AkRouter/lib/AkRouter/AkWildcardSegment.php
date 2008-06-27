@@ -19,7 +19,7 @@
  */
 
 
-class WildcardSegment extends Segment 
+class AkWildcardSegment extends AkSegment 
 {
 
     function isCompulsory()
