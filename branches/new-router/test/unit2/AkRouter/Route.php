@@ -64,11 +64,19 @@ class Route extends AkObject
                     if (!$this->isOptional($name)) return false;
                     $break = true;
                 }
+                unset ($params[$name]);
             }else{
                 $url .= '/'.$segment;
             }
         }
         if ($url=='') $url = '/';
+        if (!empty($params)){
+            $additional_parameters = array();
+            foreach ($params as $name=>$value){
+                $additional_parameters[] = "$name=$value";
+            }
+            $url .= '?'.join('&',$additional_parameters);            
+        }
         return $url;
     }
     

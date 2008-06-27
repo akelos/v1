@@ -143,6 +143,14 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('name'=>'lewis','age'=>'45'))->returns('/person/lewis/45');
     }
     
+    function testUrlizeAppendsAnyAdditionalParameters()
+    {
+        $this->withRoute('/person/:name/:age');
+        
+        $this->urlize(array('format'=>'xml'))->returns('/person?format=xml');
+        $this->urlize(array('name'=>'steve','format'=>'xml'))->returns('/person/steve?format=xml');
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
