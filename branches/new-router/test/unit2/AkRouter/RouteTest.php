@@ -151,6 +151,14 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('name'=>'steve','format'=>'xml'))->returns('/person/steve?format=xml');
     }
     
+    function testUrlizeBreaksIfParameterTriesToOverrideADefaultWithoutMatchingNamedSegment()
+    {
+        $this->withRoute('/person/:name/:age',array('controller'=>'person'));
+        
+        $this->urlize(array('controller'=>'author'))->returnsFalse();
+        
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";

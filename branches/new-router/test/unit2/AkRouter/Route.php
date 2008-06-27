@@ -73,6 +73,7 @@ class Route extends AkObject
         if (!empty($params)){
             $additional_parameters = array();
             foreach ($params as $name=>$value){
+                if (isset($this->defaults[$name]) && $this->defaults[$name] != $value) return false;
                 $additional_parameters[] = "$name=$value";
             }
             $url .= '?'.join('&',$additional_parameters);            
