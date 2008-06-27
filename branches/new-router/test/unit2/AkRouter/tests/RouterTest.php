@@ -115,6 +115,19 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->Router->urlize(array('not'=>'found'));
     }
     
+    function testUrlizeUsingAnNamedRoute()
+    {
+        $AuthorRoute = $this->getMock('Route',array(),array('author/:name'));
+        $AuthorRoute->expects($this->once())
+                    ->method('urlize')
+                    ->with(array('name'=>'martin'))
+                    ->will($this->returnValue('/author/martin'));
+        
+        $this->Router->addRoute('author',$AuthorRoute);
+        
+        $this->assertEquals('/author/martin',$this->Router->author_url(array('name'=>'martin')));
+    }
+    
 }
 
 ?>
