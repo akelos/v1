@@ -22,12 +22,13 @@ class Route extends AkObject
         #var_dump($url);
         
         if (!preg_match($this->getRegex(),$url,$matches)) return false;
+        array_shift($matches);   //throw away the "all-match", we only need the groups
+        #var_dump($matches);
 
         $params = array();
-        array_shift($matches);
-        #var_dump($matches);
         foreach ($matches as $i=>$match){
-            if ($match) $params[$this->dynamic_segments[$i]] = $match;
+            if (empty($match)) continue;  
+            $params[$this->dynamic_segments[$i]] = $match;
         }
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){
