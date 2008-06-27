@@ -47,7 +47,7 @@ class Route extends AkObject
         foreach ($segments as $segment){
             if ($this->isVariableSegment($segment)){
                 $name = substr($segment,1);
-                if (isset($params[$name])){
+                if (isset($params[$name]) && !(isset($this->defaults[$name]) && $this->defaults[$name] == $params[$name])){
                     $url .= '/'.$params[$name];
                 }
             }else{
