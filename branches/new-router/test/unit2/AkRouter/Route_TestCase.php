@@ -54,6 +54,24 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
         $this->assertEquals($params,$actual);
     }
     
+    function urlize($params = array())
+    {
+        $this->params = $params;
+        return $this;
+    }
+    
+    function returns($url)
+    {
+        $this->assertEquals($url,$this->Route->urlize($this->params));
+    }
+    
+    function returnsFalse()
+    {
+        $this->assertFalse($this->Route->urlize($this->params));
+    }
+    
+    
+    
 }
 
 ?>
