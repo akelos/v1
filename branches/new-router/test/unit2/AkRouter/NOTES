@@ -18,3 +18,8 @@ e.g. $this->withRoute('/:author/:name',array('name'=>'/[a-z]+/'))
 or   $this->withRoute('/:author/:name',array('requirements'=>array('name'=>'/[a-z]+/')))
 
 are deprecated.
+
+
+3.
+
+Route->urlize doesn't append a slash '/' anymore. 
