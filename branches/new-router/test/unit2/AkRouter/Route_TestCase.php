@@ -1,5 +1,5 @@
 <?php
-PHPUnit_Akelos_autoload::addFolder(__FILE__);
+PHPUnit_Akelos_autoload::addFolder(dirname(__FILE__).DS.'lib');
 
 abstract class Route_TestCase extends PHPUnit_Framework_TestCase
 {
