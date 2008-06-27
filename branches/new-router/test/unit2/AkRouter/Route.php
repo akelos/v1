@@ -27,8 +27,13 @@ class Route extends AkObject
         #var_dump($matches);
 
         $params = array();
+        $break = false;
         foreach ($matches as $i=>$match){
-            if (empty($match)) continue;  
+            if (empty($match)) {
+                $break = true;
+                continue;  
+            }
+            if ($break) return false;
             $params[$this->dynamic_segments[$i]] = $match;
         }
         foreach ($this->defaults as $name=>$value){

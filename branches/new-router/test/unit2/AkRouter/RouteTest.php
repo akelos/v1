@@ -112,7 +112,14 @@ class RouteTest extends Route_TestCase
         $this->urlize()->returns('/person');
         $this->urlize(array('name'=>'steve'))            ->returns('/person/steve');
         $this->urlize(array('name'=>'steve','age'=>'34'))->returns('/person/steve/34');
-        $this->urlize(array('age'=>'34'))                ->returnsNothing();
+    }
+    
+    function testOptionalSegmentFollowedByAnotherOptionalSegmentActuallyIsCompulsory()
+    {
+        $this->withRoute('/person/:name/:age',array('name'=>'martin'),array('name'=>'[a-z]+'));
+        
+        $this->get('/person/24')         ->doesntMatch();
+        $this->urlize(array('age'=>'34'))->returnsNothing();
     }
     
     function urlize($params = array())
