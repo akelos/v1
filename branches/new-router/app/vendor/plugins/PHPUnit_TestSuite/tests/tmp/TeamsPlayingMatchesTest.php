@@ -1,10 +1,5 @@
 <?php
 
-class _Team extends ActiveRecord 
-{
-    
-}
-
 class Match extends ActiveRecord
 {
     var $belongs_to = array(

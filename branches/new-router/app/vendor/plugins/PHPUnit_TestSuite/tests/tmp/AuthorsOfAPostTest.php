@@ -1,8 +1,9 @@
 <?php
+PHPUnit_Akelos_autoload::addFolder(AK_PHPUNIT_TESTSUITE_FIXTURES);
 
 class AuthorsOfAPostTest extends PHPUnit_Model_TestCase 
 {
-    function testSetupPost()
+    function testPostIsWrittenByAnAuthor()
     {
         $this->useModel('Post');
         list(,$People) = $this->useModel('Person');
@@ -16,14 +17,16 @@ class AuthorsOfAPostTest extends PHPUnit_Model_TestCase
     
     function testDeleteCommentFromAPost()
     {
-        list($Post) = $this->useModel('Post');
-        $this->useModel('Comment');
+        list($Post)    = $this->useModel('Post');
+        list($Comment) = $this->useModel('Comment');
         
         $MyPost    = $this->createPost('title: First Post');
         $MyComment = $this->createComment("name: My 2 cents,post_id: {$MyPost->id}");
         
         $Reloaded = $Post->find('first');
         $Reloaded->comment->delete($MyComment);
+        
+        $this->assertEquals(0,$Comment->count());
     }
 }
 

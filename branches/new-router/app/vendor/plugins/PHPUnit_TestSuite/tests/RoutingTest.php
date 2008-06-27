@@ -5,7 +5,7 @@ class RoutingTest extends PHPUnit_Routing_TestCase
 
     function setUp()
     {
-        $this->useMap(dirname(__FILE__).DS.'fixtures'.DS.'routes.php');
+        $this->useMap(AK_PHPUNIT_TESTSUITE_FIXTURES.DS.'routes.php');
     }
     
     function testShouldResolveUrl()

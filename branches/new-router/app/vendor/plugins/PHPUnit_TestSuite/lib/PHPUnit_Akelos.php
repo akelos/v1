@@ -25,47 +25,82 @@ class PHPUnit_Akelos_autoload
     	   }
     	   return false;
         }
-        if (preg_match('/^(.*)Controller$/',$classname,$matches)){
-            $controller_file_name = AkInflector::underscore($classname).'.php';
-            $filename = self::searchFileInIncludePath(self::CONTROLLER_FOLDERS(),$controller_file_name);
-            if ($filename){
-                require_once $filename;
-                return true;
-            }
-            return false;            
-        }
-        if (preg_match('/^(.*)Installer$/',$classname,$matches)){
-            $installer_file_name = AkInflector::underscore($classname).'.php';
-            if ($filename = self::searchFileInIncludePath(self::INSTALLER_FOLDERS(),$installer_file_name)){
-                require_once $filename;
-                return true;
-            }
-            return false;
-        }
-        $model_file_name = AkInflector::underscore($classname).'.php';
-        if ($filename = self::searchFileInIncludePath(self::MODEL_FOLDERS(),$model_file_name)){
-            require_once $filename;
+        if (self::includeClass(self::$extra_folders,$classname)){
             return true;
         }
-        return false; 
+        if (preg_match('/(Controller$|Installer$|$)/',$classname,$matches)){
+            switch ($matches[1]){
+                case 'Controller': 
+                    $search_path = self::CONTROLLER_FOLDERS(); 
+                    break;
+                case 'Installer':
+                    $search_path = self::INSTALLER_FOLDERS();
+                    break;
+                default:
+                    $search_path = self::MODEL_FOLDERS();
+                    break;
+            }
+            return self::includeClass($search_path,$classname);
+        }
+        return false;
+    }
+    
+    static $extra_folders = array();
+
+    /**
+     * Adds a folder to the search-path. It will always be used before the standard-path.
+     * But remeber you can't redeclare classes.
+     *
+     * @param string $path
+     * @return array of the registered folders
+     */
+    static function addFolder($path)
+    {
+        foreach (func_get_args() as $path){
+            if (!in_array($path,self::$extra_folders)){
+                if (is_file($path)) $path = dirname($path);
+                
+                self::$extra_folders[] = $path;
+            }
+        }
+
+        return self::$extra_folders;
+    }
+    
+    static function deleteExtraFolders()
+    {
+        return self::$extra_folders = array();
+    }
+    
+    /**
+     * @return boolean
+     */
+    static function includeClass($search_path,$class_name)
+    {
+        $file_name = AkInflector::underscore($class_name).'.php';
+        if ($full_filename = self::searchFilenameInPath($search_path,$file_name)){
+            require_once $full_filename;
+            return true;
+        }
+        return false;
     }
     
     static function CONTROLLER_FOLDERS()
     {
-        return array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_CONTROLLERS_DIR,AK_BASE_DIR.DS.'app'.DS.'controllers');
+        return array(AK_CONTROLLERS_DIR,AK_BASE_DIR.DS.'app'.DS.'controllers');
     }
     
     static function INSTALLER_FOLDERS()
     {
-        return array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_APP_DIR.DS.'installers',AK_BASE_DIR.DS.'app'.DS.'installers');
+        return array(AK_APP_DIR.DS.'installers',AK_BASE_DIR.DS.'app'.DS.'installers');
     }
 
     static function MODEL_FOLDERS()
     {
-        return array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_MODELS_DIR,AK_BASE_DIR.DS.'app'.DS.'models');
+        return array(AK_MODELS_DIR,AK_BASE_DIR.DS.'app'.DS.'models');
     }
     
-    static function searchFileInIncludePath($folders,$filename)
+    static function searchFilenameInPath($folders,$filename)
     {
         foreach ($folders as $folder){
             $full_filename = $folder.DS.$filename;
@@ -83,7 +118,7 @@ class PHPUnit_Akelos_autoload
         $quoted_path = preg_quote(DS.'app'.DS.'vendor'.DS);
         defined(AK_BASE_DIR) ? null : define(AK_BASE_DIR,preg_replace('@'.$quoted_path.'.*$@','',__FILE__));
 
-        $config_file = AK_BASE_DIR.DS.'test'.DS.'fixtures'.DS.'config'.DS.'config.phps';
+        $config_file = AK_BASE_DIR.DS.'test'.DS.'fixtures'.DS.'config'.DS.'config.php';
         if (!is_file($config_file) || $config_file == __FILE__) 
             exit ("Whoa! That didnt start too well. config/config.php not found!\n\r defined AK_BASE_DIR=".AK_BASE_DIR.",\n\r accordingly tried:  $config_file");
             

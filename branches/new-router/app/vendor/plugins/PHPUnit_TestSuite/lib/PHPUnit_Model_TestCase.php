@@ -108,7 +108,7 @@ abstract class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
     {
         $fixture_file_name = AkInflector::tableize($model_name).'.yaml';
         $include_path = array(AK_PHPUNIT_TESTSUITE_FIXTURES,AK_APP_DIR.DS.'data');
-        return PHPUnit_Akelos_autoload::searchFileInIncludePath($include_path,$fixture_file_name);
+        return PHPUnit_Akelos_autoload::searchFilenameInPath($include_path,$fixture_file_name);
     }
     
     /**

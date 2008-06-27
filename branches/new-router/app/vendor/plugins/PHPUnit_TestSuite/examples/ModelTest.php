@@ -1,4 +1,7 @@
 <?php
+# we add an folder to the search-path of the autoloader, because this plugin has its own fixtures-folder.
+# usually you don't need this, as long as you use the standard-folders; i.e. test/fixtures/app/* and app/*
+PHPUnit_Akelos_autoload::addFolder(AK_PHPUNIT_TESTSUITE_FIXTURES);
 
 class ModelTestExample extends PHPUnit_Model_TestCase 
 {

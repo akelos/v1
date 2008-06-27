@@ -1,4 +1,5 @@
 <?php
+PHPUnit_Akelos_autoload::addFolder(AK_PHPUNIT_TESTSUITE_FIXTURES);
 
 class TestControllerTest extends PHPUnit_Controller_TestCase 
 {
