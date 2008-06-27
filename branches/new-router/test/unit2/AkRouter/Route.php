@@ -7,6 +7,7 @@ class Route extends AkObject
     private $defaults;
     private $requirements;
     private $regex;
+    private $dynamic_segments = array();
     
     function __construct($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
@@ -25,7 +26,7 @@ class Route extends AkObject
         array_shift($matches);
         #var_dump($matches);
         foreach ($matches as $i=>$match){
-            if ($match = substr($match,1)) $params[$this->segments[$i]] = $match;
+            if ($match = substr($match,1)) $params[$this->dynamic_segments[$i]] = $match;
         }
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){
@@ -42,7 +43,7 @@ class Route extends AkObject
         $segments = explode('/',trim($this->url_pattern,'/'));
         foreach ($segments as &$segment){
             if ($segment{0}==':'){
-                $this->segments[] = $name = substr($segment,1);
+                $this->dynamic_segments[] = $name = substr($segment,1);
                 if (isset($this->requirements[$name])){
                     $segment = "(/{$this->requirements[$name]})?";                    
                 }else{
