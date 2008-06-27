@@ -72,6 +72,15 @@ class RouteTest extends Route_TestCase
         $this->get('/person23')  ->doesntMatch();
     }
     
+    function testCompulsoryVariableSegment()
+    {
+        $this->withRoute('/person/:age',array('age'=>COMPULSORY),array('age'=>'[0-9]+'));
+        
+        $this->get('/')      ->doesntMatch();
+        $this->get('/person')->doesntMatch();
+        $this->get('/person/123')->matches(array('age'=>'123'));
+    }
+    
     function testRouteWithOnlyOptionalSegmentsMatchesAgainstRoot()
     {
         $this->withRoute('/:person/:name/:age',array('controller'=>'person'));

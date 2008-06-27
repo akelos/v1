@@ -1,4 +1,5 @@
 <?php
+define('COMPULSORY','COMPULSORY');
 
 class Route extends AkObject 
 {
@@ -46,7 +47,8 @@ class Route extends AkObject
         foreach ($segments as &$segment){
             if ($this->isVariableSegment($segment)){
                 $this->dynamic_segments[] = $name = substr($segment,1);
-                $segment = "(?:/({$this->innerRegExFor($name)}))?";
+                $optional_switch = $this->isOptional($name) ? '?': '';
+                $segment = "(?:/({$this->innerRegExFor($name)}))$optional_switch";
             }else{
                 $segment = '/'.$segment;
             }
@@ -67,6 +69,12 @@ class Route extends AkObject
     {
         if ($name && $name{0}==':') return true;
         return false;
+    }
+    
+    function isOptional($name)
+    {
+        if (isset($this->defaults[$name]) && $this->defaults[$name]===COMPULSORY) return false;
+        return true;
     }
 }
 
