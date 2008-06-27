@@ -5,13 +5,18 @@ class WildcardSegment extends Segment
 
     function isCompulsory()
     {
-        return $this->default === COMPULSORY || is_int($this->default);    
+        return $this->default === COMPULSORY || $this->expectsExactSize();    
+    }
+    
+    function expectsExactSize()
+    {
+        return is_int($this->default) ? $this->default : false;
     }
     
     function getRegEx()
     {
         $optional_switch = $this->isOptional() ? '?': '';
-        $multiplier = is_int($this->default) ? '{'. $this->default .'}' : '+';
+        $multiplier = ($size = $this->expectsExactSize()) ? '{'. $size .'}' : '+';
         return "((?:$this->delimiter{$this->getInnerRegEx()})$multiplier)$optional_switch";
     }
     
@@ -29,7 +34,7 @@ class WildcardSegment extends Segment
     function meetsRequirement($values)
     {
         if (!$this->hasRequirement()) return true;
-        if (is_int($this->default) && count($values) != $this->default) return false;
+        if (($size = $this->expectsExactSize()) && count($values) != $size) return false;
 
         $regex = "|^{$this->getInnerRegEx()}$|";
         foreach ($values as $value){
@@ -37,7 +42,6 @@ class WildcardSegment extends Segment
         }
         return true;
     }
-    
     
 }
 

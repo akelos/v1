@@ -225,14 +225,14 @@ class RouteTest extends Route_TestCase
         $this->get('/numbers/12/stop/789') ->doesntMatch();
     }
     
-    function testWildcardSegmentWithDefinedLengthActsAsCompulsory()
+    function testWildcardSegmentWithDefinedSizeActsAsCompulsory()
     {
         $this->withRoute('/numbers/*numbers',array('numbers'=>3));
         
         $this->get('/numbers')->doesntMatch();
     }
     
-    function testWildcardSegmentsWithDefinedLength()
+    function testWildcardSegmentsWithDefinedSize()
     {
         $this->withRoute('/numbers/*numbers',array('numbers'=>3));
         
