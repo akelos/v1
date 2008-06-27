@@ -18,7 +18,7 @@ class Route extends AkObject
     
     function match(AkRequest $Request)
     {
-        $url = '/'.trim($Request->getRequestedUrl(),'/').'/';
+        $url = $Request->getRequestedUrl();
         #var_dump($url);
         
         if (!preg_match($this->getRegex(),$url,$matches)) return false;
