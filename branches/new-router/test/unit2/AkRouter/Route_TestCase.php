@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__FILE__).DS.'lib'.DS.'AkRouter.php';
+require_once 'AkRouter.php';
 
 abstract class Route_TestCase extends PHPUnit_Framework_TestCase
 {
