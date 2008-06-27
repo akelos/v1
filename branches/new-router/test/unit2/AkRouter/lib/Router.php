@@ -37,7 +37,7 @@ class Router extends AkObject
     function deprecatedMoveImplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
     {
         foreach ($defaults as $key=>$value){
-            if (trim($value,'/') !== $value){
+            if (trim($value,'/') != $value){
                 #Ak::deprecateWarning('Don\'t use implicit requirements in the defaults-array. Move it explicitly to the requirements-array.');
                 $requirements[$key] = $value;
                 unset ($defaults[$key]);
