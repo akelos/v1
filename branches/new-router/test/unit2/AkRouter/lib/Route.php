@@ -62,6 +62,7 @@ class Route extends AkObject
 
     function urlize($params)
     {
+        $params = $this->urlEncode($params);
         $segments = $this->getSegments();
         
         $url_pieces = array();
@@ -167,14 +168,11 @@ class Route extends AkObject
     */
     function urlEncode($input)
     {
-        if(!empty($input)){
-            if (is_scalar($input)){
-                return urlencode($input);
-            }elseif (is_array($input)){
-                return array_map(array($this,'urlEncode'),$input);
-            }
+        if (is_scalar($input)){
+            return urlencode($input);
+        }elseif (is_array($input)){
+            return array_map(array($this,'urlEncode'),$input);
         }
-        return '';
     }
     
 }
