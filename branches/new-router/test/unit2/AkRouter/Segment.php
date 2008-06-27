@@ -2,10 +2,10 @@
 
 class Segment 
 {
-    public  $name;
-    private $delimiter;
-    public  $default;
-    private $requirement;  //default requirement matches all but stops on dashes
+    public     $name;
+    protected  $delimiter;
+    public     $default;
+    protected  $requirement;  //default requirement matches all but stops on dashes
     
     static  $DEFAULT_REQUIREMENT='[^/]*';  //default requirement matches all but stops on dashes
     
@@ -31,12 +31,6 @@ class Segment
     function isOptional()
     {
         return !$this->default || $this->default !== COMPULSORY; 
-    }
-    
-    function getRegEx()
-    {
-        $optional_switch = $this->isOptional() ? '?': '';
-        return "(?:$this->delimiter({$this->getInnerRegEx()}))$optional_switch";
     }
     
     function __toString()

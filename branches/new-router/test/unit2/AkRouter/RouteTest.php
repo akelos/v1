@@ -163,14 +163,29 @@ class RouteTest extends Route_TestCase
     {
         $this->withRoute('/set/*options');
         
-        $this->get('/set')->matches();
-        $this->get('/set/this')->matches(array('options'=>array('this')));
+        $this->get('/set')              ->matches();
+        $this->get('/set/this')         ->matches(array('options'=>array('this')));
+        $this->get('/set/this/and/that')->matches(array('options'=>array('this','and','that')));
     }
     
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
-        $subject = "person";
+        #"(?:$this->delimiter({$this->getInnerRegEx()}))$optional_switch";
+        $pattern = "|^/set(?:/([^/]*))?$|";
+        $pattern = "|^/set
+                (?:/((?:/?[^/]*)+))?
+                /steve
+            $|x";
+        $delimiter = '/';
+        $inner =  '[^/]+';
+        
+        $pattern = "|^/set
+                (?:$delimiter((?:$inner/?)+))?
+                /steve
+            $|x";
+        $subject = "/set/martin/dave/steve";
+        $subject = "/set/steve";
         var_dump($pattern,$subject);
         var_dump(preg_match($pattern,$subject,$matches));
         var_dump($matches);
