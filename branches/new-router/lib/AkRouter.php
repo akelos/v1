@@ -145,6 +145,19 @@ class AkRouter extends AkObject
         return $url;
     }
     
+    static $singleton;
+    
+    /**
+     * @return AkRouter
+     */
+    static function getInstance()
+    {
+        if (!self::$singleton){
+            self::$singleton = new AkRouter();    
+        }
+        return self::$singleton;
+    }
+    
 }
 
 //somehow dirty and therefore outsourced
