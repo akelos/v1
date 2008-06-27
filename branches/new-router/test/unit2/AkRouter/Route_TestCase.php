@@ -64,20 +64,21 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     /**
      * @return Route_TestCase
      */
-    function urlize($params = array())
+    function urlize($params = array(),$rewrite_enabled=AK_URL_REWRITE_ENABLED)
     {
         $this->params = $params;
+        $this->rewrite_enabled = $rewrite_enabled;
         return $this;
     }
     
     function returns($url)
     {
-        $this->assertEquals($url,$this->Route->urlize($this->params));
+        $this->assertEquals($url,$this->Route->urlize($this->params,$this->rewrite_enabled));
     }
     
     function returnsFalse()
     {
-        $this->assertFalse($this->Route->urlize($this->params));
+        $this->assertFalse($this->Route->urlize($this->params,$this->rewrite_enabled));
     }
     
 }

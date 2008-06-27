@@ -125,4 +125,12 @@ class Router extends AkObject
     
 }
 
+//somehow dirty and therefore outsourced
+if (!defined('AK_URL_REWRITE_ENABLED')){
+    if (!defined('AK_ENABLE_URL_REWRITE') || AK_ENABLE_URL_REWRITE){
+        require_once 'RouterConfig.php';
+        RouterConfig::loadUrlRewriteSettings();
+    }
+}
+
 ?>

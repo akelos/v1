@@ -60,7 +60,7 @@ class Route extends AkObject
         return false;
     }
 
-    function urlize($params)
+    function urlize($params,$rewrite_enabled=AK_URL_REWRITE_ENABLED)
     {
         $params = $this->urlEncode($params);
         $segments = $this->getSegments();
@@ -87,13 +87,20 @@ class Route extends AkObject
             }
         }
         $url = join('',array_reverse($url_pieces));
-        
         if ($url=='') $url = '/';
+
+        if (!$rewrite_enabled){
+            $url = '/?ak='.$url;
+        }
+        
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
         if (!empty($params)){
             $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
             if ($key_value_list===false) return false;
-            $url .= $key_value_list;
+            if ($key_value_list){
+                $url .= $rewrite_enabled ? '?' : '&';
+                $url .= $key_value_list;
+            }
         }
         return $url;
     }
@@ -110,7 +117,7 @@ class Route extends AkObject
             }
             $key_value_pairs[] = "$name=$value";
         }
-        return empty($key_value_pairs) ? '' : ('?'.join('&',$key_value_pairs));            
+        return empty($key_value_pairs) ? '' : join('&',$key_value_pairs);            
     }
     
     function getRegex()
