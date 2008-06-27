@@ -21,8 +21,9 @@ class Route extends AkObject
         $url = '/'.trim($Request->getRequestedUrl(),'/').'/';
         #var_dump($url);
         
+        if (!preg_match($this->getRegex(),$url,$matches)) return false;
+
         $params = array();
-        $result = preg_match($this->getRegex(),$url,$matches);
         array_shift($matches);
         #var_dump($matches);
         foreach ($matches as $i=>$match){
@@ -33,7 +34,7 @@ class Route extends AkObject
                 $params[$name] = $value;
             }
         }
-        return (bool)$result ? $params : false;
+        return $params;
     }
     
     function getRegex()
