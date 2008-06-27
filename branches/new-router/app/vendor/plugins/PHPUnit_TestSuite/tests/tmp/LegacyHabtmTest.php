@@ -48,6 +48,11 @@ class LegacyHabtmTest extends PHPUnit_Model_TestCase
         $AreClients = $this->createClient("my_user_id: $Bill->id,my_customer_id: $Bob->id");
     }
     
+    function tearDown()
+    {
+        unlink(AK_MODELS_DIR.DS.'client.php');
+    }
+    
     function testSetUp()
     {
         $this->assertThat($this->User->getTableName(),$this->equalTo('my_users'));
