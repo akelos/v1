@@ -20,6 +20,25 @@ class WildcardSegment extends Segment
         $match = substr($match,1); // the first char is the delimiter
         $params[$this->name] = explode('/',$match);
     }
+    
+    function insertPieceForUrl($value)
+    {
+        return $this->delimiter.join('/',$value);
+    }
+    
+    function meetsRequirement($values)
+    {
+        if (!$this->hasRequirement()) return true;
+        if (is_int($this->default) && count($values) != $this->default) return false;
+
+        $regex = "|^{$this->getInnerRegEx()}$|";
+        foreach ($values as $value){
+            if (!(bool) preg_match($regex,$value)) return false;
+        }
+        return true;
+    }
+    
+    
 }
 
 ?>

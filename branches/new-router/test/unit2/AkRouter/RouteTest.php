@@ -241,6 +241,43 @@ class RouteTest extends Route_TestCase
         $this->get('/numbers/12/345/6/78')->doesntMatch();
     }
     
+    function testUrlizeWildcardSegment()
+    {
+        $this->withRoute('/set/*options');
+        
+        $this->urlize()->returns('/set');
+        $this->urlize(array('options'=>array('this','and','that')))->returns('/set/this/and/that');
+    }
+    
+    function testUrlizeWildcardSegmentWithRequirement()
+    {
+        $this->withRoute('/numbers/*numbers',array(),array('numbers'=>'[0-9]+'));
+        
+        $this->urlize()->returns('/numbers');
+        $this->urlize(array('numbers'=>array('12','234')))       ->returns('/numbers/12/234');
+        $this->urlize(array('numbers'=>array('12','stop','234')))->returnsFalse();
+    }
+    
+    function testUrlizeCompulsoryWildcardSegment()
+    {
+        $this->withRoute('/numbers/*numbers',array('numbers'=>3),array('numbers'=>'[0-9]+'));
+        
+        $this->urlize()->returnsFalse();
+        $this->urlize(array('numbers'=>array('12','234','56')))      ->returns('/numbers/12/234/56');
+        $this->urlize(array('numbers'=>array('12','234','56','789')))->returnsFalse();
+        $this->urlize(array('numbers'=>array('12','234')))           ->returnsFalse();
+    }
+    
+    function testWilcardSegmentWithDefaults()
+    {
+        $this->withRoute('feel/*how',array('how'=>array('blue','or','green')));
+        
+        $this->get('/feel')->matches(array('how'=>array('blue','or','green')));
+        
+        $this->urlize(array('how'=>array('blue','or','green')))  ->returns('/feel');
+        $this->urlize(array('how'=>array('black','and','white')))->returns('/feel/black/and/white');
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
