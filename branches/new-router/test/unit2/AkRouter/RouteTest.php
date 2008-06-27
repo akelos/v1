@@ -34,28 +34,32 @@ class RouteTest extends PHPUnit_Framework_TestCase
     function testStaticRouteMatchesAgainstExactUrl()
     {
         $this->withRoute('/person/martin');
-        $this->get('/person/martin/')->matches();
+        $this->get('/person/martin')->matches();
     }
     
     function testStaticRouteReturnsDefaults()
     {
         $this->withRoute('/person/martin',array('controller'=>'person','action'=>'view'));
 
-        $this->get('/person/martin/');
+        $this->get('/person/martin');
         $this->matches(array('controller'=>'person','action'=>'view'));
+    }
+    
+    function testRootMatchesAndReturnsDefaults()
+    {
+        $this->withRoute('/',array('controller'=>'person','action'=>'list'));
+        
+        $this->get('/')->matches(array('controller'=>'person','action'=>'list'));
     }
     
     function testOptionalSegment()
     {
         $this->withRoute('/person/:name/:age');
         
-        $this->get('/person') ->matches();
-        $this->get('/person/')->matches();
+        $this->get('/person')->matches();
         
         $this->get('/person/martin')    ->matches(array('name'=>'martin'));
-        $this->get('/person/martin/')   ->matches(array('name'=>'martin'));
         $this->get('/person/martin/23') ->matches(array('name'=>'martin','age'=>'23'));
-        $this->get('/person/martin/23/')->matches(array('name'=>'martin','age'=>'23'));
     }
     
     function testOptionalSegmentWithDefaults()
@@ -72,9 +76,9 @@ class RouteTest extends PHPUnit_Framework_TestCase
         
         $this->get('/person/abc')->doesntMatch();
         #$this->get('/person/')   ->doesntMatch();
-        $this->get('/person/')   ->matches();
+        $this->get('/person')    ->matches();
         $this->get('/person/23') ->matches(array('age'=>'23'));
-        $this->get('/person23/') ->doesntMatch();
+        $this->get('/person23')  ->doesntMatch();
     }
     
     function _testRegex()

@@ -52,7 +52,7 @@ class Route extends AkObject
             }
         }
         
-        $regex = '|^'.join('',$segments).'/?$|';
+        $regex = '|^'.join('',$segments).'$|';
         #var_dump($regex);
         return $this->regex = $regex;        
     }
@@ -65,7 +65,7 @@ class Route extends AkObject
     
     function isVariableSegment($name)
     {
-        if ($name{0}==':') return true;
+        if ($name && $name{0}==':') return true;
         return false;
     }
 }
