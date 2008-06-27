@@ -232,6 +232,15 @@ class RouteTest extends Route_TestCase
         $this->get('/numbers')->doesntMatch();
     }
     
+    function testWildcardSegmentsWithDefinedLength()
+    {
+        $this->withRoute('/numbers/*numbers',array('numbers'=>3));
+        
+        $this->get('/numbers/12/345/6')   ->matches(array('numbers'=>array('12','345','6')));
+        $this->get('/numbers/12/345')     ->doesntMatch();
+        $this->get('/numbers/12/345/6/78')->doesntMatch();
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
@@ -248,8 +257,17 @@ class RouteTest extends Route_TestCase
                 (?:$delimiter((?:$inner/?)+))?
                 /steve
             $|x";
+        $pattern = "|^
+                /set
+                (?:
+                    (
+                        #(?:[^/]+/?)
+                        (?:/[^/]+){3}
+                        #(?:/[^/]+)
+                    )
+                )
+            $|x";
         $subject = "/set/martin/dave/steve";
-        $subject = "/set/steve";
         var_dump($pattern,$subject);
         var_dump(preg_match($pattern,$subject,$matches));
         var_dump($matches);

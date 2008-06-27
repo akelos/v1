@@ -11,11 +11,13 @@ class WildcardSegment extends Segment
     function getRegEx()
     {
         $optional_switch = $this->isOptional() ? '?': '';
-        return "(?:$this->delimiter((?:{$this->getInnerRegEx()}/?)+))$optional_switch";
+        $multiplier = is_int($this->default) ? '{'. $this->default .'}' : '+';
+        return "((?:$this->delimiter{$this->getInnerRegEx()})$multiplier)$optional_switch";
     }
     
     function addToParams(&$params,$match)
     {
+        $match = substr($match,1); // the first char is the delimiter
         $params[$this->name] = explode('/',$match);
     }
 }
