@@ -55,6 +55,10 @@ class Route extends AkObject
                 $name = substr($segment,1);
                 if (isset($params[$name]) && !(isset($this->defaults[$name]) && $this->defaults[$name] == $params[$name])){
                     if ($break) return false;
+                    if ($this->hasRequirement($name)){
+                        $regex = "|^{$this->innerRegExFor($name)}$|";
+                        if (!preg_match($regex,$params[$name])) return false;
+                    }
                     $url .= '/'.$params[$name];
                 }else{
                     $break = true;
@@ -86,9 +90,14 @@ class Route extends AkObject
         return $this->regex = $regex;        
     }
     
+    function hasRequirement($name)
+    {
+        return isset($this->requirements[$name]); 
+    }
+    
     function innerRegExFor($name)
     {
-        if (isset($this->requirements[$name])) return $this->requirements[$name];
+        if ($this->hasRequirement($name)) return $this->requirements[$name];
         return '[^/]*';  //default requirement matches all but stops on dashes
     }
     
