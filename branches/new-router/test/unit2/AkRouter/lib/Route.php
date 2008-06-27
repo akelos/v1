@@ -47,6 +47,7 @@ class Route extends AkObject
                 $params[$name] = $value;
             }
         }
+        $params = $this->urlDecode($params);
         return $params;
     }
     
@@ -145,7 +146,34 @@ class Route extends AkObject
         if ($name && ($name{0}==':'||$name{0}=='*')) return $name{0};
         return false;
     }
+    
+    /**
+    * Url decode a string or an array of strings
+    */
+    function urlDecode($input)
+    {
+        if (is_scalar($input)){
+            return urldecode($input);
+        }elseif (is_array($input)){
+            return array_map(array($this,'urlDecode'),$input);
+        }
+    }
 
+    /**
+    * Url encodes a string or an array of strings
+    */
+    function urlEncode($input)
+    {
+        if(!empty($input)){
+            if (is_scalar($input)){
+                return urlencode($input);
+            }elseif (is_array($input)){
+                return array_map(array($this,'urlEncode'),$input);
+            }
+        }
+        return '';
+    }
+    
 }
 
 ?>
