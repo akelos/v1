@@ -9,6 +9,7 @@ class Route extends AkObject
     private $requirements;
     private $regex;
     private $dynamic_segments = array();
+    private $segments;
     
     function __construct($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
@@ -95,20 +96,25 @@ class Route extends AkObject
     {
         if ($this->regex) return $this->regex;
         
+        $regex = '|^'.join('',$this->getSegments()).'$|';
+        #var_dump($regex);
+        return $this->regex = $regex;        
+    }
+    
+    function getSegments()
+    {
+        if ($this->segments) return $this->segments;
+        
         $segments = explode('/',trim($this->url_pattern,'/'));
         foreach ($segments as &$segment){
             if ($this->isVariableSegment($segment)){
-                $this->dynamic_segments[] = $name = substr($segment,1);
-                $optional_switch = $this->isOptional($name) ? '?': '';
-                $segment = "(?:/({$this->innerRegExFor($name)}))$optional_switch";
+                $name = $this->dynamic_segments[] = substr($segment,1);
+                $segment = new Segment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
             }else{
                 $segment = '/'.$segment;
             }
         }
-        
-        $regex = '|^'.join('',$segments).'$|';
-        #var_dump($regex);
-        return $this->regex = $regex;        
+        return $this->segments = $segments;
     }
     
     function hasRequirement($name)
