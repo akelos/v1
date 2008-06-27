@@ -1,18 +1,9 @@
 <?php
-PHPUnit_Akelos_autoload::addFolder(__FILE__);
+require_once 'Route_TestCase.php';
 
-class RouteTest extends PHPUnit_Framework_TestCase
+class RouteTest extends Route_TestCase
 {
 
-    /**
-     * @var AkRequest
-     */
-    private $Request;
-    
-    /**
-     * @var Route
-     */
-    private $Route;
     function testWithRouteInstantiatesARoute()
     {
         $this->withRoute('/person/:name');
@@ -95,47 +86,6 @@ class RouteTest extends PHPUnit_Framework_TestCase
         var_dump($pattern,$subject);
         var_dump(preg_match($pattern,$subject,$matches));
         var_dump($matches);
-    }
-    
-    function createRequest($url)
-    {
-        $Request = $this->getMock('AkRequest',array('getRequestedUrl'));
-        $Request->expects($this->once())
-                ->method('getRequestedUrl')
-                ->will($this->returnValue($url));
-        
-        return $this->Request = $Request;
-    }
-    
-    /**
-     * takes the same arguments as the constructor of a Route
-     *
-     * @return RouteTest
-     */
-    function withRoute($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
-    {
-        $this->Route = new Route($url_pattern,$defaults,$requirements,$conditions);
-        return $this;
-    }
-
-    /**
-     * @return RouteTest
-     */
-    function get($url)
-    {
-        $this->Request = $this->createRequest($url);
-        return $this;
-    }
-    
-    function doesntMatch()
-    {
-        $this->assertFalse($this->Route->match($this->Request));
-    }
-    
-    function matches($params=array())
-    {
-        $actual = $this->Route->match($this->Request);
-        $this->assertEquals($params,$actual);
     }
     
 }
