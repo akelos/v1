@@ -62,26 +62,29 @@ class Route extends AkObject
 
     function urlize($params)
     {
-        $url = '';
         $segments = $this->getSegments();
         
-        $break = false;
-        foreach ($segments as $segment){
+        $url_pieces = array();
+        $omit_defaults = true;
+        foreach (array_reverse($segments) as $segment){
             if ($segment instanceof Segment){
                 $name = $segment->name;
-                if (isset($params[$name]) && !($segment->default == $params[$name])){
-                    if ($break) return false;
-                    if (!$segment->meetsRequirement($params[$name])) return false;
-                    $url .= $segment->insertPieceForUrl($params[$name]);
+                if (!isset($params[$name])){
+                    if ($segment->isCompulsory()) return false;
                 }else{
-                    if (!$segment->isOptional()) return false; // compulsory segments must be set
-                    $break = true;
+                    $desired_value = $params[$name];
+                    if ($omit_defaults && $segment->default == $desired_value) continue;
+                    
+                    if (!$segment->meetsRequirement($desired_value)) return false;
+                    $url_pieces[] = $segment->insertPieceForUrl($desired_value);
+                    unset ($params[$name]); 
+                    $omit_defaults = false;
                 }
-                unset ($params[$name]);  // later we'll need the parameters that don't match dynamic-segments 
-            }else{ // = static segment
-                $url .= $segment;
+            }else{
+                $url_pieces[] = $segment;
             }
         }
+        $url = join('',array_reverse($url_pieces));
         
         if ($url=='') $url = '/';
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
