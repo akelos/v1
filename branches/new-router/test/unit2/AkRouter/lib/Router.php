@@ -11,11 +11,16 @@ class Router extends AkObject
     
     function connect($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
+        $this->handleDeprecatedApi($defaults,$requirements);
+        return $this->addRoute(null,new Route($url_pattern,$defaults,$requirements,$conditions));
+    }
+    
+    function handleDeprecatedApi(&$defaults,&$requirements)
+    {
         $this->deprecatedMoveExplicitRequirementsFromDefaultsToRequirements($defaults,$requirements);
         $this->deprecatedMoveImplicitRequirementsFromDefaultsToRequirements($defaults,$requirements);
         $this->deprecatedRemoveDelimitersFromRequirements($requirements);
         $this->deprecatedRemoveExplicitOptional($defaults);
-        return $this->addRoute(null,new Route($url_pattern,$defaults,$requirements,$conditions));
     }
     
     function deprecatedRemoveDelimitersFromRequirements(&$requirements)
@@ -105,6 +110,7 @@ class Router extends AkObject
 
     private function connectNamed($name,$url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
+        $this->handleDeprecatedApi($defaults,$requirements);        
         return $this->addRoute($name,new Route($url_pattern,$defaults,$requirements,$conditions));
     }
     
