@@ -43,19 +43,6 @@ class Segment
         return $this->getRegEx();
     }
     
-    function meetsRequirement($value)
-    {
-        if (!$this->hasRequirement()) return true;
-        
-        $regex = "|^{$this->getInnerRegEx()}$|";
-        return (bool) preg_match($regex,$value);
-    }
-    
-    function insertPieceForUrl($value)
-    {
-        return $this->delimiter.$value;
-    }
-    
 }
 
 ?>
