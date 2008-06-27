@@ -27,7 +27,7 @@ class Route extends AkObject
         array_shift($matches);
         #var_dump($matches);
         foreach ($matches as $i=>$match){
-            if ($match = substr($match,1)) $params[$this->dynamic_segments[$i]] = $match;
+            if ($match) $params[$this->dynamic_segments[$i]] = $match;
         }
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){
@@ -45,7 +45,7 @@ class Route extends AkObject
         foreach ($segments as &$segment){
             if ($this->isVariableSegment($segment)){
                 $this->dynamic_segments[] = $name = substr($segment,1);
-                $segment = "(/{$this->innerRegExFor($name)})?";
+                $segment = "(?:/({$this->innerRegExFor($name)}))?";
             }else{
                 $segment = '/'.$segment;
             }
