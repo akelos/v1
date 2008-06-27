@@ -1,5 +1,7 @@
 <?php
+define ('COMPULSORY','COMPULSORY');
 define ('OPTIONAL','OPTIONAL');
+define ('ANY','ANY');
 
 class NoMatchingRouteException extends Exception 
 { }

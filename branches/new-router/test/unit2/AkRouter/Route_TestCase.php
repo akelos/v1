@@ -1,5 +1,6 @@
 <?php
 PHPUnit_Akelos_autoload::addFolder(dirname(__FILE__).DS.'lib');
+require_once dirname(__FILE__).DS.'lib'.DS.'Router.php';
 
 abstract class Route_TestCase extends PHPUnit_Framework_TestCase
 {
@@ -13,12 +14,15 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
      */
     protected $Route;
 
-    function createRequest($url)
+    function createRequest($url,$method='get')
     {
-        $Request = $this->getMock('AkRequest',array('getRequestedUrl'));
-        $Request->expects($this->once())
+        $Request = $this->getMock('AkRequest',array('getRequestedUrl','getMethod'));
+        $Request->expects($this->any())
                 ->method('getRequestedUrl')
                 ->will($this->returnValue($url));
+        $Request->expects($this->any())
+                ->method('getMethod')
+                ->will($this->returnValue($method));                
         
         return $this->Request = $Request;
     }
@@ -37,9 +41,9 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     /**
      * @return RouteTest
      */
-    function get($url)
+    function get($url,$method='get')
     {
-        $this->Request = $this->createRequest($url);
+        $this->Request = $this->createRequest($url,$method);
         return $this;
     }
     

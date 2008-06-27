@@ -1,5 +1,4 @@
 <?php
-define('COMPULSORY','COMPULSORY');
 require_once 'VariableSegment.php';
 require_once 'WildcardSegment.php';
 
@@ -9,6 +8,7 @@ class Route extends AkObject
     private $url_pattern;
     private $defaults;
     private $requirements;
+    private $conditions;
     private $regex;
     private $dynamic_segments = array();
     private $segments;
@@ -17,11 +17,14 @@ class Route extends AkObject
     {
         $this->url_pattern  = $url_pattern;    
         $this->defaults     = $defaults;
-        $this->requirements = $requirements; 
+        $this->requirements = $requirements;
+        $this->conditions   = $conditions;
     }
     
     function parametrize(AkRequest $Request)
     {
+        if (!$this->ensureRequestMethod($Request->getMethod())) return false;
+        
         $url = $Request->getRequestedUrl();
         #var_dump($url);
         
@@ -45,6 +48,15 @@ class Route extends AkObject
             }
         }
         return $params;
+    }
+    
+    function ensureRequestMethod($method)
+    {
+        if (!isset($this->conditions['method'])) return true;
+        if ($this->conditions['method'] === ANY) return true;
+
+        if (strstr($this->conditions['method'],$method)) return true;
+        return false;
     }
 
     function urlize($params)
