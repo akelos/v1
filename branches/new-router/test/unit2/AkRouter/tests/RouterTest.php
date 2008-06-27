@@ -38,7 +38,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, count($this->Router->getRoutes()));
     }
     
-    function testNoMatch()
+    function testMatchThrowsAnExcpetionIfRequestCannotBeSolved()
     {
         $Request = new AkRequest();
         $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
@@ -53,7 +53,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->Router->match($Request);
     }
     
-    function testMatch()
+    function testMatchTraversesAllRegisteredRoutesIfFalseIsReturned()
     {
         $Request = new AkRequest();
         $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
@@ -72,6 +72,38 @@ class RouterTest extends PHPUnit_Framework_TestCase
         
         $this->Router->match($Request);
         $this->assertEquals($AuthorRoute,$this->Router->currentRoute);
+    }
+    
+    function testUrlizeTraversesAllRegisteredRoutesWhileFalseIsReturned()
+    {
+        $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
+        $PersonRoute->expects($this->once())
+                    ->method('urlize')
+                    ->with(array('name'=>'martin'))
+                    ->will($this->returnValue(false));
+        $AuthorRoute = $this->getMock('Route',array(),array('author/:name'));
+        $AuthorRoute->expects($this->once())
+                    ->method('urlize')
+                    ->with(array('name'=>'martin'))
+                    ->will($this->returnValue('/author/martin'));
+        
+        $this->Router->addRoute('person',$PersonRoute);
+        $this->Router->addRoute('author',$AuthorRoute);
+        
+        $this->assertEquals('/author/martin',$this->Router->urlize(array('name'=>'martin')));
+    }
+    
+    function testUrlizeThrowsAnExceptionIfItCantFindARoute()
+    {
+        $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
+        $PersonRoute->expects($this->once())
+                    ->method('urlize')
+                    ->with(array('not'=>'found'))
+                    ->will($this->returnValue(false));
+        $this->Router->addRoute('person',$PersonRoute);
+
+        $this->setExpectedException('NoMatchingRouteException');
+        $this->Router->urlize(array('not'=>'found'));
     }
     
 }

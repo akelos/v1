@@ -37,6 +37,16 @@ class Router extends AkObject
         }
         throw new NoMatchingRouteException();
     }
+    
+    function urlize($params)
+    {
+        foreach ($this->routes as $route){
+            $url = $route->urlize($params);
+            if ($url) return $url;
+        }
+        throw new NoMatchingRouteException();
+    }
+    
 }
 
 ?>
