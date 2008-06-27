@@ -6,6 +6,7 @@ class AkRouterSpecs extends PHPUnit_Routing_TestCase
     function setUp()
     {
         $this->instantiateRouter();
+        $this->testReciprocity();
     }
     
     function testShowsTheTestAPI()
