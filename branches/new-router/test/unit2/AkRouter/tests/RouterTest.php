@@ -31,11 +31,20 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(array('person'),array_keys($this->Router->getRoutes()));
     }
     
-    function testConnect()
+    function testConnectAddsUnnamedRoute()
     {
         $this->Router->connect('person/:name');
 
         $this->assertEquals(1, count($this->Router->getRoutes()));
+        $this->assertEquals(array(0),array_keys($this->Router->getRoutes()));
+    }
+    
+    function testInterceptCallToUnknownMethodsAndAddNamedRoute()
+    {
+        $this->Router->person('person/:name');
+        
+        $this->assertEquals(1, count($this->Router->getRoutes()));
+        $this->assertEquals(array('person'),array_keys($this->Router->getRoutes()));
     }
     
     function testMatchThrowsAnExcpetionIfRequestCannotBeSolved()
