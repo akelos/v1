@@ -14,6 +14,9 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
      */
     protected $Route;
 
+    /**
+     * @return AkRequest
+     */
     function createRequest($url,$method='get')
     {
         $Request = $this->getMock('AkRequest',array('getRequestedUrl','getMethod'));
@@ -30,7 +33,7 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     /**
      * takes the same arguments as the constructor of a Route
      *
-     * @return RouteTest
+     * @return Route_TestCase
      */
     function withRoute($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
@@ -39,7 +42,7 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return RouteTest
+     * @return Route_TestCase
      */
     function get($url,$method='get')
     {
@@ -58,6 +61,9 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
         $this->assertEquals($params,$actual);
     }
     
+    /**
+     * @return Route_TestCase
+     */
     function urlize($params = array())
     {
         $this->params = $params;
@@ -73,8 +79,6 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     {
         $this->assertFalse($this->Route->urlize($this->params));
     }
-    
-    
     
 }
 
