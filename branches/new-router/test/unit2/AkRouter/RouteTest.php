@@ -57,7 +57,7 @@ class RouteTest extends Route_TestCase
     {
         $this->withRoute('/person/:name/:age',array('name'=>'kevin','controller'=>'person'));
         
-        $this->get('/person/')      ->matches(array('name'=>'kevin','controller'=>'person'));
+        $this->get('/person')      ->matches(array('name'=>'kevin','controller'=>'person'));
         $this->get('/person/martin')->matches(array('name'=>'martin','controller'=>'person'));
     }
     
@@ -105,6 +105,16 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('name'=>'martin'))->returns('/person');
     }
     
+    function testUrlizeWithMultipleOptionalSegments()
+    {
+        $this->withRoute('/person/:name/:age',array('name'=>'martin'),array('name'=>'[a-z]+'));
+        
+        $this->urlize()->returns('/person');
+        $this->urlize(array('name'=>'steve'))            ->returns('/person/steve');
+        $this->urlize(array('name'=>'steve','age'=>'34'))->returns('/person/steve/34');
+        $this->urlize(array('age'=>'34'))                ->returnsNothing();
+    }
+    
     function urlize($params = array())
     {
         $this->params = $params;
@@ -114,6 +124,11 @@ class RouteTest extends Route_TestCase
     function returns($url)
     {
         $this->assertEquals($url,$this->Route->urlize($this->params));
+    }
+    
+    function returnsNothing()
+    {
+        $this->assertFalse($this->Route->urlize($this->params));
     }
     
     function _testRegex()
