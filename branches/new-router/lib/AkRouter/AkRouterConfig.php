@@ -19,7 +19,7 @@
  */
 
 
-class RouterConfig
+class AkRouterConfig
 {
     /**
     * This method tries to determine if url rewrite is enabled on this server.

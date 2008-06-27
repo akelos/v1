@@ -168,7 +168,7 @@ class AkRouter extends AkObject
 //somehow dirty and therefore outsourced
 if (!defined('AK_URL_REWRITE_ENABLED')){
     if (!defined('AK_ENABLE_URL_REWRITE') || AK_ENABLE_URL_REWRITE){
-        require_once 'RouterConfig.php';
+        require_once 'AkRouter'.DS.'AkRouterConfig.php';
         AkRouterConfig::loadUrlRewriteSettings();
     }
 }
