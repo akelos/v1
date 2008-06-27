@@ -38,6 +38,24 @@ class Route extends AkObject
         }
         return $params;
     }
+
+    function urlize($params)
+    {
+        $url = '';
+        $segments = explode('/',trim($this->url_pattern,'/'));
+        
+        foreach ($segments as $segment){
+            if ($this->isVariableSegment($segment)){
+                $name = substr($segment,1);
+                if (isset($params[$name])){
+                    $url .= '/'.$params[$name];
+                }
+            }else{
+                $url .= '/'.$segment;
+            }
+        }
+        return $url;
+    }
     
     function getRegex()
     {

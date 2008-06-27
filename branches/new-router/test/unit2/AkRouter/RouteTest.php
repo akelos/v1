@@ -88,6 +88,25 @@ class RouteTest extends Route_TestCase
         $this->get('/')->matches(array('controller'=>'person'));
     }
     
+    function testUrlizeWithOptionalSegment()
+    {
+        $this->withRoute('/person/:age');
+        
+        $this->urlize()->returns('/person');
+        $this->urlize(array('age'=>'23'))->returns('/person/23');
+    }
+    
+    function urlize($params = array())
+    {
+        $this->params = $params;
+        return $this;
+    }
+    
+    function returns($url)
+    {
+        $this->assertEquals($url,$this->Route->urlize($this->params));
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
