@@ -37,7 +37,7 @@ class Route extends AkObject
                 continue;  
             }
             if ($break) return false;
-            $params[$this->dynamic_segments[$i]->name] = $match;
+            $this->dynamic_segments[$i]->addToParams($params,$match);
         }
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){

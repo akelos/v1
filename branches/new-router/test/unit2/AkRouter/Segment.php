@@ -56,5 +56,7 @@ class Segment
     {
         return $this->delimiter.$value;
     }
+    
 }
+
 ?>

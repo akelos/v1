@@ -164,6 +164,7 @@ class RouteTest extends Route_TestCase
         $this->withRoute('/set/*options');
         
         $this->get('/set')->matches();
+        $this->get('/set/this')->matches(array('options'=>array('this')));
     }
     
     function _testRegex()
