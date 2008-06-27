@@ -11,14 +11,12 @@ class RouteUrlencodesParameters extends Route_TestCase
     
     function testParametrizeDecodesReturnedParameters()
     {
-        $name = 'Martin L. Degree';
-        $this->get('/author/'.urlencode($name))->matches(array('name'=>$name));
+        $this->get('/author/Martin+L.+Degree')->matches(array('name'=>'Martin L. Degree'));
     }
     
     function testUrlizeEncodesGivenParameters()
     {
-        $name = 'Martin L. Degree';
-        $this->urlize(array('name'=>$name))->returns('/author/'.urlencode($name));
+        $this->urlize(array('name'=>'Martin L. Degree'))->returns('/author/Martin+L.+Degree');
     }
     
 }
