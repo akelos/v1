@@ -83,10 +83,10 @@ class Route extends AkObject
         }
         
         if ($url=='') $url = '/';
-
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
         if (!empty($params)){
-            if (!$key_value_list = $this->getAdditionalKeyValueListForUrl($params)) return false;
+            $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
+            if ($key_value_list===false) return false;
             $url .= $key_value_list;
         }
         return $url;
@@ -96,11 +96,15 @@ class Route extends AkObject
     {
         $key_value_pairs = array();
         foreach ($params as $name=>$value){
-            // don't override defaults that don't correspond to dynamic segments
-            if (isset($this->defaults[$name]) && $this->defaults[$name] != $value) return false;
+            if (isset($this->defaults[$name])){
+                // don't override defaults that don't correspond to dynamic segments, but break
+                if ($this->defaults[$name] != $value) return false;
+                // don't append defaults
+                continue;
+            }
             $key_value_pairs[] = "$name=$value";
         }
-        return '?'.join('&',$key_value_pairs);            
+        return empty($key_value_pairs) ? '' : ('?'.join('&',$key_value_pairs));            
     }
     
     function getRegex()

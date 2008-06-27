@@ -278,6 +278,13 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('how'=>array('black','and','white')))->returns('/feel/black/and/white');
     }
     
+    function testUrlizeDoesNotAppendDefaultValuesToTheUrl()
+    {
+        $this->withRoute('/author/:name',array('controller'=>'author'));
+        
+        $this->urlize(array('controller'=>'author'))->returns('/author');
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
