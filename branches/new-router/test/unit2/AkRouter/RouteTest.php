@@ -133,6 +133,15 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('age'=>'34'))->returnsFalse();
     }
     
+    function testUrlizeBreaksIfACompulsorySegmentIsNotSet()
+    {
+        $this->withRoute('/person/:name/:age',array('age'=>COMPULSORY));
+        
+        $this->urlize()                      ->returnsFalse();
+        $this->urlize(array('name'=>'lewis'))->returnsFalse();
+        $this->urlize(array('name'=>'lewis','age'=>'45'))->returns('/person/lewis/45');
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";

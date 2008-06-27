@@ -61,6 +61,7 @@ class Route extends AkObject
                     }
                     $url .= '/'.$params[$name];
                 }else{
+                    if (!$this->isOptional($name)) return false;
                     $break = true;
                 }
             }else{
