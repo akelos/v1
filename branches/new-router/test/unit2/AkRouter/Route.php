@@ -44,11 +44,7 @@ class Route extends AkObject
         foreach ($segments as &$segment){
             if ($segment{0}==':'){
                 $this->dynamic_segments[] = $name = substr($segment,1);
-                if (isset($this->requirements[$name])){
-                    $segment = "(/{$this->requirements[$name]})?";                    
-                }else{
-                    $segment = '(/[^/]*)?';
-                }
+                $segment = "(/{$this->innerRegExFor($name)})?";
             }else{
                 $segment = '/'.$segment;
             }
@@ -57,6 +53,12 @@ class Route extends AkObject
         $regex = '|^'.join('',$segments).'/?$|';
         #var_dump($regex);
         return $this->regex = $regex;        
+    }
+    
+    function innerRegExFor($name)
+    {
+        if (isset($this->requirements[$name])) return $this->requirements[$name];
+        return '[^/]*';  //default requirement matches all but stops on dashes
     }
 }
 
