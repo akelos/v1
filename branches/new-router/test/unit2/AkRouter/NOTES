@@ -1,0 +1,15 @@
+
+1.
+
+$this->withRoute('/:controller/:action');
+$this->get('/blog') doesnt return ('blog','') anymore but ('blog')
+so an optional segment is suppressed if not present
+
+2.
+
+Requirements given in the default-array 
+
+e.g. $this->withRoute('/:author/:name',array('name'=>'/[a-z]+/'))
+or   $this->withRoute('/:author/:name',array('requirements'=>array('name'=>'/[a-z]+/')))
+
+are deprecated.

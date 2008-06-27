@@ -128,6 +128,46 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('/author/martin',$this->Router->author_url(array('name'=>'martin')));
     }
     
+    function testRequirementsShouldntHaveRegexDelimiters()
+    {
+        $Router = $this->getMock('Router',array('addRoute'));
+        $Router->expects($this->once())
+               ->method('addRoute')
+               ->with(null,new Route('/author/:name',array(),array('name'=>'[a-z]+')));
+               
+       $Router->connect('/author/:name',array(),array('name'=>'/[a-z]+/'));
+    }
+    
+    function testDefaultsShouldntBeUsedForRequirements()
+    {
+        $Router = $this->getMock('Router',array('addRoute'));
+        $Router->expects($this->once())
+               ->method('addRoute')
+               ->with(null,new Route('/author/:name',array(),array('name'=>'[a-z]+')));
+               
+       $Router->connect('/author/:name',array('name'=>'/[a-z]+/'));
+    }
+
+    function testSegmentsShouldntBeDeclaredOptional()
+    {
+        $Router = $this->getMock('Router',array('addRoute'));
+        $Router->expects($this->once())
+               ->method('addRoute')
+               ->with(null,new Route('/author/:name',array()));
+               
+       $Router->connect('/author/:name',array('name'=>OPTIONAL));
+    }
+    
+    function testDefaultsShouldntBeUsedForRequirementsAsAnExplicitOption()
+    {
+        $Router = $this->getMock('Router',array('addRoute'));
+        $Router->expects($this->once())
+               ->method('addRoute')
+               ->with(null,new Route('/author/:name',array(),array('name'=>'[a-z]+')));
+               
+       $Router->connect('/author/:name',array('requirements'=>array('name'=>'/[a-z]+/')));
+    }
+    
 }
 
 ?>
