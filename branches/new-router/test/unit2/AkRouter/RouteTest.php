@@ -81,6 +81,13 @@ class RouteTest extends PHPUnit_Framework_TestCase
         $this->get('/person23')  ->doesntMatch();
     }
     
+    function testRouteWithOnlyOptionalSegmentsMatchesAgainstRoot()
+    {
+        $this->withRoute('/:person/:name/:age',array('controller'=>'person'));
+        
+        $this->get('/')->matches(array('controller'=>'person'));
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";
