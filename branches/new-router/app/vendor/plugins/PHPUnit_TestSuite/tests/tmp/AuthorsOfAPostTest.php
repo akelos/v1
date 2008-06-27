@@ -1,5 +1,5 @@
 <?php
-PHPUnit_Akelos_autoload::addFolder(AK_PHPUNIT_TESTSUITE_FIXTURES);
+PHPUnit_Akelos_autoload::addFolder(__FILE__);
 
 class AuthorsOfAPostTest extends PHPUnit_Model_TestCase 
 {

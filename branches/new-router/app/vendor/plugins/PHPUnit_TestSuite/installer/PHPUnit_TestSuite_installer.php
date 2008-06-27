@@ -2,7 +2,7 @@
 
 class PHPUnitTestSuiteInstaller extends AkInstaller 
 {
-    function up_1()
+    function install()
     {
         $source = dirname(__FILE__).DS.'phpunit_test.php';
         $target = AK_BASE_DIR.DS.'script'.DS.'phpunit_testsuite.php';
@@ -19,7 +19,7 @@ class PHPUnitTestSuiteInstaller extends AkInstaller
         echo "We're now on version: ".Ak::file_get_contents(dirname(dirname(__FILE__)).DS.'VERSION');
     }
     
-    function down_1()
+    function uninstall()
     {
         $target = AK_BASE_DIR.DS.'script'.DS.'phpunit_testsuite.php';
         unlink($target);        

@@ -1,12 +1,12 @@
 <?php
-# we add an folder to the search-path of the autoloader, because this plugin has its own fixtures-folder.
+# we add a folder to the search-path of the autoloader, because this plugin has its own fixtures-folder.
 # usually you don't need this, as long as you use the standard-folders; i.e. test/fixtures/app/* and app/*
 PHPUnit_Akelos_autoload::addFolder(AK_PHPUNIT_TESTSUITE_FIXTURES);
 
 class ModelTestExample extends PHPUnit_Model_TestCase 
 {
 
-    function testUseModel()
+    function testBasicUsageToIncludeAModel()
     {
         list($Person,$People) = $this->useModel('Person');
         # that's it: now we have
@@ -22,7 +22,7 @@ class ModelTestExample extends PHPUnit_Model_TestCase
         $this->assertEquals('Freud',$Sigmund->last_name);
     }
     
-    function testGenerateTheModelAndTheTableOnTheFly()
+    function testGenerateTheModelAndTheTableOnTheFlyAndGenerateSomeRecords()
     {
         # if we hadn't neither an Artist-Model nor an Artist-installer
         $this->useModel('Artist=>id,name,tag');
