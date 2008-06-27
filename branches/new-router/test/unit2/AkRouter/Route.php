@@ -35,7 +35,7 @@ class Route extends AkObject
                 continue;  
             }
             if ($break) return false;
-            $params[$this->dynamic_segments[$i]] = $match;
+            $params[$this->dynamic_segments[$i]->name] = $match;
         }
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){
@@ -105,8 +105,9 @@ class Route extends AkObject
         $segments = explode('/',trim($this->url_pattern,'/'));
         foreach ($segments as &$segment){
             if ($this->isVariableSegment($segment)){
-                $name = $this->dynamic_segments[] = substr($segment,1);
+                $name = substr($segment,1);
                 $segment = new Segment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                $this->dynamic_segments[] = $segment;
             }else{
                 $segment = '/'.$segment;
             }
