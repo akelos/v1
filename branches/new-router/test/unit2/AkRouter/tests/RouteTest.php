@@ -4,18 +4,6 @@ require_once 'Route_TestCase.php';
 class RouteTest extends Route_TestCase
 {
 
-    function testWithRouteInstantiatesARoute()
-    {
-        $this->withRoute('/person/:name');
-        $this->assertType('Route',$this->Route);
-    }
-    
-    function testMockedRequestCanBeAskedAboutRequestedUrl()
-    {
-        $Request = $this->createRequest('/person/martin');
-        $this->assertEquals('/person/martin',$Request->getRequestedUrl());
-    }
-    
     function testStaticRouteDoesNotMatchAgainstRoot()
     {
         $this->withRoute('/person');
