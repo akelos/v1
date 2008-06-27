@@ -159,6 +159,13 @@ class RouteTest extends Route_TestCase
         
     }
     
+    function testWildcardSegmentImplicitOptional()
+    {
+        $this->withRoute('/set/*options');
+        
+        $this->get('/set')->matches();
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";

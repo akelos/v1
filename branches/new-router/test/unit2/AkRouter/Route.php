@@ -1,5 +1,7 @@
 <?php
 define('COMPULSORY','COMPULSORY');
+require_once 'VariableSegment.php';
+require_once 'WildcardSegment.php';
 
 class Route extends AkObject 
 {
@@ -104,9 +106,16 @@ class Route extends AkObject
         
         $segments = explode('/',trim($this->url_pattern,'/'));
         foreach ($segments as &$segment){
-            if ($this->isVariableSegment($segment)){
+            if ($type = $this->isVariableSegment($segment)){
                 $name = substr($segment,1);
-                $segment = new Segment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                switch ($type) {
+                	case ':':
+                        $segment = new VariableSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                    	break;
+                	case '*':
+                        $segment = new WildcardSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                	    break;
+                }
                 $this->dynamic_segments[] = $segment;
             }else{
                 $segment = '/'.$segment;
@@ -117,7 +126,7 @@ class Route extends AkObject
     
     function isVariableSegment($name)
     {
-        if ($name && $name{0}==':') return true;
+        if ($name && ($name{0}==':'||$name{0}=='*')) return $name{0};
         return false;
     }
 
