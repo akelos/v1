@@ -1,5 +1,4 @@
 <?php
-PHPUnit_Akelos_autoload::addFolder(dirname(__FILE__).DS.'lib');
 require_once dirname(__FILE__).DS.'lib'.DS.'AkRouter.php';
 
 abstract class Route_TestCase extends PHPUnit_Framework_TestCase
