@@ -2,9 +2,9 @@
 
 class Segment 
 {
-    private $name;
+    public  $name;
     private $delimiter;
-    private $default;
+    public  $default;
     private $requirement;  //default requirement matches all but stops on dashes
     
     static  $DEFAULT_REQUIREMENT='[^/]*';  //default requirement matches all but stops on dashes

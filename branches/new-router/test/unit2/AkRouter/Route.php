@@ -48,26 +48,23 @@ class Route extends AkObject
     function urlize($params)
     {
         $url = '';
-        $segments = explode('/',trim($this->url_pattern,'/'));
+        $segments = $this->getSegments();
         
         $break = false;
         foreach ($segments as $segment){
-            if ($this->isVariableSegment($segment)){
-                $name = substr($segment,1);
-                if (isset($params[$name]) && !(isset($this->defaults[$name]) && $this->defaults[$name] == $params[$name])){
+            if ($segment instanceof Segment){
+                $name = $segment->name;
+                if (isset($params[$name]) && !($segment->default == $params[$name])){
                     if ($break) return false;
-                    if ($this->hasRequirement($name)){
-                        $regex = "|^{$this->innerRegExFor($name)}$|";
-                        if (!preg_match($regex,$params[$name])) return false;
-                    }
+                    if (!$segment->meetsRequirement($params[$name])) return false;
                     $url .= '/'.$params[$name];
                 }else{
-                    if (!$this->isOptional($name)) return false;  // compulsory segment must be set
+                    if (!$segment->isOptional()) return false; // compulsory segment must be set
                     $break = true;
                 }
                 unset ($params[$name]);  // later we'll need the parameters that don't match dynamic-segments 
             }else{ // = static segment
-                $url .= '/'.$segment;
+                $url .= $segment;
             }
         }
         
