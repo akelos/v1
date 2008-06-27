@@ -45,12 +45,12 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     
     function doesntMatch()
     {
-        $this->assertFalse($this->Route->match($this->Request));
+        $this->assertFalse($this->Route->parametrize($this->Request));
     }
     
     function matches($params=array())
     {
-        $actual = $this->Route->match($this->Request);
+        $actual = $this->Route->parametrize($this->Request);
         $this->assertEquals($params,$actual);
     }
     

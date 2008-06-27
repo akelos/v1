@@ -29,10 +29,10 @@ class Router extends AkObject
     function match(AkRequest $Request)
     {
         foreach ($this->routes as $route){
-            $match = $route->match($Request);
-            if ($match){
+            $params = $route->parametrize($Request);
+            if ($params){
                 $this->currentRoute = $route;
-                return $Request;
+                return $params;
             }
         }
         throw new NoMatchingRouteException();

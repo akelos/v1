@@ -43,7 +43,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $Request = new AkRequest();
         $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
-                    ->method('match')
+                    ->method('parametrize')
                     ->with($Request)
                     ->will($this->returnValue(false));
         
@@ -58,12 +58,12 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $Request = new AkRequest();
         $PersonRoute = $this->getMock('Route',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
-                    ->method('match')
+                    ->method('parametrize')
                     ->with($Request)
                     ->will($this->returnValue(false));
         $AuthorRoute = $this->getMock('Route',array(),array('author/:name'));
         $AuthorRoute->expects($this->once())
-                    ->method('match')
+                    ->method('parametrize')
                     ->with($Request)
                     ->will($this->returnValue(true));
         

@@ -20,7 +20,7 @@ class Route extends AkObject
         $this->requirements = $requirements; 
     }
     
-    function match(AkRequest $Request)
+    function parametrize(AkRequest $Request)
     {
         $url = $Request->getRequestedUrl();
         #var_dump($url);
