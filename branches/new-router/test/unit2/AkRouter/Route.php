@@ -68,6 +68,7 @@ class Route extends AkObject
                 $url .= '/'.$segment;
             }
         }
+        if ($url=='') $url = '/';
         return $url;
     }
     

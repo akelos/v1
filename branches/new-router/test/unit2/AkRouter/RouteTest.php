@@ -86,6 +86,7 @@ class RouteTest extends Route_TestCase
         $this->withRoute('/:person/:name/:age',array('controller'=>'person'));
         
         $this->get('/')->matches(array('controller'=>'person'));
+        $this->urlize()->returns('/');
     }
     
     function testUrlizeWithOptionalSegment()
