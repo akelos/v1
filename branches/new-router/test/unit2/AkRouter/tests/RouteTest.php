@@ -138,7 +138,7 @@ class RouteTest extends Route_TestCase
         $this->withRoute('/person/:name/:age',array('name'=>'martin'),array('name'=>'[a-z]+'));
         
         $this->get('/person/24')         ->doesntMatch();
-        #$this->urlize(array('age'=>'34'))->returnsFalse();
+        $this->urlize(array('age'=>'34'))->returnsFalse();
     }
     
     function testUrlizeBreaksIfACompulsorySegmentIsNotSet()

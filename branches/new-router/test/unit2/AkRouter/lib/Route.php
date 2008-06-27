@@ -72,6 +72,7 @@ class Route extends AkObject
                 $name = $segment->name;
                 if (!isset($params[$name])){
                     if ($segment->isCompulsory()) return false;
+                    if (!$omit_defaults) return false;
                 }else{
                     $desired_value = $params[$name];
                     if ($omit_defaults && $segment->default == $desired_value) continue;
