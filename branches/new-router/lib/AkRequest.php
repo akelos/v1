@@ -175,14 +175,14 @@ class AkRequest extends AkObject
     function getRequestedUrl()
     {
         if (!isset($this->_request['ak'])) return '/';
-        return '/'.trim($this->_request['ak'],'/').'/';
+        return '/'.trim($this->_request['ak'],'/');
     }
     
-    function checkForRoutedRequests(&$Router)
+    function checkForRoutedRequests(AkRouter &$Router)
     {
         $ak_request = $this->getRequestedUrl();
 
-        if($found = $Router->toParams($ak_request)){
+        if ($found = $Router->match($this)){
             if(!isset($found['controller'])){
                 trigger_error(Ak::t('No controller was specified.'), E_USER_WARNING);
             }
@@ -781,7 +781,7 @@ class AkRequest extends AkObject
         require_once(AK_LIB_DIR.DS.'AkRouter.php');
         if(is_file(AK_ROUTES_MAPPING_FILE)){
             if(empty($Map)){
-                $Map =& AkRouter();
+                $Map = AkRouter::getInstance();
             }
             include(AK_ROUTES_MAPPING_FILE);
             // Set this routes for being used via Ak::toUrl
