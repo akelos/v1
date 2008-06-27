@@ -225,6 +225,13 @@ class RouteTest extends Route_TestCase
         $this->get('/numbers/12/stop/789') ->doesntMatch();
     }
     
+    function testWildcardSegmentWithDefinedLengthActsAsCompulsory()
+    {
+        $this->withRoute('/numbers/*numbers',array('numbers'=>3));
+        
+        $this->get('/numbers')->doesntMatch();
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";

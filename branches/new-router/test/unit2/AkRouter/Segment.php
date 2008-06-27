@@ -30,7 +30,12 @@ class Segment
     
     function isOptional()
     {
-        return !$this->default || $this->default !== COMPULSORY; 
+        return !$this->isCompulsory();
+    }
+    
+    function isCompulsory()
+    {
+        return $this->default === COMPULSORY;
     }
     
     function __toString()
