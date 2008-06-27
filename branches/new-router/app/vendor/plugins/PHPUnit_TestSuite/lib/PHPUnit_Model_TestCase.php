@@ -8,18 +8,18 @@ abstract class PHPUnit_Model_TestCase extends PHPUnit_Framework_TestCase
      * 
      * ->useModel('Person')
      * will look for an installer-file <person_installer.php> and use it for creating the table. 
-     * It will include the Person-model or genertae an empty/default model if none is found in the include path.
-     * An instance of the model can found at $this->Person. After all it will look for a fixture named
+     * It will include the Person-model or generate an empty/default model if none is found in the include path.
+     * An instance of the model can be found at $this->Person. After all it will look for a fixture named
      * <people.yaml> in the path and create the records/rows in the database. A copy of this data can be found
      * at $this->People as an associative array. 
-     * Additionally it returns the instance and the fixture-data, so you can do
+     * It returns the instance and the fixture-data, so you can do
      *     list($Person,$People) = $this->useModel('Person'); 
      * and use these local variables. 
      * 
      * ->useModel('Person=>id,name')
      * will instead of using an installer-file simply use the columns provided. I.e. it will drop and then create
      * the table <people> with the columns 'id' and 'name'. In fact the table-definition can be the same as in any
-     * installer, so you can really quickly prototype your staff.  
+     * installer, so you can really quickly prototype your stuff.  
      *   
      *
      * @param string $model_name optionally with table-defintion 

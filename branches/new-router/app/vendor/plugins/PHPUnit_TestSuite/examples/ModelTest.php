@@ -32,9 +32,9 @@ class ModelTestExample extends PHPUnit_Model_TestCase
         # we can create an Artist by doing 
         $Super = $this->createArtist('name: Supertramp, tag: super-goofy');
         $this->assertEquals('Supertramp', $Super->name);
-        # since this is a comma-seperated list, escape a <,> with <\,> in your strings 
+        # since this is a comma-separated list, escape a <,> with <\,> in your strings 
 
-        # the given data will be merged with the array returned by <defaultArtist()>
+        # the given data will be merged with the array returned by the method <defaultArtist()> below
         $Duran = $this->createArtist('name: Duran Duran');
         $this->assertEquals('so-so',$Duran->tag);
     }
