@@ -57,9 +57,9 @@ class Route extends AkObject
                 if (isset($params[$name]) && !($segment->default == $params[$name])){
                     if ($break) return false;
                     if (!$segment->meetsRequirement($params[$name])) return false;
-                    $url .= '/'.$params[$name];
+                    $url .= $segment->insertPieceForUrl($params[$name]);
                 }else{
-                    if (!$segment->isOptional()) return false; // compulsory segment must be set
+                    if (!$segment->isOptional()) return false; // compulsory segments must be set
                     $break = true;
                 }
                 unset ($params[$name]);  // later we'll need the parameters that don't match dynamic-segments 
