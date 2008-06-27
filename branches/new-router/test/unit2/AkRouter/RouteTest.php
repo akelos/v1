@@ -8,12 +8,18 @@ class RouteTest extends PHPUnit_Framework_TestCase
      * @var AkRequest
      */
     private $Request;
-    function testInstantiateRoute()
+    
+    /**
+     * @var Route
+     */
+    private $Route;
+    function testWithRouteInstantiatesARoute()
     {
-        $Route = new Route('/person/:name');
+        $this->withRoute('/person/:name');
+        $this->assertType('Route',$this->Route);
     }
     
-    function testMockedRequest()
+    function testMockedRequestCanBeAskedAboutRequestedUrl()
     {
         $Request = $this->createRequest('/person/martin');
         $this->assertEquals('/person/martin',$Request->getRequestedUrl());
@@ -21,56 +27,54 @@ class RouteTest extends PHPUnit_Framework_TestCase
     
     function testStaticRouteDoesNotMatchAgainstRoot()
     {
-        $Route = new Route('/person');
-        $Request = $this->createRequest('/');
-        
-        $this->assertFalse($Route->match($Request));
+        $this->withRoute('/person');
+        $this->get('/')->doesntMatch();
     }
     
     function testStaticRouteMatchesAgainstExactUrl()
     {
-        $Route = new Route('/person/martin');
-        $Request = $this->createRequest('/person/martin/');
-
-        $this->assertEquals(array(),$Route->match($Request));
+        $this->withRoute('/person/martin');
+        $this->get('/person/martin/')->matches();
     }
     
     function testStaticRouteReturnsDefaults()
     {
-        $Route = new Route('/person/martin',array('controller'=>'person','action'=>'view'));
-        $Request = $this->createRequest('/person/martin/');
+        $this->withRoute('/person/martin',array('controller'=>'person','action'=>'view'));
 
-        $this->assertEquals(array('controller'=>'person','action'=>'view'),$Route->match($Request));
+        $this->get('/person/martin/');
+        $this->matches(array('controller'=>'person','action'=>'view'));
     }
     
     function testOptionalSegment()
     {
-        $Route = new Route('/person/:name/:age');
+        $this->withRoute('/person/:name/:age');
         
-        $this->assertEquals(array(),$Route->match($this->createRequest('/person')));
-        $this->assertEquals(array(),$Route->match($this->createRequest('/person/')));
-        $this->assertEquals(array('name'=>'martin'),$Route->match($this->createRequest('/person/martin')));
-        $this->assertEquals(array('name'=>'martin'),$Route->match($this->createRequest('/person/martin/')));
-        $this->assertEquals(array('name'=>'martin','age'=>'23'),$Route->match($this->createRequest('/person/martin/23')));
-        $this->assertEquals(array('name'=>'martin','age'=>'23'),$Route->match($this->createRequest('/person/martin/23/')));
+        $this->get('/person') ->matches();
+        $this->get('/person/')->matches();
+        
+        $this->get('/person/martin')    ->matches(array('name'=>'martin'));
+        $this->get('/person/martin/')   ->matches(array('name'=>'martin'));
+        $this->get('/person/martin/23') ->matches(array('name'=>'martin','age'=>'23'));
+        $this->get('/person/martin/23/')->matches(array('name'=>'martin','age'=>'23'));
     }
     
     function testOptionalSegmentWithDefaults()
     {
-        $Route = new Route('/person/:name/:age',array('name'=>'kevin','controller'=>'person'));
-        $this->assertEquals(array('name'=>'kevin','controller'=>'person'),$Route->match($this->createRequest('/person/')));
-        $this->assertEquals(array('name'=>'martin','controller'=>'person'),$Route->match($this->createRequest('/person/martin')));
+        $this->withRoute('/person/:name/:age',array('name'=>'kevin','controller'=>'person'));
+        
+        $this->get('/person/')      ->matches(array('name'=>'kevin','controller'=>'person'));
+        $this->get('/person/martin')->matches(array('name'=>'martin','controller'=>'person'));
     }
     
     function testOptionalSegmentWithRequirement()
     {
-        $Route = new Route('/person/:age',array(),array('age'=>'[0-9]+'));
+        $this->withRoute('/person/:age',array(),array('age'=>'[0-9]+'));
         
-        $this->assertFalse($Route->match($this->createRequest('/person/abc')));
-        #$this->assertFalse($Route->match($this->createRequest('/person/')));
-        $this->assertEquals(array(),$Route->match($this->createRequest('/person/')));
-        $this->assertEquals(array('age'=>'23'),$Route->match($this->createRequest('/person/23')));
-        $this->assertFalse($Route->match($this->createRequest('/person23/')));
+        $this->get('/person/abc')->doesntMatch();
+        #$this->get('/person/')   ->doesntMatch();
+        $this->get('/person/')   ->matches();
+        $this->get('/person/23') ->matches(array('age'=>'23'));
+        $this->get('/person23/') ->doesntMatch();
     }
     
     function _testRegex()
@@ -91,6 +95,38 @@ class RouteTest extends PHPUnit_Framework_TestCase
         
         return $this->Request = $Request;
     }
+    
+    /**
+     * takes the same arguments as the constructor of a Route
+     *
+     * @return RouteTest
+     */
+    function withRoute($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
+    {
+        $this->Route = new Route($url_pattern,$defaults,$requirements,$conditions);
+        return $this;
+    }
+
+    /**
+     * @return RouteTest
+     */
+    function get($url)
+    {
+        $this->Request = $this->createRequest($url);
+        return $this;
+    }
+    
+    function doesntMatch()
+    {
+        $this->assertFalse($this->Route->match($this->Request));
+    }
+    
+    function matches($params=array())
+    {
+        $actual = $this->Route->match($this->Request);
+        $this->assertEquals($params,$actual);
+    }
+    
 }
 
 ?>
