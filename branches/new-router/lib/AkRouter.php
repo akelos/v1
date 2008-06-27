@@ -116,6 +116,11 @@ class AkRouter extends AkObject
         throw new NoMatchingRouteException();
     }
     
+    function toUrl($params)
+    {
+        return $this->urlize($params);
+    }
+    
     /**
      * catches
      *    :name_url($params) and maps to ->urlizeUsingNamedRoute(:name,$params) 
