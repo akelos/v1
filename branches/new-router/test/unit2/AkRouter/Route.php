@@ -61,24 +61,34 @@ class Route extends AkObject
                     }
                     $url .= '/'.$params[$name];
                 }else{
-                    if (!$this->isOptional($name)) return false;
+                    if (!$this->isOptional($name)) return false;  // compulsory segment must be set
                     $break = true;
                 }
-                unset ($params[$name]);
-            }else{
+                unset ($params[$name]);  // later we'll need the parameters that don't match dynamic-segments 
+            }else{ // = static segment
                 $url .= '/'.$segment;
             }
         }
+        
         if ($url=='') $url = '/';
+
+        // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
         if (!empty($params)){
-            $additional_parameters = array();
-            foreach ($params as $name=>$value){
-                if (isset($this->defaults[$name]) && $this->defaults[$name] != $value) return false;
-                $additional_parameters[] = "$name=$value";
-            }
-            $url .= '?'.join('&',$additional_parameters);            
+            if (!$key_value_list = $this->getAdditionalKeyValueListForUrl($params)) return false;
+            $url .= $key_value_list;
         }
         return $url;
+    }
+    
+    function getAdditionalKeyValueListForUrl($params)
+    {
+        $key_value_pairs = array();
+        foreach ($params as $name=>$value){
+            // don't override defaults that don't correspond to dynamic segments
+            if (isset($this->defaults[$name]) && $this->defaults[$name] != $value) return false;
+            $key_value_pairs[] = "$name=$value";
+        }
+        return '?'.join('&',$key_value_pairs);            
     }
     
     function getRegex()
