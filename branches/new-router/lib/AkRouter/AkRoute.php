@@ -18,6 +18,9 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
+class RouteDoesNotMatchRequestException extends Exception 
+{ }
+
 require_once 'AkSegment.php';
 require_once 'AkVariableSegment.php';
 require_once 'AkLangSegment.php';
@@ -41,12 +44,17 @@ class AkRoute extends AkObject
         $this->conditions   = $conditions;
     }
     
+    /**
+     * @throws RouteDoesNotMatchRequestException
+     * @param AkRequest $Request
+     * @return array $params
+     */
     function parametrize(AkRequest $Request)
     {
-        if (!$this->ensureRequestMethod($Request->getMethod())) return false;
+        if (!$this->ensureRequestMethod($Request->getMethod())) throw new RouteDoesNotMatchRequestException();
         
         $params = array();
-        if ($this->addUrlSegments($params,$Request->getRequestedUrl())===false) return false;
+        if ($this->addUrlSegments($params,$Request->getRequestedUrl())===false) throw new RouteDoesNotMatchRequestException();
         $this->addDefaults($params);
         
         $params = $this->urlDecode($params);

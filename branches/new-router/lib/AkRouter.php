@@ -104,11 +104,11 @@ class AkRouter extends AkObject
     function match(AkRequest $Request)
     {
         foreach ($this->routes as $route){
-            $params = $route->parametrize($Request);
-            if ($params){
+            try {
+                $params = $route->parametrize($Request);
                 $this->currentRoute = $route;
                 return $params;
-            }
+            } catch (RouteDoesNotMatchRequestException $e) {}
         }
         throw new NoMatchingRouteException();
     }
