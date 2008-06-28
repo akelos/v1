@@ -64,7 +64,7 @@ class AkRoute extends AkObject
         foreach ($matches as $name=>$match){
             if (is_int($name)) continue;  // we use named-subpatterns, anything else we throw away
             if (empty($match)) {
-                if (!$this->segments[$name]->isOmmitable()){
+                if (!$this->segments[$name]->isOmitable()){
                     $skipped_optional = true;
                 }
                 continue;  
@@ -117,7 +117,7 @@ class AkRoute extends AkObject
                 $name = $segment->name;
                 if (!isset($params[$name])){
                     if ($segment->isCompulsory()) return false;
-                    if (!$omit_defaults && !$segment->isOmmitable()) return false;
+                    if (!$omit_defaults && !$segment->isOmitable()) return false;
                 }else{
                     $desired_value = $params[$name];
                     if ($omit_defaults && $segment->default == $desired_value) continue;

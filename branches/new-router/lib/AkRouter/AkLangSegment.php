@@ -30,7 +30,7 @@ class AkLangSegment extends AkVariableSegment
         parent::__construct($name,$delimiter,$default,$requirement);
     }
     
-    function isOmmitable()
+    function isOmitable()
     {
         return true;
     }

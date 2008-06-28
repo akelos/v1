@@ -15,7 +15,7 @@ class RouteWithLangSegment extends Route_TestCase
         $this->assertType('AkLangSegment',$segments['lang']);
     }
     
-    function testLangCanBeOmmittedOnParametrize()
+    function testLangCanBeOmittedOnParametrize()
     {
         $this->get('/person/martin')->matches(array('name'=>'martin'));
     }
@@ -28,7 +28,7 @@ class RouteWithLangSegment extends Route_TestCase
         }
     }
 
-    function testLangCanBeOmmittedOnUrlize()
+    function testLangCanBeOmittedOnUrlize()
     {
         $this->urlize(array('name'=>'martin'))->returns('/person/martin');
     }

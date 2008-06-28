@@ -57,7 +57,7 @@ class AkSegment
         return $this->default === COMPULSORY;
     }
     
-    function isOmmitable()
+    function isOmitable()
     {
         return false;
     }
