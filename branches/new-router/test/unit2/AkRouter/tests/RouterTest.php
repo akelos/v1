@@ -89,7 +89,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $PersonRoute->expects($this->once())
                     ->method('urlize')
                     ->with(array('name'=>'martin'))
-                    ->will($this->returnValue(false));
+                    ->will($this->throwException(new RouteDoesNotMatchParametersException));
         $AuthorRoute = $this->getMock('AkRoute',array(),array('author/:name'));
         $AuthorRoute->expects($this->once())
                     ->method('urlize')
@@ -108,7 +108,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $PersonRoute->expects($this->once())
                     ->method('urlize')
                     ->with(array('not'=>'found'))
-                    ->will($this->returnValue(false));
+                    ->will($this->throwException(new RouteDoesNotMatchParametersException));
         $this->Router->addRoute('person',$PersonRoute);
 
         $this->setExpectedException('NoMatchingRouteException');

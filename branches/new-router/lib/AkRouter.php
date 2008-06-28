@@ -116,8 +116,10 @@ class AkRouter extends AkObject
     function urlize($params)
     {
         foreach ($this->routes as $route){
-            $url = $route->urlize($params);
-            if ($url) return $url;
+            try {
+                $url = $route->urlize($params);
+                return $url;
+            } catch (RouteDoesNotMatchParametersException $e) {}
         }
         throw new NoMatchingRouteException();
     }

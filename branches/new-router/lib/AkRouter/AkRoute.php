@@ -20,6 +20,8 @@
 
 class RouteDoesNotMatchRequestException extends Exception 
 { }
+class RouteDoesNotMatchParametersException extends Exception 
+{ }
 
 require_once 'AkSegment.php';
 require_once 'AkVariableSegment.php';
@@ -46,8 +48,6 @@ class AkRoute extends AkObject
     
     /**
      * @throws RouteDoesNotMatchRequestException
-     * @param AkRequest $Request
-     * @return array $params
      */
     function parametrize(AkRequest $Request)
     {
@@ -100,15 +100,18 @@ class AkRoute extends AkObject
         return false;
     }
 
+    /**
+     * @throws RouteDoesNotMatchParametersException
+     */
     function urlize($params,$rewrite_enabled=AK_URL_REWRITE_ENABLED)
     {
         $params = $this->urlEncode($params);
 
-        if (!$url = $this->buildUrlFromSegments($params)) return false;
+        if (!$url = $this->buildUrlFromSegments($params)) throw new RouteDoesNotMatchParametersException();
 
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
         $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
-        if ($key_value_list===false) return false;
+        if ($key_value_list===false) throw new RouteDoesNotMatchParametersException();
 
         $prefix = $rewrite_enabled ? ''  : '/?ak=';
         $concat = $key_value_list  ? ($rewrite_enabled ? '?' : '&') : '';
