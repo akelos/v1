@@ -55,6 +55,8 @@ class AkRoute extends AkObject
     
     function addUrlSegments(&$params,$url)
     {
+        if ($url=='/') $url = '';
+        
         if (!preg_match($this->getRegex(),$url,$matches)) return false;
         array_shift($matches);   //throw away the "all-match", we only need the groups
 
@@ -166,6 +168,8 @@ class AkRoute extends AkObject
         $segments = array();
         $url_parts = explode('/',trim($url_pattern,'/'));
         foreach ($url_parts as $url_part){
+            if (empty($url_part)) continue;
+            
             $name = substr($url_part,1);
             switch ($this->segmentType($url_part)) {
             	case ':':

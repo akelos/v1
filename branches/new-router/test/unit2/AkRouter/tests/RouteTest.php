@@ -31,6 +31,13 @@ class RouteTest extends Route_TestCase
         $this->get('/')->matches(array('controller'=>'person','action'=>'list'));
     }
     
+    function testRootMatchesAgainstRouteWithOptionalsOnly()
+    {
+        $this->withRoute('/:controller',array(),array('controller'=>'[a-z]+'));
+        
+        $this->get('/')->matches();
+    }
+    
     function testOptionalSegment()
     {
         $this->withRoute('/person/:name/:age');
