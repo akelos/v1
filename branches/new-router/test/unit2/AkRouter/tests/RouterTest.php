@@ -128,6 +128,20 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('/author/martin',$this->Router->author_url(array('name'=>'martin')));
     }
     
+    function testUrlizeUsingAnNamedRouteThrowsIfNotApplicable()
+    {
+        $AuthorRoute = $this->getMock('AkRoute',array(),array('author/:name'));
+        $AuthorRoute->expects($this->once())
+                    ->method('urlize')
+                    ->with(array('name'=>'martin'))
+                    ->will($this->throwException(new RouteDoesNotMatchParametersException));
+        
+        $this->Router->addRoute('author',$AuthorRoute);
+        
+        $this->setExpectedException('RouteDoesNotMatchParametersException');
+        $this->Router->author_url(array('name'=>'martin'));
+    }
+    
     function testRequirementsShouldntHaveRegexDelimiters()
     {
         $Router = $this->getMock('AkRouter',array('addRoute'));

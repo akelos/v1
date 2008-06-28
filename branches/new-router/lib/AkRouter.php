@@ -151,11 +151,12 @@ class AkRouter extends AkObject
         return $this->addRoute($name,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
     }
     
+    /**
+     * @throws RouteDoesNotMatchParametersException
+     */
     private function urlizeUsingNamedRoute($name,$params)
     {
-        $url = $this->routes[$name]->urlize($params);
-        if (!$url) throw new NoMatchingRouteException();
-        return $url;
+        return $this->routes[$name]->urlize($params);
     }
     
     static $singleton;
