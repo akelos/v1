@@ -36,13 +36,13 @@ class AkWildcardSegment extends AkSegment
     {
         $optional_switch = $this->isOptional() ? '?': '';
         $multiplier = ($size = $this->expectsExactSize()) ? '{'. $size .'}' : '+';
-        return "((?:$this->delimiter{$this->getInnerRegEx()})$multiplier)$optional_switch";
+        return "(?P<$this->name>(?:$this->delimiter{$this->getInnerRegEx()})$multiplier)$optional_switch";
     }
     
-    function addToParams(&$params,$match)
+    function addToParams($match)
     {
         $match = substr($match,1); // the first char is the delimiter
-        $params[$this->name] = explode('/',$match);
+        return explode('/',$match);
     }
     
     function insertPieceForUrl($value)

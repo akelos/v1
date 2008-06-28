@@ -31,7 +31,6 @@ class AkRoute extends AkObject
     private $requirements;
     private $conditions;
     private $regex;
-    private $dynamic_segments = array();
     private $segments;
     
     function __construct($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
@@ -46,30 +45,38 @@ class AkRoute extends AkObject
     {
         if (!$this->ensureRequestMethod($Request->getMethod())) return false;
         
-        $url = $Request->getRequestedUrl();
-        #var_dump($url);
+        $params = array();
+        if ($this->addUrlSegments($params,$Request->getRequestedUrl())===false) return false;
+        $this->addDefaults($params);
         
+        $params = $this->urlDecode($params);
+        return $params;
+    }
+    
+    function addUrlSegments(&$params,$url)
+    {
         if (!preg_match($this->getRegex(),$url,$matches)) return false;
         array_shift($matches);   //throw away the "all-match", we only need the groups
-        #var_dump($matches);
 
-        $params = array();
-        $break = false;
-        foreach ($matches as $i=>$match){
+        $skipped_optional = false;
+        foreach ($matches as $name=>$match){
+            if (is_int($name)) continue;  // we use named-subpatterns, anything else we throw away
             if (empty($match)) {
-                $break = true;
+                $skipped_optional = true;
                 continue;  
             }
-            if ($break) return false;
-            $this->dynamic_segments[$i]->addToParams($params,$match);
+            if ($skipped_optional) return false;
+            $params[$name] = $this->segments[$name]->addToParams($match);
         }
+    }
+    
+    function addDefaults(&$params)
+    {
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){
                 $params[$name] = $value;
             }
         }
-        $params = $this->urlDecode($params);
-        return $params;
     }
     
     function ensureRequestMethod($method)
@@ -154,29 +161,28 @@ class AkRoute extends AkObject
     {
         if ($this->segments) return $this->segments;
         
-        $segments = explode('/',trim($this->url_pattern,'/'));
-        foreach ($segments as &$segment){
-            if ($type = $this->isVariableSegment($segment)){
-                $name = substr($segment,1);
-                switch ($type) {
-                	case ':':
-                        $segment = new AkVariableSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
-                    	break;
-                	case '*':
-                        $segment = new AkWildcardSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
-                	    break;
-                }
-                $this->dynamic_segments[] = $segment;
-            }else{
-                $segment = '/'.$segment;
+        $segments = array();
+        $url_parts = explode('/',trim($this->url_pattern,'/'));
+        foreach ($url_parts as $url_part){
+            $name = substr($url_part,1);
+            switch ($this->segmentType($url_part)) {
+            	case ':':
+                    $segments[$name] = new AkVariableSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                	break;
+            	case '*':
+                    $segments[$name] = new AkWildcardSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+            	    break;
+            	default:
+                    $segments[] = '/'.$url_part;
+                    break;
             }
         }
         return $this->segments = $segments;
     }
     
-    function isVariableSegment($name)
+    function segmentType($name)
     {
-        if ($name && ($name{0}==':'||$name{0}=='*')) return $name{0};
+        if ($name) return $name{0};
         return false;
     }
     
