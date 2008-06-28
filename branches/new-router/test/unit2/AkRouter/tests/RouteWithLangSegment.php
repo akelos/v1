@@ -44,6 +44,12 @@ class RouteWithLangSegment extends Route_TestCase
         $this->urlize(array('lang'=>'jp'))->returnsFalse();
     }
     
+    function testExplicitRequirementsOverwriteTheAutomaticOnes()
+    {
+        $this->withRoute('/:lang/person',array(),array('lang'=>'[a-z]{2}'));
+        $this->urlize(array('lang'=>'jp'))->returns('/jp/person');
+    }
+    
 }
 
 ?>
