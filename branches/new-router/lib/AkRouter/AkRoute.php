@@ -18,9 +18,9 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
-
 require_once 'AkSegment.php';
 require_once 'AkVariableSegment.php';
+require_once 'AkLangSegment.php';
 require_once 'AkWildcardSegment.php';
 
 class AkRoute extends AkObject 
@@ -173,8 +173,15 @@ class AkRoute extends AkObject
             $name = substr($url_part,1);
             switch ($this->segmentType($url_part)) {
             	case ':':
-                    $segments[$name] = new AkVariableSegment($name,'/',@$defaults[$name],@$requirements[$name]);
-                	break;
+            	    switch ($name){
+            	        case 'lang':
+                            $segments[$name] = new AkLangSegment($name,'/',@$defaults[$name],@$requirements[$name]);
+                            break;
+            	        default:
+                            $segments[$name] = new AkVariableSegment($name,'/',@$defaults[$name],@$requirements[$name]);
+                            break;
+            	    }
+            	    break;
             	case '*':
                     $segments[$name] = new AkWildcardSegment($name,'/',@$defaults[$name],@$requirements[$name]);
             	    break;
