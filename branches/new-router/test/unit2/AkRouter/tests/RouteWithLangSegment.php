@@ -19,6 +19,14 @@ class RouteWithLangSegment extends Route_TestCase
     {
         $this->get('/person/martin')->matches(array('name'=>'martin'));
     }
+    
+    function testLangHasAutomaticRequirements()
+    {
+        $this->get('/jp/person/martin')->doesntMatch();
+        foreach (Ak::langs() as $lang){
+            $this->get("/$lang/person")->matches(array('lang'=>$lang));
+        }
+    }
 }
 
 ?>

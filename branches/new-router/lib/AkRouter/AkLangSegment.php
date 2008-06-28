@@ -26,7 +26,12 @@ class AkLangSegment extends AkVariableSegment
     {
         return true;
     }
-    
+
+    function getInnerRegEx()
+    {
+        if ($this->hasRequirement()) return $this->requirement;
+        return '('.join('|',Ak::langs()).')';
+    }
 }
 
 ?>
