@@ -61,7 +61,7 @@ class AkRoute extends AkObject
         return $params;
     }
     
-    function addUrlSegments(&$params,$url)
+    protected function addUrlSegments(&$params,$url)
     {
         if ($url=='/') $url = '';
         
@@ -82,7 +82,7 @@ class AkRoute extends AkObject
         }
     }
     
-    function addDefaults(&$params)
+    protected function addDefaults(&$params)
     {
         foreach ($this->defaults as $name=>$value){
             if (!isset($params[$name])){
@@ -91,7 +91,7 @@ class AkRoute extends AkObject
         }
     }
     
-    function ensureRequestMethod($method)
+    protected function ensureRequestMethod($method)
     {
         if (!isset($this->conditions['method'])) return true;
         if ($this->conditions['method'] === ANY) return true;
@@ -118,7 +118,7 @@ class AkRoute extends AkObject
         return $url;
     }
     
-    function buildUrlFromSegments(&$params)
+    protected function buildUrlFromSegments(&$params)
     {
         $url_pieces    = array();
         $omit_defaults = true;
@@ -146,7 +146,7 @@ class AkRoute extends AkObject
         return $url;
     }
     
-    function getAdditionalKeyValueListForUrl($params)
+    protected function getAdditionalKeyValueListForUrl($params)
     {
         if (empty($params)) return '';
         
@@ -175,7 +175,7 @@ class AkRoute extends AkObject
         return $this->segments = $this->buildSegments($this->url_pattern,$this->defaults,$this->requirements);
     }
     
-    function buildSegments($url_pattern,$defaults,$requirements)
+    protected function buildSegments($url_pattern,$defaults,$requirements)
     {
         $segments = array();
         $url_parts = explode('/',trim($url_pattern,'/'));
@@ -205,7 +205,7 @@ class AkRoute extends AkObject
         return $segments;        
     }
     
-    function segmentType($name)
+    protected function segmentType($name)
     {
         if ($name) return $name{0};
         return false;
@@ -214,7 +214,7 @@ class AkRoute extends AkObject
     /**
     * Url decode a string or an array of strings
     */
-    function urlDecode($input)
+    private function urlDecode($input)
     {
         if (is_scalar($input)){
             return urldecode($input);
@@ -226,7 +226,7 @@ class AkRoute extends AkObject
     /**
     * Url encodes a string or an array of strings
     */
-    function urlEncode($input)
+    private function urlEncode($input)
     {
         if (is_scalar($input)){
             return urlencode($input);

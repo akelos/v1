@@ -39,7 +39,7 @@ class AkRouter extends AkObject
         return $this->addRoute(null,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
     }
     
-    function handleApiShortcuts(&$url_pattern,&$defaults,&$requirements)
+    protected function handleApiShortcuts(&$url_pattern,&$defaults,&$requirements)
     {
         $this->addLanguageSegment($url_pattern);
         $this->deprecatedMoveExplicitRequirementsFromDefaultsToRequirements($defaults,$requirements);
@@ -48,12 +48,12 @@ class AkRouter extends AkObject
         $this->deprecatedRemoveExplicitOptional($defaults);
     }
     
-    function addLanguageSegment(&$url_pattern)
+    private function addLanguageSegment(&$url_pattern)
     {
         if ($this->automatic_lang_segment) $url_pattern = '/:lang'.$url_pattern;
     }
     
-    function deprecatedRemoveDelimitersFromRequirements(&$requirements)
+    private function deprecatedRemoveDelimitersFromRequirements(&$requirements)
     {
         foreach ($requirements as &$value){
             $trimmed = trim($value,'/');
@@ -62,7 +62,7 @@ class AkRouter extends AkObject
         }
     }
     
-    function deprecatedMoveImplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
+    private function deprecatedMoveImplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
     {
         foreach ($defaults as $key=>$value){
             if (trim($value,'/') != $value){
@@ -73,14 +73,14 @@ class AkRouter extends AkObject
         }
     }
     
-    function deprecatedRemoveExplicitOptional(&$defaults)
+    private function deprecatedRemoveExplicitOptional(&$defaults)
     {
         foreach ($defaults as $key=>$value){
             if ($value === OPTIONAL) unset ($defaults[$key]);
         }
     }
     
-    function deprecatedMoveExplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
+    private function deprecatedMoveExplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
     {
         foreach ($defaults as $key=>$value){
             if ($key == 'requirements'){
