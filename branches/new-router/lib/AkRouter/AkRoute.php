@@ -51,10 +51,10 @@ class AkRoute extends AkObject
      */
     function parametrize(AkRequest $Request)
     {
-        if (!$this->ensureRequestMethod($Request->getMethod())) throw new RouteDoesNotMatchRequestException();
+        $this->ensureRequestMethod($Request->getMethod());
         
         $params = array();
-        if ($this->addUrlSegments($params,$Request->getRequestedUrl())===false) throw new RouteDoesNotMatchRequestException();
+        $this->addUrlSegments($params,$Request->getRequestedUrl());
         $this->addDefaults($params);
         
         $params = $this->urlDecode($params);
@@ -65,7 +65,7 @@ class AkRoute extends AkObject
     {
         if ($url=='/') $url = '';
         
-        if (!preg_match($this->getRegex(),$url,$matches)) return false;
+        if (!preg_match($this->getRegex(),$url,$matches)) throw new RouteDoesNotMatchRequestException();
         array_shift($matches);   //throw away the "all-match", we only need the groups
 
         $skipped_optional = false;
@@ -77,7 +77,7 @@ class AkRoute extends AkObject
                 }
                 continue;  
             }
-            if ($skipped_optional) return false;
+            if ($skipped_optional) throw new RouteDoesNotMatchRequestException();
             $params[$name] = $this->segments[$name]->addToParams($match);
         }
     }
@@ -97,7 +97,7 @@ class AkRoute extends AkObject
         if ($this->conditions['method'] === ANY) return true;
 
         if (strstr($this->conditions['method'],$method)) return true;
-        return false;
+        throw new RouteDoesNotMatchRequestException();
     }
 
     /**
