@@ -42,7 +42,7 @@ class AkVariableSegment extends AkSegment
     {
         if (!$this->hasRequirement()) return true;
         
-        $regex = "|^{$this->getInnerRegEx()}$|";
+        $regex = "@^{$this->getInnerRegEx()}$@";
         return (bool) preg_match($regex,$value);
     }
 

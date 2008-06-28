@@ -145,7 +145,7 @@ class AkRoute extends AkObject
     {
         if ($this->regex) return $this->regex;
         
-        $regex = '|^'.join('',$this->getSegments()).'$|';
+        $regex = '@^'.join('',$this->getSegments()).'$@';
         #var_dump($regex);
         return $this->regex = $regex;        
     }

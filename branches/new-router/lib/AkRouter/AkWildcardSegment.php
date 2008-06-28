@@ -55,7 +55,7 @@ class AkWildcardSegment extends AkSegment
         if (!$this->hasRequirement()) return true;
         if (($size = $this->expectsExactSize()) && count($values) != $size) return false;
 
-        $regex = "|^{$this->getInnerRegEx()}$|";
+        $regex = "@^{$this->getInnerRegEx()}$@";
         foreach ($values as $value){
             if (!(bool) preg_match($regex,$value)) return false;
         }
