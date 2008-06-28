@@ -57,6 +57,11 @@ class AkSegment
         return $this->default === COMPULSORY;
     }
     
+    function isOmmitable()
+    {
+        return false;
+    }
+    
     function __toString()
     {
         return $this->getRegEx();

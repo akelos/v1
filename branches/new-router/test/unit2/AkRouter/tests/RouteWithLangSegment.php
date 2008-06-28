@@ -15,6 +15,10 @@ class RouteWithLangSegment extends Route_TestCase
         $this->assertType('AkLangSegment',$segments['lang']);
     }
     
+    function testLangCanBeOmmitted()
+    {
+        $this->get('/person/martin')->matches(array('name'=>'martin'));
+    }
 }
 
 ?>

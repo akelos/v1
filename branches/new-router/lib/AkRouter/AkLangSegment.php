@@ -21,6 +21,11 @@
 
 class AkLangSegment extends AkVariableSegment 
 {
+
+    function isOmmitable()
+    {
+        return true;
+    }
     
 }
 
