@@ -151,10 +151,7 @@ class AkRoute extends AkObject
     function getRegex()
     {
         if ($this->regex) return $this->regex;
-        
-        $regex = '@^'.join('',$this->getSegments()).'$@';
-        #var_dump($regex);
-        return $this->regex = $regex;        
+        return $this->regex = '@^'.join('',$this->getSegments()).'$@';      
     }
     
     function getSegments()
