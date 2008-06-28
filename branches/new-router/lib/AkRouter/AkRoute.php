@@ -91,11 +91,24 @@ class AkRoute extends AkObject
     function urlize($params,$rewrite_enabled=AK_URL_REWRITE_ENABLED)
     {
         $params = $this->urlEncode($params);
-        $segments = $this->getSegments();
-        
-        $url_pieces = array();
+
+        if (!$url = $this->buildUrlFromSegments($params)) return false;
+
+        // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
+        $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
+        if ($key_value_list===false) return false;
+
+        $prefix = $rewrite_enabled ? ''  : '/?ak=';
+        $concat = $key_value_list  ? ($rewrite_enabled ? '?' : '&') : '';
+        $url = $prefix.$url.$concat.$key_value_list;
+        return $url;
+    }
+    
+    function buildUrlFromSegments(&$params)
+    {
+        $url_pieces    = array();
         $omit_defaults = true;
-        foreach (array_reverse($segments) as $segment){
+        foreach (array_reverse($this->getSegments()) as $segment){
             if ($segment instanceof AkSegment){
                 $name = $segment->name;
                 if (!isset($params[$name])){
@@ -116,25 +129,13 @@ class AkRoute extends AkObject
         }
         $url = join('',array_reverse($url_pieces));
         if ($url=='') $url = '/';
-
-        if (!$rewrite_enabled){
-            $url = '/?ak='.$url;
-        }
-        
-        // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
-        if (!empty($params)){
-            $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
-            if ($key_value_list===false) return false;
-            if ($key_value_list){
-                $url .= $rewrite_enabled ? '?' : '&';
-                $url .= $key_value_list;
-            }
-        }
         return $url;
     }
     
     function getAdditionalKeyValueListForUrl($params)
     {
+        if (empty($params)) return '';
+        
         $key_value_pairs = array();
         foreach ($params as $name=>$value){
             if (isset($this->defaults[$name])){
@@ -145,7 +146,7 @@ class AkRoute extends AkObject
             }
             $key_value_pairs[] = "$name=$value";
         }
-        return empty($key_value_pairs) ? '' : join('&',$key_value_pairs);            
+        return join('&',$key_value_pairs);
     }
     
     function getRegex()
