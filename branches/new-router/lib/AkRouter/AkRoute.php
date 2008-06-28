@@ -107,11 +107,10 @@ class AkRoute extends AkObject
     {
         $params = $this->urlEncode($params);
 
-        if (!$url = $this->buildUrlFromSegments($params)) throw new RouteDoesNotMatchParametersException();
+        $url = $this->buildUrlFromSegments($params);
 
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
         $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
-        if ($key_value_list===false) throw new RouteDoesNotMatchParametersException();
 
         $prefix = $rewrite_enabled ? ''  : '/?ak=';
         $concat = $key_value_list  ? ($rewrite_enabled ? '?' : '&') : '';
@@ -127,13 +126,13 @@ class AkRoute extends AkObject
             if ($segment instanceof AkSegment){
                 $name = $segment->name;
                 if (!isset($params[$name])){
-                    if ($segment->isCompulsory()) return false;
-                    if (!$omit_defaults && !$segment->isOmitable()) return false;
+                    if ($segment->isCompulsory()) throw new RouteDoesNotMatchParametersException();
+                    if (!$omit_defaults && !$segment->isOmitable()) throw new RouteDoesNotMatchParametersException();
                 }else{
                     $desired_value = $params[$name];
                     if ($omit_defaults && $segment->default == $desired_value) continue;
                     
-                    if (!$segment->meetsRequirement($desired_value)) return false;
+                    if (!$segment->meetsRequirement($desired_value)) throw new RouteDoesNotMatchParametersException();
                     $url_pieces[] = $segment->insertPieceForUrl($desired_value);
                     unset ($params[$name]); 
                     $omit_defaults = false;
@@ -155,7 +154,7 @@ class AkRoute extends AkObject
         foreach ($params as $name=>$value){
             if (isset($this->defaults[$name])){
                 // don't override defaults that don't correspond to dynamic segments, but break
-                if ($this->defaults[$name] != $value) return false;
+                if ($this->defaults[$name] != $value) throw new RouteDoesNotMatchParametersException();
                 // don't append defaults
                 continue;
             }
