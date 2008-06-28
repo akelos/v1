@@ -160,24 +160,28 @@ class AkRoute extends AkObject
     function getSegments()
     {
         if ($this->segments) return $this->segments;
-        
+        return $this->segments = $this->buildSegments($this->url_pattern,$this->defaults,$this->requirements);
+    }
+    
+    function buildSegments($url_pattern,$defaults,$requirements)
+    {
         $segments = array();
-        $url_parts = explode('/',trim($this->url_pattern,'/'));
+        $url_parts = explode('/',trim($url_pattern,'/'));
         foreach ($url_parts as $url_part){
             $name = substr($url_part,1);
             switch ($this->segmentType($url_part)) {
             	case ':':
-                    $segments[$name] = new AkVariableSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                    $segments[$name] = new AkVariableSegment($name,'/',@$defaults[$name],@$requirements[$name]);
                 	break;
             	case '*':
-                    $segments[$name] = new AkWildcardSegment($name,'/',@$this->defaults[$name],@$this->requirements[$name]);
+                    $segments[$name] = new AkWildcardSegment($name,'/',@$defaults[$name],@$requirements[$name]);
             	    break;
             	default:
                     $segments[] = '/'.$url_part;
                     break;
             }
         }
-        return $this->segments = $segments;
+        return $segments;        
     }
     
     function segmentType($name)
