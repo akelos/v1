@@ -30,21 +30,27 @@ class NoMatchingRouteException extends Exception
 
 class AkRouter extends AkObject 
 {
-
+    public  $automatic_lang_segment = true;
     private $routes = array();
     
     function connect($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
-        $this->handleDeprecatedApi($defaults,$requirements);
+        $this->handleApiShortcuts($url_pattern,$defaults,$requirements);
         return $this->addRoute(null,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
     }
     
-    function handleDeprecatedApi(&$defaults,&$requirements)
+    function handleApiShortcuts(&$url_pattern,&$defaults,&$requirements)
     {
+        $this->addLanguageSegment($url_pattern);
         $this->deprecatedMoveExplicitRequirementsFromDefaultsToRequirements($defaults,$requirements);
         $this->deprecatedMoveImplicitRequirementsFromDefaultsToRequirements($defaults,$requirements);
         $this->deprecatedRemoveDelimitersFromRequirements($requirements);
         $this->deprecatedRemoveExplicitOptional($defaults);
+    }
+    
+    function addLanguageSegment(&$url_pattern)
+    {
+        if ($this->automatic_lang_segment) $url_pattern = '/:lang'.$url_pattern;
     }
     
     function deprecatedRemoveDelimitersFromRequirements(&$requirements)
@@ -139,7 +145,7 @@ class AkRouter extends AkObject
 
     private function connectNamed($name,$url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
-        $this->handleDeprecatedApi($defaults,$requirements);        
+        $this->handleApiShortcuts($url_pattern,$defaults,$requirements);       
         return $this->addRoute($name,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
     }
     

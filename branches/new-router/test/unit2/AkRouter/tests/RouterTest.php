@@ -135,7 +135,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
                ->method('addRoute')
                ->with(null,new AkRoute('/author/:name',array(),array('name'=>'[a-z]+')));
                
-       $Router->connect('/author/:name',array(),array('name'=>'/[a-z]+/'));
+        $Router->automatic_lang_segment = false;
+        $Router->connect('/author/:name',array(),array('name'=>'/[a-z]+/'));
     }
     
     function testDefaultsShouldntBeUsedForRequirements()
@@ -145,7 +146,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
                ->method('addRoute')
                ->with(null,new AkRoute('/author/:name',array(),array('name'=>'[a-z]+')));
                
-       $Router->connect('/author/:name',array('name'=>'/[a-z]+/'));
+        $Router->automatic_lang_segment = false;
+        $Router->connect('/author/:name',array('name'=>'/[a-z]+/'));
     }
 
     function testSegmentsShouldntBeDeclaredOptional()
@@ -155,7 +157,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
                ->method('addRoute')
                ->with(null,new AkRoute('/author/:name',array()));
                
-       $Router->connect('/author/:name',array('name'=>OPTIONAL));
+        $Router->automatic_lang_segment = false;
+        $Router->connect('/author/:name',array('name'=>OPTIONAL));
     }
     
     function testDefaultsShouldntBeUsedForRequirementsAsAnExplicitOption()
@@ -165,7 +168,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
                ->method('addRoute')
                ->with(null,new AkRoute('/author/:name',array(),array('name'=>'[a-z]+')));
                
-       $Router->connect('/author/:name',array('requirements'=>array('name'=>'/[a-z]+/')));
+        $Router->automatic_lang_segment = false;
+        $Router->connect('/author/:name',array('requirements'=>array('name'=>'/[a-z]+/')));
     }
     
 }

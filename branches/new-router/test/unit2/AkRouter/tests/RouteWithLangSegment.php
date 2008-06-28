@@ -50,6 +50,16 @@ class RouteWithLangSegment extends Route_TestCase
         $this->urlize(array('lang'=>'jp'))->returns('/jp/person');
     }
     
+    function testRouterConnectAddsLangSegmentAutomatically()
+    {
+        $Router = new AkRouter();
+        $Router->person('/person/:name');
+        
+        $routes = $Router->getRoutes();
+        $segments = $routes['person']->getSegments();
+        $this->assertArrayHasKey('lang',$segments);
+    }
+    
 }
 
 ?>
