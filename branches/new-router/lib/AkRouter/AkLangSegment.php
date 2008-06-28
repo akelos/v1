@@ -22,16 +22,24 @@
 class AkLangSegment extends AkVariableSegment 
 {
 
+    function __construct($name,$delimiter,$default=null,$requirement=null)
+    {
+        if (!$requirement){
+            $requirement = '('.join('|',$this->availableLocales()).')';  
+        }
+        parent::__construct($name,$delimiter,$default,$requirement);
+    }
+    
     function isOmmitable()
     {
         return true;
     }
-
-    function getInnerRegEx()
+    
+    function availableLocales()
     {
-        if ($this->hasRequirement()) return $this->requirement;
-        return '('.join('|',Ak::langs()).')';
+        return Ak::langs();
     }
+
 }
 
 ?>
