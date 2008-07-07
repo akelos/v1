@@ -216,11 +216,13 @@ class AkRoute extends AkObject
     */
     private function urlDecode($input)
     {
-        if (is_scalar($input)){
-            return urldecode($input);
-        }elseif (is_array($input)){
-            return array_map(array($this,'urlDecode'),$input);
-        }
+        array_walk_recursive($input,array($this,'_urldecode'));
+        return $input;
+    }
+    
+    private function _urldecode(&$input)
+    {
+        $input = urldecode($input);
     }
 
     /**
@@ -228,11 +230,13 @@ class AkRoute extends AkObject
     */
     private function urlEncode($input)
     {
-        if (is_scalar($input)){
-            return urlencode($input);
-        }elseif (is_array($input)){
-            return array_map(array($this,'urlEncode'),$input);
-        }
+        array_walk_recursive($input,array($this,'_urlencode'));
+        return $input;
+    }
+    
+    private function _urlencode(&$input)
+    {
+        $input = urlencode($input);
     }
     
 }
