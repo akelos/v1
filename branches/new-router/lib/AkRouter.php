@@ -56,18 +56,19 @@ class AkRouter extends AkObject
     private function deprecatedRemoveDelimitersFromRequirements(&$requirements)
     {
         foreach ($requirements as &$value){
-            $trimmed = trim($value,'/');
-            #if ($trimmed !== $value) Ak::deprecateWarning('Don\'t use delimiters in the requirements of your routes.');
-            $value = $trimmed;
+            if ($value{0}=='/'){
+                #Ak::deprecateWarning('Don\'t use delimiters in the requirements of your routes.');
+                $value = trim($value,'/');
+            }
         }
     }
     
     private function deprecatedMoveImplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
     {
         foreach ($defaults as $key=>$value){
-            if (trim($value,'/') != $value){
+            if ($value{0}=='/'){
                 #Ak::deprecateWarning('Don\'t use implicit requirements in the defaults-array. Move it explicitly to the requirements-array.');
-                $requirements[$key] = $value;
+                $requirements[$key] = trim($value,'/');
                 unset ($defaults[$key]);
             }
         }
@@ -75,18 +76,18 @@ class AkRouter extends AkObject
     
     private function deprecatedRemoveExplicitOptional(&$defaults)
     {
-        foreach ($defaults as $key=>$value){
-            if ($value === OPTIONAL) unset ($defaults[$key]);
+        if ($found = array_keys($defaults,OPTIONAL)){
+            foreach ($found as $key){
+                unset ($defaults[$key]);
+            }
         }
     }
     
     private function deprecatedMoveExplicitRequirementsFromDefaultsToRequirements(&$defaults,&$requirements)
     {
-        foreach ($defaults as $key=>$value){
-            if ($key == 'requirements'){
-                $requirements = array_merge($value,$requirements);
-                unset($defaults[$key]);            
-            }
+        if (array_key_exists('requirements',$defaults)){
+            $requirements = array_merge($defaults['requirements'],$requirements);
+            unset($defaults['requirements']);            
         }
     }
     
