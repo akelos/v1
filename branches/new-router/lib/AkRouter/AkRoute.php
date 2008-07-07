@@ -53,21 +53,21 @@ class AkRoute extends AkObject
     {
         $this->ensureRequestMethod($Request->getMethod());
         
-        $params = array();
-        $this->addUrlSegments($params,$Request->getRequestedUrl());
+        $params = $this->extractParamsFromUrl($Request->getRequestedUrl());
         $this->addDefaults($params);
         
         $params = $this->urlDecode($params);
         return $params;
     }
     
-    protected function addUrlSegments(&$params,$url)
+    protected function extractParamsFromUrl($url)
     {
         if ($url=='/') $url = '';
         
         if (!preg_match($this->getRegex(),$url,$matches)) throw new RouteDoesNotMatchRequestException();
         array_shift($matches);   //throw away the "all-match", we only need the groups
 
+        $params = array();
         $skipped_optional = false;
         foreach ($matches as $name=>$match){
             if (is_int($name)) continue;  // we use named-subpatterns, anything else we throw away
@@ -80,6 +80,7 @@ class AkRoute extends AkObject
             if ($skipped_optional) throw new RouteDoesNotMatchRequestException();
             $params[$name] = $this->segments[$name]->addToParams($match);
         }
+        return $params;
     }
     
     protected function addDefaults(&$params)
