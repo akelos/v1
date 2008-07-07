@@ -35,8 +35,7 @@ class AkRouter extends AkObject
     
     function connect($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
-        $this->handleApiShortcuts($url_pattern,$defaults,$requirements);
-        return $this->addRoute(null,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
+        return $this->connectNamed(null,$url_pattern,$defaults,$requirements,$conditions);
     }
     
     protected function handleApiShortcuts(&$url_pattern,&$defaults,&$requirements)
