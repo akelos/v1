@@ -172,10 +172,14 @@ class AkRequest extends AkObject
         $this->_addParam($variable, $value);
     }
 
+    private $requested_url;
+    
     function getRequestedUrl()
     {
-        if (!isset($this->_request['ak'])) return '/';
-        return '/'.trim($this->_request['ak'],'/');
+        if ($this->requested_url) return $this->requested_url;
+
+        $requested_url = isset($this->_request['ak']) ? '/'.trim($this->_request['ak'],'/') : '/';
+        return $this->requested_url = $requested_url;
     }
     
     function checkForRoutedRequests(AkRouter &$Router)
