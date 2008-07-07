@@ -271,8 +271,8 @@ class Ak
     function langs()
     {
         static $langs;
-        if(!empty($lang)){
-            return $lang;
+        if(!empty($langs)){
+            return $langs;
         }
         $lang = Ak::lang();
         if(defined('AK_APP_LOCALES')){
