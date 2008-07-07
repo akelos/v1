@@ -75,10 +75,8 @@ class AkRouter extends AkObject
     
     private function deprecatedRemoveExplicitOptional(&$defaults)
     {
-        if ($found = array_keys($defaults,OPTIONAL)){
-            foreach ($found as $key){
-                unset ($defaults[$key]);
-            }
+        foreach (array_keys($defaults,OPTIONAL) as $key){
+            unset ($defaults[$key]);
         }
     }
     
