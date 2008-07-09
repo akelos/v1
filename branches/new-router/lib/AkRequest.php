@@ -30,6 +30,8 @@ defined('AK_AUTOMATIC_SESSION_START') ? null : define('AK_AUTOMATIC_SESSION_STAR
 // IIS does not provide a valid REQUEST_URI so we need to guess it from the script name + query string
 $_SERVER['REQUEST_URI'] = (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $_SERVER['SCRIPT_NAME'].(( isset($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '')));
 
+class DispatchException extends Exception 
+{ }
 
 /**
 * Class that handles incoming request.
@@ -148,6 +150,7 @@ class AkRequest extends AkObject
 
     function getParams()
     {
+        return $this->_request;
         return array_merge(array('controller'=>$this->controller,'action'=>$this->action),$this->_request);
     }
 
@@ -182,40 +185,32 @@ class AkRequest extends AkObject
         return $this->requested_url = $requested_url;
     }
     
+    private $parameters_from_url;
+    
+    function getParametersFromRequestedUrl()
+    {
+        return $this->parameters_from_url;
+    }
+    
     function checkForRoutedRequests(AkRouter &$Router)
     {
-        $ak_request = $this->getRequestedUrl();
+        $this->parameters_from_url = $params = $Router->match($this);
 
-        if ($found = $Router->match($this)){
-            if(!isset($found['controller'])){
-                trigger_error(Ak::t('No controller was specified.'), E_USER_WARNING);
-            }
-            if(!isset($found['action'])){
-                trigger_error(Ak::t('No action was specified.'), E_USER_WARNING);
-            }
-
-            if(isset($found['controller'])){
-                if($this->_addParam('controller',$found['controller'])){
-                    $this->controller = $this->_request['controller'] = $found['controller'];
-                }
-            }
-            if(isset($found['action'])){
-                if($this->_addParam('action',$found['action'])){
-                    $this->action = $this->_request['action'] = $found['action'];
-                }
-            }
-            if(isset($found['module'])){
-                if($this->_addParam('module',$found['module'])){
-                    $this->module = $this->_request['module'] = $found['module'];
-                }
-            }
-
-            foreach ($found as $k=>$v){
-                if($this->_addParam($k,$v)){
-                    $this->_request[$k] = $v;
-                }
-            }
+        if(!isset($params['controller']) || !$this->isValidControllerName($params['controller'])){
+            throw new DispatchException('No controller was specified.');
         }
+        if(!isset($params['action']) || !$this->isValidActionName($params['action'])){
+            throw new DispatchException('No action was specified.');
+        }
+        if(isset($params['module']) && !$this->isValidModuleName($params['module'])){
+            throw new DispatchException('Invalid module.');
+        }
+
+        isset($params['module']) ? $this->module = $params['module'] : null;
+        $this->controller = $params['controller'];
+        $this->action     = $params['action'];
+        
+        $this->_request = array_merge($this->_request,$params);
     }
 
 
@@ -642,14 +637,7 @@ class AkRequest extends AkObject
     function _addParam($variable, $value)
     {
         if($variable[0] != '_'){
-            if( ( $variable == 'action' && !$this->isValidActionName($value)) ||
-            ( $variable == 'controller' && !$this->isValidControllerName($value)) ||
-            ( $variable == 'module' && !$this->isValidModuleName($value))
-            ){
-                return false;
-            }
-            $this->$variable = $value;
-            return true;
+            return $this->$variable = $value;
         }
         return false;
     }
