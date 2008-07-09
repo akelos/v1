@@ -20,6 +20,14 @@ class UrlRewriteIsFalse extends Route_TestCase
         $this->assertEquals('/?ak=/author/martin&age=23',$url->path());
     }
     
+    function testTrailingSlash()
+    {
+        $url = new AkUrl('/author/martin');
+        $url->setOptions(array('trailing_slash'=>true));
+        
+        $this->assertEquals('/author/martin/',$url->path());
+    }
+    
 }
 
 ?>
