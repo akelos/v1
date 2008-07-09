@@ -117,7 +117,7 @@ class AkUrlWriter
     private function fillInLastParameters(&$params)
     {
         $old_params = array();
-        foreach ($this->Request->getParameters() as $k=>$v){
+        foreach ($this->Request->getParametersFromRequestedUrl() as $k=>$v){
             if (array_key_exists($k,$params)){
                 if (is_null($params[$k])) unset($params[$k]);
                 break;
@@ -131,7 +131,7 @@ class AkUrlWriter
     {
         if (isset($params['skip_url_locale'])){
             if (!$params['skip_url_locale'] && empty($params['lang'])){
-                $old_params = $this->Request->getParameters();
+                $old_params = $this->Request->getParametersFromRequestedUrl();
                 isset($old_params['lang']) ? $params['lang'] = $old_params['lang'] : null;
             }
             unset($params['skip_url_locale']);

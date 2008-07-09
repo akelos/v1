@@ -3,11 +3,14 @@
 class AkTestRequest extends AkRequest 
 {
 
+    private $parameters_from_url;
+    
     static function createInstance($method,$params)
     {
         $Request = new AkTestRequest();
         $Request->addParamsToRequest($params);
         $Request->setRequestMethod($method);
+        $Request->parameters_from_url = $params;    
         return $Request;
     }
     
@@ -33,6 +36,11 @@ class AkTestRequest extends AkRequest
     function getRelativeUrlRoot()
     {
         return '';
+    }
+    
+    function getParametersFromRequestedUrl()
+    {
+        return $this->parameters_from_url;
     }
     
 }
