@@ -17,8 +17,12 @@ class ActiveRecordHelperTests extends HelpersUnitTester
 {
     function test_setup()
     {
-        $this->controller = &new AkActionController();
-        $this->controller->Request =& new MockAkRequest($this);
+        $Request = new MockAkRequest();
+        $Request->setReturnValue('getController','test');
+        $Request->setReturnValue('getRelativeUrlRoot','');
+        
+        $this->controller = new AkActionController();
+        $this->controller->Request = $Request;
         $this->controller->controller_name = 'test';
         $this->controller->instantiateHelpers();
 

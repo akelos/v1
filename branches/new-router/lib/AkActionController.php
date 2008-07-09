@@ -9,6 +9,7 @@
 // +----------------------------------------------------------------------+
 
 require_once(AK_LIB_DIR.DS.'AkObject.php');
+require_once AK_LIB_DIR.DS.'AkRouter'.DS.'AkUrlWriter.php';
 
 defined('AK_HIGH_LOAD_MODE') ? null : define('AK_HIGH_LOAD_MODE', false);
 defined('AK_APP_NAME') ? null : define('AK_APP_NAME', 'Application');

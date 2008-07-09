@@ -13,7 +13,7 @@ class AkUrlWriter
      */
     private $Router;
     
-    function __construct(AkRequest $Request, AkRouter $Router=null)
+    function __construct($Request, AkRouter $Router=null)
     #function __construct(AkRequest $Request, AkRouter $Router)
     {
         $this->Request = $Request;
