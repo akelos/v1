@@ -6,7 +6,7 @@ class ControllerUrlFor extends PHPUnit_Controller_TestCase
 
     function setUp()
     {
-        $this->useController('LocaleDetection');    
+        $this->useController('locale_detection');    
     }
     
     function testUrlFromIndexToList()
@@ -16,6 +16,21 @@ class ControllerUrlFor extends PHPUnit_Controller_TestCase
         
         $this->assertEquals('/locale_detection/list',$controller->urlFor(array('action'=>'list','only_path'=>true)));
         $this->assertEquals('http://localhost/locale_detection/list',$controller->urlFor(array('action'=>'list')));
+    }
+    
+    function testUrlFromSessionWithIdToList()
+    {
+        $this->get('session',array('id'=>'1234'));
+        
+        $this->assertEquals('/locale_detection/list',$this->Controller->urlFor(array('action'=>'list','only_path'=>true)));
+    }
+    
+    function testUrlFromSessionWithIdToAnotherId()
+    {
+        $this->markTestIncomplete('Not implemented.');
+        $this->get('session',array('id'=>'123'));
+        
+        $this->assertEquals('/locale_detection/session/345',$this->Controller->urlFor(array('id'=>'345','only_path'=>true)));
     }
 }
 
