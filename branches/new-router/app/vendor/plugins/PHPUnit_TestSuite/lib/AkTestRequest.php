@@ -30,6 +30,11 @@ class AkTestRequest extends AkRequest
         return $this->_requestedMethod;
     }
     
+    function getRelativeUrlRoot()
+    {
+        return '';
+    }
+    
 }
 
 ?>
