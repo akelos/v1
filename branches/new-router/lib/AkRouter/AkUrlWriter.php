@@ -14,28 +14,32 @@ class AkUrlWriter
      */
     private $Router;
     
-    function __construct($Request, AkRouter $Router=null)
+    function __construct($Request=null, AkRouter $Router=null)
     #function __construct(AkRequest $Request, AkRouter $Router)
     {
         if (!$Router){
             $Router = AkRouter::getInstance();
         }
+        if (!$Request){
+            $Request = AkRequest::getInstance();
+        }
         $this->Request = $Request;
         $this->Router  = $Router;  
+        
+        $this->persistValuesFromRequest($Request);
     }
     
     private $values_from_request;
+    private $parameters_from_actual_request;
     
-    function valuesFromRequest(AkRequest $Request)
+    function persistValuesFromRequest(AkRequest $Request)
     {
-        if (!$this->values_from_request){
-            $this->values_from_request = array(
-                'relative_url_root' => $Request->getRelativeUrlRoot(),
-                'protocol'          => $Request->getProtocol(),
-                'host'              => $Request->getHostWithPort()
-            );
-        }
-        return $this->values_from_request;
+        $this->values_from_request = array(
+            'relative_url_root' => $Request->getRelativeUrlRoot(),
+            'protocol'          => $Request->getProtocol(),
+            'host'              => $Request->getHostWithPort()
+        );
+        $this->parameters_from_actual_request = $Request->getParametersFromRequestedUrl();
     }
     
     function urlFor($options = array())
@@ -48,7 +52,7 @@ class AkUrlWriter
         list($params,$options) = $this->extractOptionsFromParameters($options);
         $this->rewriteParameters($params);
         return (string)$this->Router->urlize($params)
-                            ->setOptions(array_merge($this->valuesFromRequest($this->Request),$options));
+                            ->setOptions(array_merge($this->values_from_request,$options));
     }
     
     function extractOptionsFromParameters($params)
@@ -93,11 +97,12 @@ class AkUrlWriter
     
     private function fillInLastParameters(&$params)
     {
-        $last_params = $this->Request->getParametersFromRequestedUrl();
-        $this->handleLocale($params,$last_params);
+        $actual_parameters = $this->getParametersFromActualRequest($params);
+        
+        $this->handleLocale($params,$actual_parameters);
 
         $old_params = array();
-        foreach ($last_params as $k=>$v){
+        foreach ($actual_parameters as $k=>$v){
             if (array_key_exists($k,$params)){
                 if (is_null($params[$k])) unset($params[$k]);
                 break;
@@ -105,6 +110,11 @@ class AkUrlWriter
             $old_params[$k] = $v;
         }
         $params = array_merge($old_params,$params);
+    }
+    
+    private function getParametersFromActualRequest(&$params)
+    {
+        return  $this->parameters_from_actual_request;
     }
 
     private function handleLocale(&$params,&$last_params)
