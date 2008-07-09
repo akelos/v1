@@ -35,6 +35,13 @@ class UrlWriterTest extends UrlWriter_TestCase
              ->isRewrittenTo(array('controller'=>'author','action'=>'edit','name'=>'martin'));        
     }
     
+    function testSplitGivenControllerIntoModuleAndControllerPart()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show'));
+        $this->urlFor(array('controller'=>'admin/user'))
+             ->isRewrittenTo(array('module'=>'admin','controller'=>'user'));
+    }
+    
     function testFiltersSetOptions()
     {
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');

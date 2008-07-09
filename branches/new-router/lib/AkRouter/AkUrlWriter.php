@@ -25,20 +25,7 @@ class AkUrlWriter
     
     function urlFor($options = array())
     {
-        return $this->rewrite($this->rewriteOptions($options));
-    }
-    
-    /**
-     * This methods are required for retrieving available controllers for URL Routing
-     */
-    function rewriteOptions($options)
-    {
-        $last_parameters = $this->Request->getParameters();
-        if(!empty($options['controller']) && strstr($options['controller'], '/')){
-            $options['module'] = substr($options['controller'], 0, strrpos($options['controller'], '/'));
-            $options['controller'] = substr($options['controller'], strrpos($options['controller'], '/') + 1);
-        }
-        return $options;
+        return $this->rewrite($options);
     }
     
     function rewrite($options = array())
@@ -104,7 +91,8 @@ class AkUrlWriter
     
     private function rewriteParameters(&$params)
     {
-        $this->injectParameters($params);        
+        $this->injectParameters($params); 
+        $this->extractModuleFromControllerIfGiven($params);       
         $this->fillInLastParameters($params);
         $this->handleLocale($params);
         $this->overwriteParameters($params);
@@ -115,6 +103,14 @@ class AkUrlWriter
         if(!empty($params['params'])){
             $params = array_merge($params,$params['params']);
             unset($params['params']);
+        }
+    }
+    
+    private function extractModuleFromControllerIfGiven(&$params)
+    {
+        if(!empty($params['controller']) && strstr($params['controller'], '/')){
+            $params['module'] = substr($params['controller'], 0, strrpos($params['controller'], '/'));
+            $params['controller'] = substr($params['controller'], strrpos($params['controller'], '/') + 1);
         }
     }
     
