@@ -210,6 +210,8 @@ class AkRequest extends AkObject
         $this->controller = $params['controller'];
         $this->action     = $params['action'];
         
+        isset($params['lang']) ? AkLocaleManager::rememberNavigationLanguage($params['lang']) : null;
+        
         $this->_request = array_merge($this->_request,$params);
     }
 

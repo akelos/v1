@@ -293,10 +293,6 @@ class AkLocaleManager extends AkObject
     {
         $lang = $this->getNavigationLanguage();
 
-        if($url_locale = $this->getLangFromUrl($Request)){
-            $lang = $this->getLocaleFromAlias($url_locale);
-        }
-
         if(!$this->_canUseLocaleOnCurrentRequest($lang, $Request)){
             $lang = array_shift($this->getPublicLocales());
         }elseif (empty($lang)){

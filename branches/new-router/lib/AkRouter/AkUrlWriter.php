@@ -94,7 +94,6 @@ class AkUrlWriter
         $this->injectParameters($params); 
         $this->extractModuleFromControllerIfGiven($params);       
         $this->fillInLastParameters($params);
-        $this->handleLocale($params);
         $this->overwriteParameters($params);
     }
     
@@ -116,8 +115,11 @@ class AkUrlWriter
     
     private function fillInLastParameters(&$params)
     {
+        $last_params = $this->Request->getParametersFromRequestedUrl();
+        $this->handleLocale($params,$last_params);
+
         $old_params = array();
-        foreach ($this->Request->getParametersFromRequestedUrl() as $k=>$v){
+        foreach ($last_params as $k=>$v){
             if (array_key_exists($k,$params)){
                 if (is_null($params[$k])) unset($params[$k]);
                 break;
@@ -127,15 +129,12 @@ class AkUrlWriter
         $params = array_merge($old_params,$params);
     }
 
-    private function handleLocale(&$params)
+    private function handleLocale(&$params,&$last_params)
     {
-        if (isset($params['skip_url_locale'])){
-            if (!$params['skip_url_locale'] && empty($params['lang'])){
-                $old_params = $this->Request->getParametersFromRequestedUrl();
-                isset($old_params['lang']) ? $params['lang'] = $old_params['lang'] : null;
-            }
-            unset($params['skip_url_locale']);
+        if (!empty($params['skip_url_locale'])){
+            unset($last_params['lang']);
         }
+        unset($params['skip_url_locale']);
     }
     
     private function overwriteParameters(&$params)

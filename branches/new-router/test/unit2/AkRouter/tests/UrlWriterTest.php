@@ -51,18 +51,25 @@ class UrlWriterTest extends UrlWriter_TestCase
              ->isRewrittenTo(array('controller'=>'author'));
     }
     
-    function testFiltersLangSettingByDefault()
+    function testPassThroughLangSettingByDefault()
     {
-        $this->withRequestTo(array('controller'=>'author','action'=>'show','lang'=>'en'));
+        $this->withRequestTo(array('lang'=>'en','controller'=>'author','action'=>'show'));
         $this->urlFor(array('action'=>'list'))
-             ->isRewrittenTo(array('controller'=>'author','action'=>'list'));
+             ->isRewrittenTo(array('lang'=>'en','controller'=>'author','action'=>'list'));
     }
     
-    function testPassThroughLangSettingIfOptionIsSet()
+    function testPassThroughLangSettingIfOptionIsFalse()
     {
-        $this->withRequestTo(array('controller'=>'author','action'=>'show','lang'=>'en'));
+        $this->withRequestTo(array('lang'=>'en','controller'=>'author','action'=>'show'));
         $this->urlFor(array('action'=>'list','skip_url_locale'=>false))
-             ->isRewrittenTo(array('controller'=>'author','action'=>'list','lang'=>'en'));
+             ->isRewrittenTo(array('lang'=>'en','controller'=>'author','action'=>'list'));
+    }
+
+    function testFilterLangSettingIfOptionIsTrue()
+    {
+        $this->withRequestTo(array('lang'=>'en','controller'=>'author','action'=>'show'));
+        $this->urlFor(array('action'=>'list','skip_url_locale'=>true))
+             ->isRewrittenTo(array('controller'=>'author','action'=>'list'));
     }
     
     function testAlgoExtractOptions()
