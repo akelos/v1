@@ -291,7 +291,11 @@ class AkLocaleManager extends AkObject
 
     function _getLocaleForRequest(&$Request)
     {
-        $lang = $this->getNavigationLanguage();
+        if (isset($Request->lang)){
+            $lang = $Request->lang;
+        }else{
+            $lang = $this->getNavigationLanguage();
+        }
 
         if(!$this->_canUseLocaleOnCurrentRequest($lang, $Request)){
             $lang = array_shift($this->getPublicLocales());

@@ -210,7 +210,10 @@ class AkRequest extends AkObject
         $this->controller = $params['controller'];
         $this->action     = $params['action'];
         
-        isset($params['lang']) ? AkLocaleManager::rememberNavigationLanguage($params['lang']) : null;
+        if(isset($params['lang'])){
+            AkLocaleManager::rememberNavigationLanguage($params['lang']);
+            Ak::lang($params['lang']);
+        }
         
         $this->_request = array_merge($this->_request,$params);
     }
@@ -777,9 +780,7 @@ class AkRequest extends AkObject
             if(empty($Map)){
                 $Map = AkRouter::getInstance();
             }
-            include(AK_ROUTES_MAPPING_FILE);
-            // Set this routes for being used via Ak::toUrl
-            Ak::toUrl($Map,true);
+            #$Map->loadMap();
             $this->checkForRoutedRequests($Map);
         }
     }

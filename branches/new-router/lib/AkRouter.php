@@ -167,9 +167,16 @@ class AkRouter extends AkObject
     static function getInstance()
     {
         if (!self::$singleton){
-            self::$singleton = new AkRouter();    
+            $Map = self::$singleton = new AkRouter();
+            $Map->loadMap();
         }
         return self::$singleton;
+    }
+    
+    function loadMap($file_name=AK_ROUTES_MAPPING_FILE)
+    {
+        $Map = $this;
+        include(AK_ROUTES_MAPPING_FILE);
     }
     
 }
