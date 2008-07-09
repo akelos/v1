@@ -22,6 +22,12 @@ class UrlWriterTest extends UrlWriter_TestCase
         $this->urlFor(array('action'=>'list'))->isRewrittenTo(array('controller'=>'author','action'=>'list'));
     }
     
+    function testAParameterSetToNullWillBeUnset()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin'));
+        $this->urlFor(array('action'=>null))->isRewrittenTo(array('controller'=>'author'));
+    }
+    
     function testFiltersSetOptions()
     {
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');

@@ -128,7 +128,10 @@ class AkUrlWriter
     {
         $params = array();
         foreach ($this->Request->getParameters() as $k=>$v){
-            if (isset($options[$k])) break;
+            if (array_key_exists($k,$options)){
+                if (is_null($options[$k])) unset($options[$k]);
+                break;
+            }
             $params[$k] = $v;
         }
         $options = array_merge($params,$options);
