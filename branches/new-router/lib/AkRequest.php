@@ -836,10 +836,25 @@ class AkRequest extends AkObject
             return false;
         }
     }
+    
+    static $singleton;
+    
+    /**
+     * @return AkRequest
+     */
+    static function getInstance()
+    {
+        if (!self::$singleton){
+            self::$singleton = new AkRequest();
+        }
+        return self::$singleton;
+    }
+    
 }
 
 function &AkRequest()
 {
+var_dump('function AkRequest() should not be used, anymore. Do you need it?');    
     $null = null;
     $AkRequest =& Ak::singleton('AkRequest', $null);
     return $AkRequest;

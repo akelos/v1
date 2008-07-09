@@ -53,7 +53,7 @@ class AkWebRequest extends AkActionController
         }
 
         require_once(AK_LIB_DIR.DS.'AkRequest.php');
-        $this->__ParentController->Request =& AkRequest();
+        $this->__ParentController->Request = AkRequest::getInstance();
 
         if(AK_WEB_REQUEST_ENABLE_INTERNATIONALIZATION_SUPPORT_ON_INSTANTIATE && AK_AVAILABLE_LOCALES != 'en'){
             $this->__ParentController->__enableInternationalizationSupport();

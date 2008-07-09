@@ -39,7 +39,7 @@ class AkDispatcher
     
     function dispatch()
     {
-        $this->Request =& AkRequest();
+        $this->Request = AkRequest::getInstance();
         $this->Response =& AkResponse();
         $this->Controller =& $this->Request->recognize();
         $this->Controller->process($this->Request, $this->Response);
