@@ -24,6 +24,7 @@ define ('OPTIONAL','OPTIONAL');
 define ('ANY','ANY');
 
 require_once 'AkRouter'.DS.'AkRoute.php';
+require_once 'AkRouter'.DS.'AkRouterHelper.php';
 
 class NoMatchingRouteException extends Exception 
 { }
