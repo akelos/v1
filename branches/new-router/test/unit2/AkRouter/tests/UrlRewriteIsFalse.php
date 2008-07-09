@@ -4,19 +4,20 @@ require_once 'Route_TestCase.php';
 class UrlRewriteIsFalse extends Route_TestCase
 {
 
-    function setUp()
-    {
-        $this->withRoute('/author/:name');
-    }
-    
     function testUrlizeReturnsHttpQuery()
     {
-        $this->urlize(array('name'=>'martin'),false)->returns('/?ak=/author/martin');
+        $url = new AkUrl('/author/martin');
+        $url->setRewriteEnabled(false);
+        
+        $this->assertEquals('/?ak=/author/martin',$url->path());
     }
     
     function testUrlizeAppendsAdditionalParametersWithAnAmpersand()
     {
-        $this->urlize(array('name'=>'martin','age'=>'23'),false)->returns('/?ak=/author/martin&age=23');
+        $url = new AkUrl('/author/martin','age=23');
+        $url->setRewriteEnabled(false);
+
+        $this->assertEquals('/?ak=/author/martin&age=23',$url->path());
     }
     
 }

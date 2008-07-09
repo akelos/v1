@@ -27,6 +27,7 @@ require_once 'AkSegment.php';
 require_once 'AkVariableSegment.php';
 require_once 'AkLangSegment.php';
 require_once 'AkWildcardSegment.php';
+require_once 'AkUrl.php';
 
 class AkRoute extends AkObject 
 {
@@ -104,7 +105,7 @@ class AkRoute extends AkObject
     /**
      * @throws RouteDoesNotMatchParametersException
      */
-    function urlize($params,$rewrite_enabled=AK_URL_REWRITE_ENABLED)
+    function urlize($params)
     {
         $params = $this->urlEncode($params);
 
@@ -113,10 +114,7 @@ class AkRoute extends AkObject
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
         $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
 
-        $prefix = $rewrite_enabled ? ''  : '/?ak=';
-        $concat = $key_value_list  ? ($rewrite_enabled ? '?' : '&') : '';
-        $url = $prefix.$url.$concat.$key_value_list;
-        return $url;
+        return new AkUrl($url,$key_value_list);
     }
     
     protected function buildUrlFromSegments(&$params)

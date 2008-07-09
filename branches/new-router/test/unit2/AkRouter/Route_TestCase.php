@@ -66,22 +66,21 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     /**
      * @return Route_TestCase
      */
-    function urlize($params = array(),$rewrite_enabled=AK_URL_REWRITE_ENABLED)
+    function urlize($params = array())
     {
         $this->params = $params;
-        $this->rewrite_enabled = $rewrite_enabled;
         return $this;
     }
     
     function returns($url)
     {
-        $this->assertEquals($url,$this->Route->urlize($this->params,$this->rewrite_enabled));
+        $this->assertEquals($url,(string)$this->Route->urlize($this->params));
     }
     
     function returnsFalse()
     {
         try {
-            $actual = $this->Route->urlize($this->params,$this->rewrite_enabled);
+            $actual = $this->Route->urlize($this->params);
             $this->fail('Expected \'no match\', but actually got: '.$actual);
         } catch (RouteDoesNotMatchParametersException $e) {}
     }
