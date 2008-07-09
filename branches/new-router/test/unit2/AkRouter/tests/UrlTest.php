@@ -1,7 +1,7 @@
 <?php
 require_once 'Route_TestCase.php';
 
-class UrlRewriteIsFalse extends Route_TestCase
+class UrlTest extends Route_TestCase
 {
 
     function testUrlizeReturnsHttpQuery()
