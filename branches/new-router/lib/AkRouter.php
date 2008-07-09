@@ -113,8 +113,12 @@ class AkRouter extends AkObject
         throw new NoMatchingRouteException();
     }
     
-    function urlize($params)
+    function urlize($params,$name = null)
     {
+        if ($name){
+            return $this->routes[$name]->urlize($params);
+        }
+        
         foreach ($this->routes as $route){
             try {
                 $url = $route->urlize($params);
@@ -137,8 +141,8 @@ class AkRouter extends AkObject
     function __call($name,$args)
     {
         if (preg_match('/^(.*)_url$/',$name,$matches)){
-            array_unshift($args,$matches[1]);
-            return call_user_func_array(array($this,'urlizeUsingNamedRoute'),$args);
+            $args[] = $matches[1];
+            return call_user_func_array(array($this,'urlize'),$args);
         }else{
             array_unshift($args,$name);
             return call_user_func_array(array($this,'connectNamed'),$args);
@@ -149,14 +153,6 @@ class AkRouter extends AkObject
     {
         $this->handleApiShortcuts($url_pattern,$defaults,$requirements);       
         return $this->addRoute($name,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
-    }
-    
-    /**
-     * @throws RouteDoesNotMatchParametersException
-     */
-    private function urlizeUsingNamedRoute($name,$params)
-    {
-        return $this->routes[$name]->urlize($params);
     }
     
     static $singleton;
