@@ -13,7 +13,13 @@ class NamedRouteIdealWorld extends IdealWorld_TestCase
     function testDefaultRoute()
     {
         $url_writer = $this->withRequestTo('/user');
-        $this->assertEquals('http://localhost/user/show/1',$url_writer->urlFor(array('action'=>'show','id'=>'1')));
+        $this->assertEquals('http://localhost/user/show/1',default_url(array('action'=>'show','id'=>'1')));
+    }
+    
+    function testChangeLanguage()
+    {
+        $url_writer = $this->withRequestTo('/en/user/show/1');
+        $this->assertEquals('/es/user/show/1',default_path(array('overwrite_params'=>array('lang'=>'es'))));
     }
     
     function testFromDefaultToAuthor()
