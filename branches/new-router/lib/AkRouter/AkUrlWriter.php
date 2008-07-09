@@ -114,7 +114,10 @@ class AkUrlWriter
     
     private function getParametersFromActualRequest(&$params)
     {
-        return  $this->parameters_from_actual_request;
+        if (empty($params['skip_old_parameters_except'])) return $this->parameters_from_actual_request;
+        $actual = array_intersect_key($this->parameters_from_actual_request,array_flip($params['skip_old_parameters_except']));
+        unset ($params['skip_old_parameters_except']); 
+        return $actual;
     }
 
     private function handleLocale(&$params,&$last_params)

@@ -72,6 +72,13 @@ class UrlWriterTest extends UrlWriter_TestCase
              ->isRewrittenTo(array('controller'=>'author','action'=>'list'));
     }
     
+    function testOnlyUseSpecifiedParametersFromOldRequest()
+    {
+        $this->withRequestTo(array('lang'=>'en','controller'=>'author','action'=>'show'));
+        $this->urlFor(array('skip_old_parameters_except'=>array('controller')))
+             ->isRewrittenTo(array('controller'=>'author'));
+    }
+    
     function testAlgoExtractOptions()
     {
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');
