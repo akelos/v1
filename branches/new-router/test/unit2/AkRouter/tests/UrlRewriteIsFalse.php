@@ -52,10 +52,26 @@ class UrlRewriteIsFalse extends Route_TestCase
                 ->will($this->returnValue('/subfolder'));
                 
         $url = new AkUrl('/author/martin');
-        $url->setRequest($Request);
+        AkUrl::setCommonValuesFromRequest($Request);
         $url->setOptions(array('skip_relative_url_root'=>false));
             
         $this->assertEquals('/subfolder/author/martin',$url->path());
+    }
+    
+    function testUrl()
+    {
+        $url = $this->createUrl('/author');
+        
+        $this->assertEquals('http://localhost/author',$url->url());
+    }
+    
+    function testToStringMethodDecidesIfOnlyThePathWillBeReturned()
+    {
+        $url = $this->createUrl('/author');
+        $this->assertEquals('http://localhost/author',"$url");
+
+        $url->setOptions(array('only_path'=>true));
+        $this->assertEquals('/author',"$url");
     }
     
     /**
@@ -63,12 +79,18 @@ class UrlRewriteIsFalse extends Route_TestCase
      */
     function createUrl($path,$query='')
     {
-        $Request = $this->getMock('AkRequest',array('getRelativeUrlRoot'));
+        $Request = $this->getMock('AkRequest',array('getRelativeUrlRoot','getProtocol','getHostWithPort'));
         $Request->expects($this->any())
                 ->method('getRelativeUrlRoot')
                 ->will($this->returnValue(''));
+        $Request->expects($this->any())
+                ->method('getProtocol')
+                ->will($this->returnValue('http'));
+        $Request->expects($this->any())
+                ->method('getHostWithPort')
+                ->will($this->returnValue('localhost'));
         $url = new AkUrl($path,$query);
-        $url->setRequest($Request);
+        AkUrl::setCommonValuesFromRequest($Request);
         
         return $this->Url = $url;
     }
