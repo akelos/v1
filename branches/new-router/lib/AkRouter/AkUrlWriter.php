@@ -21,7 +21,21 @@ class AkUrlWriter
             $Router = AkRouter::getInstance();
         }
         $this->Request = $Request;
-        $this->Router  = $Router;    
+        $this->Router  = $Router;  
+    }
+    
+    private $values_from_request;
+    
+    function valuesFromRequest(AkRequest $Request)
+    {
+        if (!$this->values_from_request){
+            $this->values_from_request = array(
+                'relative_url_root' => $Request->getRelativeUrlRoot(),
+                'protocol'          => $Request->getProtocol(),
+                'host'              => $Request->getHostWithPort()
+            );
+        }
+        return $this->values_from_request;
     }
     
     function urlFor($options = array())
@@ -33,7 +47,9 @@ class AkUrlWriter
     {
         list($params,$options) = $this->extractOptionsFromParameters($options);
         $this->rewriteParameters($params);
-        return $this->_rewriteUrl($this->_rewritePath($params), $options);
+        $url = $this->_rewritePath($params);
+        $url->setOptions(array_merge($this->valuesFromRequest($this->Request),$options));
+        return (string)$url;
     }
     
     function extractOptionsFromParameters($params)
@@ -52,41 +68,8 @@ class AkUrlWriter
         return array($params,$options);
     }
     
-    /**
-     * Given a path and options, returns a rewritten URL string
-     */
-    function _rewriteUrl($path, $options)
-    {
-        $rewritten_url = '';
-        if(empty($options['only_path'])){
-            $rewritten_url .= !empty($options['protocol']) ? $options['protocol'] : $this->Request->getProtocol();
-            $rewritten_url .= empty($rewritten_url) || strpos($rewritten_url,'://') ? '' : '://';
-            $rewritten_url .= $this->_rewriteAuthentication($options);
-            $rewritten_url .= !empty($options['host']) ? $options['host'] : $this->Request->getHostWithPort();
-        }
-
-        $rewritten_url .= empty($options['skip_relative_url_root']) ? $this->Request->getRelativeUrlRoot() : '';
-
-        $rewritten_url .= (substr($rewritten_url,-1) == '/' ? '' : (AK_URL_REWRITE_ENABLED ? '' : (!empty($path[0]) && $path[0] != '/' ? '/' : '')));
-        $rewritten_url .= $path;
-        $rewritten_url .= empty($options['trailing_slash']) ? '' : '/';
-        $rewritten_url .= empty($options['anchor']) ? '' : '#'.$options['anchor'];
-
-        return $rewritten_url;
-    }
-
-    function _rewriteAuthentication($options)
-    {
-        if(!isset($options['user']) && isset($options['password'])){
-            return urlencode($options['user']).':'.urlencode($options['password']).'@';
-        }else{
-            return '';
-        }
-    }
-
     function _rewritePath($options)
     {
-        #$path = Ak::toUrl($options);
         return $this->Router->urlize($options);
     }
     

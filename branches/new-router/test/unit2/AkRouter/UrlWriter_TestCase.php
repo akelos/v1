@@ -57,6 +57,7 @@ abstract class UrlWriter_TestCase extends PHPUnit_Framework_TestCase
         $Router = $this->getMock('AkRouter',array($method_name));
         $Router->expects($this->any())
                ->method($method_name)
+               ->will($this->returnValue(new AkUrl('')))
                ->with($args);
                
         return $this->Router = $Router;

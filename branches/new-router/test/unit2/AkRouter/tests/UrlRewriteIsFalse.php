@@ -52,8 +52,7 @@ class UrlRewriteIsFalse extends Route_TestCase
                 ->will($this->returnValue('/subfolder'));
                 
         $url = new AkUrl('/author/martin');
-        AkUrl::setCommonValuesFromRequest($Request);
-        $url->setOptions(array('skip_relative_url_root'=>false));
+        $url->setOptions(array('skip_relative_url_root'=>false,'relative_url_root'=>'/subfolder'));
             
         $this->assertEquals('/subfolder/author/martin',$url->path());
     }
@@ -90,7 +89,7 @@ class UrlRewriteIsFalse extends Route_TestCase
                 ->method('getHostWithPort')
                 ->will($this->returnValue('localhost'));
         $url = new AkUrl($path,$query);
-        AkUrl::setCommonValuesFromRequest($Request);
+        $url->setOptions(array('relative_url_root'=>'','protocol'=>'http','host'=>'localhost'));
         
         return $this->Url = $url;
     }
