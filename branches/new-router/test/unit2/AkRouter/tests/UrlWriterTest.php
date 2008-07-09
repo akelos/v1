@@ -78,6 +78,14 @@ class UrlWriterTest extends UrlWriter_TestCase
         $this->urlFor(array('skip_old_parameters_except'=>array('controller')))
              ->isRewrittenTo(array('controller'=>'author'));
     }
+
+    function testFilterAllOldParameters()
+    {
+        $this->withRequestTo(array('lang'=>'en','controller'=>'author','action'=>'show'));
+        $this->urlFor(array('skip_old_parameters_except'=>array()))
+             ->isRewrittenTo(array());
+        
+    }
     
     function testUseNamedRouteIfSpecified()
     {

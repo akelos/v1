@@ -122,7 +122,7 @@ class AkUrlWriter
     
     private function getParametersFromActualRequest(&$params)
     {
-        if (empty($params['skip_old_parameters_except'])) return $this->parameters_from_actual_request;
+        if (!isset($params['skip_old_parameters_except'])) return $this->parameters_from_actual_request;
         $actual = array_intersect_key($this->parameters_from_actual_request,array_flip($params['skip_old_parameters_except']));
         unset ($params['skip_old_parameters_except']); 
         return $actual;
