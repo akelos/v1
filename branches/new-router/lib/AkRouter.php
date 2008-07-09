@@ -32,6 +32,8 @@ class NoMatchingRouteException extends Exception
 class AkRouter extends AkObject 
 {
     public  $automatic_lang_segment = true;
+    public  $generate_helper_functions = AK_GENERATE_HELPER_FUNCTIONS_FOR_NAMED_ROUTES;
+    
     private $routes = array();
     
     function connect($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
@@ -153,7 +155,11 @@ class AkRouter extends AkObject
     private function connectNamed($name,$url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
         $this->handleApiShortcuts($url_pattern,$defaults,$requirements);       
-        return $this->addRoute($name,new AkRoute($url_pattern,$defaults,$requirements,$conditions));
+        $Route = new AkRoute($url_pattern,$defaults,$requirements,$conditions);
+        if ($this->generate_helper_functions){
+            AkRouterHelper::generateHelperFunctionsFor($name,$Route);
+        }
+        return $this->addRoute($name,$Route);
     }
     
     static $singleton;
