@@ -51,11 +51,19 @@ class AkUrlWriter
     {
         list($params,$options) = $this->extractOptionsFromParameters($options);
         $this->rewriteParameters($params);
-        return (string)$this->Router->urlize($params)
+        $named_route = $this->extractNamedRoute($params);
+        return (string)$this->Router->urlize($params,$named_route)
                             ->setOptions(array_merge($this->values_from_request,$options));
     }
     
-    function extractOptionsFromParameters($params)
+    private function extractNamedRoute(&$params)
+    {
+        $named_route = @$params['use_named_route'];
+        unset($params['use_named_route']);
+        return $named_route;
+    }
+    
+    private function extractOptionsFromParameters($params)
     {
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');
         

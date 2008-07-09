@@ -79,6 +79,18 @@ class UrlWriterTest extends UrlWriter_TestCase
              ->isRewrittenTo(array('controller'=>'author'));
     }
     
+    function testUseNamedRouteIfSpecified()
+    {
+        $this->withRequestTo(array('lang'=>'en','controller'=>'author','action'=>'show'));
+        $asked_url_for_parameters = array('lang'=>'es','use_named_route'=>'default');
+        $rewritten_parameters     = array('lang'=>'es');
+        
+        $args = array($rewritten_parameters,'default');
+        $Router = $this->createRouter('urlize',$args);
+        $UrlWriter = new AkUrlWriter($this->Request,$Router);
+        $UrlWriter->urlFor($asked_url_for_parameters);
+    }
+    
     function testAlgoExtractOptions()
     {
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');

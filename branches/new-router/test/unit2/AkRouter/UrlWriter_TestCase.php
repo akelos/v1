@@ -31,7 +31,8 @@ abstract class UrlWriter_TestCase extends PHPUnit_Framework_TestCase
     
     function isRewrittenTo($expected_params)
     {
-        $this->Router = $Router = $this->createRouter('urlize',$expected_params);
+        $args = array($expected_params);
+        $this->Router = $Router = $this->createRouter('urlize',$args);
         $UrlWriter = new AkUrlWriter($this->Request,$Router);
         $UrlWriter->urlFor($this->asked_url_for_parameters);
     }
@@ -55,10 +56,10 @@ abstract class UrlWriter_TestCase extends PHPUnit_Framework_TestCase
     function createRouter($method_name,$args=array())
     {
         $Router = $this->getMock('AkRouter',array($method_name));
-        $Router->expects($this->any())
+        $method_object = $Router->expects($this->any())
                ->method($method_name)
-               ->will($this->returnValue(new AkUrl('')))
-               ->with($args);
+               ->will($this->returnValue(new AkUrl('')));
+        call_user_func_array(array($method_object,'with'),$args);
                
         return $this->Router = $Router;
     }
