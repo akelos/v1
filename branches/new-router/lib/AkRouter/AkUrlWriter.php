@@ -44,6 +44,7 @@ class AkUrlWriter
     function rewrite($options = array())
     {
         list($params,$options) = $this->extractOptionsFromParameters($options);
+        $this->rewriteParameters($params);
         return $this->_rewriteUrl($this->_rewritePath($params), $options);
     }
     
@@ -97,47 +98,57 @@ class AkUrlWriter
 
     function _rewritePath($options)
     {
-        
-        $this->fillInLastParameters($options);
-        if (isset($options['skip_url_locale'])){
-            if (!$options['skip_url_locale'] && empty($options['lang'])){
-                $params = $this->Request->getParameters();
-                isset($params['lang']) ? $options['lang'] = $params['lang'] : null;
-            }
-            unset($options['skip_url_locale']);
-        }
-
-        if(!empty($options['params'])){
-            foreach ($options['params'] as $k=>$v){
-                $options[$k] = $v;
-            }
-            unset($options['params']);
-        }
-        if(!empty($options['overwrite_params'])){
-            foreach ($options['overwrite_params'] as $k=>$v){
-                $options[$k] = $v;
-            }
-            unset($options['overwrite_params']);
-        }
-        $path = $this->Router->urlize($options);
         #$path = Ak::toUrl($options);
-        return $path;
+        return $this->Router->urlize($options);
     }
     
-    function fillInLastParameters(&$options)
+    private function rewriteParameters(&$params)
     {
-        $params = array();
+        $this->injectParameters($params);        
+        $this->fillInLastParameters($params);
+        $this->handleLocale($params);
+        $this->overwriteParameters($params);
+    }
+    
+    private function injectParameters(&$params)
+    {
+        if(!empty($params['params'])){
+            $params = array_merge($params,$params['params']);
+            unset($params['params']);
+        }
+    }
+    
+    private function fillInLastParameters(&$params)
+    {
+        $old_params = array();
         foreach ($this->Request->getParameters() as $k=>$v){
-            if (array_key_exists($k,$options)){
-                if (is_null($options[$k])) unset($options[$k]);
+            if (array_key_exists($k,$params)){
+                if (is_null($params[$k])) unset($params[$k]);
                 break;
             }
-            $params[$k] = $v;
+            $old_params[$k] = $v;
         }
-        $options = array_merge($params,$options);
+        $params = array_merge($old_params,$params);
     }
 
+    private function handleLocale(&$params)
+    {
+        if (isset($params['skip_url_locale'])){
+            if (!$params['skip_url_locale'] && empty($params['lang'])){
+                $old_params = $this->Request->getParameters();
+                isset($old_params['lang']) ? $params['lang'] = $old_params['lang'] : null;
+            }
+            unset($params['skip_url_locale']);
+        }
+    }
     
+    private function overwriteParameters(&$params)
+    {
+        if(!empty($params['overwrite_params'])){
+            $params = array_merge($params,$params['overwrite_params']);
+            unset($params['overwrite_params']);
+        }
+    }
     
 }
 
