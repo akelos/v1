@@ -15,7 +15,7 @@ class AkUrlWriter
     private $Router;
     
     function __construct($Request=null, AkRouter $Router=null)
-    #function __construct(AkRequest $Request, AkRouter $Router)
+    #function __construct(AkRequest $Request, AkRouter $Router) // Mocks from simple_test aren't an instance of the mocked!
     {
         if (!$Router){
             $Router = AkRouter::getInstance();
@@ -32,7 +32,8 @@ class AkUrlWriter
     private $values_from_request;
     private $parameters_from_actual_request;
     
-    function persistValuesFromRequest(AkRequest $Request)
+    function persistValuesFromRequest($Request)
+    #function persistValuesFromRequest(AkRequest $Request)  // Mocks from simple_test aren't an instance of the mocked!
     {
         $this->values_from_request = array(
             'relative_url_root' => $Request->getRelativeUrlRoot(),
