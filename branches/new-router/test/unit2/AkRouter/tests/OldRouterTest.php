@@ -137,55 +137,55 @@ class Test_of_AkRouter_Class extends  PHPUnit_Framework_TestCase
     {
         $input_value = array('controller'=>'page','action'=>'view_page','webpage'=>'index');
         $expected = '/';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'page','action'=>'view_page','webpage'=>'contact_us');
         $expected = $this->url_prefix.'/contact_us';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'post','action'=>'list');
         $expected = $this->url_prefix.'/blog';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'post','action'=>'view');
         $expected = $this->url_prefix.'/blog/view';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'error','action'=>'database');
         $expected = $this->url_prefix.'/error/database';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'post','action'=>'view','id'=>'10');
         $expected = $this->url_prefix.'/blog/view/10';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'blog','action'=>'view','id'=>'newest');
         $expected = $this->url_prefix.'/blog/view/newest';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'blog','action'=>'view','id'=>'newest','format'=>'printer_friendly');
         $expected = AK_URL_REWRITE_ENABLED ? '/blog/view/newest?format=printer_friendly' : '/?ak=/blog/view/newest/&format=printer_friendly';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller' => 'articles','action' => 'view_headlines','year' => '2005','month' => '10');
         $expected = $this->url_prefix.'/2005/10';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller' => 'articles','action' => 'view_headlines','year' => '2006','month' => 'all');
         $expected = $this->url_prefix. '/2006';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller' => 'user','action' => 'list','id' => '12');
         $expected = $this->url_prefix.'/user/list/12';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller' => 'setup','config_settings' => array('themes','clone','12'));
         $expected = $this->url_prefix.'/setup/themes/clone/12';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller' => 'themes','options' => array('blue','css','sans_serif'), 'action'=>'clone');
         $expected = $this->url_prefix.'/customize/blue/css/sans_serif/clone';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
     }
 
@@ -193,11 +193,11 @@ class Test_of_AkRouter_Class extends  PHPUnit_Framework_TestCase
     {
         $input_value = array('controller'=>'topic','action'=>'view', 'id'=>4);
         $expected = $this->url_prefix.'/topic/4';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'topic','action'=>'unread', 'id'=>4);
         $expected = $this->url_prefix.'/topic/4/unread';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
     }
 }
@@ -227,7 +227,7 @@ class Test_for_default_routes extends PHPUnit_Framework_TestCase
     {
         $input_value = array('controller'=>'page','action'=>'listing');
         $expected = '/page/listing';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
     }
 
 }
@@ -313,11 +313,11 @@ class Test_for_middle_optional_values_when_generating_urls extends PHPUnit_Frame
 
         $input_value = array('controller'=>'news','action'=>'feed','type'=>'atom','category'=>'foobar');
         $expected = $this->url_prefix.'/news/feed/atom/foobar';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
 
         $input_value = array('controller'=>'news','action'=>'feed');
         $expected = $this->url_prefix.'/news/feed';
-        $this->assertEquals($this->Router->urlize($input_value),$expected);
+        $this->assertEquals((string)$this->Router->urlize($input_value),$expected);
     }
 }
 
@@ -340,7 +340,7 @@ class Test_router_conflicts extends PHPUnit_Framework_TestCase
     {
         $params = array('controller'=>'page','action'=>'redirect', 'value'=>'http://akelos.org/download/');
         $url = '/page/redirect/http%3A%2F%2Fakelos.org%2Fdownload%2F';
-        $this->assertEquals($this->Router->urlize($params), $url);
+        $this->assertEquals((string)$this->Router->urlize($params), $url);
         $this->assertEquals($this->Router->match($this->createRequest($this->url_prefix.$url)), $params);
     }
 
