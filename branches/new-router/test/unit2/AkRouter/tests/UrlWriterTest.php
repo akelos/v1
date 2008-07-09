@@ -3,8 +3,20 @@ require_once 'UrlWriter_TestCase.php';
 
 class UrlWriterTest extends UrlWriter_TestCase
 {
+
+    function testUseLastRequestToFillParameters()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin'));
+        $this->urlFor(array())->isRewrittenTo(array('controller'=>'author','action'=>'show','name'=>'martin'));        
+    }
     
-    function testUsesControllerFromGivenRequest()
+    function testAGivenParameterOverridesTheOldOne()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show'));
+        $this->urlFor(array('action'=>'list'))->isRewrittenTo(array('controller'=>'author','action'=>'list'));
+    }
+    
+    function testDontFillBeyondAGivenParameter()
     {
         $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin'));
         $this->urlFor(array('action'=>'list'))->isRewrittenTo(array('controller'=>'author','action'=>'list'));
@@ -14,21 +26,21 @@ class UrlWriterTest extends UrlWriter_TestCase
     {
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');
         
-        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin'));
+        $this->withRequestTo(array('controller'=>'author'));
         $this->urlFor(array_flip($keywords))
              ->isRewrittenTo(array('controller'=>'author'));
     }
     
     function testFiltersLangSettingByDefault()
     {
-        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin','lang'=>'en'));
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','lang'=>'en'));
         $this->urlFor(array('action'=>'list'))
              ->isRewrittenTo(array('controller'=>'author','action'=>'list'));
     }
     
     function testPassThroughLangSettingIfOptionIsSet()
     {
-        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin','lang'=>'en'));
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','lang'=>'en'));
         $this->urlFor(array('action'=>'list','skip_url_locale'=>false))
              ->isRewrittenTo(array('controller'=>'author','action'=>'list','lang'=>'en'));
     }

@@ -38,7 +38,6 @@ class AkUrlWriter
             $options['module'] = substr($options['controller'], 0, strrpos($options['controller'], '/'));
             $options['controller'] = substr($options['controller'], strrpos($options['controller'], '/') + 1);
         }
-        $options['controller'] = empty($options['controller']) ? $last_parameters['controller'] : $options['controller'];
         return $options;
     }
     
@@ -98,6 +97,8 @@ class AkUrlWriter
 
     function _rewritePath($options)
     {
+        
+        $this->fillInLastParameters($options);
         if (isset($options['skip_url_locale'])){
             if (!$options['skip_url_locale'] && empty($options['lang'])){
                 $params = $this->Request->getParameters();
@@ -121,6 +122,16 @@ class AkUrlWriter
         $path = $this->Router->urlize($options);
         #$path = Ak::toUrl($options);
         return $path;
+    }
+    
+    function fillInLastParameters(&$options)
+    {
+        $params = array();
+        foreach ($this->Request->getParameters() as $k=>$v){
+            if (isset($options[$k])) break;
+            $params[$k] = $v;
+        }
+        $options = array_merge($params,$options);
     }
 
     
