@@ -5,6 +5,7 @@ class AkUrl
 
     private $path;
     private $query_string;
+    private $Request;
     private $rewrite_enabled = AK_URL_REWRITE_ENABLED;
     private $options = array('trailing_slash'=>false);
     
@@ -12,6 +13,11 @@ class AkUrl
     {
         $this->path = $path;
         $this->query_string = $query_string;    
+    }
+    
+    function setRequest($Request)
+    {
+        $this->Request = $Request;
     }
     
     function setRewriteEnabled($enable=true)
@@ -24,21 +30,17 @@ class AkUrl
         $this->options = array_merge($this->options,$options);
     }
     
-    private function trailing_slash()
-    {
-        return $this->options['trailing_slash'] ? '/' : '';
-    }
-    
-    private function query_string()
-    {
-        $concat = $this->query_string ? ($this->rewrite_enabled ? '?' : '&') : '';
-        return $concat.$this->query_string;
-    }
-    
     function path()
     {
-        $prefix = $this->rewrite_enabled ? ''  : '/?ak=';
-        $path = $prefix.$this->path.$this->trailing_slash().$this->query_string();
+        $path = '';
+        $path .= empty($this->options['skip_relative_url_root']) ? $this->Request->getRelativeUrlRoot() : '';
+        $path .= $this->rewrite_enabled ? '' : '/?ak=';
+        $path .= $this->path;
+        $path .= empty($this->options['trailing_slash']) ? '' : '/';
+        $path .= $this->query_string ? ($this->rewrite_enabled ? '?' : '&') : '';
+        $path .= $this->query_string;
+        $path .= empty($this->options['anchor']) ? '' : '#'.$this->options['anchor'];
+        
         return $path;
     }
     
