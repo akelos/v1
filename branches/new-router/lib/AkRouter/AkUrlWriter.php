@@ -47,9 +47,8 @@ class AkUrlWriter
     {
         list($params,$options) = $this->extractOptionsFromParameters($options);
         $this->rewriteParameters($params);
-        $url = $this->_rewritePath($params);
-        $url->setOptions(array_merge($this->valuesFromRequest($this->Request),$options));
-        return (string)$url;
+        return (string)$this->Router->urlize($params)
+                            ->setOptions(array_merge($this->valuesFromRequest($this->Request),$options));
     }
     
     function extractOptionsFromParameters($params)
@@ -66,11 +65,6 @@ class AkUrlWriter
         }
         
         return array($params,$options);
-    }
-    
-    function _rewritePath($options)
-    {
-        return $this->Router->urlize($options);
     }
     
     private function rewriteParameters(&$params)

@@ -30,6 +30,7 @@ class AkUrl
     function setOptions($options)
     {
         $this->options = array_merge($this->options,$options);
+        return $this;
     }
     
     function path()
