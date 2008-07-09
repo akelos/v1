@@ -287,6 +287,14 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('controller'=>'author'))->returns('/author');
     }
     
+    function testRouteCanBeAskedForDynamicSegments()
+    {
+        $this->withRoute('/author/:name/:age');
+        
+        $this->assertEquals(array('name','age'),$this->Route->getNamesOfDynamicSegments());
+        
+    }
+    
     function _testRegex()
     {
         $pattern = "|^person(/.*)/?$|";

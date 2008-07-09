@@ -210,6 +210,12 @@ class AkRoute extends AkObject
         return false;
     }
     
+    function getNamesOfDynamicSegments()
+    {
+        preg_match_all('@/[:*](\w+)@',$this->url_pattern,$matches);
+        return ($matches[1]);
+    }
+    
     /**
     * Url decode a string or an array of strings
     */
