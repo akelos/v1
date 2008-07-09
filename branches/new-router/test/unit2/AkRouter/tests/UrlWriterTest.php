@@ -91,21 +91,6 @@ class UrlWriterTest extends UrlWriter_TestCase
         $UrlWriter->urlFor($asked_url_for_parameters);
     }
     
-    function testAlgoExtractOptions()
-    {
-        $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');
-        $asked = array('only_path'=>true,'anchor'=>'blub','name'=>'blib','id'=>1);
-        
-        $options = array_intersect_key($asked,array_flip($keywords));
-        $asked   = array_diff_key($asked,$options);
-        
-        #var_dump($asked);
-        #var_dump($options);
-        $this->assertEquals(array('name'=>'blib','id'=>'1'),$asked);
-        $this->assertEquals(array('only_path'=>true,'anchor'=>'blub'),$options);
-    }
-
-    
 }
 
 ?>
