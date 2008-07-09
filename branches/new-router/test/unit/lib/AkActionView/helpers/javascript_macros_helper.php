@@ -14,6 +14,7 @@ class JavaScriptMacrosHelperTests extends HelpersUnitTester
     {
         $this->controller = &new AkActionController();
         $this->controller->Request =& new MockAkRequest($this);
+        $this->controller->Request->setReturnValue('getParametersFromRequestedUrl',array('controller'=>'test'));
         $this->controller->controller_name = 'test';
         $this->controller->instantiateHelpers();
         

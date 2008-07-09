@@ -20,6 +20,8 @@ class ActiveRecordHelperTests extends HelpersUnitTester
         $Request = new MockAkRequest();
         $Request->setReturnValue('getController','test');
         $Request->setReturnValue('getRelativeUrlRoot','');
+        $Request->setReturnValue('getParametersFromRequestedUrl',array('controller'=>'test'));
+        
         
         $this->controller = new AkActionController();
         $this->controller->Request = $Request;

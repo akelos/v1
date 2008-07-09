@@ -1,4 +1,5 @@
 <?php
+require_once AK_LIB_DIR.DS.'AkRouter.php';
 
 class AkUrlWriter
 {
