@@ -50,11 +50,6 @@ class AkUrlWriter
     
     function extractOptionsFromParameters($params)
     {
-        if(empty($params['skip_url_locale']) && empty($params['lang'])){
-            $locale = $this->Request->getLocaleFromUrl();    
-            $locale ? $params['lang'] = $locale : null; 
-        }
-
         $keywords = array('anchor', 'only_path', 'host', 'protocol', 'trailing_slash', 'skip_relative_url_root');
         
         $options = array_intersect_key($params,array_flip($keywords));
@@ -103,7 +98,14 @@ class AkUrlWriter
 
     function _rewritePath($options)
     {
-        
+        if (isset($options['skip_url_locale'])){
+            if (!$options['skip_url_locale'] && empty($options['lang'])){
+                $params = $this->Request->getParameters();
+                isset($params['lang']) ? $options['lang'] = $params['lang'] : null;
+            }
+            unset($options['skip_url_locale']);
+        }
+
         if(!empty($options['params'])){
             foreach ($options['params'] as $k=>$v){
                 $options[$k] = $v;

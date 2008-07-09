@@ -17,7 +17,20 @@ class UrlWriterTest extends UrlWriter_TestCase
         $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin'));
         $this->urlFor(array_flip($keywords))
              ->isRewrittenTo(array('controller'=>'author'));
-        
+    }
+    
+    function testFiltersLangSettingByDefault()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin','lang'=>'en'));
+        $this->urlFor(array('action'=>'list'))
+             ->isRewrittenTo(array('controller'=>'author','action'=>'list'));
+    }
+    
+    function testPassThroughLangSettingIfOptionIsSet()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin','lang'=>'en'));
+        $this->urlFor(array('action'=>'list','skip_url_locale'=>false))
+             ->isRewrittenTo(array('controller'=>'author','action'=>'list','lang'=>'en'));
     }
     
     function testAlgoExtractOptions()
