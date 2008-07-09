@@ -1,32 +1,15 @@
 <?php
-require_once AK_LIB_DIR.DS.'AkRouter'.DS.'AkUrlWriter.php';
+require_once 'UrlWriter_TestCase.php';
 
-class UrlWriterTest extends PHPUnit_Framework_TestCase
+class UrlWriterTest extends UrlWriter_TestCase
 {
+    
+    function testUsesControllerGivenRequest()
+    {
+        $this->withRequestTo(array('controller'=>'author','action'=>'show','name'=>'martin'));
+        $this->urlFor(array('action'=>'list'))->isRewrittenTo(array('controller'=>'author','action'=>'list'));
+    }
 
-    function testInstantiateUrlWriter()
-    {
-        $Request = $this->createRequest(array('controller'=>'author','action'=>'show','name'=>'martin'));
-        $UrlWriter = new AkUrlWriter($Request,$this->createRouter());
-        
-        
-    }
-    
-    function createRequest($params)
-    {
-        $Request = $this->getMock('AkRequest',array('getParameters'));
-        $Request->expects($this->any())
-                ->method('getParameters')
-                ->will($this->returnValue($params));
-        
-        return $this->Request = $Request;
-    }
-    
-    function createRouter()
-    {
-        return $this->Router = new AkRouter();
-    }
-    
     
 }
 

@@ -16,6 +16,9 @@ class AkUrlWriter
     function __construct($Request, AkRouter $Router=null)
     #function __construct(AkRequest $Request, AkRouter $Router)
     {
+        if (!$Router){
+            $Router = AkRouter::getInstance();
+        }
         $this->Request = $Request;
         $this->Router  = $Router;    
     }
@@ -30,12 +33,12 @@ class AkUrlWriter
      */
     function rewriteOptions($options)
     {
+        $last_parameters = $this->Request->getParameters();
         if(!empty($options['controller']) && strstr($options['controller'], '/')){
             $options['module'] = substr($options['controller'], 0, strrpos($options['controller'], '/'));
             $options['controller'] = substr($options['controller'], strrpos($options['controller'], '/') + 1);
         }
-        
-        $options['controller'] = empty($options['controller']) ? AkInflector::underscore($this->Request->getController()) : $options['controller'];
+        $options['controller'] = empty($options['controller']) ? $last_parameters['controller'] : $options['controller'];
         return $options;
     }
     
@@ -103,7 +106,8 @@ class AkUrlWriter
             unset($options[$k]);
         }
         #$path = AkRouter::getInstance()->urlize($options);
-        $path = Ak::toUrl($options);
+        $path = $this->Router->urlize($options);
+        #$path = Ak::toUrl($options);
         return $path;
     }
 
