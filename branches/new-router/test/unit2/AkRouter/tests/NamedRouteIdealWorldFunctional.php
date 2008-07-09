@@ -1,14 +1,6 @@
 <?php
 require_once AK_LIB_DIR.DS.'AkRouter'.DS.'AkUrlWriter.php';
 
-function author_url($params=array())
-{
-    $url_writer = AkUrlWriter::getInstance();
-    $my_params = array('use_named_route'=>'author','skip_old_parameters_except'=>array('name'));
-    $params = array_merge($my_params,$params);
-    return $url_writer->urlFor($params);    
-}
-
 class NamedRouteIdealWorldFunctional extends PHPUnit_Framework_TestCase
 {
 
@@ -18,18 +10,41 @@ class NamedRouteIdealWorldFunctional extends PHPUnit_Framework_TestCase
         $this->assertNull(AkRequest::$singleton);
     }
     
+    function testEnsureHelperFunctionsAreAvailable()
+    {
+        $this->createRouter();
+        $this->assertTrue(function_exists('author_url'));
+        $this->assertTrue(function_exists('author_path'));
+        $this->assertTrue(function_exists('default_url'));
+        $this->assertTrue(function_exists('default_path'));
+        $this->assertTrue(function_exists('root_url'));
+        $this->assertTrue(function_exists('root_path'));
+    }
+    
     function testDefaultRoute()
     {
         $url_writer = $this->withRequestTo('/user');
         $this->assertEquals('http://localhost/user/show/1',$url_writer->urlFor(array('action'=>'show','id'=>'1')));
     }
     
-    function testHandcraftedFunctionAuthorUrl()
+    function testFromDefaultToAuthor()
     {
-        $url_writer = $this->withRequestTo('/user');
+        $this->withRequestTo('/user');
         $this->assertEquals('http://localhost/author/mart',author_url(array('name'=>'mart')));
     }
 
+    function testFromAuthorToRoot()
+    {
+        $this->withRequestTo('/author/steve');
+        $this->assertEquals('http://localhost/',root_url());
+    }
+    
+    function testFromRootToAuthorPath()
+    {
+        $this->withRequestTo('/');
+        $this->assertEquals('/author/steve',author_path(array('name'=>'steve')));
+    }
+    
     /* = = = = = = TEST - API = = = = = = */
 
     /* we mock away the singletons!       */
@@ -80,6 +95,7 @@ class NamedRouteIdealWorldFunctional extends PHPUnit_Framework_TestCase
     function createRouter()
     {
         $Router = new AkRouter();
+        $Router->generate_helper_functions = true;
         $Router->author('/author/:name',array('controller'=>'author','action'=>'show','name'=>COMPULSORY));
         $Router->default('/:controller/:action/:id',array('controller'=>COMPULSORY,'action'=>'index'));
         $Router->root('/',array('controller'=>'blog','action'=>'index'));
