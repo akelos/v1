@@ -144,6 +144,18 @@ class AkUrlWriter
         }
     }
     
+    static $singleton;
+    
+    /**
+     * @return AkUrlWriter
+     */
+    static function getInstance()
+    {
+        if (!self::$singleton){
+            self::$singleton = new AkUrlWriter();
+        }
+        return self::$singleton;
+    }
 }
 
 ?>
