@@ -18,7 +18,6 @@
 
 include_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailEncoding.php');
-require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMimeMail.php');
 
 class AkMail extends Mail
 {
@@ -546,31 +545,6 @@ class AkMail extends Mail
     function getEncoded()
     {
         return $this->_getHeadersAsText().AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$this->getBody();
-        /*
-
-
-        $Mail =& new AkMimeMail();
-
-
-        $this->Mime->_build_params['text_encoding'] = '8bit';
-        $this->Mime->_build_params['html_charset'] = $this->Mime->_build_params['text_charset'] = $this->Mime->_build_params['head_charset'] = Ak::locale('charset');
-
-        $this->Mime->setTxtBody($options['text']);
-        $this->Mime->setHtmlBody($options['html']);
-        foreach ($html_images as $html_image){
-        $this->Mime->addHTMLImage(AK_CACHE_DIR.DS.'tmp'.DS.$html_image, 'image/png');
-        }
-        foreach ((array)$options['attachments'] as $attachment){
-        $this->Mime->addAttachment($attachment);
-        }
-        return '';
-        /**
-        require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail'.DS.'mime.php');
-        $Mime =& new Mail_mime();
-        //$Mime->getMessage
-        echo "<pre>".print_r($this,true)."</pre>";
-        die();
-        */
     }
 
     function _getHeadersAsText()

@@ -10,7 +10,6 @@ Ak::import('render_mailer,first_mailer,second_mailer,helper_mailer,test_mailer')
 
 class Tests_for_Mailers extends  AkUnitTest
 {
-    /**/
     function setup()
     {
         $this->Mailer =& new AkActionMailer();
@@ -19,7 +18,7 @@ class Tests_for_Mailers extends  AkUnitTest
         $this->Mailer->deliveries = array();
         $this->recipient = 'test@localhost';
     }
-
+    /**/
 
     function test_inline_template()
     {
@@ -98,19 +97,19 @@ class Tests_for_Mailers extends  AkUnitTest
     {
         $headers = array(
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?=\n\r =?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]',
-
+       
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?==?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]',
-
+       
         'Subject: =?UTF-8?B?UHLDvGZ1bmcgUHLDvGZ1bmc=?='=>'Subject: Prüfung Prüfung',
         'Subject: =?iso-8859-1?Q?RV:_=5BFwd:__chiste_inform=E1tico=5D?='=>'Subject: RV: [Fwd:  chiste informático]',
         'X-Akelos-Random: =?ISO-8859-11?B?4L7U6MG7w9DK1Le41MDSvuPL6aHRuuCr1MPsv+DHzcPstOnHwiBEdWFsLUNvcmUgSW50ZWwoUikgWGVvbihSKSBQcm9jZXNzb3Ig48vB6A==?='=>'X-Akelos-Random: เพิ่มประสิทธิภาพให้กับเซิร์ฟเวอร์ด้วย Dual-Core Intel(R) Xeon(R) Processor ใหม่',
         'X-Akelos-Random: =?UTF-8?B?0KDRg9GB0YHQutC40Lkg5Lit5paHINei15HXqNeZ16o=?='=>'X-Akelos-Random: Русский 中文 עברית',
         'X-Akelos-Random: =?UTF-8?B?ZXN0w6Egw6MgYsOkc8OqNjQ=?='=>'X-Akelos-Random: está ã bäsê64',
         //'X-Akelos-Random: =?ISO-2022-JP?B?GyRCJDMkcyRLJEEkT0AkMyYbKEI=?='=>'X-Akelos-Random: こんにちは世界',
-
+       
         'X-Akelos-Random: =?UTF-8?Q?E=C3=B1e_de_Espa=C3=B1a?= =?UTF-8?Q?_Fwd:_?= =?UTF-8?Q?=E3=81=93=E3=82=93=E3=81=AB=E3=81=A1=E3=81=AF=E4=B8=96=E7=95=8C?='=>'X-Akelos-Random: Eñe de España Fwd: こんにちは世界',
         'From: =?ISO-8859-1?Q?Crist=F3bal_G=F3mez_Moreno?= <cristobal@example.com>'=>'From: Cristóbal Gómez Moreno <cristobal@example.com>',
-
+       
         "Subject: =?ISO-8859-1?Q?=C9ste_es_el_sof=E1_del_q_habl=E9_=5B?=\n =?ISO-8859-1?Q?Fwd=3A_Sof=E1=2E=5D_?="=>'Subject: Éste es el sofá del q hablé [Fwd: Sofá.]'
         );
 
@@ -141,6 +140,7 @@ class Tests_for_Mailers extends  AkUnitTest
 
 class Tests_for_AkActionMailer extends  AkUnitTest
 {
+    /**/
 
     function encode($text, $charset = 'utf-8')
     {
@@ -164,8 +164,6 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->Mailer->deliveries = array();
         $this->recipient = 'test@localhost';
     }
-
-    /**/
 
     function test_nested_parts()
     {
@@ -669,7 +667,7 @@ EOF;
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/action_mailer/raw_email7"));
         $this->assertEqual("This is the first part.\n\nAttachment: test.rb\nAttachment: test.pdf\n\n\nAttachment: smime.p7s\n", $Mail->bodyToString());
     }
-
+    /*
 
     function test_decode_encoded_attachment_filename()
     {
@@ -679,7 +677,6 @@ EOF;
         $this->assertEqual("01QuienTeDijat.Pitbull.mp3", $Attachment->original_filename);
     }
 
-
     function test_wrong_mail_header()
     {
         $TestMailer =& new TestMailer();
@@ -687,13 +684,13 @@ EOF;
         $this->assertTrue(empty($Mail->quite));
     }
 
-
     function test_decode_message_with_unquoted_atchar_in_header()
     {
         $TestMailer =& new TestMailer();
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/action_mailer/raw_email11"));
         $this->assertTrue(!empty($Mail->from));
     }
+    /**/
 
 
 }
