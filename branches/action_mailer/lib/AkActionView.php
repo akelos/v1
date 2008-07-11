@@ -183,7 +183,7 @@ class AkActionView extends AkObject
             }elseif (!empty($options['partial'])){
                 return $this->renderPartial($options['partial'], @$options['object'], @$options['locals']);
             }elseif ($options['inline']){
-                return $this->_renderTemplate(empty($options['type']) ? 'tpl.php' : $options['type'], $options['inline'], null, empty($options['locals']) ? array() : $options['locals']);
+                return $this->renderTemplate(empty($options['type']) ? 'tpl.php' : $options['type'], $options['inline'], null, empty($options['locals']) ? array() : $options['locals']);
             }
         }
     }
