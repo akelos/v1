@@ -1,5 +1,6 @@
 <?php echo "<?php"; ?>
 
+
 require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
 
 Ak::import('<?php echo $class_name; ?>');

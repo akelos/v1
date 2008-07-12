@@ -160,5 +160,24 @@ $dictionary['You must supply a valid generator as the first command.
 
    Available generator are:';
 
+// 2008-07-13 1:18:57
+
+
+$dictionary['
+Warning, sqlite support is not available by default on PHP4.
+ Check your PHP version by running "env php -v", and change the first line in your scripts/ so they point to a php5 binary
+
+'] = '
+Warning, sqlite support is not available by default on PHP4.
+ Check your PHP version by running "env php -v", and change the first line in your scripts/ so they point to a php5 binary
+
+';
+$dictionary['Connection to the database failed. %dsn'] = 'Connection to the database failed. %dsn';
+
+// 2008-07-13 1:19:35
+
+
+$dictionary['Template file %path not found.'] = 'Template file %path not found.';
+
 
 ?>

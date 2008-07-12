@@ -25,11 +25,11 @@ class MailerGenerator extends  AkelosGenerator
     {
         $this->class_name = AkInflector::camelize($this->class_name);
         $this->assignVarToTemplate('class_name', $this->class_name);
-        $this->actions = trim(join(' ', (array)@$this->actions));
+        $this->actions = Ak::toArray(@$this->actions);
         $this->assignVarToTemplate('actions', $this->actions);
-        $this->underscored_model_name = AkInflector::underscore($this->class_name);
-        $this->model_path = 'app'.DS.'models'.DS.$this->underscored_model_name.'.php';
-        $this->installer_path = 'app'.DS.'installers'.DS.$this->underscored_model_name.'_installer.php';
+        $this->underscored_class_name = AkInflector::underscore($this->class_name);
+        $this->model_path = 'app'.DS.'models'.DS.$this->underscored_class_name.'.php';
+        $this->installer_path = 'app'.DS.'installers'.DS.$this->underscored_class_name.'_installer.php';
     }
 
     function hasCollisions()
@@ -40,12 +40,12 @@ class MailerGenerator extends  AkelosGenerator
 
         $files = array(
         AkInflector::toModelFilename($this->class_name),
-        AK_TEST_DIR.DS.'unit'.DS.'app'.DS.'models'.DS.$this->underscored_model_name.'.php',
+        AK_TEST_DIR.DS.'unit'.DS.'app'.DS.'models'.DS.$this->underscored_class_name.'.php',
         AK_TEST_DIR.DS.'fixtures'.DS.$this->model_path
         );
         
         foreach ($this->actions as $action){
-            $files[] = AK_VIEWS_DIR.DS.AkInflector::underscore($this->model_name).DS.$action.'.tpl';
+            $files[] = AK_VIEWS_DIR.DS.AkInflector::underscore($this->class_name).DS.$action.'.tpl';
         }
 
         foreach ($files as $file_name){
@@ -63,8 +63,8 @@ class MailerGenerator extends  AkelosGenerator
         $this->class_name = AkInflector::camelize($this->class_name);
 
         $files = array(
-        'model'=>AkInflector::toModelFilename($this->class_name),
-        'unit_test'=>AK_TEST_DIR.DS.'unit'.DS.'app'.DS.'models'.DS.$this->underscored_model_name.'.php',
+        'mailer'=>AkInflector::toModelFilename($this->class_name),
+        'unit_test'=>AK_TEST_DIR.DS.'unit'.DS.'app'.DS.'models'.DS.$this->underscored_class_name.'.php',
         'model_fixture.tpl'=>AK_TEST_DIR.DS.'fixtures'.DS.$this->model_path
         );
 
@@ -72,11 +72,14 @@ class MailerGenerator extends  AkelosGenerator
             $this->save($file_path, $this->render($template));
         }
 
-        @Ak::make_dir(AK_VIEWS_DIR.DS.AkInflector::underscore($this->model_name));
+        @Ak::make_dir(AK_VIEWS_DIR.DS.AkInflector::underscore($this->class_name));
 
         foreach ($this->actions as $action){
             $this->assignVarToTemplate('action', $action);
-            $this->save(AK_VIEWS_DIR.DS.AkInflector::underscore($this->model_name).DS.$action.'.tpl', $this->render('view'));
+            $path = 'app'.DS.'views'.DS.AkInflector::underscore($this->class_name).DS.$action.'.tpl';
+            $this->assignVarToTemplate('path', $path);
+            $this->save(AK_VIEWS_DIR.DS.$path);
+            $this->save(AK_TEST_DIR.DS.'fixtures'.DS.$path, $this->render('view_reference'));
         }
     }
 }
