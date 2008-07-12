@@ -302,7 +302,7 @@ class AkCharset
         if($this->enableCharsetRecoding == false || $target_charset==$origin_charset){
             return $string;
         }
-        if(isset($engine)|!isset($memory['engine'])){
+        if(isset($engine) || !isset($memory['engine'])){
             $engine = $this->SetRecodingEngine($engine,$engine_extra_params);
 
         }else{
@@ -453,17 +453,14 @@ class AkCharset
 	* return the string without modifications.
 	*/
     function _PhpStringRecode($string, $target_charset, $origin_charset)
-    {
+    {   
         $target_charset = $this->_GetCharset($target_charset, false);
-        $origin_charset = $this->_GetCharset($origin_charset, false);
+        $origin_charset = $this->_GetCharset($origin_charset, false);        
 
-        if((!$this->_ConversionIsNeeded($origin_charset, $target_charset)|!$this->usePhpRecoding) && !$this->isUtf8($string)){
+        if((!$target_charset || !$origin_charset) || ((!$this->_ConversionIsNeeded($origin_charset, $target_charset) || !$this->usePhpRecoding) && !$this->isUtf8($string))){
             return $string;
         }
         if($origin_charset=='utf8'){
-            if(!$this->_charsetMapFileExists($target_charset)){
-                return $string;
-            }
             include_once(AK_LIB_DIR.DS.'AkCharset'.DS.'utf8_mappings'.DS.$target_charset.'.php');
             if(class_exists($target_charset)){
 
@@ -477,10 +474,7 @@ class AkCharset
             }else{
                 return $string;
             }
-        }elseif($target_charset=='utf8'){
-            if(!$this->_charsetMapFileExists($origin_charset)){
-                return $string;
-            }
+        }elseif($target_charset=='utf8'){            
             include_once(AK_LIB_DIR.DS.'AkCharset'.DS.'utf8_mappings'.DS.$origin_charset.'.php');
             if(class_exists($origin_charset)){
                 $mappingObject =& Ak::singleton($origin_charset, $origin_charset);
@@ -602,10 +596,11 @@ class AkCharset
         'iso885911'=>'iso_8859_11', 'jis0228' => 'jis_0228', 'jis0212' => 'jis_0212'
         );
         $procesed_charset = isset($alias_xref[$procesed_charset]) ? $alias_xref[$procesed_charset] : $procesed_charset;
-        $memory[$charset] = isset($alias[$procesed_charset]) ? $alias[$procesed_charset] : FALSE;//$this->defaultCharset;
+        $memory[$charset] = isset($alias[$procesed_charset]) ? $alias[$procesed_charset] : false;
         if($set_charset){
             $this->_currentCharset = $memory[$charset];
         }
+        
         return $memory[$charset];
     }// -- end of &_GetCharset -- //
 
