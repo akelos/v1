@@ -18,7 +18,6 @@ class Tests_for_Mailers extends  AkUnitTest
         $this->Mailer->deliveries = array();
         $this->recipient = 'test@localhost';
     }
-    /**/
 
     function test_inline_template()
     {
@@ -140,8 +139,6 @@ class Tests_for_Mailers extends  AkUnitTest
 
 class Tests_for_AkActionMailer extends  AkUnitTest
 {
-    /**/
-
     function encode($text, $charset = 'utf-8')
     {
         return AkActionMailerQuoting::quotedPrintable($text, $charset);
@@ -164,7 +161,7 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->Mailer->deliveries = array();
         $this->recipient = 'test@localhost';
     }
-
+    
     function test_nested_parts()
     {
         $HelperMailer =& new TestMailer();
@@ -667,7 +664,6 @@ EOF;
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/action_mailer/raw_email7"));
         $this->assertEqual("This is the first part.\n\nAttachment: test.rb\nAttachment: test.pdf\n\n\nAttachment: smime.p7s\n", $Mail->bodyToString());
     }
-    /*
 
     function test_decode_encoded_attachment_filename()
     {
@@ -676,6 +672,7 @@ EOF;
         $Attachment = Ak::last($Mail->attachments);
         $this->assertEqual("01QuienTeDijat.Pitbull.mp3", $Attachment->original_filename);
     }
+
 
     function test_wrong_mail_header()
     {
@@ -690,8 +687,6 @@ EOF;
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/action_mailer/raw_email11"));
         $this->assertTrue(!empty($Mail->from));
     }
-    /**/
-
 
 }
 

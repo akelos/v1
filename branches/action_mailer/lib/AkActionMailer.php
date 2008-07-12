@@ -34,7 +34,7 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *
 * To use AkActionMailer, you need to create a mailer model.
 *   
-*   $ script/generate mailer Notifier
+*   $ ./script/generate mailer Notifier
 *
 * The generated model inherits from AkActionMailer. Emails are defined by creating methods within the model which are then 
 * used to set variables to be used in the mail template, to change options on the mail, or 
@@ -173,7 +173,6 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *               'body' => $this->renderMessage('signup-as-plain', 'account' => $recipient)));
 *       }
 *   }
-
 *  
 * Multipart messages can also be used implicitly because AkActionMailer will automatically
 * detect and use multipart templates, where each template is named after the name of the action, followed
@@ -485,16 +484,6 @@ class AkActionMailer extends AkBaseModel
         $Mail->send();
     }
 
-    /**
-     * Instantiate a new mailer object. If +method_name+ is not +null+, the mailer
-     * will be initialized according to the named method. If not, the mailer will
-     * remain uninitialized (useful when you only need to invoke the "receive"
-     * method, for instance).
-     */
-    function initialize($method_name = null, $parameters)
-    {
-        //create!(method_name, *parameters) if method_name
-    }
 
     /**
      * Initialize the mailer via the given +method_name+. The body will be
