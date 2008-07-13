@@ -1,0 +1,7 @@
+server_settings: 
+  address: localhost
+  port: 25
+  domain: localhost.localdomain
+  user_name: 
+  password: 
+  authentication: 

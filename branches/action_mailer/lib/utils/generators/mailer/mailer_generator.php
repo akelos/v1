@@ -78,7 +78,7 @@ class MailerGenerator extends  AkelosGenerator
             $this->assignVarToTemplate('action', $action);
             $path = 'app'.DS.'views'.DS.AkInflector::underscore($this->class_name).DS.$action.'.tpl';
             $this->assignVarToTemplate('path', $path);
-            $this->save(AK_VIEWS_DIR.DS.$path);
+            $this->save(AK_VIEWS_DIR.DS.$path, $this->render('view'));
             $this->save(AK_TEST_DIR.DS.'fixtures'.DS.$path, $this->render('view_reference'));
         }
     }

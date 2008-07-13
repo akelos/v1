@@ -573,7 +573,7 @@ class AkMail extends Mail
         if(empty($this->parts)){
 
             $Part->setContentTransferEncoding(!empty($this->transfer_encoding) ? $this->transfer_encoding : 'quoted-printable');
-            switch (strtolower($this->transfer_encoding)) {
+            switch (strtolower($Part->content_transfer_encoding)) {
                 case 'base64':
                 $Part->setBody(chunk_split(base64_encode($this->body)));
                 break;
@@ -615,7 +615,7 @@ class AkMail extends Mail
             }
         }
 
-        $Part->addHeaders($this->header);
+        $Part->setHeaders($this->header);
         return $Part;
     }
 
@@ -630,7 +630,7 @@ class AkMail extends Mail
         return isset($defaults[$field]) ? $defaults[$field] : null;
     }
 
-    function _getContentTypeAndAttributes($content_type)
+    function _getContentTypeAndAttributes($content_type = null)
     {
         if(empty($content_type)){
             return array($this->getDefault('content_type'), array());

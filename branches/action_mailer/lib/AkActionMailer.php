@@ -36,9 +36,9 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *   
 *   $ ./script/generate mailer Notifier
 *
-* The generated model inherits from AkActionMailer. Emails are defined by creating methods within the model which are then 
-* used to set variables to be used in the mail template, to change options on the mail, or 
-* to add attachments.
+* The generated model inherits from AkActionMailer. Emails are defined by 
+* creating methods within the model which are then used to set variables to be 
+* used in the mail template, to change options on the mail, or to add attachments.
 *
 * Examples:
 *
@@ -95,9 +95,13 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *
 * = Generating URLs for mailer views
 *
-* If your view includes URLs from the application, you need to use Ak::urlFor in the mailing method instead of the view.
-* Unlike controllers from Action View, the mailer instance doesn't have any context about the incoming request. That's
-* why you need to jump this little hoop and supply all the details needed for the URL. Example:
+* If your view includes URLs from the application, you need to use Ak::urlFor in 
+* the mailing method instead of the view.
+* Unlike controllers from Action View, the mailer instance doesn't have any 
+* context about the incoming request. That's why you need to jump this little 
+* hoop and supply all the details needed for the URL. 
+* 
+* Example:
 *
 *   function signupNotification($Recipient)
 *   {
@@ -117,17 +121,17 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *
 * = Sending mail
 *
-* Once a mailer action and template are defined, you can deliver your message or create it and save it 
-* for delivery later:
+* Once a mailer action and template are defined, you can deliver your message or 
+* create it and save it for delivery later:
 *
 *   Notifier::deliver('signup_notification', $David); // sends the email
-*   $Mail = Notifier::create('signupNotification', $David); // => A PEAR::Mail object
+*   $Mail = Notifier::create('signup_notification', $David); // => A PEAR::Mail object
 *   Notifier::deliver($Mail);
 * 
 * You never instantiate your mailer class. Rather, your delivery instance
 * methods are automatically wrapped in class methods that are called statically
-* The <tt>signup_notification</tt> method defined above is
-* delivered by invoking <tt>$Notifier =& new Notifier(); $Notifier->signupNotification(); $Notifier->deliver();</tt>.
+* The <tt>signup_notification</tt> method defined above is delivered by invoking 
+* <tt>$Notifier =& new Notifier(); $Notifier->signupNotification(); $Notifier->deliver();</tt>.
 *
 *
 * = HTML email
@@ -215,18 +219,20 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *
 * = Configuration options
 *
-* These options are specified on the class level, as class attriibutes <tt>$AkActionMailerInstance->templateRoot = "/my/templates";</tt>
+* These options are specified on the class level, as class attriibutes 
+* <tt>$AkActionMailerInstance->templateRoot = "/my/templates";</tt>
 *
 * * <tt>templateRoot</tt> - template root determines the base from which template references will be made.
 *
 * * <tt>server_settings</tt> -  Allows detailed configuration of the server:
-*   * <tt>address</tt> Allows you to use a remote mail server. Just change it from its default "localhost" setting.
+*   * <tt>address</tt> Allows you to use a remote mail server. Just change it 
+*       from its default "localhost" setting.
 *   * <tt>port</tt> On the off chance that your mail server doesn't run on port 25, you can change it.
 *   * <tt>domain</tt> If you need to specify a HELO domain, you can do it here.
 *   * <tt>user_name</tt> If your mail server requires authentication, set the username in this setting.
 *   * <tt>password</tt> If your mail server requires authentication, set the password in this setting.
 *   * <tt>authentication</tt> If your mail server requires authentication, you need to specify the authentication type here. 
-*     This is a symbol and one of :plain, :login, :cram_md5
+*     Options are: plain, login, cram_md5
 *
 * * <tt>delivery_method</tt> - Defines a delivery method. Possible values are 'smtp' (default), 'php', and 'test'.
 *
@@ -260,7 +266,7 @@ class AkActionMailer extends AkBaseModel
     'authentication' => null
     );
 
-    var $delivery_method = 'php';
+    var $delivery_method = 'smtp';
     var $perform_deliveries = true;
     var $deliveries = array();
     var $default_charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
@@ -273,6 +279,7 @@ class AkActionMailer extends AkBaseModel
 
     function __construct($Driver = null)
     {
+        $this->loadSettings();
         if(empty($Driver)){
             $this->_MailDriver =& new $this->_defaultMailDriverName();
         }else{
@@ -280,6 +287,14 @@ class AkActionMailer extends AkBaseModel
         }
     }
 
+    function loadSettings()
+    {
+        if($settings = Ak::getSettings('mailer', false)){
+            foreach ($settings as $k=>$v){
+                $this->$k = $v;
+            }
+        }
+    }
 
     /**
     * Specify the template name to use for current message. This is the "base"
@@ -468,7 +483,7 @@ class AkActionMailer extends AkBaseModel
         $this->_MailDriver =& AkMail::parse($raw_mail);
         return $this->_MailDriver;
     }
-    
+
 
     /**
      * Deliver the given mail object directly. This can be used to deliver
@@ -573,12 +588,72 @@ class AkActionMailer extends AkBaseModel
         return $this->Mail;
     }
 
-    function performSmtpDelivery()
-    {
+    function performSmtpDelivery(&$Mail)
+    {   
+        $settings = array(
+        'host'     =>  @$this->server_settings['address'],
+        'localhost'     =>  @$this->server_settings['domain'],
+        'port'     =>  @$this->server_settings['port'],
+        'username'     =>  @$this->server_settings['user_name'],
+        'password'     =>  @$this->server_settings['password'],
+        'auth'     =>  (!empty($this->server_settings['user_name']) || @$this->server_settings['authentication']),
+        'debug'    =>  true
+        );
+        $SmtpClient =& Mail::factory('smtp', $settings);
+
+        include_once 'Net/SMTP.php';
+        
+        if (!($smtp = &new Net_SMTP($SmtpClient->host, $SmtpClient->port, $SmtpClient->localhost))) {
+            return PEAR::raiseError('unable to instantiate Net_SMTP object');
+        }
+        
+        if ($SmtpClient->debug) {
+            $smtp->setDebug(true);
+        }
+
+        if (PEAR::isError($smtp->connect($SmtpClient->timeout))) {
+            return PEAR::raiseError('unable to connect to smtp server ' .
+                                    $SmtpClient->host . ':' . $SmtpClient->port);
+        }
+
+        if ($SmtpClient->auth) {
+            $method = is_string($SmtpClient->auth) ? $SmtpClient->auth : '';
+
+            if (PEAR::isError($smtp->auth($SmtpClient->username, $SmtpClient->password,
+                              $method))) {
+                return PEAR::raiseError('unable to authenticate to smtp server');
+            }
+        }
+
+        if (PEAR::isError($smtp->mailFrom($Mail->getFrom(), array('verp'=>$SmtpClient->verp)))) {
+            return PEAR::raiseError('unable to set sender to [' . $from . ']');
+        }
+
+        $recipients = $SmtpClient->parseRecipients($Mail->getRecipients());
+        if (PEAR::isError($recipients)) {
+            return $recipients;
+        }
+
+        foreach ($recipients as $recipient) {
+            if (PEAR::isError($res = $smtp->rcptTo($recipient))) {
+                return PEAR::raiseError('unable to add recipient [' .
+                                        $recipient . ']: ' . $res->getMessage());
+            }
+        }
+
+        if (PEAR::isError($smtp->data($Mail->_getHeadersAsText() . "\r\n" . $Mail->bodyToString()))) {
+            return PEAR::raiseError('unable to send data');
+        }
+        
+        $smtp->disconnect();
+        
+        return true;
+
     }
 
-    function performPhpDelivery()
+    function performPhpDelivery(&$Mail)
     {
+        return mail($Mail->getTo(), $Mail->getSubject(), $Mail->bodyToString(), $Mail->_getHeadersAsText());
     }
 
     function performTestDelivery(&$Mail)
@@ -603,6 +678,7 @@ class AkActionMailer extends AkBaseModel
             $method = 'set'.AkInflector::camelize($attribute);
             $Mail->$method(empty($this->$attribute) ? array() : $this->$attribute);
         }
+
         $this->templateRoot = empty($this->templateRoot) ? AK_APP_DIR.DS.'views' : $this->templateRoot;
         $this->template = empty($this->template) ? $method_name : $this->template;
         $this->mailerName = empty($this->mailerName) ? AkInflector::underscore($this->getModelName()) : $this->mailerName;
@@ -637,29 +713,6 @@ class AkActionMailer extends AkBaseModel
         return $TemplateInstance;
     }
 
-
-    function _loadMailConnector($options)
-    {
-        if(empty($this->Connector)){
-            $settings = array(
-            'host'     =>  $options['server'],
-            'port'     =>  $options['port'],
-            'auth'     =>  (bool)$options['authentication'],
-            'username' =>  $options['username'],
-            'password' =>  $options['password'],
-            'debug'    =>  true
-            );
-            $this->Connector =& Mail::factory('smtp', $settings);
-        }
-        return $this->Connector;
-    }
-
-    function _checkIfEmailContactExistsAsPerson(&$EmailContact)
-    {
-        if(!empty($EmailContact) && strtolower($EmailContact->getModelName()) == 'person'){
-            $EmailContact =& new EmailContact(array('name'=>$EmailContact->get('name'), 'email'=>$EmailContact->get('email')));
-        }
-    }
 
     /**
      * Alias for getModelName
