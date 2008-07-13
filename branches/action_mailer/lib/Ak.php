@@ -1831,6 +1831,29 @@ class Ak
         $PluginManager->loadPlugins();
         return $PluginManager;
     }
+    
+    /**
+     * Returns YAML settings from config/$component.yml
+     */
+    function getSettings($component, $raise_error_if_config_file_not_found = true)
+    {
+        static $loaded_settings = array();
+        
+        if(isset($loaded_settings[$component])){
+            return $loaded_settings[$component];
+        }
+        
+        $component = Ak::sanitize_include($component, 'paranoid');
+        $yaml_file_name = AK_CONFIG_DIR.DS.$component.'.yml';
+
+        if (!is_file($yaml_file_name)){
+            if($raise_error_if_config_file_not_found){
+                die(Ak::t('Could not find %component settings file in %path.', array('%component'=>$component, '%path'=>$yaml_file_name))."\n");
+            }
+            return false;
+        }
+        return $loaded_settings[$component] = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));  
+    }
 }
 
 
