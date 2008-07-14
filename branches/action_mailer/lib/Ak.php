@@ -1833,26 +1833,26 @@ class Ak
     }
     
     /**
-     * Returns YAML settings from config/$component.yml
+     * Returns YAML settings from config/$namespace.yml
      */
-    function getSettings($component, $raise_error_if_config_file_not_found = true)
+    function getSettings($namespace, $raise_error_if_config_file_not_found = true)
     {
         static $loaded_settings = array();
         
-        if(isset($loaded_settings[$component])){
-            return $loaded_settings[$component];
+        if(isset($loaded_settings[$namespace])){
+            return $loaded_settings[$namespace];
         }
         
-        $component = Ak::sanitize_include($component, 'paranoid');
-        $yaml_file_name = AK_CONFIG_DIR.DS.$component.'.yml';
+        $namespace = Ak::sanitize_include($namespace, 'paranoid');
+        $yaml_file_name = AK_CONFIG_DIR.DS.$namespace.'.yml';
 
         if (!is_file($yaml_file_name)){
             if($raise_error_if_config_file_not_found){
-                die(Ak::t('Could not find %component settings file in %path.', array('%component'=>$component, '%path'=>$yaml_file_name))."\n");
+                die(Ak::t('Could not find %component settings file in %path.', array('%component'=>$namespace, '%path'=>$yaml_file_name))."\n");
             }
             return false;
         }
-        return $loaded_settings[$component] = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));  
+        return $loaded_settings[$namespace] = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));  
     }
 }
 
