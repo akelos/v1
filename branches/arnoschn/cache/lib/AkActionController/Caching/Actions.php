@@ -21,23 +21,23 @@ class AkActionControllerCachingActions extends AkObject
         if (isset($this->_controller->caches_action)) {
             $this->_cachesAction($this->_controller->caches_action);
         }
-        $this->_controller->prependBeforeFilter(array(&$this,'before'));
-        $this->_controller->appendAfterFilter(array(&$this,'after'));
+        
     }
     
-    function before()
+    function beforeAction()
     {
         
     }
     
-    function after()
+    function afterAction()
     {
         
     }
     
     function _cachesAction($options)
     {
-       
+        $this->_controller->prependBeforeFilter(array(&$this,'beforeAction'));
+        $this->_controller->appendAfterFilter(array(&$this,'afterAction'));
     }
     function expireAction($options)
     {

@@ -169,26 +169,6 @@ class AkObject
         }
     }
     
-    /**
-     * Modules
-     */
-    
-    var $_ak_modules = array();
-    function _registerModule($alias, $classname, $filename)
-    {
-        require_once($filename);
-        $object = &new $classname();
-        $object->init(&$this);
-        $this->_ak_modules[$alias] = &$object;
-    }
-    
-    function _callModuleMethod($alias, $method)
-    {
-        $args = func_get_args();
-        array_shift($args);array_shift($args);
-        return call_user_func_array(array(&$this->_ak_modules[$alias], $method), $args);
-    }
-    
 
 }
 

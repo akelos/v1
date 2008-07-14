@@ -116,7 +116,7 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
             foreach ($methods as $method) {
                 $path='/page_caching/'.$action;
                 $this->$method($path);
-                if ($action == 'ok' && $method=='get') {
+                if ($this->getHeader('Status') == 200 && $method=='get') {
                     $this->_assertPageCached($path, 'action ok with GET request should be cached');
                 } else {
                     $this->_assertPageNotCached($path,' action '.$action.' with '.strtoupper($method).' should not be cached');

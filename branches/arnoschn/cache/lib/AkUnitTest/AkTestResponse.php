@@ -23,6 +23,8 @@ class AkTestResponse extends AkResponse
             $status = $this->_getStatusHeader($this->_headers['Status']);
             array_unshift($this->_headers,  $status ? $status : (strstr('HTTP/1.1 '.$this->_headers['Status'],'HTTP') ? $this->_headers['Status'] : 'HTTP/1.1 '.$this->_headers['Status']));
             //unset($this->_headers['Status']);
+        } else {
+            $this->_headers['Status'] = $this->_default_status;
         }
         
         if(!empty($this->_headers) && is_array($this->_headers)){

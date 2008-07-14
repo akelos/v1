@@ -152,7 +152,7 @@ class AkActionController extends AkObject
         $this->_action_name = $this->Request->getAction();
 
         $this->_ensureActionExists();
-        $this->_initModules();
+        $this->_initExtensions();
         Ak::t('Akelos'); // We need to get locales ready
 
         if($this->_high_load_mode !== true){
@@ -2852,11 +2852,22 @@ class AkActionController extends AkObject
      * ########################################################################
      */
     
-    function _initModules()
+    function _initExtensions()
     {
-        $this->_registerModule('caching','AkActionControllerCaching','AkActionController/Caching.php');
+        
+         $this->_initCacheHandler();
+        
+        //$this->_registerModule('caching','AkActionControllerCaching','AkActionController/Caching.php');
     }
-    
+    function _initCacheHandler() 
+    { 
+        if (isset($this->cache_store) && isset($this->perform_caching)) {
+            $null = null;
+            require_once(AK_LIB_DIR . DS . 'AkActionController' . DS . 'AkCacheHandler.php');
+            $this->_CacheHandler =& Ak::singleton('AkCacheHandler', $null);
+            $this->_CacheHandler->init(&$this);
+        }
+    }
     /**
      * ########################################################################
      * #
@@ -2866,53 +2877,64 @@ class AkActionController extends AkObject
      */
     function cacheConfigured()
     {
-        return $this->_callModuleMethod('caching','cacheConfigured');
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->cacheConfigured();
     }
     function cachePage($content, $path = null)
     {
-        return $this->_callModuleMethod('caching','cachePage', $content, $path);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->cachePage($content, $path);
     }
     
     function getCachedPage($path = null, $lang = null)
     {
-        return $this->_callModuleMethod('caching','getCachedPage', $path, $lang);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->getCachedPage($path, $lang);
     }
     
     function expirePage($options)
     {
-        return $this->_callModuleMethod('caching','expirePage', $options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->expirePage($options);
     }
     function fragmentCacheKey($key)
     {
-        return $this->_callModuleMethod('caching','fragmentCacheKey', $key);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->fragmentCacheKey($key);
     }
     function cacheTplFragmentStart($key, $options = array())
     {
-        return $this->_callModuleMethod('caching','cacheTplFragmentStart', $key, $options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->cacheTplFragmentStart($key, $options);
     }
     
     function cacheTplFragmentEnd($key, $options = array())
     {
-        return $this->_callModuleMethod('caching','cacheTplFragmentEnd', $key, $options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->cacheTplFragmentEnd($key, $options);
     }
     
     function writeFragment($key, $content, $options = array())
     {
-        return $this->_callModuleMethod('caching','writeFragment', $key,$content, $options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->writeFragment($key,$content, $options);
     }
     
     function readFragment($key, $options = array())
     {
-        return $this->_callModuleMethod('caching','readFragment', $key,$options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->readFragment($key,$options);
     }
     
     function expireFragment($key, $options = array())
     {
-        return $this->_callModuleMethod('caching','expireFragment', $key,$options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->expireFragment($key,$options);
     }
     function expireAction($options = array())
     {
-        return $this->_callModuleMethod('caching','expireAction', $options);
+        if (!isset($this->_CacheHandler)) return false;
+        return $this->_CacheHandler->expireAction($options);
     }
     /**
      * ########################################################################

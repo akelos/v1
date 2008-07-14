@@ -128,9 +128,9 @@ class AkTestApplication extends AkUnitTest
         $_SERVER['AK_HOST']= isset($parts['host'])?$parts['host']:'localhost';
         if (defined('AK_PAGE_CACHE_ENABLED') && AK_PAGE_CACHE_ENABLED) {
     
-            require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'Caching'.DS.'Pages.php');
+            require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');
             $null = null;
-            $pageCache = &Ak::singleton('AkActionControllerCachingPages',$null);
+            $pageCache = &Ak::singleton('AkCacheHandler',$null);
             
             $pageCache->init($null, 'file');
             $options = array('cacheDir'=>dirname(__FILE__).'/../../tmp/cache/',
