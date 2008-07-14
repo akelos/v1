@@ -4,10 +4,7 @@ require_once(AK_LIB_DIR . DS .'AkUnitTest'. DS . 'AkTestRequest.php');
 require_once(AK_LIB_DIR . DS .'AkUnitTest'. DS . 'AkTestResponse.php');
 class AkTestDispatcher extends AkDispatcher
 {
-    function AkTestDispatcher()
-    {
-        ____ak_shutdown_function($this);
-    }
+    
     function get($url)
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
