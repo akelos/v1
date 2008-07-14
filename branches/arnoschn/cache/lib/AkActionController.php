@@ -127,6 +127,8 @@ class AkActionController extends AkObject
 
     var $module_name;
     var $_module_path;
+    
+    var $_request_id = -1;
 
     /**
      * Old fashioned way of dispatching requests. Please use AkDispatcher or roll your own.
@@ -135,6 +137,7 @@ class AkActionController extends AkObject
      */
     function handleRequest()
     {
+
         AK_LOG_EVENTS && empty($this->_Logger) ? ($this->_Logger =& Ak::getLogger()) : null;
         AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->warning('Using deprecated request dispatcher AkActionController::handleRequest. Use  to AkDispatcher + AkDispatcher::dispatch instead.') : null;
         require_once(AK_LIB_DIR.DS.'AkDispatcher.php');
@@ -180,23 +183,31 @@ class AkActionController extends AkObject
             require_once(AK_LIB_DIR.DS.'AkActionWebService.php');
             $this->aroundFilter(new AkActionWebService($this));
         }
-        /**
-         * for testing purposes
-         */
-        $this->_response_id = md5(time().rand(0,100000).$this->_action_name);
+        
         
         $this->performActionWithFilters($this->_action_name);
 
+        $this->_identifyRequest();
         $this->handleResponse();
     }
-    
+    function _identifyRequest()
+    {
+        /**
+         * for AkTestApplication we need to identify if handleResponse rendered
+         * the output already.
+         * Since AkTestApplication performs multiple requests
+         * on one instance of AkActionController, each Request needs
+         * to be identified separately
+         */
+        $this->_request_id++;
+    }
     function handleResponse()
     {
         static $handled;
         if (empty($handled)) {
             $handled = array();
         }
-        if (!isset($handled[$this->_response_id])) {
+        if (!isset($handled[$this->_request_id])) {
             if (!$this->_hasPerformed()){
                 $this->_enableLayoutOnRender ? $this->renderWithLayout() : $this->renderWithoutLayout();
             }
@@ -206,7 +217,7 @@ class AkActionController extends AkObject
             }
     
             $this->Response->outputResults();
-            $handled[$this->_response_id]=true;
+            $handled[$this->_request_id]=true;
         }
     }
     
