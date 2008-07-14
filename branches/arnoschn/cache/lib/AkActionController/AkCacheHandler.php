@@ -257,7 +257,7 @@ class AkCacheHandler extends AkObject
         if (isset($this->_controller)) {
             return $this->_controller->Request->isGet() && $this->_controller->Response->getStatus()==200;
         } else {
-            return empty($_POST) && empty($_ENV['HTTP_RAW_POST_DATA']) && strtolower($_SERVER['REQUEST_METHOD'])=='get';
+            return empty($_POST) && empty($_ENV['HTTP_RAW_POST_DATA']) && (isset($_SERVER['REQUEST_METHOD']) && strtolower($_SERVER['REQUEST_METHOD'])=='get');
         }
     }
     
