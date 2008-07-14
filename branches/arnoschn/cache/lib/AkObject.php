@@ -168,6 +168,27 @@ class AkObject
             }
         }
     }
+    
+    /**
+     * Modules
+     */
+    
+    var $_ak_modules = array();
+    function _registerModule($alias, $classname, $filename)
+    {
+        require_once($filename);
+        $object = &new $classname();
+        $object->init(&$this);
+        $this->_ak_modules[$alias] = &$object;
+    }
+    
+    function _callModuleMethod($alias, $method)
+    {
+        $args = func_get_args();
+        array_shift($args);array_shift($args);
+        return call_user_func_array(array(&$this->_ak_modules[$alias], $method), $args);
+    }
+    
 
 }
 
@@ -175,6 +196,9 @@ class AkObject
 function ____ak_shutdown_function($details = false)
 {
     static $___registered_objects;
+    if (empty($___registered_objects)) {
+        $___registered_objects = array();
+    }
     if(!$details){
         Ak::profile('Calling shutdown destructors');
         foreach (array_keys($___registered_objects) as $k){

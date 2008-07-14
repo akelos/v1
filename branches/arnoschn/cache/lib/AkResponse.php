@@ -25,6 +25,10 @@ class AkResponse extends AkObject
     var $body = '';
     var $__Logger;
     
+    var $_output_flushed = false;
+    
+    var $_default_status = 200;
+    
     function set($data, $id = null)
     {
         if(isset($id)){
@@ -70,7 +74,10 @@ class AkResponse extends AkObject
             echo $this->body;
         }
     }
-
+    function getStatus()
+    {
+        return isset($this->_headers['Status'])?$this->_headers['Status']:$this->_default_status;
+    }
     function sendHeaders($terminate_if_redirected = true)
     {
         /**

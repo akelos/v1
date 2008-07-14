@@ -58,7 +58,12 @@ defined('AK_ERROR_REPORTING') ? null : define('AK_ERROR_REPORTING', AK_DEBUG ? E
 
 @error_reporting(AK_ERROR_REPORTING);
 
-defined('AK_CACHE_HANDLER') ? null : define('AK_CACHE_HANDLER', 1);
+
+defined('AK_CACHE_HANDLER_PEAR') ? null: define('AK_CACHE_HANDLER_PEAR',1);
+defined('AK_CACHE_HANDLER_ADODB') ? null: define('AK_CACHE_HANDLER_ADODB',2);
+defined('AK_CACHE_HANDLER_MEMCACHE') ? null: define('AK_CACHE_HANDLER_MEMCACHE',2);
+defined('AK_PAGE_CACHE_ENABLED') ? null : define('AK_PAGE_CACHE_ENABLED', true);
+defined('AK_CACHE_HANDLER') ? null : define('AK_CACHE_HANDLER', AK_CACHE_HANDLER_PEAR);
 
 defined('AK_APP_DIR') ? null : define('AK_APP_DIR', AK_BASE_DIR.DS.'app');
 defined('AK_APIS_DIR') ? null : define('AK_APIS_DIR', AK_APP_DIR.DS.'apis');

@@ -29,9 +29,20 @@ if(!defined('AK_CONFIG_INCLUDED')){
         include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
     }
 }
-
-require_once(AK_LIB_DIR.DS.'AkDispatcher.php');
+/**
+ * Check cache here, render cache with headers
+*/
+if (AK_PAGE_CACHE_ENABLED) {
+    require_once(AK_LIB_DIR . DS . 'AkPageCache.php');
+    $pageCache = new AkPageCache();
+    $pageCache->init();
+    if ($cachedPage = $pageCache->getCachedPage()) {
+        $cachedPage->render();
+    }
+}
+require_once(AK_LIB_DIR . DS . 'AkDispatcher.php');
 $Dispatcher =& new AkDispatcher();
 $Dispatcher->dispatch();
+
 
 ?>

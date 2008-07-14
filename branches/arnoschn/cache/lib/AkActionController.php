@@ -141,7 +141,7 @@ class AkActionController extends AkObject
         $Dispatcher =& new AkDispatcher();
         $Dispatcher->dispatch();
     }
-
+    
     function process(&$Request, &$Response)
     {
         AK_LOG_EVENTS && empty($this->_Logger) ? ($this->_Logger =& Ak::getLogger()) : null;
@@ -152,7 +152,7 @@ class AkActionController extends AkObject
         $this->_action_name = $this->Request->getAction();
 
         $this->_ensureActionExists();
-
+        $this->_initModules();
         Ak::t('Akelos'); // We need to get locales ready
 
         if($this->_high_load_mode !== true){
@@ -180,20 +180,36 @@ class AkActionController extends AkObject
             require_once(AK_LIB_DIR.DS.'AkActionWebService.php');
             $this->aroundFilter(new AkActionWebService($this));
         }
-
+        /**
+         * for testing purposes
+         */
+        $this->_response_id = md5(time().rand(0,100000).$this->_action_name);
+        
         $this->performActionWithFilters($this->_action_name);
 
-        if (!$this->_hasPerformed()){
-            $this->_enableLayoutOnRender ? $this->renderWithLayout() : $this->renderWithoutLayout();
-        }
-
-        if(!empty($this->validate_output)){
-            $this->_validateGeneratedXhtml();
-        }
-
-        $this->Response->outputResults();
+        $this->handleResponse();
     }
-
+    
+    function handleResponse()
+    {
+        static $handled;
+        if (empty($handled)) {
+            $handled = array();
+        }
+        if (!isset($handled[$this->_response_id])) {
+            if (!$this->_hasPerformed()){
+                $this->_enableLayoutOnRender ? $this->renderWithLayout() : $this->renderWithoutLayout();
+            }
+    
+            if(!empty($this->validate_output)){
+                $this->_validateGeneratedXhtml();
+            }
+    
+            $this->Response->outputResults();
+            $handled[$this->_response_id]=true;
+        }
+    }
+    
     function _loadActionView()
     {
         empty($this->_assigns) ? ($this->_assigns = array()) : null;
@@ -2827,6 +2843,84 @@ class AkActionController extends AkObject
             }
         }
     }
+    
+    /**
+     * ########################################################################
+     * #
+     * #               Modules
+     * #
+     * ########################################################################
+     */
+    
+    function _initModules()
+    {
+        $this->_registerModule('caching','AkActionControllerCaching','AkActionController/Caching.php');
+    }
+    
+    /**
+     * ########################################################################
+     * #
+     * #               START Module: AkActionControllerCaching
+     * #
+     * ########################################################################
+     */
+    function cacheConfigured()
+    {
+        return $this->_callModuleMethod('caching','cacheConfigured');
+    }
+    function cachePage($content, $path = null)
+    {
+        return $this->_callModuleMethod('caching','cachePage', $content, $path);
+    }
+    
+    function getCachedPage($path = null, $lang = null)
+    {
+        return $this->_callModuleMethod('caching','getCachedPage', $path, $lang);
+    }
+    
+    function expirePage($options)
+    {
+        return $this->_callModuleMethod('caching','expirePage', $options);
+    }
+    function fragmentCacheKey($key)
+    {
+        return $this->_callModuleMethod('caching','fragmentCacheKey', $key);
+    }
+    function cacheTplFragmentStart($key, $options = array())
+    {
+        return $this->_callModuleMethod('caching','cacheTplFragmentStart', $key, $options);
+    }
+    
+    function cacheTplFragmentEnd($key, $options = array())
+    {
+        return $this->_callModuleMethod('caching','cacheTplFragmentEnd', $key, $options);
+    }
+    
+    function writeFragment($key, $content, $options = array())
+    {
+        return $this->_callModuleMethod('caching','writeFragment', $key,$content, $options);
+    }
+    
+    function readFragment($key, $options = array())
+    {
+        return $this->_callModuleMethod('caching','readFragment', $key,$options);
+    }
+    
+    function expireFragment($key, $options = array())
+    {
+        return $this->_callModuleMethod('caching','expireFragment', $key,$options);
+    }
+    function expireAction($options = array())
+    {
+        return $this->_callModuleMethod('caching','expireAction', $options);
+    }
+    /**
+     * ########################################################################
+     * #
+     * #               END Module: AkActionControllerCaching
+     * #
+     * ########################################################################
+     */
 }
 
 

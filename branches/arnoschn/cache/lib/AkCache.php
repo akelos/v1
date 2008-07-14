@@ -100,6 +100,26 @@ class AkCache extends AkObject
     var $cache_enabled = true;
 
     
+    function &lookupStore($options)
+    {
+        $false = false;
+        if (is_array($options)) {
+            $type = key($options);
+            $options = $options[$type];
+        } else if (is_string($options)) {
+            $type = $options;
+            $options = array();
+        } else {
+            return $false;
+        }
+        $return = new AkCache();
+        $return->init($options,$type);
+        if ($return->cache_enabled) {
+            return $return;
+        }
+        return $false;
+    }
+    
     /**
     * Class constructor (ALA Akelos Framework)
     *
@@ -153,6 +173,7 @@ class AkCache extends AkObject
         $options = is_int($options) ? array('lifeTime'=>$options) : (is_array($options) ? $options : array());
 
         switch ($cache_type) {
+            case 'file':
             case 1:
                 $this->cache_enabled = true;
                 if(!class_exists('Cache_Lite')){
@@ -166,10 +187,18 @@ class AkCache extends AkObject
                 }
                 $this->_driverInstance =& new Cache_Lite($options);
                 break;
+            case 'db':
             case 2:
                 $this->cache_enabled = true;
                 require_once(AK_LIB_DIR.'/AkCache/AkAdodbCache.php');
                 $this->_driverInstance =& new AkAdodbCache();
+                $this->_driverInstance->init($options);
+                break;
+            case 'memcache':
+            case 3:
+                $this->cache_enabled = true;
+                require_once(AK_LIB_DIR.'/AkCache/AkMemcache.php');
+                $this->_driverInstance =& new AkMemcache();
                 $this->_driverInstance->init($options);
                 break;
             default:
@@ -245,7 +274,6 @@ class AkCache extends AkObject
     {
         return $this->cache_enabled ? $this->_driverInstance->clean($group, $mode) : true;
     }
-
 
 }
 

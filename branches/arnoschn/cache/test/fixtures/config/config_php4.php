@@ -23,7 +23,7 @@ defined('AK_ENABLE_AKELOS_ARGS') ? null : define('AK_ENABLE_AKELOS_ARGS', true);
 //define('AK_SKIP_DB_CONNECTION',isset($db) && $db === false);
 defined('AK_URL_REWRITE_ENABLED') ? null : define('AK_URL_REWRITE_ENABLED', true);
 
-include_once(substr(AK_TEST_DIR,0,-5).DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
+include_once(substr(AK_TEST_DIR,0,-5).DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config_php4.php');
 
 defined('AK_APP_LOCALES') ? null : define('AK_APP_LOCALES', 'en,es');
 defined('AK_PUBLIC_LOCALES') ? null : define('AK_PUBLIC_LOCALES', AK_APP_LOCALES);
