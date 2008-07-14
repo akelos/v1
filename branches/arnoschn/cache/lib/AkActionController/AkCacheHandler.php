@@ -9,6 +9,8 @@ class AkCacheHandler extends AkObject
     
     var $_perform_caching = true;
     
+    var $_page_cache_extension = '.html';
+    
     var $_controller;
     
     
@@ -68,6 +70,9 @@ class AkCacheHandler extends AkObject
              */
             if (isset($this->_controller->caches_page)) {
                 $this->_cachesPage($this->_controller->caches_page);
+            }
+            if (isset($this->_controller->page_cache_extension)) {
+                $this->_page_cache_extension = $this->_controller->page_cache_extension;
             }
             /**
              * ######## Action Caching #########
@@ -200,7 +205,7 @@ class AkCacheHandler extends AkObject
         $parts = split('/',$cacheId);
         $hasExtension = preg_match('/.+\..{3,4}/',$parts[count($parts)-1]);
         if (!$hasExtension) {
-            $cacheId.='.html';
+            $cacheId.= $this->_page_cache_extension;
         }
 
         $getParameters = $_GET;
