@@ -98,26 +98,114 @@ class AkCache extends AkObject
     * @var boolean true
     */
     var $cache_enabled = true;
-
     
-    function &lookupStore($options)
+    /**
+     * parses an option string ala:
+     * 
+     * define('AK_CACHE_OPTIONS','cacheDir=>/tmp; ttl=>180');
+     * 
+     * into:
+     * 
+     * array('cacheDir'=>'/tmp','ttl'=>180)
+     * 
+     */
+    function _parseCacheOptions($option_string)
     {
+        $options = array();
+        $opts = preg_split('/;\s*/', $option_string);
+        foreach ($opts as $opt) {
+            $c = preg_split('/\s*=>\s*/', $opt);
+            if (count($c)==2) {
+                $options[$c[0]] = $options[$c[1]];
+            } else {
+                $options[] = $c[0];
+            }
+        }
+        return $options;
+    }
+    
+    /**
+     * Instantiates and configures the AkCache store.
+     * 
+     * If $options == NULL the configuration will be taken from the constants:
+     * 
+     * AK_CACHE_HANDLER and AK_CACHE_OPTIONS
+     * 
+     * if $options is of type string/int the $options parameter will be considered
+     * as the AK_CACHE_HANDLER_* Type (AK_CACHE_HANDLER_PEAR,AK_CACHE_HANDLER_ADODB,AK_CACHE_HANDLER_MEMCACHE)
+     * 
+     * if $options is an array of format:
+     * 
+     *   array('file'=>array('cacheDir'=>'/tmp'))
+     *   
+     *   or
+     * 
+     *   array(AK_CACHE_HANDLER_PEAR=>array('cacheDir'=>'/tmp'))
+     * 
+     *  the first key will be used as the AK_CACHE_HANDLER_* Type
+     *  and the array as the config options
+     * 
+     * Default behaviour is calling the method with the $options == null parameter:
+     * 
+     * AkCache::lookupStore()
+     * 
+     * Calling it with:
+     * 
+     * AkCache::lookupStore(true)
+     * 
+     * will return the configured $cache_store
+     *
+     * @param mixed $options
+     * @return mixed   false if no cache could be configured or AkCache instance
+     */
+    function &lookupStore($options = null)
+    {
+        static $cache_store;
         $false = false;
-        if (is_array($options)) {
+        if ($options == true && !empty($cache_store)) {
+            return $cache_store;
+        } else if (defined('AK_CACHE_HANDLER') && ($options == null || $options == true)) {
+            $type = AK_CACHE_HANDLER;
+            $options = AkCache::_parseCacheOptions(defined('AK_CACHE_OPTIONS')?AK_CACHE_OPTIONS:'');
+        } else if (is_array($options)) {
             $type = key($options);
             $options = $options[$type];
-        } else if (is_string($options)) {
+        } else if (is_string($options) || is_int($options)) {
             $type = $options;
             $options = array();
         } else {
             return $false;
         }
-        $return = new AkCache();
-        $return->init($options,$type);
-        if ($return->cache_enabled) {
-            return $return;
+        $cache_store = new AkCache();
+        $cache_store->init($options,$type);
+        if ($cache_store->cache_enabled) {
+            return $cache_store;
         }
         return $false;
+    }
+    
+    function expandCacheKey($key, $namespace = null)
+    {
+        $expanded_cache_key = $namespace != null? $namespace : '';
+        if (isset($_ENV['AK_CACHE_ID'])) {
+            $expanded_cache_key .= DS . $_ENV['AK_CACHE_ID'];
+        } else if (isset($_ENV['AK_APP_VERSION'])) {
+            $expanded_cache_key .= DS . $_ENV['AK_APP_VERSION'];
+        }
+        
+        if (is_object($key) && method_exists($key,'cacheKey')) {
+            $expanded_cache_key .= DS . $key->cacheKey();
+        } else if (is_array($key)) {
+            foreach ($key as $idx => $v) {
+                $expanded_cache_key .= DS . $idx.'='.$v;
+            }
+        } else {
+            $expanded_cache_key .= DS . $key;
+        }
+        $regex = '/'.addcslashes(DS,"\\/").'+/';
+        $expanded_cache_key = preg_replace($regex,DS, $expanded_cache_key);
+        $expanded_cache_key = rtrim($expanded_cache_key,DS);
+        return $expanded_cache_key;
     }
     
     /**

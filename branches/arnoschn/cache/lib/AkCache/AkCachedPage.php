@@ -18,9 +18,13 @@ class AkCachedPage extends AkObject
         $time = null;
         if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
             $time = $_SERVER['HTTP_IF_MODIFIED_SINCE'];
+            $ifModifiedSince = preg_replace('/;.*$/', '', $time);
+            $timestamp = strtotime($ifModifiedSince);
+        } else {
+            $timestamp = 0;
         }
-        $ifModifiedSince = preg_replace('/;.*$/', '', $time);
-        $timestamp = strtotime($ifModifiedSince);
+        
+        
         $gmTime = mktime(gmdate('H'), gmdate('i'), gmdate('s'), gmdate('m'), gmdate('d'), gmdate('Y'));
         $time = time();
         $diff = $time - $gmTime;

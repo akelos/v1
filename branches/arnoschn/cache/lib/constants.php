@@ -18,11 +18,24 @@
 
 defined('AK_CONFIG_DIR') ? null : define('AK_CONFIG_DIR', AK_BASE_DIR.DS.'config');
 
+
+defined('AK_CACHE_HANDLER_PEAR') ? null: define('AK_CACHE_HANDLER_PEAR',1);
+defined('AK_CACHE_HANDLER_ADODB') ? null: define('AK_CACHE_HANDLER_ADODB',2);
+defined('AK_CACHE_HANDLER_MEMCACHE') ? null: define('AK_CACHE_HANDLER_MEMCACHE',3);
+
 // If you need to customize the framework default settings or specify internationalization options,
 // edit the files config/testing.php, config/development.php, config/production.php
 if(AK_ENVIRONMENT != 'setup'){        
     require_once(AK_CONFIG_DIR.DS.'environments'.DS.AK_ENVIRONMENT.'.php');
 }
+/**
+ * format: 
+ * define('AK_CACHE_OPTIONS','cacheDir=>/tmp; ttl=>180');
+ */
+defined('AK_CACHE_OPTIONS') ? null: define('AK_CACHE_OPTIONS','');
+defined('AK_CACHE_ENABLED') ? null : define('AK_CACHE_ENABLED', false);
+defined('AK_CACHE_HANDLER') ? null : define('AK_CACHE_HANDLER', AK_CACHE_HANDLER_PEAR);
+
 
 if (!defined('AK_TEST_DATABASE_ON')) {
     defined('AK_DEFAULT_DATABASE_PROFILE') ? null : define('AK_DEFAULT_DATABASE_PROFILE', AK_ENVIRONMENT);
@@ -58,12 +71,6 @@ defined('AK_ERROR_REPORTING') ? null : define('AK_ERROR_REPORTING', AK_DEBUG ? E
 
 @error_reporting(AK_ERROR_REPORTING);
 
-
-defined('AK_CACHE_HANDLER_PEAR') ? null: define('AK_CACHE_HANDLER_PEAR',1);
-defined('AK_CACHE_HANDLER_ADODB') ? null: define('AK_CACHE_HANDLER_ADODB',2);
-defined('AK_CACHE_HANDLER_MEMCACHE') ? null: define('AK_CACHE_HANDLER_MEMCACHE',2);
-defined('AK_PAGE_CACHE_ENABLED') ? null : define('AK_PAGE_CACHE_ENABLED', true);
-defined('AK_CACHE_HANDLER') ? null : define('AK_CACHE_HANDLER', AK_CACHE_HANDLER_PEAR);
 
 defined('AK_APP_DIR') ? null : define('AK_APP_DIR', AK_BASE_DIR.DS.'app');
 defined('AK_APIS_DIR') ? null : define('AK_APIS_DIR', AK_APP_DIR.DS.'apis');

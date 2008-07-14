@@ -119,30 +119,21 @@ class AkTestApplication extends AkUnitTest
     }
 
     
-    function _init($url, $constants = array())
+    function _init($url, $constants = array(), $controllerVars = array())
     {
         
+        $this->_response = null;
         $this->_setConstants($constants);
         $parts = parse_url($url);
         $_REQUEST['ak'] = isset($parts['path'])?$parts['path']:'/';
         $_SERVER['AK_HOST']= isset($parts['host'])?$parts['host']:'localhost';
-        if (defined('AK_PAGE_CACHE_ENABLED') && AK_PAGE_CACHE_ENABLED) {
+        if (defined('AK_CACHE_ENABLED') && AK_CACHE_ENABLED) {
     
             require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');
             $null = null;
             $pageCache = &Ak::singleton('AkCacheHandler',$null);
             
-            $pageCache->init($null, 'file');
-            $options = array('cacheDir'=>dirname(__FILE__).'/../../tmp/cache/',
-                                   'use_if_modified_since'=>true,
-                                   'headers'=>array('X-Cached-By: Akelos'));
-            if (isset($_GET['allow_get'])) {
-                $options['include_get_parameters'] = split(',',$_GET['allow_get']);
-            }
-            
-            if (isset($_GET['use_if_modified_since'])) {
-                $options['use_if_modified_since'] = true;
-            }
+            $pageCache->init($null);
             if ($cachedPage = $pageCache->getCachedPage()) {
                 ob_start();
                 $headers = $cachedPage->render(false,false,true);
@@ -153,14 +144,14 @@ class AkTestApplication extends AkUnitTest
                 return true;
             }
         }
-        require_once('AkTestDispatcher.php');
-        $this->Dispatcher =& new AkTestDispatcher();
+        require_once(AK_LIB_DIR.DS.'AkUnitTest'.DS.'AkTestDispatcher.php');
+        $this->Dispatcher =& new AkTestDispatcher($controllerVars);
     }
-    function get($url,$constants = array())
+    function get($url,$constants = array(), $controllerVars = array())
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         ob_start();
-        $rendered = $this->_init($url, $constants);
+        $rendered = $this->_init($url, $constants, $controllerVars);
         if (!$rendered) {
             $res = $this->Dispatcher->get($url);
             $this->_response = ob_get_clean();
@@ -169,12 +160,12 @@ class AkTestApplication extends AkUnitTest
         }
         return $res;
     }
-    function post($url, $data = null, $constants = array())
+    function post($url, $data = null, $constants = array(), $controllerVars = array())
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';
         ob_start();
         
-        $rendered = $this->_init($url, $constants);
+        $rendered = $this->_init($url, $constants, $controllerVars);
         if (!$rendered) {
             $res = $this->Dispatcher->post($url, $data);
             $this->_response = ob_get_clean();
@@ -184,11 +175,11 @@ class AkTestApplication extends AkUnitTest
         return $res;
     }
     
-    function put($url,$data = null, $constants = array())
+    function put($url,$data = null, $constants = array(), $controllerVars = array())
     {
         $_SERVER['REQUEST_METHOD'] = 'PUT';
         ob_start();
-        $rendered = $this->_init($url, $constants);
+        $rendered = $this->_init($url, $constants, $controllerVars);
         if (!$rendered) {
             $res = $this->Dispatcher->put($url,$data);
             $this->_response = ob_get_clean();
@@ -206,11 +197,11 @@ class AkTestApplication extends AkUnitTest
                 $this->_response,
                 $message);
     }
-    function delete($url, $constants = array())
+    function delete($url, $constants = array(), $controllerVars = array())
     {
         $_SERVER['REQUEST_METHOD'] = 'DELETE';
         ob_start();
-        $rendered = $this->_init($url, $constants);
+        $rendered = $this->_init($url, $constants, $controllerVars);
         if (!$rendered) {
             $res = $this->Dispatcher->delete($url);
             $this->_response = ob_get_clean();
@@ -219,4 +210,5 @@ class AkTestApplication extends AkUnitTest
         }
         return $res;
     }
+    
 }

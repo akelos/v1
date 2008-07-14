@@ -20,9 +20,11 @@ class AkActionControllerCachingFragments extends AkObject
         $this->_controller = $parent->getController();
     }
     
-    function fragmentCacheKey($key)
+    function fragmentCacheKey($options)
     {
-        
+        if (is_array($options)) {
+            $url = 
+        }
     }
     
     function cacheTplFragmentStart($key, $options = array())

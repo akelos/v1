@@ -4,7 +4,18 @@ require_once(AK_LIB_DIR . DS .'AkUnitTest'. DS . 'AkTestRequest.php');
 require_once(AK_LIB_DIR . DS .'AkUnitTest'. DS . 'AkTestResponse.php');
 class AkTestDispatcher extends AkDispatcher
 {
+    var $_controllerVars;
     
+    function AkTestDispatcher($controllerVars = array())
+    {
+        $this->_controllerVars = $controllerVars;
+        
+    }
+    
+    function __construct($controllerVars = array()) 
+    {
+        $this->_controllerVars = $controllerVars;
+    }
     function get($url)
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -43,6 +54,7 @@ class AkTestDispatcher extends AkDispatcher
     }
     function process($url)
     {
+        $_SERVER['PHP_SELF'] = '/index.php';
         $parts = parse_url($url);
         if (isset($parts['scheme'])) {
             $_SERVER['HTTPS']=$parts['scheme']=='https'; 
@@ -72,6 +84,11 @@ class AkTestDispatcher extends AkDispatcher
             return false;
         } else {
             $this->Controller = &$controller;
+            if (is_array($this->_controllerVars)) {
+                foreach ($this->_controllerVars as $key=>$value) {
+                    $this->Controller->$key = $value;
+                }
+            }
             $this->Controller->process($this->Request, $this->Response);
 
         }

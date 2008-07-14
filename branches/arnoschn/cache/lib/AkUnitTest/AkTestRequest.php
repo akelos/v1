@@ -8,6 +8,7 @@ class AkTestRequest extends AkRequest
         AK_ENVIRONMENT != 'setup' ? $this->_connectToDatabase() : null;
         $this->_startSession();
         $this->_enableInternationalizationSupport();
+        $this->_detectFormat();
         $this->_mapRoutes($Map);
 
         $params = $this->getParams();

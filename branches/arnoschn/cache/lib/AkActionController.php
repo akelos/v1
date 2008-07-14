@@ -154,7 +154,11 @@ class AkActionController extends AkObject
         $this->params = $this->Request->getParams();
         $this->_action_name = $this->Request->getAction();
 
-        $this->_ensureActionExists();
+        $actionExists = $this->_ensureActionExists();
+        
+        if (!$actionExists) {
+            return;
+        }
         $this->_initExtensions();
         Ak::t('Akelos'); // We need to get locales ready
 
@@ -184,22 +188,44 @@ class AkActionController extends AkObject
             $this->aroundFilter(new AkActionWebService($this));
         }
         
+        $this->_identifyRequest();
+        
         
         $this->performActionWithFilters($this->_action_name);
 
-        $this->_identifyRequest();
+        
         $this->handleResponse();
     }
+    
+    function _sendMimeContentType()
+    {
+        static $mime_types;
+        if (($format = $this->Request->getFormat()) != null) {
+            $parts = preg_split('/\./',$format);
+            if (empty($mime_types)) {
+                require_once(AK_LIB_DIR.DS.'utils'.DS.'mime_types.php');
+            }
+            if (isset($mime_types[$parts[count($parts)-1]])) {
+                $mime_type = $mime_types[$parts[count($parts)-1]];
+                $this->Response->addHeader('Content-Type', $mime_type);
+            }
+        }
+    }
+    
     function _identifyRequest()
     {
-        /**
-         * for AkTestApplication we need to identify if handleResponse rendered
-         * the output already.
-         * Since AkTestApplication performs multiple requests
-         * on one instance of AkActionController, each Request needs
-         * to be identified separately
-         */
-        $this->_request_id++;
+        if (AK_ENVIRONMENT != 'testing') {
+            /**
+             * for AkTestApplication we need to identify if handleResponse rendered
+             * the output already.
+             * Since AkTestApplication performs multiple requests
+             * on one instance of AkActionController, each Request needs
+             * to be identified separately
+             */
+            $this->_request_id++;
+        } else {
+            $this->_request_id = md5(time().microtime(true).rand(0,10000));
+        }
     }
     function handleResponse()
     {
@@ -211,11 +237,10 @@ class AkActionController extends AkObject
             if (!$this->_hasPerformed()){
                 $this->_enableLayoutOnRender ? $this->renderWithLayout() : $this->renderWithoutLayout();
             }
-    
+            $this->_sendMimeContentType();
             if(!empty($this->validate_output)){
                 $this->_validateGeneratedXhtml();
             }
-    
             $this->Response->outputResults();
             $handled[$this->_request_id]=true;
         }
@@ -2847,12 +2872,15 @@ class AkActionController extends AkObject
                 '%action_name' => $this->_action_name,
                 )), E_USER_ERROR);
             }elseif(@include(AK_PUBLIC_DIR.DS.'405.php')){
-                exit;
+                return false;
             }else{
-                header("HTTP/1.1 405 Method Not Allowed");
+                $this->Response->addHeader('Status',405);//("HTTP/1.1 405 Method Not Allowed");
+                $this->Response->sendHeaders();
                 die('405 Method Not Allowed');
+                return false;
             }
         }
+        return true;
     }
     
     /**
@@ -2872,11 +2900,11 @@ class AkActionController extends AkObject
     }
     function _initCacheHandler() 
     { 
-        if (isset($this->cache_store) && isset($this->perform_caching)) {
+        if (defined('AK_CACHE_ENABLED') && AK_CACHE_ENABLED && defined('AK_CACHE_HANDLER')) {
             $null = null;
             require_once(AK_LIB_DIR . DS . 'AkActionController' . DS . 'AkCacheHandler.php');
             $this->_CacheHandler =& Ak::singleton('AkCacheHandler', $null);
-            $this->_CacheHandler->init(&$this);
+            $this->_CacheHandler->init(&$this, true);
         }
     }
     /**

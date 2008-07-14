@@ -2,6 +2,9 @@
 
 error_reporting(E_ALL);
 
+defined('AK_CACHE_ENABLED') ? null: define('AK_CACHE_ENABLED', true);
+defined('AK_CACHE_HANDLER') ? null: define('AK_CACHE_HANDLER', 1);
+
 defined('AK_ENVIRONMENT') ? null : define('AK_ENVIRONMENT', 'testing');
 
 defined('AK_TEST_DIR') ? null : define('AK_TEST_DIR', str_replace(DIRECTORY_SEPARATOR.'fixtures'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php','',__FILE__));

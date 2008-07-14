@@ -2,9 +2,10 @@
 require_once(AK_LIB_DIR.DS.'AkResponse.php');
 class AkTestResponse extends AkResponse
 {
-    function AkTestResponse()
+    function __construct()
     {
-        
+        $this->_headers = array();
+        $this->_headers_sent = array();
     }
     function sendHeaders($terminate_if_redirected = true)
     {
@@ -86,6 +87,16 @@ class AkTestResponse extends AkResponse
             $isRedirected = true;
         }
         return $isRedirected;
+    }
+    
+    function redirect ($url)
+    {
+        $this->autoRender = false;
+        if(substr(@$this->_headers['Status'],0,3) != '301'){
+            $this->_headers['Status'] = 302;    
+        }
+        $this->addHeader('Location', $url);
+        $this->sendHeaders();
     }
 }
 

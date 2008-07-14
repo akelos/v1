@@ -2,9 +2,9 @@
 
 class PageCachingController extends ApplicationController
 {
-    var $perform_caching=true;
+
     var $caches_page = array('ok','no_content','found','not_found');
-    var $cache_store = 'file';
+
     function ok()
     {
         

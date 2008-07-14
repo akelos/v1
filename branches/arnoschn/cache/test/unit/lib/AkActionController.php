@@ -19,7 +19,9 @@ $partial_tests = array(
 'partials',
 'http_authentication',
 'model_instantiation',
-'caching',
+'page_caching',
+'action_caching',
+'sweeper'
 );
 
 foreach ($partial_tests as $partial_test){

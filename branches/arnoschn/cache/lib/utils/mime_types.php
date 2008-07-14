@@ -308,6 +308,7 @@ $mime_types = array(
 'rnd' => 'application/prs.nprend',
 'roff' => 'application/x-troff',
 'rpm' => 'audio/x-pn-realaudio-plugin',
+'rss' => 'application/rss+xml',
 'rtf' => 'application/rtf',
 'rtx' => 'text/richtext',
 'sav' => 'application/x-spss',

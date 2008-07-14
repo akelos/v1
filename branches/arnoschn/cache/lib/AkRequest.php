@@ -690,8 +690,20 @@ class AkRequest extends AkObject
             $item = urldecode($item);
         }
     }
-
-
+    
+    function _detectFormat()
+    {
+        if (preg_match('/^([^\.]+)\.(.+)$/', @$_REQUEST['ak'], $matches)) {
+            $this->_format = isset($matches[2])?$matches[2]:null;
+            $_REQUEST['ak'] = $matches[1];
+            $this->_request['ak'] = $matches[1];
+        }
+    }
+    
+    function getFormat()
+    {
+        return isset($this->_format)?$this->_format:null;
+    }
     // {{{ recognize()
 
     /**
@@ -704,6 +716,7 @@ class AkRequest extends AkObject
         AK_ENVIRONMENT != 'setup' ? $this->_connectToDatabase() : null;
         $this->_startSession();
         $this->_enableInternationalizationSupport();
+        $this->_detectFormat();
         $this->_mapRoutes($Map);
 
         $params = $this->getParams();

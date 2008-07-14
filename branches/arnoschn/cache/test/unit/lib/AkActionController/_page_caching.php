@@ -20,7 +20,9 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
     function _flushCache($host)
     {
         $fileCache=AkCache::lookupStore('file');
-        $fileCache->clean($host);
+        if ($fileCache!==false) {
+            $fileCache->clean($host);
+        }
     }
     
     function test_should_cache_get_with_ok_status()
