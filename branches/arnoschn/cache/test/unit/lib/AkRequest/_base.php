@@ -80,7 +80,17 @@ class AkRequestTestCase extends  AkUnitTest
 
     function Test_mergeRequest()
     {
-        $gpc_param = get_magic_quotes_gpc() ? "Isn't it ironic" : 'Isn\\\'t it ironic';
+        $gpc_param = 'Isn\\\'t it ironic';
+        if(!defined('AK_GPC_MAGIC_FIXED')){
+            if (get_magic_quotes_gpc()) {
+                array_walk($_GET, array('AkRequest', '_fixGpc'));
+                array_walk($_POST, array('AkRequest', '_fixGpc'));
+                array_walk($_COOKIE, array('AkRequest', '_fixGpc'));
+                $gpc_param = "Isn't it ironic";
+            }
+            define('AK_GPC_MAGIC_FIXED',true);
+        }
+        
 
         $expected = array(
         'cmd_param'=>'cmd',

@@ -62,7 +62,6 @@ class AkObject
         static $_callback_called;
         Ak::profile('Instantiating '.get_class($this));
         $args = func_get_args();
-        // register_shutdown_function(array(&$this, '__destruct'));
         ____ak_shutdown_function(&$this);
         call_user_func_array(array(&$this, '__construct'), $args);
 
@@ -150,8 +149,7 @@ class AkObject
         $log = Log::singleton('file', AK_LOGS_DIR.DS.$ident.'.log',$ident);
         $log->log($type, $message);
     }
-    
-    
+
     /**
     * Unsets circular reference children that are not freed from memory
     * when calling unset() or when the parent object is garbage collected.
@@ -168,7 +166,6 @@ class AkObject
             }
         }
     }
-    
 
 }
 
@@ -176,9 +173,6 @@ class AkObject
 function ____ak_shutdown_function($details = false)
 {
     static $___registered_objects;
-    if (empty($___registered_objects)) {
-        $___registered_objects = array();
-    }
     if(!$details){
         Ak::profile('Calling shutdown destructors');
         foreach (array_keys($___registered_objects) as $k){
