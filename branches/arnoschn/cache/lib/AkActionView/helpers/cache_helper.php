@@ -22,9 +22,9 @@
 *
 * == Caching a block into a fragment
 *
-*   <?php $cache_helper->begin ('fragment_cache_key'); ?>
+*   <?php if (!$cache_helper->begin ('fragment_cache_key')) { ?>
 *     [some html...]
-*   <?php $cache_helper->end ('fragment_cache_key'); ?>
+*   <?php $cache_helper->end ('fragment_cache_key');} ?>
 *  
 *
 *
@@ -35,15 +35,20 @@ require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkActionViewHelper.php');
 
 class CacheHelper extends AkActionViewHelper 
 {
-    
+    /**
+     * Enter description here...
+     *
+     * @param unknown_type $key
+     * @param unknown_type $options
+     */
     function begin ($key, $options = array())
     {
-        $this->_controller->cacheTplFragmentStart($key, $options);
+        return $this->_controller->cacheTplFragmentStart($key, $options);
     }
 
     function end($key, $options = array())
     {
-        $this->_controller->cacheTplFragmentEnd($key, $options);
+        return $this->_controller->cacheTplFragmentEnd($key, $options);
     }
 }
 

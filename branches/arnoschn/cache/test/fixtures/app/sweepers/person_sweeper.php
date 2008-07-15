@@ -5,18 +5,18 @@ class PersonSweeper extends AkCacheSweeper
 {
     var $observe = 'Person';
     
-    function after_create(&$record)
+    function afterCreate(&$record)
     {
         $this->expirePage(array('controller'=>'cache_sweeper','action'=>'listing'));
     }
     
-    function after_save(&$record)
+    function afterSave(&$record)
     {
         $this->expirePage(array('controller'=>'cache_sweeper','action'=>'listing'),'*');
         $this->expireAction(array('controller'=>'cache_sweeper','action'=>'show','id'=>$record->id,'lang'=>'*'));
     }
     
-    function before_destroy(&$record)
+    function beforeDestroy(&$record)
     {
         $this->expirePage(array('controller'=>'cache_sweeper','action'=>'show','id'=>$record->id));
     }

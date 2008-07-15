@@ -70,7 +70,13 @@ class AkTestRequest extends AkRequest
         return $Controller;
 
     }
-    
+    function getHost()
+    {
+        if(!empty($this->_host)){
+            return $this->_host;
+        }
+        return isset($this->env['SERVER_NAME']) ? $this->env['SERVER_NAME'] : 'localhost';
+    }
 }
 
 function &AkTestRequest()

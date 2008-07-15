@@ -4195,29 +4195,56 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         return $this->_observable_state;
     }
-
+    
     /**
     * Register the reference to an object object
+    * 
+    * 
+    * @param $observer AkObserver
+    * @param $options array of options for the observer
     * @return void
     */ 
-    function &addObserver(&$observer)
+    function addObserver(&$observer)
     {
-        static $observers, $registered_observers;
+        $staticVarNs='AkActiveRecord::observers::' . $this->_modelName;
         $observer_class_name = get_class($observer);
-        if(!isset($registered_observers[$observer_class_name]) && func_num_args() == 1){
-            $observers[] =& $observer;
-            $registered_observers[$observer_class_name] = count($observers);
+        $null = null;
+        /**
+         * get the statically stored observers for the namespace
+         */
+        $observers = &Ak::static_var($staticVarNs,$null);
+        if (!is_array($observers)) {
+            $observers = array('classes'=>array(),'objects'=>array());
         }
-        return $observers;
+        /**
+         * if not already registered, the observerclass will 
+         * be registered now
+         */
+        if (!in_array($observer_class_name,$observers['classes'])) {
+            $observers['classes'][] = $observer_class_name;
+            $observers['objects'][] = &$observer;
+            Ak::static_var($staticVarNs, $observers);
+            
+        }
     }
-
     /**
     * Register the reference to an object object
     * @return void
     */ 
     function &getObservers()
     {
-        $observers =& $this->addObserver(&$this, false);
+        $staticVarNs='AkActiveRecord::observers::' . $this->_modelName;
+        $key = 'objects';
+
+        $null = null;
+        $array = array();
+        $observers_arr =& Ak::static_var($staticVarNs, $null);
+        if (isset($observers_arr[$key])) {
+            $observers = &$observers_arr[$key];
+        } else {
+            $observers = &$array;
+        }
+
         return $observers;
     }
 

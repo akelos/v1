@@ -59,6 +59,7 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
     
     function test_cache_expiration()
     {
+        $this->_flushCache('www.example.com');
         $time = time();
         $cache_this = date('Y-m-d, H:i:s',$time);
         
@@ -66,7 +67,7 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
         $this->assertTextMatch($cache_this);
         $this->_assertCacheExists('/'.Ak::lang().'/action_caching/index');
         
-        $cache_this_new = date('Y-m-d, H:i:s');
+        $cache_this_new = date('Y-m-d, H:i:s',$time+10);
         $this->get('http://www.example.com/action_caching/',array(),array('cache_this'=>$cache_this_new));
         $this->assertHeader('X-Cached-By','Akelos-Action-Cache');
         $this->assertTextMatch($cache_this);
@@ -75,7 +76,7 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
         $this->assertResponse(200);
         $this->_assertCacheNotExists('/'.Ak::lang().'/action_caching/index');
         
-        $cache_this_new = date('Y-m-d, H:i:s');
+        $cache_this_new = date('Y-m-d, H:i:s',$time+20);
         $this->get('http://www.example.com/action_caching/',array(),array('cache_this'=>$cache_this_new));
         $this->assertTextMatch($cache_this_new);
         $cached = $this->_getActionCache('/'.Ak::lang().'/action_caching/index');
@@ -156,12 +157,14 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
     {
         $controller=$this->getController();
         $options['action_cache']=true;
+        $options['namespace']='actions';
         $fragment = $controller->readFragment($path, $options);
         return $fragment;
     }
     
     function _assertCacheExists($path, $options = array())
     {
+        $options['namespace']='actions';
         $fragment = $this->_getActionCache($path, $options);
         $this->assertTrue($fragment!==false);
     }

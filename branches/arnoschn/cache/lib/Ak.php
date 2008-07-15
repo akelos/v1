@@ -1817,6 +1817,48 @@ class Ak
         $PluginManager->loadPlugins();
         return $PluginManager;
     }
+    
+    function &static_var($name, &$value, $destruct = false)
+    {
+        static $_memory;
+        $null = null;
+        $true = true;
+        $false = false;
+        $return = $null;
+        if ($value === null && $destruct === false) {
+            /**
+             * GET mode
+             */
+            if (isset($_memory[$name])) {
+                $return = &$_memory[$name];
+            }
+        } else if ($value !== null) {
+            /**
+             * SET mode
+             */
+            if (is_string($name)) {
+                $_memory[$name] = &$value;
+                $return = $true;
+            } else {
+                $return = $false;
+            }
+            
+        } else if ($destruct === true) {
+            if ($name !== null) {
+                $value = isset($_memory[$name])?$_memory[$name]:$null;
+                if (is_object($value) && method_exists($value,'__destruct')) {
+                    $value->__destruct();
+                }
+                unset($value);
+                unset($_memory[$name]);
+            } else {
+                foreach ($_memory as $name => $value) {
+                    Ak::static_var($name,false,null,true);
+                }
+            }
+        }
+        return $return;
+    }
 }
 
 

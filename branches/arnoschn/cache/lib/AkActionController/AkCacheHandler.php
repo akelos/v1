@@ -202,25 +202,26 @@ class AkCacheHandler extends AkObject
     
     function _initSweeper($sweeper, $params = array())
     {
-        if (!is_array($params) || empty($params)) {
-            $observedEvents = $this->__availableObserveEvents;
-        } else if (isset($params['only'])) {
-            $observedEvents = is_array($params['only'])?$params['only']:Ak::toArray($params['only']);
-            $observedEvents = array_intersect($this->__availableObserveEvents, $observedEvents);
-        }
-        $sweeper_class = AkInflector::classify($sweeper);
-        $filePath = AK_APP_DIR . DS . 'sweepers' . DS . $sweeper.'.php';
-        if (file_exists($filePath)) {
-            require_once($filePath);
-            if (class_exists($sweeper_class)) {
-                $this->_Sweepers[] = &new $sweeper_class(&$this,$observedEvents);
-            } else {
-                trigger_error('Cache Sweeper "' . $sweeper_class . '" does not exist in: ' . $filePath, E_USER_ERROR);
-            }
-        } else if (AK_ENVIRONMENT == 'development') {
-            trigger_error('Cache Sweeper file does not exist: ' . $filePath, E_USER_ERROR);
-        }
+        $only = isset($params['only'])?Ak::toArray($params['only']):array();
+        $except = isset($params['except'])?Ak::toArray($params['except']):array();
         
+        if (!empty($only) && !in_array($this->_controller->getActionName(), $only)) return;
+        if (!empty($except) && !in_array($this->_controller->getActionName(), $except)) return;
+        
+        $sweeper_class = AkInflector::classify($sweeper);
+        
+        if (!class_exists($sweeper_class)) {
+            $filePath = AK_APP_DIR . DS . 'sweepers' . DS . $sweeper.'.php';
+            if (file_exists($filePath)) {
+                require_once($filePath);
+                if (!class_exists($sweeper_class)) {
+                    trigger_error('Cache Sweeper "' . $sweeper_class . '" does not exist in: ' . $filePath, E_USER_ERROR);
+                }
+            } else if (AK_ENVIRONMENT == 'development') {
+                trigger_error('Cache Sweeper file does not exist: ' . $filePath, E_USER_ERROR);
+            }
+        }
+        $this->_Sweepers[] = &new $sweeper_class(&$this);
     }
     
     function _cachesPage($options)
@@ -355,7 +356,7 @@ class AkCacheHandler extends AkObject
             $options = $this->_pathFor($this->_controller->params);
         }
         
-        $key = AkCache::expandCacheKey($options, 'fragments');
+        $key = AkCache::expandCacheKey($options, isset($parameters['namespace'])?$parameters['namespace']:'fragments');
         
         return $key;
     }
@@ -380,8 +381,10 @@ class AkCacheHandler extends AkObject
         if ($read !== false) {
             echo $read;
             $this->_cacheTplRendered($key);
+            return true;
         } else {
             ob_start();
+            return false;
         }
     }
     
@@ -397,23 +400,19 @@ class AkCacheHandler extends AkObject
     {
         if (!$this->cacheConfigured()) return;
         
-        $key = $this->fragmentCachekey($key);
+        $key = $this->fragmentCachekey($key, $options);
         
         return $this->_cache_store->save($content, $key, isset($options['host'])?
-                                                  $options['host']:
-                                                      isset($options['action_cache'])?
-                                                         $this->_buildCacheGroup():'fragment');
+                                                  $options['host']:$this->_buildCacheGroup());
     }
     
     function readFragment($key, $options = array())
     {
         if (!$this->cacheConfigured()) return;
         
-        $key = $this->fragmentCachekey($key);
+        $key = $this->fragmentCachekey($key, $options);
         return $this->_cache_store->get($key, isset($options['host'])?
-                                                  $options['host']:
-                                                      isset($options['action_cache'])?
-                                                         $this->_buildCacheGroup():'fragment');
+                                                  $options['host']:$this->_buildCacheGroup());
     }
     
     function expireFragment($key, $options = array())
@@ -424,15 +423,13 @@ class AkCacheHandler extends AkObject
             $res = true;
             foreach ($langs as $lang) {
                 $key['lang'] = $lang;
-                $res = $res || $this->expireFragment($key, $options);
+                $res = $this->expireFragment($key, $options);
             }
             return $res;
         }
-        $key = $this->fragmentCachekey($key);
+        $key = $this->fragmentCachekey($key, $options);
         return $this->_cache_store->remove($key, isset($options['host'])?
-                                                  $options['host']:
-                                                      isset($options['action_cache'])?
-                                                         $this->_buildCacheGroup():'fragment');
+                                                  $options['host']:$this->_buildCacheGroup());
     }
     /*
      * ########################################################################
@@ -463,7 +460,7 @@ class AkCacheHandler extends AkObject
         if (!empty($this->_action_cache_host)) {
             $options['host'] = $this->_action_cache_host;
         }
-        $options['action_cache'] = true;
+        $options['namespace'] = 'actions';
         if (($content = $this->readFragment($this->_action_cache_path, $options))!==false) {
             $this->_controller->renderText($content);
             $this->_rendered_action_cache = true;
@@ -486,7 +483,7 @@ class AkCacheHandler extends AkObject
         if (!empty($this->_action_cache_host)) {
             $options['host'] = $this->_action_cache_host;
         }
-        $options['action_cache'] = true;
+        $options['namespace'] = 'actions';
         $this->writeFragment($this->_action_cache_path , $contents, $options);
         return true;
     }
@@ -514,6 +511,9 @@ class AkCacheHandler extends AkObject
                     $this->_action_cache_path = $path;
                 }
             }
+            if (!isset($this->_action_cache_host)) {
+                $this->_action_cache_host = $this->_controller->Request->getHost();
+            }
             $this->_action_cache_path = $this->_actionPath($this->_action_cache_path);
             $this->_controller->prependBeforeFilter(array(&$this,'beforeActionCache'));
             $this->_controller->appendAfterFilter(array(&$this,'afterActionCache'));
@@ -538,7 +538,7 @@ class AkCacheHandler extends AkObject
     
     function expireAction($options, $params = array())
     {
-        $params['action_cache'] = true;
+        $params['namespace'] = 'actions';
         return $this->expireFragment($options, $params);
     }
     function _normalize($path)

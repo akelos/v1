@@ -1,11 +1,10 @@
 <?php
 
-class CacheSweeperController extends ApplicationController
+class CacheSweeper2Controller extends ApplicationController
 {
     var $models = 'person';
     var $caches_action = array('show');
-    var $caches_page = array('listing');
-    var $cache_sweeper = array('person_sweeper'=>array('only'=>'update'));
+    var $cache_sweeper = array('person_sweeper2'=>array('except'=>'update,show,listing'));
     
     function show()
     {
@@ -25,7 +24,7 @@ class CacheSweeperController extends ApplicationController
     function update()
     {
         $this->Person=$this->Person->findFirstBy('id',@$this->params['id']);
-        if (isset($this->Person) && $this->Person->id>0) {
+        if (isset($this->Person) && isset($this->Person->id) && $this->Person->id>0) {
             $this->Person->first_name = @$this->params['first_name'];
             $this->Person->last_name = @$this->params['last_name'];
             $res = $this->Person->save();
@@ -46,7 +45,7 @@ class CacheSweeperController extends ApplicationController
         $res = $person->save();
         if ($res) {
             //$this->renderText('User '.$person->first_name.' '.$person->last_name.' created', 201);
-            $this->redirectTo($this->urlFor(array('controller'=>'cache_sweeper','action'=>'show','id'=>$person->id)));
+            $this->redirectTo($this->urlFor(array('controller'=>'cache_sweeper2','action'=>'show','id'=>$person->id)));
         } else {
             $this->renderText('Error', 502);
         }
