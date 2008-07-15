@@ -261,7 +261,6 @@ class AkCache extends AkObject
         $options = is_int($options) ? array('lifeTime'=>$options) : (is_array($options) ? $options : array());
 
         switch ($cache_type) {
-            case 'file':
             case 1:
                 $this->cache_enabled = true;
                 if(!class_exists('Cache_Lite')){
@@ -275,14 +274,12 @@ class AkCache extends AkObject
                 }
                 $this->_driverInstance =& new Cache_Lite($options);
                 break;
-            case 'db':
             case 2:
                 $this->cache_enabled = true;
                 require_once(AK_LIB_DIR.'/AkCache/AkAdodbCache.php');
                 $this->_driverInstance =& new AkAdodbCache();
                 $this->_driverInstance->init($options);
                 break;
-            case 'memcache':
             case 3:
                 $this->cache_enabled = true;
                 require_once(AK_LIB_DIR.'/AkCache/AkMemcache.php');

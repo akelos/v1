@@ -55,18 +55,7 @@ class Test_Ak extends AkUnitTest
         $this->assertEqual(true,$return);
         $this->assertEqual($value,Ak::static_var('testVar1', $null));
     }
-    function test_static_var_set_value_object_not_referenced()
-    {
-        $value = new stdClass;
-        $value->id = 1;
-        $return = Ak::static_var('testVar1',$value);
-        $this->assertEqual(true,$return);
-        $storedValue = Ak::static_var('testVar1', $null);
-        $this->assertEqual($value,$storedValue);
-        $value->id = 2;
-        $this->assertEqual($value->id, 2);
-        $this->assertEqual($storedValue->id, 1);
-    }
+
     function test_static_var_set_value_object_referenced()
     {
         $value = new stdClass;
