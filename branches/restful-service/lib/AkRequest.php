@@ -666,7 +666,7 @@ class AkRequest extends AkObject
         $session_params = isset($_SESSION['request']) ? $_SESSION['request'] : null;
         $command_line_params = !empty($_REQUEST)  ? $_REQUEST : null;
 
-        $requests = array($command_line_params, $_GET, array_merge_recursive($_POST, $this->getPutParams(), $this->_getNormalizedFilesArray()), $_COOKIE, $session_params);
+        $requests = array($command_line_params, $_GET, array_merge_recursive($this->getPostParams(), $this->getPutParams(), $this->_getNormalizedFilesArray()), $_COOKIE, $session_params);
 
         foreach ($requests as $request){
             $this->_request = (!is_null($request) && is_array($request)) ?
@@ -924,8 +924,19 @@ class AkRequest extends AkObject
     function getPutParams()
     {
         if (!$this->isPut()) return array();
-
-        $data = $this->getMessageBody();
+        return $this->parseMessageBody($this->getMessageBody());
+    }
+    
+    function getPostParams()
+    {
+        if (!$this->isPost()) return array();
+        if ($this->getContentType()=='application/x-www-form-urlencoded') return $_POST;
+        
+        return $_POST = $this->parseMessageBody($this->getMessageBody());
+    }
+    
+    private function parseMessageBody($data)
+    {
         if (empty($data)) return array();
 
         $content_type = $this->getContentType();

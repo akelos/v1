@@ -74,6 +74,33 @@ class ParseMessageBody extends PHPUnit_Framework_TestCase
         $this->assertEquals(array('person'=>array('name'=>'Steve')),$Request->getPutParams());
     }
     
+    function testXmlIsAutomaticallyMergedIntoParamsOnPost()
+    {
+        $data = '<person><name>Steve</name></person>';
+        $Request = $this->createPostRequest($data,'text/xml');
+
+        $this->assertEquals(array('person'=>array('name'=>'Steve')),$Request->getPostParams());
+    }
+    
+    function testJsonIsAutomaticallyMergedIntoParamsOnPostRequests()
+    {
+        $data = '{"person":{"name":"Steve"}}';
+        $Request = $this->createPostRequest($data,'text/x-json');
+        
+        $this->assertEquals(array('person'=>array('name'=>'Steve')),$Request->getPostParams());
+    }
+    
+    function testWwwFormIsAutomaticallyMergedIntoParamsOnPost()
+    {
+        $_save_POST = $_POST;
+        $_POST = array('something'=>'here');
+        
+        $Request = $this->createPostRequest('ignored, uses standard super-global','application/x-www-form-urlencoded');
+        $this->assertEquals($_POST,$Request->getPostParams());
+        
+        $_POST = $_save_POST;
+    }
+    
 
 
 /* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  = = =  */
@@ -84,6 +111,23 @@ class ParseMessageBody extends PHPUnit_Framework_TestCase
     function createPutRequest($data,$content_type = 'text/xml')
     {
         $_SERVER['REQUEST_METHOD'] = 'put';
+        $_SERVER['CONTENT_TYPE']   = $content_type;
+        
+        $Request = $this->getMock('AkRequest',array('getMessageBody'),array(),'',false);
+        $Request->expects($this->any())
+                ->method('getMessageBody')
+                ->will($this->returnValue($data));
+        $Request->env = $_SERVER;
+                
+        return $this->Request = $Request;
+    }
+
+    /**
+     * @return AkRequest
+     */
+    function createPostRequest($data,$content_type = 'text/xml')
+    {
+        $_SERVER['REQUEST_METHOD'] = 'post';
         $_SERVER['CONTENT_TYPE']   = $content_type;
         
         $Request = $this->getMock('AkRequest',array('getMessageBody'),array(),'',false);

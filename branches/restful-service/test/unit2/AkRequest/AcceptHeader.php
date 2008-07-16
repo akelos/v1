@@ -12,13 +12,14 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
     
     function setUp()
     {
+        $this->_save_env = $_SERVER;
+        $_SERVER['REQUEST_METHOD'] = 'get';
         $this->Request = new AkRequest();
-        $this->_save_env = $this->Request->env;
     }
     
     function tearDown()
     {
-        $this->Request->env = $this->_save_env;
+        $_SERVER = $this->_save_env;
     }
     
     function testAssumeQOfOneIfNoneIsPresent()
