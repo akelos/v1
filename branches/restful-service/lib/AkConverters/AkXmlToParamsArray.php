@@ -1,20 +1,51 @@
 <?php
-
+/**
+ * Converts a Xml-representation of an Active Record to an array that can be used as params-array.
+ * Used internally to convert POST and PUT message bodys.
+ * 
+ *      <person>
+ *          <name>Steve</name>
+ *          <details>
+ *              <age>21</age>
+ *          </details>
+ *      </person>
+ * 
+ *   => array('person'=>array('name'=>'Steve','details'=>array('age'=>'21')))
+ *   => $params['person']['name']  //= Steve
+ * 
+ * 
+ *      <person>
+ *          <name>Steve</name>
+ *          <photos>
+ *              <photo>
+ *                  <title>One</title>
+ *              </photo>
+ *              <photo>
+ *                  <title>Two</title>
+ *              </photo>
+ *          </photos>
+ *          <age>21</age>
+ *      </person>
+ *
+ *   => array('person'=>array('name'=>'Steve','photos'=>array(0=>array('title'=>'One'),1=>array('title'=>'Two'))))
+ *   => $params['person']['photos'][1]['title'] //= Two 
+ *
+ */
 class AkXmlToParamsArray
 {
 
-    function convert()
+    public function convert()
     {
         return self::convertToArray($this->source);    
     }
     
-    function convertToArray($xml_or_string)
+    static public function convertToArray($xml_or_string)
     {
         $xml = is_string($xml_or_string) ? new SimpleXMLElement($xml_or_string) : $xml_or_string;
         return self::parseXml($xml);
     }
     
-    static public function parseXml(SimpleXMLElement $xml)
+    static private function parseXml(SimpleXMLElement $xml)
     {
         $properties = array();
         $properties[$xml->getName()] = self::addChildren($xml);
@@ -26,21 +57,16 @@ class AkXmlToParamsArray
         $properties = array();
     
         foreach ($xml as $child){
-#echo "{$xml->getName()};";
             if (count($child->children())>0){
-#echo $child->getName()."::> ";            
                 $children = self::addChildren($child);
                 if (AkInflector::isCollectionOf($child->getName(),$xml->getName())){
-#echo "[[[{$xml->getName()};{$child->getName()}]]].";
                     $properties[]= $children;
                 }else{
                     $properties[$child->getName()] = $children;
                 }
             }else{
-#echo " {$child->getName()}<-->$child";
                 $properties[$child->getName()] = (string)$child;
             }
-#echo "\n\r";            
         }
         return $properties;
     }
