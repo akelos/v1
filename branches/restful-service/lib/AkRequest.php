@@ -295,20 +295,24 @@ class AkRequest extends AkObject
     function getAcceptHeader()
     {
         $accept_header = $this->env['HTTP_ACCEPT'];
-#var_dump($accept_header);        
 
-        $accepts = explode(',',$accept_header);
-        foreach ($accepts as $index=>&$acceptable){
+        $accepts = array();
+        foreach (explode(',',$accept_header) as $index=>$acceptable){
             @list($type,$factor) = preg_split('/;\s*q=/',$acceptable);
             if (!$factor) $factor = '1.0';
             $type = trim($type);
             
-            $acceptable = array('i'=>$index,'type'=>$type,'q'=>$factor);
+            //we need the original index inside this structure 
+            //because usort happily rearranges the array on equality
+            //therefore we first compare the 'q' and then 'i'
+            $accepts[] = array('i'=>$index,'type'=>$type,'q'=>$factor);
         }
+        usort($accepts,array($this,'sortAcceptHeader'));
         
-        usort($accepts,array($this,'sortAcceptHeader'));                
-        #var_dump($accepts);
-        
+        //we throw away the old index
+        foreach ($accepts as &$array){
+            unset($array['i']);
+        }
         return $accepts;
     }
     
@@ -320,6 +324,16 @@ class AkRequest extends AkObject
     
     function getMimeType($acceptables)
     {
+        // we group by 'quality'
+        $grouped_acceptables = array();
+        foreach ($acceptables as $acceptable){
+            $grouped_acceptables[$acceptable['q']][] = $acceptable['type'];
+        }
+        
+        // we register a dictionary: mime_type => our_type
+        // this is an ordered list, the first entry has top priority
+        // say a client accepts different mime_types with the same 'q'uality-factor
+        // we then won't just pop his first one, but our best match within this group  
         $mime_types = array(
             'text/html'                => 'html',
             'application/xhtml+xml'    => 'html',
@@ -335,10 +349,15 @@ class AkRequest extends AkObject
             '*/*'                      => 'html',
             'default'                  => 'html',
         );
-        foreach ($acceptables as $acceptable){
-            if (empty($mime_types[$acceptable['type']])) continue;
-            return $mime_types[$acceptable['type']];
+        
+        foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){
+            foreach ($mime_types as $mime_type=>$our_mime_type){
+                foreach ($array_with_acceptables_of_same_quality as $acceptable){
+                    if ($mime_type == $acceptable) return $our_mime_type;
+                }
+            }
         }
+        return $mime_types['default'];
     }
 
     /**

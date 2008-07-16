@@ -63,7 +63,6 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
     
     function testDeliverHtmlToFirefox2()
     {
-        $this->markTestIncomplete('Firefox says he likes xml most.');
         $this->Request->env['HTTP_ACCEPT'] = 'text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5';
         $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
         $this->assertEquals('html',$mime_type);
