@@ -1,0 +1,46 @@
+This provides a PHPUnit-TestSuite for the Akelos_Framework.
+
+Requirements
+------------
+
+[PHPUnit](http://www.phpunit.de/) itself must be installed separate. [(Installation guide)](http://www.phpunit.de/pocket_guide/3.2/en/installation.html)
+The recommended and supported way is to use the PEAR-installer. 
+
+    pear channel-discover pear.phpunit.de
+    pear install phpunit/PHPUnit 
+    
+That's it. You can test your installation by executing 
+
+    phpunit
+    
+which will print a help message.
+
+Run a test
+----------
+
+This TestSuite has its own script (scripts/test_runner.php) to run your tests. Basically it includes lib/PHPUnit_Akelos which registers the autoloader and includes the config-file (test/fixtures/config/).
+Addionally it creates TestSuites from directories or files on-the-fly.
+
+    scripts/test_runner.php
+    
+will print a help message.
+
+Try
+
+    scripts/test_runner.php -v examples/
+    
+from the root-folder of *this* package. The installer should place a shortcut 
+
+    script/phpunit_testsuite.php ...
+    
+in your app-base dir. 
+
+Study these examples, hopefully they're quite self-explanatory. Some of the examples rely on fixtures (an installer f.i.) you can find in tests/fixtures/.
+
+   
+
+  
+
+
+   
+
