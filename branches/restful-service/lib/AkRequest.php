@@ -33,6 +33,9 @@ $_SERVER['REQUEST_URI'] = (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_UR
 class DispatchException extends Exception 
 { }
 
+class NotAcceptableException extends Exception 
+{ }
+
 /**
 * Class that handles incoming request.
 * 
@@ -330,6 +333,24 @@ class AkRequest extends AkObject
             $grouped_acceptables[$acceptable['q']][] = $acceptable['type'];
         }
         
+        $mime_types = $this->registeredMimeTypes();
+        
+        foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){
+            foreach ($mime_types as $mime_type=>$our_mime_type){
+                foreach ($array_with_acceptables_of_same_quality as $acceptable){
+                    if ($mime_type == $acceptable){
+                        return $our_mime_type;
+                    }
+                }
+            }
+        }
+        return $mime_types['default'];
+    }
+
+    static $mime_types;
+    
+    function registeredMimeTypes()
+    {
         // we register a dictionary: mime_type => our_type
         // this is an ordered list, the first entry has top priority
         // say a client accepts different mime_types with the same 'q'uality-factor
@@ -347,19 +368,10 @@ class AkRequest extends AkObject
             'application/rss+xml'      => 'rss',
             'application/atom+xml'     => 'atom',
             '*/*'                      => 'html',
+            'application/x-www-form-urlencoded' => 'www-form',
             'default'                  => 'html',
         );
-        
-        foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){
-            foreach ($mime_types as $mime_type=>$our_mime_type){
-                foreach ($array_with_acceptables_of_same_quality as $acceptable){
-                    if ($mime_type == $acceptable){
-                        return $our_mime_type;
-                    }
-                }
-            }
-        }
-        return $mime_types['default'];
+        return AkRequest::$mime_types = $mime_types;
     }
     
     function bestMimeType()
@@ -370,6 +382,19 @@ class AkRequest extends AkObject
     function getFormat()
     {
         return isset($this->_request['format']) ? $this->_request['format'] : $this->bestMimeType();
+    }
+    
+    function getContentType()
+    {
+        if (empty($this->env['CONTENT_TYPE'])) return false;
+        return $this->env['CONTENT_TYPE'];
+    }
+    
+    function lookupMimeType($mime_type)
+    {
+        $this->registeredMimeTypes();
+        if (!isset(self::$mime_types[$mime_type])) throw new NotAcceptableException();
+        return self::$mime_types[$mime_type];
     }
 
     /**
@@ -896,26 +921,29 @@ class AkRequest extends AkObject
         }
     }
     
-    function getContentType()
-    {
-        if (empty($this->env['CONTENT_TYPE'])) return false;
-        
-        return $this->env['CONTENT_TYPE'];
-    }
-
-    private $put_body;
-    
     function getPutParams()
     {
-        if ($this->put_body) return $this->put_body;
         if (!$this->isPut()) return array();
 
-        
-        if($data = $this->getMessageBody()){
-            $this->put_body = array();
-            parse_str(urldecode($data), $this->put_body);
+        $data = $this->getMessageBody();
+        if (empty($data)) return array();
+
+        $content_type = $this->getContentType();
+        switch ($this->lookupMimeType($content_type)){
+            case 'www-form':
+                $as_array = array();
+                parse_str($data,$as_array);
+                return $as_array;
+            case 'xml':
+                require_once AK_LIB_DIR.DS.'AkConverters'.DS.'AkXmlToParamsArray.php';
+                return AkXmlToParamsArray::convertToArray($data);
+                break;
+            case 'json':
+                return json_decode($data,true);
+            default:
+                return array('put_body'=>$data);
+                break;
         }
-        return isset($this->put_body) ? $this->put_body : array();
     }
     
     private $message_body;
