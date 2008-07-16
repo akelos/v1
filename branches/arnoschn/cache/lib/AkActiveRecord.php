@@ -4208,11 +4208,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     {
         $staticVarNs='AkActiveRecord::observers::' . $this->_modelName;
         $observer_class_name = get_class($observer);
-        $null = null;
         /**
          * get the statically stored observers for the namespace
          */
-        $observers = &Ak::static_var($staticVarNs,$null);
+        $observers = &Ak::getStaticVar($staticVarNs);
         if (!is_array($observers)) {
             $observers = array('classes'=>array(),'objects'=>array());
         }
@@ -4223,7 +4222,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if (!in_array($observer_class_name,$observers['classes'])) {
             $observers['classes'][] = $observer_class_name;
             $observers['objects'][] = &$observer;
-            Ak::static_var($staticVarNs, $observers);
+            Ak::setStaticVar($staticVarNs, $observers);
             
         }
     }
@@ -4236,9 +4235,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $staticVarNs='AkActiveRecord::observers::' . $this->_modelName;
         $key = 'objects';
 
-        $null = null;
         $array = array();
-        $observers_arr =& Ak::static_var($staticVarNs, $null);
+        $observers_arr =& Ak::getStaticVar($staticVarNs);
         if (isset($observers_arr[$key])) {
             $observers = &$observers_arr[$key];
         } else {

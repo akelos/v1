@@ -1817,8 +1817,21 @@ class Ak
         $PluginManager->loadPlugins();
         return $PluginManager;
     }
-    
-    function &static_var($name, &$value, $destruct = false)
+    function &setStaticVar($name,&$value)
+    {
+        return Ak::_staticVar($name,&$value);
+    }
+    function &getStaticVar($name)
+    {
+        $null = null;
+        return Ak::_staticVar($name,&$null);
+    }
+    function &unsetStaticVar($name)
+    {
+        $null = null;
+        return Ak::_staticVar($name,&$null,true);
+    }
+    function &_staticVar($name, &$value, $destruct = false)
     {
         static $_memory;
         $null = null;
@@ -1853,7 +1866,7 @@ class Ak
                 unset($_memory[$name]);
             } else {
                 foreach ($_memory as $name => $value) {
-                    Ak::static_var($name,false,null,true);
+                    Ak::unsetStaticVar($name);
                 }
             }
         }
