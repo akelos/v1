@@ -10,14 +10,10 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
      */
     private $Request;
     
-    const typical_opera_header = 'text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1'; 
-    
     function setUp()
     {
         $this->Request = new AkRequest();
-        
         $this->_save_env = $this->Request->env;
-        
     }
     
     function tearDown()
@@ -25,22 +21,33 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
         $this->Request->env = $this->_save_env;
     }
     
+    function testAssumeQOfOneIfNoneIsPresent()
+    {
+        $this->Request->env['HTTP_ACCEPT'] = 'text/html';
+        $this->assertEquals(array('type'=>'text/html','q'=>'1.0'),array_pop($this->Request->getAcceptHeader()));
+    }
+    
+    function testPreserveOriginalOrderIfQIsEqual()
+    {
+        $this->Request->env['HTTP_ACCEPT'] = 'text/html, application/html';
+        $accepts = $this->Request->getAcceptHeader();
+        array_walk($accepts,array('self','only_type'));
+        
+        $this->assertEquals(array('text/html','application/html'),$accepts);
+    }
+    
     function testReorderAcceptHeaders()
     {
-        $this->Request->env['HTTP_ACCEPT'] = self::typical_opera_header;
-        $acceptables = $this->Request->getAcceptHeader();
+        $this->Request->env['HTTP_ACCEPT'] = 'text/html, application/xml;q=0.9, application/xhtml+xml, */*;q=0.1';
+        $accepts = $this->Request->getAcceptHeader();
+        array_walk($accepts,array('self','only_type'));
         
-        $actual = array();
-        foreach ($acceptables as $acceptable){
-            $actual[] = $acceptable['type'];
-        }
-        
-        $this->assertEquals(array('text/html','application/xhtml+xml', 'image/png', 'image/jpeg', 'image/gif', 'image/x-xbitmap', 'application/xml', '*/*'),$actual);            
+        $this->assertEquals(array('text/html','application/xhtml+xml', 'application/xml', '*/*'),$accepts);            
     }
     
     function testDeliverHtmlToOpera()
     {
-        $this->Request->env['HTTP_ACCEPT'] = self::typical_opera_header;
+        $this->Request->env['HTTP_ACCEPT'] = 'text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1';
         $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
 
         $this->assertEquals('html',$mime_type);
@@ -63,10 +70,20 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
     
     function testDeliverHtmlToFirefox2()
     {
+        //Firefox prefers xml over html
         $this->Request->env['HTTP_ACCEPT'] = 'text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5';
         $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
         $this->assertEquals('html',$mime_type);
     }
+
+    
+    /* ============= ============== =========== */
+    
+    private static function only_type(&$a)
+    {
+        $a = $a['type'];
+    }
+    
 }
 
 ?>
