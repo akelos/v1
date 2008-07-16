@@ -291,6 +291,55 @@ class AkRequest extends AkObject
         }
         return '';
     }
+    
+    function getAcceptHeader()
+    {
+        $accept_header = $this->env['HTTP_ACCEPT'];
+#var_dump($accept_header);        
+
+        $accepts = explode(',',$accept_header);
+        foreach ($accepts as $index=>&$acceptable){
+            @list($type,$factor) = preg_split('/;\s*q=/',$acceptable);
+            if (!$factor) $factor = '1.0';
+            $type = trim($type);
+            
+            $acceptable = array('i'=>$index,'type'=>$type,'q'=>$factor);
+        }
+        
+        usort($accepts,array($this,'sortAcceptHeader'));                
+        #var_dump($accepts);
+        
+        return $accepts;
+    }
+    
+    function sortAcceptHeader($a,$b)
+    {
+        //preserve the original order if q is equal
+        return $a['q'] == $b['q'] ? ($a['i'] > $b['i']) : ($a['q'] < $b['q']);
+    }
+    
+    function getMimeType($acceptables)
+    {
+        $mime_types = array(
+            'text/html'                => 'html',
+            'application/xhtml+xml'    => 'html',
+            'application/xml'          => 'xml',
+            'text/xml'                 => 'xml',
+            'text/javascript'          => 'js',
+            'application/javascript'   => 'js',
+            'application/x-javascript' => 'js',
+            'application/json'         => 'json', 
+            'text/x-json'              => 'json',
+            'application/rss+xml'      => 'rss',
+            'application/atom+xml'     => 'atom',
+            '*/*'                      => 'html',
+            'default'                  => 'html',
+        );
+        foreach ($acceptables as $acceptable){
+            if (empty($mime_types[$acceptable['type']])) continue;
+            return $mime_types[$acceptable['type']];
+        }
+    }
 
     /**
     * Returns the HTTP request method as a lowercase symbol ('get, for example)
