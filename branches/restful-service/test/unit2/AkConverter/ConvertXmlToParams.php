@@ -1,4 +1,5 @@
 <?php
+require_once AK_LIB_DIR.DS.'AkConverters'.DS.'AkXmlToParamsArray.php';
 
 class ConvertXmlToParams extends PHPUnit_Framework_TestCase
 {
@@ -11,6 +12,7 @@ class ConvertXmlToParams extends PHPUnit_Framework_TestCase
             'person'=>array('name'=>'Steve','age'=>'21')
         );
         $this->assertEquals($expected,$this->parseXml($data));
+        
         #var_dump($this->parseXml($data));
     }
 
@@ -143,40 +145,7 @@ class ConvertXmlToParams extends PHPUnit_Framework_TestCase
     
     function parseXml($xml_string)
     {
-        $xml = new SimpleXMLElement($xml_string);
-        
-        $properties = array();
-        $properties[$xml->getName()] = $this->addChildren($xml);
-        return $properties;
-    }
-    
-    private function addChildren(SimpleXMLElement $xml)
-    {
-        $properties = array();
-    
-        foreach ($xml as $child){
-#echo "{$xml->getName()};";
-            if (count($child->children())>0){
-#echo $child->getName()."::> ";            
-                $children = $this->addChildren($child);
-                if ($this->isCollectionOf($child->getName(),$xml->getName())){
-#echo "[[[{$xml->getName()};{$child->getName()}]]].";
-                    $properties[]= $children;
-                }else{
-                    $properties[$child->getName()] = $children;
-                }
-            }else{
-#echo " {$child->getName()}<-->$child";
-                $properties[$child->getName()] = (string)$child;
-            }
-#echo "\n\r";            
-        }
-        return $properties;
-    }
-    
-    private function isCollectionOf($child_name,$parent_name)
-    {
-        return AkInflector::pluralize($child_name) == $parent_name;
+        return AkXmlToParamsArray::convertToArray($xml_string);
     }
     
 }
