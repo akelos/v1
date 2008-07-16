@@ -1817,7 +1817,7 @@ class Ak
         $PluginManager->loadPlugins();
         return $PluginManager;
     }
-    function &setStaticVar($name,&$value)
+    function setStaticVar($name,&$value)
     {
         return Ak::_staticVar($name,&$value);
     }
