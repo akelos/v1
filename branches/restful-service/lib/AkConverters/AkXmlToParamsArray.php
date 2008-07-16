@@ -30,7 +30,7 @@ class AkXmlToParamsArray
             if (count($child->children())>0){
 #echo $child->getName()."::> ";            
                 $children = self::addChildren($child);
-                if (self::isCollectionOf($child->getName(),$xml->getName())){
+                if (AkInflector::isCollectionOf($child->getName(),$xml->getName())){
 #echo "[[[{$xml->getName()};{$child->getName()}]]].";
                     $properties[]= $children;
                 }else{
@@ -43,11 +43,6 @@ class AkXmlToParamsArray
 #echo "\n\r";            
         }
         return $properties;
-    }
-    
-    static private function isCollectionOf($child_name,$parent_name)
-    {
-        return AkInflector::pluralize($child_name) == $parent_name;
     }
     
 }
