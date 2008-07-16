@@ -15,7 +15,7 @@ class RESTFulPeopleServiceFunctional extends PHPUnit_Framework_TestCase
         #var_dump($result);
     }
     
-    function testPutPersonOnTheServerXml()
+    function testPutPersonOnTheServerViaXml()
     {
         $person = '<person><name>Steve</name></person>';
         $Http = new AkHttpClient();
@@ -23,19 +23,17 @@ class RESTFulPeopleServiceFunctional extends PHPUnit_Framework_TestCase
             'content-type'=>'text/xml',
         ));
         $result = $Http->put(AK_TESTING_URL.'/person/1',$options,$person);
-        
-        #var_dump($result);
+        $this->assertEquals('Steve',$result);
     }
     
-    function testPutPersonOnTheServerAray()
+    function testPutPersonOnTheServerViaWwwForm()
     {
         $person = array('person'=>array('name'=>'Steve'));
         $Http = new AkHttpClient();
 
         $options['params'] = $person;
         $result = $Http->put(AK_TESTING_URL.'/person/1',$options);
-        #$this->assertEquals('application/x-www-form-urlencoded',$headers['content-type']);        
-        #var_dump($result);
+        $this->assertEquals('Steve',$result);
     }
     
 }

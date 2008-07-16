@@ -12,7 +12,6 @@ class PersonController extends ApplicationController
     
     function index()
     {
-        #$this->renderText('Person::index');
         switch ($this->respondTo()) {
         	case 'xml':
         	    $this->renderXml(var_export($_SERVER,true));
@@ -25,9 +24,10 @@ class PersonController extends ApplicationController
     
     function update()
     {
+        $Steves_name = $this->params['person']['name'];
         $params = $this->params;
         
-        $this->renderText(var_export($params,true));
+	    $this->renderText($Steves_name);
     }
     
     protected function renderXml($xml_string,$status=null,$location=null)
