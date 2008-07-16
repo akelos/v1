@@ -143,6 +143,23 @@ class ConvertXmlToParams extends PHPUnit_Framework_TestCase
         
     }
     
+    function testClassicConverterApi()
+    {
+        $xml_string = '<person><name>Steve</name></person>';
+        $expected = array('person'=>array('name'=>'Steve'));
+        
+        $this->assertEquals($expected,Ak::convert('Xml','ParamsArray',$xml_string));
+    }
+    
+    function testConverterAcceptsXmlObjectAsInput()
+    {
+        $xml_string = '<person><name>Steve</name></person>';
+        $xml = new SimpleXMLElement($xml_string);
+        $expected = array('person'=>array('name'=>'Steve'));
+        
+        $this->assertEquals($expected,Ak::convert('Xml','ParamsArray',$xml));
+    }
+    
     function parseXml($xml_string)
     {
         return AkXmlToParamsArray::convertToArray($xml_string);

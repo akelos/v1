@@ -3,16 +3,19 @@
 class AkXmlToParamsArray
 {
 
+    function convert()
+    {
+        return self::convertToArray($this->source);    
+    }
+    
     function convertToArray($xml_or_string)
     {
-        $xml = is_string($xml_or_string) ? new SimpleXMLElement($xml_or_string) : $xml;
+        $xml = is_string($xml_or_string) ? new SimpleXMLElement($xml_or_string) : $xml_or_string;
         return self::parseXml($xml);
     }
     
     static public function parseXml(SimpleXMLElement $xml)
     {
-        #$xml = new SimpleXMLElement($xml_string);
-        
         $properties = array();
         $properties[$xml->getName()] = self::addChildren($xml);
         return $properties;
