@@ -898,20 +898,24 @@ class AkRequest extends AkObject
 
     function getPutParams()
     {
-        if(!isset($this->put) && $this->isPut() && $data = $this->getPutRequestData()){
+        if(!isset($this->put) && $this->isPut() && $data = $this->getMessageBody()){
             $this->put = array();
             parse_str(urldecode($data), $this->put);
         }
         return isset($this->put) ? $this->put : array();
     }
+    
+    private $message_body;
 
-    function getPutRequestData()
+    function getMessageBody()
     {
+        if ($this->message_body) return $this->message_body;
+        
         if(!empty($_SERVER['CONTENT_LENGTH'])){
             $putdata = fopen('php://input', 'r');
             $result = fread($putdata, $_SERVER['CONTENT_LENGTH']);
             fclose($putdata);
-            return $result;
+            return $this->message_body = $result;
         }else{
             return false;
         }
