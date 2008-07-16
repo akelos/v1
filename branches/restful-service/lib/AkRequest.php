@@ -895,14 +895,27 @@ class AkRequest extends AkObject
             }
         }
     }
+    
+    function getContentType()
+    {
+        if (empty($this->env['CONTENT_TYPE'])) return false;
+        
+        return $this->env['CONTENT_TYPE'];
+    }
 
+    private $put_body;
+    
     function getPutParams()
     {
-        if(!isset($this->put) && $this->isPut() && $data = $this->getMessageBody()){
-            $this->put = array();
-            parse_str(urldecode($data), $this->put);
+        if ($this->put_body) return $this->put_body;
+        if (!$this->isPut()) return array();
+
+        
+        if($data = $this->getMessageBody()){
+            $this->put_body = array();
+            parse_str(urldecode($data), $this->put_body);
         }
-        return isset($this->put) ? $this->put : array();
+        return isset($this->put_body) ? $this->put_body : array();
     }
     
     private $message_body;
@@ -911,14 +924,13 @@ class AkRequest extends AkObject
     {
         if ($this->message_body) return $this->message_body;
         
+        $result = '';
         if(!empty($_SERVER['CONTENT_LENGTH'])){
             $putdata = fopen('php://input', 'r');
             $result = fread($putdata, $_SERVER['CONTENT_LENGTH']);
             fclose($putdata);
-            return $this->message_body = $result;
-        }else{
-            return false;
         }
+        return $this->message_body = $result;
     }
     
     static $singleton;
