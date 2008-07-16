@@ -95,7 +95,7 @@ class AkRouter extends AkObject
     
     function addRoute($name = null,AkRoute $route)
     {
-        $name ? $this->routes[$name] = $route : $this->routes[] = $route;
+        $name && !isset($this->routes[$name]) ? $this->routes[$name] = $route : $this->routes[] = $route;
         return $route;
     }
     
