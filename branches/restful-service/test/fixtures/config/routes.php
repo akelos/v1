@@ -16,8 +16,8 @@ $Map->edit_person('/person/edit/:id',array('controller'=>'person','action'=>'edi
 //Browser-Version
 #$Map->person('/person/:id',array('controller'=>'person','action'=>'show',  'id'=>COMPULSORY),array(),array('method'=>'get'));
 #$Map->person('/person',    array('controller'=>'person','action'=>'create'),                 array(),array('method'=>'post'));
-$Map->update_person('/person/update/:id',array('controller'=>'person','action'=>'update','id'=>COMPULSORY),array(),array('method'=>'post'));
-$Map->delete_person('/person/delete/:id',array('controller'=>'person','action'=>'delete','id'=>COMPULSORY),array(),array('method'=>'post'));
+$Map->update_person('/person/:id/update',array('controller'=>'person','action'=>'update','id'=>COMPULSORY),array(),array('method'=>'post'));
+$Map->delete_person('/person/:id/delete',array('controller'=>'person','action'=>'delete','id'=>COMPULSORY),array(),array('method'=>'post'));
 
 
 

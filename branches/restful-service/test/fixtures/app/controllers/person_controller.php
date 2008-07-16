@@ -22,11 +22,15 @@ class PersonController extends ApplicationController
         }
     }
     
+    function create()
+    {
+        $Steves_name = $this->params['person']['name'];
+	    $this->renderText($Steves_name);
+    }
+    
     function update()
     {
         $Steves_name = $this->params['person']['name'];
-        $params = $this->params;
-        
 	    $this->renderText($Steves_name);
     }
     

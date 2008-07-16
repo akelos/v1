@@ -35,6 +35,27 @@ class RESTFulPeopleServiceFunctional extends PHPUnit_Framework_TestCase
         $result = $Http->put(AK_TESTING_URL.'/person/1',$options);
         $this->assertEquals('Steve',$result);
     }
+
+    function testPostPersonOnTheServerViaXml()
+    {
+        $person = '<person><name>Steve</name></person>';
+        $Http = new AkHttpClient();
+        $options = array('header'=>array(
+            'content-type'=>'text/xml',
+        ));
+        $result = $Http->post(AK_TESTING_URL.'/person',$options,$person);
+        $this->assertEquals('Steve',$result);
+    }
+    
+    function testPostPersonOnTheServerViaWwwForm()
+    {
+        $person = array('person'=>array('name'=>'Steve'));
+        $Http = new AkHttpClient();
+
+        $options['params'] = $person;
+        $result = $Http->post(AK_TESTING_URL.'/person',$options);
+        $this->assertEquals('Steve',$result);
+    }
     
 }
 
