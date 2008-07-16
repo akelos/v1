@@ -23,6 +23,13 @@ class PersonController extends ApplicationController
         }
     }
     
+    function update()
+    {
+        $params = $this->params;
+        
+        $this->renderText(var_export($params,true));
+    }
+    
     protected function renderXml($xml_string,$status=null,$location=null)
     {
         $this->Response->addHeader(array('content-type'=>'text/xml'));
