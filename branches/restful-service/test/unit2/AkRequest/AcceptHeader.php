@@ -48,32 +48,35 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
     function testDeliverHtmlToOpera()
     {
         $this->Request->env['HTTP_ACCEPT'] = 'text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1';
-        $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
-
-        $this->assertEquals('html',$mime_type);
+        $this->assertEquals('html',$this->Request->getFormat());
     }
     
     function testDeliverHtmlToInternetExplorerOnFirstRequest()
     {
         //Internet Explorer doesnt prefer anything over anything.
         $this->Request->env['HTTP_ACCEPT'] = '*/*';
-        $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
-        $this->assertEquals('html',$mime_type);
+        $this->assertEquals('html',$this->Request->getFormat());
     }
 
     function testDeliverHtmlToInternetExplorerOnSubsequentRequests()
     {
         $this->Request->env['HTTP_ACCEPT'] = 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/x-shockwave-flash, */*';
-        $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
-        $this->assertEquals('html',$mime_type);
+        $this->assertEquals('html',$this->Request->getFormat());
     }
     
     function testDeliverHtmlToFirefox2()
     {
         //Firefox prefers xml over html
         $this->Request->env['HTTP_ACCEPT'] = 'text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5';
-        $mime_type = $this->Request->getMimeType($this->Request->getAcceptHeader());
-        $this->assertEquals('html',$mime_type);
+        $this->assertEquals('html',$this->Request->getFormat());
+    }
+    
+    function testExplicitlyRequestedFormatOverrulesAnyAcceptHeader()
+    {
+        $this->Request->env['HTTP_ACCEPT'] = 'text/xml';
+        $this->Request->_request['format'] = 'html';
+        
+        $this->assertEquals('html',$this->Request->getFormat());
     }
 
     

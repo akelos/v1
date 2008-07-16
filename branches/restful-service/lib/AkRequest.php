@@ -316,7 +316,7 @@ class AkRequest extends AkObject
         return $accepts;
     }
     
-    function sortAcceptHeader($a,$b)
+    private function sortAcceptHeader($a,$b)
     {
         //preserve the original order if q is equal
         return $a['q'] == $b['q'] ? ($a['i'] > $b['i']) : ($a['q'] < $b['q']);
@@ -353,11 +353,23 @@ class AkRequest extends AkObject
         foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){
             foreach ($mime_types as $mime_type=>$our_mime_type){
                 foreach ($array_with_acceptables_of_same_quality as $acceptable){
-                    if ($mime_type == $acceptable) return $our_mime_type;
+                    if ($mime_type == $acceptable){
+                        return $our_mime_type;
+                    }
                 }
             }
         }
         return $mime_types['default'];
+    }
+    
+    function bestMimeType()
+    {
+        return $this->getMimeType($this->getAcceptHeader());
+    }
+    
+    function getFormat()
+    {
+        return isset($this->_request['format']) ? $this->_request['format'] : $this->bestMimeType();
     }
 
     /**
