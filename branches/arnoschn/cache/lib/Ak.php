@@ -1877,33 +1877,35 @@ class Ak
     
     /**
      *
-     * @param unknown_type $options
-     * @param unknown_type $default_options
-     * @param unknown_type $available_options
-     * @param unknown_type $walk_keys
-     * @return unknown
+     * @param array $options
+     * @param array $default_options
+     * @param array $available_options
+     * @param boolean $walk_keys
      */
-    function parseOptions($options = array(), $default_options = array(), $available_options = array(), $walk_keys=false)
+    function parseOptions(&$options, $default_options = array(), $parameters = array(), $walk_keys=false)
     {
-        $parsedOptions = array();
         if ($walk_keys) {
             foreach ($options as $key=>$value) {
                 if (!is_array($value)) {
-                    $parsedOptions[$value] = $default_options;
+                    $options[$value] = $default_options;
                 } else {
-                    $parsedOptions[$key] = Ak::parseOptions($value, $default_options, $available_options);
+                    Ak::parseOptions($value, $default_options, $parameters);
+                    $options[$key] = $value;
                 }
             }
-            return $parsedOptions;
+            return;
         }
         
         $options = array_merge($default_options, $options);
         foreach($options as $key => $value) {
-            if((is_array($available_options) && isset($available_options[$key])) || $available_options === true) {
-                $parsedOptions[$key] = Ak::convert(gettype($value),$available_options===true?gettype($value):$available_options[$key],$value);
+            if(isset($params['available_options'])) {
+               if (!isset($params['available_options'][$key])) {
+                   continue;
+               }
             }
+            $options[$key] = $value;
+            
         }
-        return $parsedOptions;
     }
 }
 

@@ -34,9 +34,6 @@ if(!class_exists('AkObject')){
 class AkObject
 {
 
-    // ------ OPTION HANDLING ----------//
-    var $_defaultOptions = array();
-    var $_availableOptions = array();
 
 
     // ------ CLASS METHODS ------ //
@@ -75,16 +72,6 @@ class AkObject
     }
     
     // }}}
-    
-    // ------ OPTION HANDLING ----------//
-    function setOptions($options = array(),$prefix='_')
-    {
-        $options = Ak::parseOptions($options,$this->_defaultOptions, $this->_availableOptions);
-        foreach($options as $key => $value) {
-            $property = $prefix.$key;
-            $this->$property = $value;
-        }
-    }
     
     
     // {{{ toString()

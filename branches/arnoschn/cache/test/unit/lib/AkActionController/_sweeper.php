@@ -9,10 +9,13 @@ class Test_AkActionControllerSweeper extends AkTestApplication
     
     function setUp()
     {
-        $this->includeAndInstatiateModels('Person');
+        
+        $this->instantiateModel('Person');
     }
-    
-    
+    function test_init()
+    {
+        $this->installAndIncludeModels(array('Person'));
+    }
     function test_request()
     {
         $this->_flushCache('www.example.com');

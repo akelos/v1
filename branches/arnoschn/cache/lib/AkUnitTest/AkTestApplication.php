@@ -118,10 +118,15 @@ class AkTestApplication extends AkUnitTest
         return $sentHeader;
     }
 
+    function _reset()
+    {
+        $_REQUEST = array();
+        $_POST = array();
+    }
     
     function _init($url, $constants = array(), $controllerVars = array())
     {
-        
+        $this->_reset();
         $this->_response = null;
         $this->_setConstants($constants);
         $parts = parse_url($url);

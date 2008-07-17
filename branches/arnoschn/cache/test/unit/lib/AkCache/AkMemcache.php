@@ -14,19 +14,17 @@ class Test_AkMemcache extends  UnitTestCase
         $this->memcache->init(array('servers'=>array('127.0.0.1:11211')));
     }
     
-    function test_init_without_server()
+    function test_init_without_server_fallback_to_default()
     {
         $this->memcache=new AkMemcache();
-        $this->memcache->_defaultOptions = array();
         $res = $this->memcache->init(array());
-        $this->assertFalse($res);
-        $this->assertError('Need to provide at least 1 server');
+        $this->assertTrue(true);
     }
     function test_init_with_wrong_server()
     {
         $this->memcache=new AkMemcache();
         
-        $res = $this->memcache->init(array('servers'=>'test:121'));
+        $res = $this->memcache->init(array('servers'=>array('test:121')));
         $this->assertFalse($res);
         $this->assertError('Could not connect to MemCache daemon');
     }

@@ -55,15 +55,15 @@ class AkCache_TestCase extends  AkUnitTest
         $this->assertFalse(!$this->Cache->save($this->text_to_catch, $this->id, $this->group),'saving on the file cache must not work because cache is disabled');
         
         //Cache Lite cache
-        $this->Cache->init(1,1);
+        $this->Cache->init(2,1);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertFalse($data,'This id must not be in the cache (File based)');
         $this->assertFalse(!$this->Cache->save($this->text_to_catch, $this->id, $this->group),'saving the  cache (File based)');
-        $this->Cache->init(1,1);
+        $this->Cache->init(2,1);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertEqual($data, $this->text_to_catch,'Getting cached data (File based)');
         sleep(2);
-        $this->Cache->init(1,1);
+        $this->Cache->init(2,1);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertFalse($data,'The cache has expired and we recognize it (File based)');
         
@@ -92,9 +92,9 @@ class AkCache_TestCase extends  AkUnitTest
         $this->assertFalse(!$this->Cache->remove($this->id, $this->group),'Removing cached file (Cache disabled must return success)');
         
         //Cache Lite cache
-        $this->Cache->init(2,1);
+        $this->Cache->init(3,1);
         $this->assertFalse(!$this->Cache->save($this->text_to_catch, $this->id, $this->group),'saving the cache (File based)');
-        $this->Cache->init(1,1);
+        $this->Cache->init(2,1);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertEqual($data, $this->text_to_catch,'Checking that cached data has been inserted (File based)');
         $this->assertFalse(!$this->Cache->remove($this->id, $this->group),'Removing cached file (File based)');
