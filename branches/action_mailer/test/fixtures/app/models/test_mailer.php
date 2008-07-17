@@ -301,6 +301,28 @@ class TestMailer extends AkActionMailer
         ));
     }
 
+
+    function multipart_rendering()
+    {
+        $this->set(array(
+        'recipients' => "bermi@bermilabs.com",
+        'subject' => "Multipart rendering",
+        'from' => "testing@bermilabs.com"
+        ));
+        
+        
+        $this->addAttachment('audio/mp3', array(
+        'body'=>file_get_contents(AK_BASE_DIR.DS.'test/fixtures/data/action_mailer/testing.mp3')
+        ));
+        
+        return ;
+        $this->set(array(
+        'recipients' => "no.one@example.com",
+        'subject' => "Multipart rendering",
+        'from' => "some.one@example.com"
+        ));
+    }
+    
     function &receive($raw_email)
     {
         $Mail =& parent::receive($raw_email);

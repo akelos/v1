@@ -1,2 +1,1 @@
 Plain text to {recipient}.
-Plain text to {recipient}.

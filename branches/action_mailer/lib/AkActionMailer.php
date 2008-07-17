@@ -250,7 +250,7 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *   can also pick a different value from inside a method with <tt>$this->mime_version</tt>.
 * * <tt>default_implicit_parts_order</tt> - When a message is built implicitly (i.e. multiple parts are assembled from templates
 *   which specify the content type in their filenames) this variable controls how the parts are ordered. Defaults to
-*   array("text/html", "text/enriched", "text/plain"). Items that appear first in the array have higher priority in the mail client
+*   array("multipart/alternative", "text/html", "text/enriched", "text/plain"). Items that appear first in the array have higher priority in the mail client
 *   and appear last in the mime encoded message. You can also pick a different order from inside a method with
 *   <tt>$this->implicit_parts_order</tt>.
 */
@@ -272,7 +272,7 @@ class AkActionMailer extends AkBaseModel
     var $default_charset = AK_ACTION_MAILER_DEFAULT_CHARSET;
     var $default_content_type = 'text/plain';
     var $default_mime_version = '1.0';
-    var $default_implicit_parts_order = array('text/html', 'text/enriched', 'text/plain');
+    var $default_implicit_parts_order = array('multipart/alternative', 'text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
     var $_MailDriver;
     var $_defaultMailDriverName = 'AkMail';
@@ -427,6 +427,39 @@ class AkActionMailer extends AkBaseModel
     }
 
     /**
+    * Add an attachment to the message.
+    *
+    * Example:
+    *
+    *   class ApplicationMailer extends AkActionMailer
+    *   {
+    *       // attachments
+    *       function signupNotification($Recipient)
+    *       {
+    *           $this->setAttributes(array(
+    *               'recipients' => $Recipient->getEmailAddressWithName(),
+    *               'from'       => "system@example.com",
+    *               'subject'    => "New account information"
+    *           ));
+    *
+    *           $this->addAttachment(array(
+    *               'content_type' => 'image/jpeg',
+    *               'body' => Ak::file_get_contents("an-image.jpg")));
+    * 
+    *           $this->addAttachment('application/pdf', generate_your_pdf_here());
+    *       }
+    *   }
+    *
+    *
+     */
+    function addAttachment()
+    {
+        $args = func_get_args();
+        print_r($args);
+        return call_user_func_array(array(&$this->_MailDriver, 'setAttachment'), $args);
+    }
+
+    /**
      * Generic setter
      * 
      * Calling $this->set(array('body'=>'Hello World', 'subject' => 'First subject'));
@@ -522,7 +555,7 @@ class AkActionMailer extends AkBaseModel
         if(!is_string($Mail->body)){
             if(empty($Mail->parts)){
                 $Mail->_avoid_multipart_propagation = true;
-                $templates = array_map('basename', Ak::dir($this->getTemplatePath().DS, array('dirs'=>false)));
+                $templates = $this->_getAvailableTemplates();
                 foreach ($templates as $template_name){
                     if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
                         if($this->template == $match[1]){
@@ -542,8 +575,8 @@ class AkActionMailer extends AkBaseModel
             }
 
             $template_exists = empty($Mail->parts);
-            if(!$template_exists){
-                $templates = array_map('basename', Ak::dir($this->getTemplatePath(), array('dirs'=>false)));
+            if(!$template_exists && empty($Mail->implicit_parts_order)){
+                $templates = $this->_getAvailableTemplates();
                 foreach ($templates as $template){
                     $parts = explode('.',$template);
                     if(count($parts) == 2 && $parts[0] == $this->template){
@@ -568,8 +601,17 @@ class AkActionMailer extends AkBaseModel
         return $Mail;
     }
 
+    function _getAvailableTemplates()
+    {
+        $path = $this->getTemplatePath();
+        if(!isset($templates[$path])){
+            $templates[$path] = array_map('basename', Ak::dir($path, array('dirs'=>false)));
+        }
+        return $templates[$path];
+    }
+
     /**
-    * Delivers an AMail object. By default, it delivers the cached mail
+    * Delivers an AkMail object. By default, it delivers the cached mail
     * object (from the AkActionMailer::create method). If no cached mail object exists, and
     * no alternate has been given as the parameter, this will fail.
     */
@@ -589,7 +631,7 @@ class AkActionMailer extends AkBaseModel
     }
 
     function performSmtpDelivery(&$Mail)
-    {   
+    {
         $settings = array(
         'host'     =>  @$this->server_settings['address'],
         'localhost'     =>  @$this->server_settings['domain'],
@@ -602,31 +644,30 @@ class AkActionMailer extends AkBaseModel
         $SmtpClient =& Mail::factory('smtp', $settings);
 
         include_once 'Net/SMTP.php';
-        
+
         if (!($smtp = &new Net_SMTP($SmtpClient->host, $SmtpClient->port, $SmtpClient->localhost))) {
             return PEAR::raiseError('unable to instantiate Net_SMTP object');
         }
-        
+
         if ($SmtpClient->debug) {
             $smtp->setDebug(true);
         }
 
         if (PEAR::isError($smtp->connect($SmtpClient->timeout))) {
-            return PEAR::raiseError('unable to connect to smtp server ' .
-                                    $SmtpClient->host . ':' . $SmtpClient->port);
+            trigger_error('unable to connect to smtp server '.$SmtpClient->host.':'.$SmtpClient->port, E_USER_NOTICE);
+            return false;
         }
 
         if ($SmtpClient->auth) {
             $method = is_string($SmtpClient->auth) ? $SmtpClient->auth : '';
 
-            if (PEAR::isError($smtp->auth($SmtpClient->username, $SmtpClient->password,
-                              $method))) {
-                return PEAR::raiseError('unable to authenticate to smtp server');
+            if (PEAR::isError($smtp->auth($SmtpClient->username, $SmtpClient->password, $method))) {
+                trigger_error('unable to authenticate to smtp server', E_USER_ERROR);
             }
         }
 
-        if (PEAR::isError($smtp->mailFrom($Mail->getFrom(), array('verp'=>$SmtpClient->verp)))) {
-            return PEAR::raiseError('unable to set sender to [' . $from . ']');
+        if (PEAR::isError($smtp->mailFrom($Mail->getFrom()))) {
+            trigger_error('unable to set sender to [' . $from . ']', E_USER_ERROR);
         }
 
         $recipients = $SmtpClient->parseRecipients($Mail->getRecipients());
@@ -637,16 +678,16 @@ class AkActionMailer extends AkBaseModel
         foreach ($recipients as $recipient) {
             if (PEAR::isError($res = $smtp->rcptTo($recipient))) {
                 return PEAR::raiseError('unable to add recipient [' .
-                                        $recipient . ']: ' . $res->getMessage());
+                $recipient . ']: ' . $res->getMessage());
             }
         }
 
-        if (PEAR::isError($smtp->data($Mail->_getHeadersAsText() . "\r\n" . $Mail->bodyToString()))) {
+        if (PEAR::isError($smtp->data($Mail->getRawMessage()))) {
             return PEAR::raiseError('unable to send data');
         }
-        
+
         $smtp->disconnect();
-        
+
         return true;
 
     }
@@ -658,6 +699,7 @@ class AkActionMailer extends AkBaseModel
 
     function performTestDelivery(&$Mail)
     {
+        //$this->performSmtpDelivery($Mail); return ;
         $this->deliveries[] =& $Mail->getEncoded();
     }
 
@@ -771,6 +813,16 @@ class AkActionMailer extends AkBaseModel
 
         return $helpers;
     }
+
+    /**
+     * Returns a raw version 
+     *
+     */
+    function getRawMessage()
+    {
+        return $this->_MailDriver->getRawMessage();
+    }
+
 
 }
 

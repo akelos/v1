@@ -12,7 +12,7 @@
  * @package AkelosFramework
  * @subpackage AkActionMailer
  * @author Bermi Ferrer <bermi a.t akelos c.om>
- * @copyright Copyright (c) 2002-2006, Akelos Media, S.L. http://www.akelos.org
+ * @copyright Copyright (c) 2002-2008, Akelos Media, S.L. http://www.akelos.org
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
@@ -43,11 +43,13 @@ class AkActionMailerQuoting
         $lines = preg_split("/(?:\r\n|\r|\n)/", $character);
         $search_pattern = $emulate_imap_8bit ? '/[^\x20\x21-\x3C\x3E-\x7E]/e' : '/[^\x09\x20\x21-\x3C\x3E-\x7E]/e';
         foreach ((array)$lines as $k=>$line){
-            $length = strlen($line);
-            if ($length == 0){
+            if (empty($line)){
                 continue;
             }
+            
             $line = preg_replace($search_pattern, 'sprintf( "=%02X", ord ( "$0" ) ) ;', $line );
+            $length = utf8_strlen($line);
+            
             $last_char = ord($line[$length-1]);
             if (!($emulate_imap_8bit && ($k==count($lines)-1)) && ($last_char==0x09) || ($last_char==0x20)) {
                 $line[$length-1] = '=';
@@ -59,14 +61,6 @@ class AkActionMailerQuoting
             $lines[$k] = $line;
         }
         return implode(AK_ACTION_MAILER_EOL,$lines);
-        /*
-        $characters = unpack('C*', $character);
-        $result = '';
-        for ($i=1,$count = count($characters);$i<=$count;$i++){
-            $result .= sprintf( "=%02X", $characters[$i]);
-        }
-        return $result;
-        */
     }
 
 
@@ -122,9 +116,10 @@ class AkActionMailerQuoting
 
     function chunkQuoted($quoted_string, $max_length = 74)
     {
-        if(empty($max_length)){
+        if(empty($max_length) || !is_string($quoted_string)){
             return $quoted_string;
         }
+
         $lines= preg_split("/(?:\r\n|\r|\n)/", $quoted_string);
         foreach ((array)$lines as $k=>$line){
             if (empty($line)){
@@ -133,7 +128,7 @@ class AkActionMailerQuoting
             preg_match_all( '/.{1,'.($max_length - 2).'}([^=]{0,2})?/', $line, $match );
             $line = implode('='.AK_ACTION_MAILER_EOL.' ', $match[0] );
 
-            $lines[$k] =& $line;
+            $lines[$k] = $line;
         }
         return implode(AK_ACTION_MAILER_EOL,$lines);
     }

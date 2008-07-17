@@ -17,6 +17,7 @@
  */
 
 include_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Mail.php');
+
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailEncoding.php');
 
 class AkMail extends Mail
@@ -63,7 +64,14 @@ class AkMail extends Mail
     function setBody($body)
     {
         if(is_string($body)){
-            $this->body = stristr(@$this->content_type,'text/') ? str_replace(array("\r\n","\r"),"\n", $body) : $body;
+            $content_type = @$this->content_type;
+            $this->body = stristr($content_type,'text/') ? str_replace(array("\r\n","\r"),"\n", $body) : $body;
+            if($content_type == 'text/html'){
+                $this->_extractImagesIntoInlineParts($this->body);
+            }
+            if($content_type == 'text/plain'){
+                $this->content_type_attributes['format'] = 'flowed';
+            }
         }else{
             $this->body = $body;
         }
@@ -74,16 +82,28 @@ class AkMail extends Mail
         if(!is_array($this->body)){
             $encoding = $this->getContentTransferEncoding();
             $charset = empty($this->_charset) ? AK_ACTION_MAILER_DEFAULT_CHARSET : $this->_charset;
-
             switch ($encoding) {
                 case 'quoted-printable':
-                return trim(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body,$charset)));
+                    return trim(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body, $charset)));
                 case 'base64':
-                return trim(chunk_split(base64_encode($this->body)));
+                    return $this->_base64Body($this->body);
                 default:
-                return trim($this->body);
+                    return trim($this->body);
             }
         }
+    }
+
+    function _base64Body($content)
+    {
+        $Cache =& Ak::cache();
+        $cache_id = md5($content);
+        $Cache->init(3600);
+        if (!$encoded_content = $Cache->get($cache_id)) {
+            $encoded_content = trim(chunk_split(base64_encode($content)));
+            unset($content);
+            $Cache->save($encoded_content);
+        }
+        return $encoded_content;
     }
 
     /**
@@ -126,7 +146,7 @@ class AkMail extends Mail
 
     function getContentType()
     {
-        return empty($this->content_type) ? ($this->_isMultipart()?'multipart/alternative':null) : $this->content_type.$this->getContenttypeAttributes();
+        return empty($this->content_type) ? ($this->_isMultipart()?'multipart/alternative':null) : $this->content_type.$this->getContentTypeAttributes();
     }
 
     function setContenttypeAttributes($attributes = array())
@@ -139,15 +159,24 @@ class AkMail extends Mail
         }
     }
 
-    function getContenttypeAttributes()
+    function getContentTypeAttributes()
     {
-        $attributes = '';
-        if(!empty($this->content_type_attributes)){
-            foreach ((array)$this->content_type_attributes as $key=>$value){
-                $attributes .= ";$key=$value";
+        return $this->_getAttributesForHeader('content_type');
+    }
+
+
+    function _getAttributesForHeader($header_index)
+    {
+        $header_index = strtolower(AkInflector::underscore($header_index)).'_attributes';
+        if(!empty($this->$header_index)){
+            $attributes = '';
+            if(!empty($this->$header_index)){
+                foreach ((array)$this->$header_index as $key=>$value){
+                    $attributes .= ";$key=$value";
+                }
             }
+            return $attributes;
         }
-        return $attributes;
     }
 
     /**
@@ -269,7 +298,8 @@ class AkMail extends Mail
     }
 
     /**
-     * Add a part to a multipart message, with an array of options like (content-type, charset, body, headers, etc.).
+     * Add a part to a multipart message, with an array of options like 
+     * (content-type, charset, body, headers, etc.).
      * 
      *   function my_mail_message()
      *   {
@@ -284,7 +314,6 @@ class AkMail extends Mail
     {
         $default_options = array('content_disposition' => 'inline', 'content_transfer_encoding' => 'quoted-printable');
         $options = array_merge($default_options, $options);
-
         $Part =& new AkMail($options);
         $Part->_isPart = true;
         $position == 'append' ? array_push($this->parts, $Part) : array_unshift($this->parts, $Part);
@@ -322,7 +351,7 @@ class AkMail extends Mail
         }
     }
 
-    function _moveBodyToInlinePart()
+    function _moveBodyToInlinePart($preppend = true)
     {
         $options = array(
         'content_type' => @$this->content_type,
@@ -334,7 +363,8 @@ class AkMail extends Mail
             unset($this->$k);
         }
         $this->_multipart_message = true;
-        $this->setPart($options, 'preppend');
+        $this->setContentType('multipart/alternative');
+        $this->setPart($options, $preppend?'preppend':'append');
     }
 
     function _isMultipart()
@@ -347,9 +377,9 @@ class AkMail extends Mail
         $Part->original_filename = !empty($Part->content_type_attributes['name']) ? $Part->content_type_attributes['name'] :
         (!empty($Part->content_disposition_attributes['filename']) ? $Part->content_disposition_attributes['filename'] :
         (empty($Part->filename) ? @$Part->content_location : $Part->filename));
-        
+
         $Part->original_filename = preg_replace('/[^A-Z^a-z^0-9^\-^_^\.]*/','',$Part->original_filename);
-                
+
         if(!empty($Part->body)){
             $Part->data =& $Part->body;
         }
@@ -380,9 +410,14 @@ class AkMail extends Mail
     function setAttachment()
     {
         $args = func_get_args();
-        $options = count($args) >= 1 ? array_shift($args) : array();
-        $options['content_type'] = empty($options['content_type']) && count($args) == 1 ? array_shift($args) : (empty($options['content_type'])?null:$options['content_type']);
+        $options = array();
+        if(count($args) == 2){
+            $options['content_type'] = array_shift($args);
+        }
+        $arg_options = @array_shift($args);
+        $options = array_merge($options, is_string($arg_options) ? array('body'=>$arg_options) : (array)$arg_options);
         $options = array_merge(array('content_disposition' => 'attachment', 'content_transfer_encoding' => 'base64'), $options);
+
         $this->setPart($options);
     }
 
@@ -419,7 +454,7 @@ class AkMail extends Mail
 
     /**
     * Specify the order in which parts should be sorted, based on content-type.
-    * This defaults to the value for the +default_implicitPartsOrder+.
+    * This defaults to the value for the +default_implicit_parts_order+.
     */
     function setImplicitPartsOrder($implicit_parts_order)
     {
@@ -549,20 +584,37 @@ class AkMail extends Mail
 
     function _getHeadersAsText()
     {
+        $headers = $this->getHeaders();
+        unset($headers['Charset']);
+        return array_pop($this->prepareHeaders($headers));
+    }
+
+    function getHeaders($force_reload = false)
+    {
+        if(empty($this->headers) || $force_reload){
+            $this->loadHeaders();
+        }
+        return $this->headers;
+    }
+
+    function loadHeaders()
+    {
         if(empty($this->date)){
             $this->setDate();
         }
-
         $this->_moveMailInstanceAttributesToHeaders();
-        $headers = array();
+        $this->headers = array();
         foreach (array_map(array('AkActionMailerQuoting','chunkQuoted'), $this->header) as $header=>$value){
             if(!is_numeric($header)){
-                $headers[ucfirst($header)] = $value;
+                $this->headers[$this->_castHeaderKey($header)] = $value;
             }
         }
-        unset($headers['Charset']);
-        $this->_sanitizeHeaders($headers);
-        return array_pop($this->prepareHeaders($headers));
+        $this->_sanitizeHeaders($this->headers);
+    }
+
+    function _castHeaderKey($key)
+    {
+        return str_replace(' ','-',ucwords(str_replace('_',' ',AkInflector::underscore($key))));
     }
 
     function toMail($defaults = array())
@@ -575,16 +627,16 @@ class AkMail extends Mail
             $Part->setContentTransferEncoding(!empty($this->transfer_encoding) ? $this->transfer_encoding : 'quoted-printable');
             switch (strtolower($Part->content_transfer_encoding)) {
                 case 'base64':
-                $Part->setBody(chunk_split(base64_encode($this->body)));
-                break;
+                    $Part->setBody(chunk_split(base64_encode($this->body)));
+                    break;
 
                 case 'quoted-printable':
-                $Part->setBody(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body)));
-                break;
+                    $Part->setBody(AkActionMailerQuoting::chunkQuoted(AkActionMailerQuoting::quotedPrintableEncode($this->body)));
+                    break;
 
                 default:
-                $Part->setBody($this->body);
-                break;
+                    $Part->setBody($this->body);
+                    break;
             }
 
             // Always set the content_type after setting the body and or parts!
@@ -682,6 +734,158 @@ class AkMail extends Mail
     }
 
 
+
+
+
+
+    function getRawMessage()
+    {
+        $raw_message = '';
+        if(empty($this->parts)){
+            if($this->_isPart){
+                $raw_message .= $this->getRawPart();
+            }else{
+                $raw_message .= $this->getRawHeaders().AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$this->getRawBody();
+            }
+        }else{
+            $boundary = 'mimepart_'.Ak::randomString(8).'..'.Ak::randomString(8);
+
+            $this->content_type_attributes['boundary'] = $boundary;
+            $raw_message .= $this->getRawHeaders();
+
+            $raw_parts = '';
+            foreach (array_keys($this->parts) as $k){
+                $raw_message .= AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.'--'.$boundary.AK_ACTION_MAILER_EOL.$this->parts[$k]->getRawMessage();
+            }
+
+            $raw_message .= AK_ACTION_MAILER_EOL.'--'.$boundary.'--'.AK_ACTION_MAILER_EOL;
+        }
+
+        //_propagateMultipartParts
+
+        return $raw_message;
+    }
+
+    function getRawPart()
+    {
+        return $this->getRawHeaders().AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$this->getRawBody();
+    }
+
+    function getRawHeaders()
+    {
+        $this->_prepareHeadersForRendering();
+        return $this->_getHeadersAsText();
+    }
+
+    function _prepareHeadersForRendering()
+    {
+        $this->_removeUnnecesaryHeaders();
+        $this->_addHeaderAttributes();
+    }
+
+    function _removeUnnecesaryHeaders()
+    {
+        if(isset($this->_isPart)){
+            $headers = $this->getHeaders();
+
+            $this->headers = array();
+            foreach (array(
+            'Content-Type',
+            'Content-Transfer-Encoding',
+            'Content-Id',
+            'Content-Disposition',
+            'Content-Description',
+            ) as $allowed_header){
+                if(isset($headers[$allowed_header])){
+                    $this->headers[$allowed_header] = $headers[$allowed_header];
+                }
+            }
+        }
+    }
+
+    function _extractImagesIntoInlineParts(&$html, $options = array())
+    {
+        require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'text_helper.php');
+        $images = TextHelper::get_image_urls_from_html($html);
+        $html_images = array();
+        if(!empty($images)){
+            require_once(AK_LIB_DIR.DS.'AkImage.php');
+            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'asset_tag_helper.php');
+
+            $images = array_diff(array_unique($images), array(''));
+
+            foreach ($images as $image){
+                $original_image_name = $image;
+                $image = $this->_getImagePath($image);
+                if(!empty($image)){
+                    $extenssion = substr($image, strrpos('.'.$image,'.'));
+                    $image_name = Ak::uuid().'.'.$extenssion;
+                    $html_images[$original_image_name] = 'cid:'.$image_name;
+
+                    $this->setAttachment('image/'.$extenssion, array(
+                    'body' => Ak::file_get_contents($image),
+                    'filename' => $image_name,
+                    'content_disposition' => 'inline',
+                    'content_id' => '<'.$image_name.'>',
+                    ));
+                }
+            }
+            $modified_html = str_replace(array_keys($html_images),array_values($html_images), $html);
+            if($modified_html != $html){
+                $html = $modified_html;
+                $this->_moveBodyToInlinePart(false);
+            }
+        }
+    }
+
+    function _getImagePath($path)
+    {
+        if(preg_match('/^http(s)?:\/\//', $path)){
+            $path_info = pathinfo($path);
+            $base_file_name = Ak::sanitize_include($path_info['basename'], 'paranaoid');
+            if(empty($path_info['extension'])){ // no extension, we don't do magic stuff
+                $path = '';
+            }else{
+                $local_path = AK_TMP_DIR.DS.'mailer'.DS.'remote_images'.DS.md5($base_file_name['dirname']).DS.$base_file_name.'.'.$path_info['extension'];
+                if(!file_exists($local_path) || (time() > @filemtime($local_path)+7200)){
+                    if(!Ak::file_put_contents($local_path, Ak::url_get_contents($path))){
+                        return '';
+                    }
+                }
+                return $local_path;
+            }
+        }
+
+        $path = AK_PUBLIC_DIR.Ak::sanitize_include($path);
+
+        if(!file_exists($path)){
+            $path = '';
+        }
+        return $path;
+    }
+
+    function _addHeaderAttributes()
+    {
+        foreach($this->getHeaders() as $k=>$v){
+            $this->headers[$k] .= $this->_getAttributesForHeader($k);
+        }
+    }
+
+    function getRawBody()
+    {
+        return $this->getBody();
+    }
+
+
+
+
+
 }
+
+
+
+
+
+
 
 ?>

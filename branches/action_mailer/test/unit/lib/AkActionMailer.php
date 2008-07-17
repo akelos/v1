@@ -156,12 +156,13 @@ class Tests_for_AkActionMailer extends  AkUnitTest
     function setup()
     {
         $this->Mailer =& new AkActionMailer();
-        $this->Mailer->delivery_method = 'test';
+        //$this->Mailer->delivery_method = 'test';
         $this->Mailer->perform_deliveries = true;
         $this->Mailer->deliveries = array();
-        $this->recipient = 'test@localhost';
+        //$this->recipient = 'test@localhost';
     }
-    
+
+    /*
     function test_nested_parts()
     {
         $HelperMailer =& new TestMailer();
@@ -574,7 +575,7 @@ EOF;
 
     }
 
-
+    
     function test_implicitly_multipart_messages()
     {
         $TestMailer =& new TestMailer();
@@ -591,10 +592,9 @@ EOF;
         $this->assertEqual('UTF-8', $Mail->parts[1]->content_type_attributes['charset']);
 
         $this->assertEqual("text/html", $Mail->parts[2]->content_type);
-        $this->assertEqual('UTF-8', $Mail->parts[1]->content_type_attributes['charset']);
+        $this->assertEqual('UTF-8', $Mail->parts[2]->content_type_attributes['charset']);
 
     }
-
 
     function test_implicitly_multipart_messages_with_custom_order()
     {
@@ -687,10 +687,21 @@ EOF;
         $Mail =& $TestMailer->receive(file_get_contents(AK_TEST_DIR."/fixtures/data/action_mailer/raw_email11"));
         $this->assertTrue(!empty($Mail->from));
     }
-
+    
+    /**/
+    
+    function test_should_render_multipart_message()
+    {
+        $TestMailer =& new TestMailer();
+        $TestMailer->deliver('multipart_rendering');
+        
+        echo $TestMailer->getRawMessage();
+    }
+    
+    
 }
 
-Ak::test('Tests_for_Mailers');
+//Ak::test('Tests_for_Mailers');
 Ak::test('Tests_for_AkActionMailer');
 
 
