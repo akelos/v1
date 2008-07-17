@@ -46,7 +46,7 @@ class AkMemcache extends AkObject
     
     function _getNamespaceId($group)
     {
-        $ident = AK_HOST.':'.$group;
+        $ident = $group;
         return $ident;
     }
     
@@ -88,7 +88,7 @@ class AkMemcache extends AkObject
     function &get($id, $group = 'default')
     {
         $key = $this->_generateCacheKey($id, $group);
-        $return = &$this->_memcache->get($key);
+        $return = $this->_memcache->get($key);
         @list($type,$data) = @split('@#!',$return,2);
         if (isset($data)) {
             settype($data,$type);
@@ -123,14 +123,14 @@ class AkMemcache extends AkObject
             return;
         }
         $key = $this->_generateCacheKey($id, $group);
-        $return = &$this->_memcache->set($key,$data);
+        $return = $this->_memcache->set($key,$data);
         return $return;
     }
     
     function remove($id, $group = 'default')
     {
         $key = $this->_generateCacheKey($id, $group);
-        $return = &$this->_memcache->delete($key);
+        $return = $this->_memcache->delete($key);
         return $return;
     }
     

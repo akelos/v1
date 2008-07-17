@@ -2,13 +2,15 @@
 
 class CacheSweeper2Controller extends ApplicationController
 {
-    var $models = 'person';
+    var $models = 'Person';
     var $caches_action = array('show');
     var $cache_sweeper = array('person_sweeper2'=>array('except'=>'update,show,listing'));
     
     function show()
     {
-        $this->Person=$this->Person->findFirstBy('id',@$this->params['id']);
+        if (isset($this->params['id'])) {
+            $this->Person=@$this->Person->findFirstBy('id',$this->params['id']);
+        }
         if (isset($this->Person) && isset($this->Person->id) && $this->Person->id>0) {
             $this->renderText($this->Person->first_name.' '.$this->Person->last_name);
         } else {
@@ -23,7 +25,9 @@ class CacheSweeper2Controller extends ApplicationController
     
     function update()
     {
-        $this->Person=$this->Person->findFirstBy('id',@$this->params['id']);
+        if (isset($this->params['id'])) {
+            $this->Person=@$this->Person->findFirstBy('id',$this->params['id']);
+        }
         if (isset($this->Person) && isset($this->Person->id) && $this->Person->id>0) {
             $this->Person->first_name = @$this->params['first_name'];
             $this->Person->last_name = @$this->params['last_name'];
@@ -53,7 +57,9 @@ class CacheSweeper2Controller extends ApplicationController
     
     function delete()
     {
-        $this->Person=$this->Person->findFirstBy('id',@$this->params['id']);
+        if (isset($this->params['id'])) {
+            $this->Person=@$this->Person->findFirstBy('id',$this->params['id']);
+        }
         if (isset($this->Person) && $this->Person->id>0) {
             $this->Person->destroy();
             $this->renderNothing();
