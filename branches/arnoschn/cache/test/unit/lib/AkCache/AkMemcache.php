@@ -17,7 +17,7 @@ class Test_AkMemcache extends  UnitTestCase
     function test_init_without_server()
     {
         $this->memcache=new AkMemcache();
-        
+        $this->memcache->_defaultOptions = array();
         $res = $this->memcache->init(array());
         $this->assertFalse($res);
         $this->assertError('Need to provide at least 1 server');
@@ -166,5 +166,5 @@ class Test_AkMemcache extends  UnitTestCase
 }
 
 
-ak_test('Test_AkMemcache',true);
+ak_test('Test_AkMemcache');
 ?>

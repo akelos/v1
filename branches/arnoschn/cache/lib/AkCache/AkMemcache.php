@@ -3,7 +3,10 @@ require_once(AK_VENDOR_DIR.DS.'phpmemcached'.DS.'class_MemCachedClient.php');
 
 class AkMemcache extends AkObject
 {
-
+    
+    var $_defaultOptions = array('servers'=>'localhost:11211');
+    var $_availableOptions = array('servers'=>'array');
+    
     /**
      * @var MemCachedClient
      */
@@ -24,15 +27,16 @@ class AkMemcache extends AkObject
      */
     var $_max_size = 1000000;
     
+    var $_servers = array();
+    
     function init($options = array())
     {
-        $servers = isset($options['servers'])?$options['servers']:array();
-        $servers = is_array($servers)?$servers:array($servers);
-        if (empty($servers)) {
+        $this->setOptions($options);
+        if (empty($this->_servers)) {
             trigger_error('Need to provide at least 1 server',E_USER_ERROR);
             return false;
         }
-        $this->_memcache = new MemCachedClient($servers /**array('127.0.0.1:11211')*/);
+        $this->_memcache = new MemCachedClient($this->_servers /**array('127.0.0.1:11211')*/);
         $ping = $this->_memcache->get('ping');
         if (!$ping) {
             if ($this->_memcache->errno==ERR_NO_SOCKET) {
@@ -43,6 +47,7 @@ class AkMemcache extends AkObject
         }
         return true;
     }
+    
     
     function _getNamespaceId($group)
     {

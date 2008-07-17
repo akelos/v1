@@ -13,12 +13,18 @@ class AkCacheHandler extends AkObject
     
     var $_controller;
     
+    /** Action Caching **/
+    
+    var $_actionCacheAvailableOptions = array('include_get_parameters'=>'array','cache_path'=>'string');
+    var $_actionCacheDefaultOptions = array('include_get_parameters'=>array(),'cache_path'=>'');
     
     /**
      * ########### Start: Page Caching ###########
      */
     
-        
+    var $_pageCacheAvailableOptions = array('include_get_parameters','array','headers'=>'array');
+    var $_pageCacheDefaultOptions = array('include_get_parameters'=>array(),'headers'=>array('X-Cached-By'=>'Akelos'));
+    
     var $_lastCacheGroup;
     
     var $_lastCacheId;
@@ -53,9 +59,11 @@ class AkCacheHandler extends AkObject
      */
     var $observe = array();
     
+    var $_sweeperAvailableOptions = array('only'=>'array','except'=>'array');
+    var $_sweeperDefaultOptions = array('only'=>array(),'except'=>array());
+    
     var $_Sweepers = array();
     
-    var $__availableObserveEvents = array('create','update','destroy','save');
     /**
      * Reads configuration options from AkActionController and the configured
      * constants
@@ -180,33 +188,23 @@ class AkCacheHandler extends AkObject
     
     function _cacheSweeper($options)
     {
-        if (!is_array($options)) {
-            $this->_initSweeper($options);
-        } else {
-            if (isset($options[0])) {
-                foreach ($options as $sweeper) {
-                    $this->_initSweeper($sweeper);
-                }
-            } else {
-                foreach ($options as $sweeper => $params) {
-                    if (is_int($sweeper)) {
-                        $sweeper = $params;
-                        $params = array();
-                    }
-                    $this->_initSweeper($sweeper, $params);
-                }
+        $options = Ak::parseOptions($options, $this->_sweeperDefaultOptions, $this->_sweeperAvailableOptions, true);
+
+        foreach ($options as $sweeper => $params) {
+            if (is_int($sweeper)) {
+                $sweeper = $params;
+                $params = array();
             }
-            
+            $this->_initSweeper($sweeper, $params);
         }
     }
     
     function _initSweeper($sweeper, $params = array())
     {
-        $only = isset($params['only'])?Ak::toArray($params['only']):array();
-        $except = isset($params['except'])?Ak::toArray($params['except']):array();
+        $options = Ak::parseOptions($params, $this->_sweeperDefaultOptions, $this->_sweeperAvailableOptions);
         
-        if (!empty($only) && !in_array($this->_controller->getActionName(), $only)) return;
-        if (!empty($except) && !in_array($this->_controller->getActionName(), $except)) return;
+        if (!empty($only) && !in_array($this->_controller->getActionName(), $options['only'])) return;
+        if (!empty($except) && !in_array($this->_controller->getActionName(), $options['except'])) return;
         
         $sweeper_class = AkInflector::classify($sweeper);
         
@@ -228,20 +226,13 @@ class AkCacheHandler extends AkObject
     {
         if (!$this->_perform_caching) return;
         
-        $this->_caches_page = is_array($options)?$options:Ak::toArray($options);
+        $this->_caches_page = Ak::parseOptions($options, $this->_pageCacheDefaultOptions, $this->_pageCacheAvailableOptions, true);
         $actionName = $this->_controller->getActionName();
-        if (($hasOptions = isset($this->_caches_page[$actionName])) ||
-            in_array($actionName, $this->_caches_page)) {
-            if ($hasOptions) {
-                $this->_include_get_parameters = isset($this->_caches_page[$actionName]['include_get_parameters'])?
-                                                    is_array($this->_caches_page[$actionName]['include_get_parameters'])?
-                                                       $this->_caches_page[$actionName]['include_get_parameters']: Ak::toArray($this->_caches_page[$actionName]['include_get_parameters'])
-                                                    :array();
-                $this->_additional_headers = isset($this->_caches_page[$actionName]['headers'])?
-                                                    is_array($this->_caches_page[$actionName]['headers'])?
-                                                       $this->_caches_page[$actionName]['headers']: Ak::toArray($this->_caches_page[$actionName]['headers'])
-                                                    :array();
-            }
+        if (isset($this->_caches_page[$actionName])) {
+
+            $this->_include_get_parameters = $this->_caches_page[$actionName]['include_get_parameters'];
+            $this->_additional_headers = $this->_caches_page[$actionName]['headers'];
+
             $this->_controller->prependBeforeFilter(array(&$this,'beforePageCache'));
             $this->_controller->appendAfterFilter(array(&$this,'afterPageCache'));
         }
@@ -492,25 +483,22 @@ class AkCacheHandler extends AkObject
     {
         if (!$this->_perform_caching) return;
         
-        $this->_caches_action = is_array($options)?$options:Ak::toArray($options);
+        $this->_caches_action =Ak::parseOptions($options,$this->_actionCacheDefaultOptions,$this->_actionCacheAvailableOptions,true);
+        
         $actionName = $this->_controller->getActionName();
-        if (($hasOptions = isset($this->_caches_action[$actionName])) ||
-            in_array($actionName, $this->_caches_action)) {
-            if ($hasOptions) {
-                $this->_action_include_get_parameters = isset($this->_caches_action[$actionName]['include_get_parameters'])?
-                                                    is_array($this->_caches_action[$actionName]['include_get_parameters'])?
-                                                       $this->_caches_action[$actionName]['include_get_parameters']: Ak::toArray($this->_caches_action[$actionName]['include_get_parameters'])
-                                                    :array();
-                $path = isset($this->_caches_action[$actionName]['cache_path'])?
-                                                    $this->_caches_action[$actionName]['cache_path']:null;
-                $parts = parse_url($path);
-                if (isset($parts['host'])) {
-                    $this->_action_cache_host = $parts['host'];
-                    $this->_action_cache_path = $parts['path'];
-                } else {
-                    $this->_action_cache_path = $path;
-                }
+        
+        if (isset($this->_caches_action[$actionName])) {
+
+            $this->_action_include_get_parameters = $this->_caches_action[$actionName]['include_get_parameters'];
+            $path = $this->_caches_action[$actionName]['cache_path'];
+            $parts = parse_url($path);
+            if (isset($parts['host'])) {
+                $this->_action_cache_host = $parts['host'];
+                $this->_action_cache_path = $parts['path'];
+            } else {
+                $this->_action_cache_path = $path;
             }
+            
             if (!isset($this->_action_cache_host)) {
                 $this->_action_cache_host = $this->_controller->Request->getHost();
             }
@@ -526,7 +514,7 @@ class AkCacheHandler extends AkObject
         $extension = $this->_controller->Request->getFormat();//$this->_extractExtension($this->_controller->Request->getPath());
         if (is_array($options)) {
             $path = $this->_pathFor($options);
-        } else if ($options == null) {
+        } else if ($options == null || empty($options)) {
             $path = $this->_pathFor();
         } else {
             $path = $options;

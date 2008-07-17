@@ -1414,7 +1414,9 @@ class Ak
         }else{
             $options = $args;
         }
-
+        if ($options['from'] == $options['to']) {
+            return $options['source'];
+        }
         $options['class_prefix'] = empty($options['class_prefix']) && empty($options['path']) ? 'Ak' : $options['class_prefix'];
         $options['path'] = rtrim(empty($options['path']) ? AK_LIB_DIR.DS.'AkConverters' : $options['path'], DS."\t ");
 
@@ -1871,6 +1873,37 @@ class Ak
             }
         }
         return $return;
+    }
+    
+    /**
+     *
+     * @param unknown_type $options
+     * @param unknown_type $default_options
+     * @param unknown_type $available_options
+     * @param unknown_type $walk_keys
+     * @return unknown
+     */
+    function parseOptions($options = array(), $default_options = array(), $available_options = array(), $walk_keys=false)
+    {
+        $parsedOptions = array();
+        if ($walk_keys) {
+            foreach ($options as $key=>$value) {
+                if (!is_array($value)) {
+                    $parsedOptions[$value] = $default_options;
+                } else {
+                    $parsedOptions[$key] = Ak::parseOptions($value, $default_options, $available_options);
+                }
+            }
+            return $parsedOptions;
+        }
+        
+        $options = array_merge($default_options, $options);
+        foreach($options as $key => $value) {
+            if((is_array($available_options) && isset($available_options[$key])) || $available_options === true) {
+                $parsedOptions[$key] = Ak::convert(gettype($value),$available_options===true?gettype($value):$available_options[$key],$value);
+            }
+        }
+        return $parsedOptions;
     }
 }
 

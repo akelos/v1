@@ -118,4 +118,62 @@ class Test_Ak extends AkUnitTest
         $storedValue3 = &Ak::getStaticVar('testVar3');
         $this->assertEqual($null, $storedValue3);
     }
+    
+    function test_parse_options()
+    {
+        $defaultOptions = array('test'=>1);
+        $availableOptions = array('test'=>'integer');
+        $result = Ak::parseOptions(array('nada'=>1), $defaultOptions, $availableOptions);
+        $this->assertEqual($defaultOptions, $result);
+    }
+    
+    function test_parse_options_convert_string_to_int()
+    {
+        $defaultOptions = array('test'=>1);
+        $availableOptions = array('test'=>'integer');
+        $result = Ak::parseOptions(array('test'=>'1'), $defaultOptions, $availableOptions);
+        $this->assertEqual($defaultOptions, $result);
+    }
+    
+    function test_parse_options_convert_int_to_string()
+    {
+        $defaultOptions = array('test'=>'1');
+        $availableOptions = array('test'=>'string');
+        $result = Ak::parseOptions(array('test'=>1), $defaultOptions, $availableOptions);
+        $this->assertEqual($defaultOptions, $result);
+    }
+    
+    function test_parse_options_convert_string_to_float()
+    {
+        $defaultOptions = array('test'=>1.5);
+        $availableOptions = array('test'=>'float');
+        $result = Ak::parseOptions(array('test'=>'1.5'), $defaultOptions, $availableOptions);
+        $this->assertEqual($defaultOptions, $result);
+    }
+    
+    function test_parse_options_convert_double_to_string()
+    {
+        $defaultOptions = array('test'=>'1.5');
+        $availableOptions = array('test'=>'string');
+        $result = Ak::parseOptions(array('test'=>1.5), $defaultOptions, $availableOptions);
+        $this->assertEqual($defaultOptions, $result);
+    }
+    
+    function test_parse_options_convert_string_to_array()
+    {
+        $defaultOptions = array('test'=>array(0,1));
+        $availableOptions = array('test'=>'array');
+        $result = Ak::parseOptions(array('test'=>'0,1'), $defaultOptions, $availableOptions);
+        $this->assertEqual($defaultOptions, $result);
+    }
+    
+    function test_parse_options_convert_with_keys()
+    {
+        $defaultOptions = array('test'=>1);
+        $availableOptions = array('test'=>'integer');
+        $result = Ak::parseOptions(array('key1'=>array('test'=>'1','nada'=>1),'key2'), $defaultOptions, $availableOptions,true);
+        $this->assertEqual($defaultOptions, $result['key1']);
+        $this->assertEqual($defaultOptions, $result['key2']);
+    }
 }
+ak_test('Test_Ak');

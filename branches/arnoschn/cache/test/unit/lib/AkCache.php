@@ -92,7 +92,7 @@ class AkCache_TestCase extends  AkUnitTest
         $this->assertFalse(!$this->Cache->remove($this->id, $this->group),'Removing cached file (Cache disabled must return success)');
         
         //Cache Lite cache
-        $this->Cache->init(1,1);
+        $this->Cache->init(2,1);
         $this->assertFalse(!$this->Cache->save($this->text_to_catch, $this->id, $this->group),'saving the cache (File based)');
         $this->Cache->init(1,1);
         $data = $this->Cache->get($this->id, $this->group);
