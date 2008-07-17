@@ -118,32 +118,32 @@ class AkCache_TestCase extends  AkUnitTest
     {
                 
         //AkCache::clean($group = 'false', $mode = 'ingroup');
-        $this->Cache->init(1,1);
+        $this->Cache->init(null,1);
         $this->assertFalse(!$this->Cache->save($this->text_to_catch, $this->id, $this->group),'saving on the file cache');
-        $this->Cache->init(1,1);
+        $this->Cache->init(null,1);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertEqual($data, $this->text_to_catch,'Checking that cached data has been inserted (File based)');
         
-        $this->Cache->init(1,1);
+        $this->Cache->init(null,1);
         $this->assertFalse(!$this->Cache->clean($this->group),'Removing all the items in cache');
         
-        $this->Cache->init(1,1);
+        $this->Cache->init(null,1);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertFalse($data,'The cache must have been removed at this point but stills here');
         
         
         
         //AkCache::clean($group = 'false', $mode = 'ingroup');
-        $this->Cache->init(1,2);
+        $this->Cache->init(null,2);
         $this->assertFalse(!$this->Cache->save($this->text_to_catch, $this->id, $this->group),'saving on the file cache');
-        $this->Cache->init(1,2);
+        $this->Cache->init(null,2);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertEqual($data, $this->text_to_catch,'Checking that cached data has been inserted (File based)');
         
-        $this->Cache->init(1,2);
+        $this->Cache->init(null,2);
         $this->assertFalse(!$this->Cache->clean($this->group),'Removing all the items in cache');
         
-        $this->Cache->init(1,2);
+        $this->Cache->init(null,2);
         $data = $this->Cache->get($this->id, $this->group);
         $this->assertFalse($data,'The cache must have been removed at this point but stills here');
 
