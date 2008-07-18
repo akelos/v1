@@ -135,8 +135,13 @@ class MemCachedClient {
 				$value = trim($value);
 				
 				if ($value=="END") break;
+				if($value == 'ERROR') 
+				{
+				    $results[$key] = false;
+				    break;
+				}
 				
-				list(,$key,$flags,$bytestotal) = explode(' ',$value);
+				@list(,$key,$flags,$bytestotal) = explode(' ',$value);
 				
 				$bytesread = 0;
 				$bytestotal += 2;
@@ -161,7 +166,7 @@ class MemCachedClient {
 		if (count($results)<=1) $results = array_shift($results);
 
 		//echo "\n---END GET---\n";
-
+        
 		return $results;
 	}
 	

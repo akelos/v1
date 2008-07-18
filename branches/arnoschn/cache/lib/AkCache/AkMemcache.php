@@ -26,12 +26,13 @@ class AkMemcache extends AkObject
     var $_max_size = 1000000;
     
     var $_servers = array();
+    var $_lifeTime = 0;
     
     function init($options = array())
     {
-        $default_options = array('servers'=>array('localhost:11211'));
+        $default_options = array('servers'=>array('localhost:11211'),'lifeTime'=>0);
         $options = array_merge($default_options, $options);
-        
+        $this->_lifeTime = $options['lifeTime'];
         if (empty($options['servers'])) {
             trigger_error('Need to provide at least 1 server',E_USER_ERROR);
             return false;
@@ -57,6 +58,7 @@ class AkMemcache extends AkObject
     
     function _clearNamespace($group)
     {
+        $group = 'group_'.md5($group);
         $ident = $this->_getNamespaceId($group);
         unset($this->_namespaces[$group]);
         return $this->_memcache->incr($ident,1);
@@ -64,6 +66,7 @@ class AkMemcache extends AkObject
     
     function _getNamespace($group)
     {
+        $group = 'group_'.md5($group);
         if (!isset($this->_namespaces[$group])) {
             $ident = $this->_getNamespaceId($group);
             $namespace = $this->_memcache->get($ident);
@@ -84,16 +87,19 @@ class AkMemcache extends AkObject
     {
         $namespace = $this->_getNamespace($group);
         $key = $namespace.'_'.$id;
-        if (strlen($key)>240) {
-            $key = md5($key);
-        }
+        $key = 'key_'.md5($key);
         return $key;
     }
     
-    function &get($id, $group = 'default')
+    function get($id, $group = 'default')
     {
         $key = $this->_generateCacheKey($id, $group);
         $return = $this->_memcache->get($key);
+        
+        if ($return === false) {
+            return false;
+        }
+        
         @list($type,$data) = @split('@#!',$return,2);
         if (isset($data)) {
             settype($data,$type);
@@ -121,15 +127,15 @@ class AkMemcache extends AkObject
             $keys = array();
             for ($i=0;$i<$parts;$i++) {
                 $nkey = $key.'_'.$i;
-                $this->_memcache->set($nkey,substr($data,$i*$this->_max_size,$this->_max_size));
+                $this->_memcache->set($nkey,substr($data,$i*$this->_max_size,$this->_max_size),$this->_lifeTime);
             }
             
-            $this->_memcache->set($key,'@____join____@:'. $parts);
-            return;
+            $return = $this->_memcache->set($key,'@____join____@:'. $parts);
+            return $return !== false ? true:false;
         }
         $key = $this->_generateCacheKey($id, $group);
-        $return = $this->_memcache->set($key,$data);
-        return $return;
+        $return = $this->_memcache->set($key,$data, $this->_lifeTime);
+        return $return !== false ? true:false;
     }
     
     function remove($id, $group = 'default')
