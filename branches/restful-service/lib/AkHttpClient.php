@@ -69,12 +69,14 @@ class AkHttpClient extends AkObject
 
         $this->HttpRequest->setMethod(constant('HTTP_REQUEST_METHOD_'.$http_verb));
               
-        #$http_verb == 'PUT' && !empty($options['params']) && $this->setBody($options['params']);
         if ($http_verb == 'PUT' && !empty($options['params'])){
             $this->setBody(http_build_query($options['params']));
         }
         if (!empty($body)){
             $this->setBody($body);
+        }
+        if (!empty($options['file'])){
+            $this->HttpRequest->addFile($options['file']['inputname'],$options['file']['filename']);
         }
         
         !empty($options['params']) && $this->addParams($options['params']);
