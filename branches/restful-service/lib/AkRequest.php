@@ -36,6 +36,9 @@ class DispatchException extends Exception
 class NotAcceptableException extends Exception 
 { }
 
+class BadRequestException extends Exception 
+{ }
+
 /**
 * Class that handles incoming request.
 * 
@@ -390,9 +393,18 @@ class AkRequest extends AkObject
         return $this->getMimeType($this->getAcceptHeader());
     }
     
+    /**
+     * @throws BadRequestException
+     * @return string our mime_type
+     */
     function getFormat()
     {
-        return isset($this->_request['format']) ? $this->_request['format'] : $this->bestMimeType();
+        if (isset($this->_request['format'])) return $this->_request['format'];
+        
+        if ($this->isPost() || $this->isPut())   return $this->lookupMimeType($this->getContentType());
+        if ($this->isGet() || $this->isDelete()) return $this->bestMimeType();
+        
+        throw new BadRequestException();
     }
     
     function getContentType()

@@ -86,6 +86,22 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
         $this->assertEquals('text/xml',$this->Request->getContentType());
     }
     
+    function testGetFormatReturnsContentTypeOnPostRequests()
+    {
+        $this->Request->env['REQUEST_METHOD'] = 'post';
+        $this->Request->env['CONTENT_TYPE'] = 'text/xml;charset=utf-8';
+        
+        $this->assertEquals('xml',$this->Request->getFormat());
+    }
+    
+    function testGetFormatReturnsContentTypeOnPutRequests()
+    {
+        $this->Request->env['REQUEST_METHOD'] = 'put';
+        $this->Request->env['CONTENT_TYPE'] = 'text/xml;charset=utf-8';
+        
+        $this->assertEquals('xml',$this->Request->getFormat());
+    }
+    
     /* ============= ============== =========== */
     
     private static function only_type(&$a)
