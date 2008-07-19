@@ -57,6 +57,16 @@ class RESTFulPeopleServiceFunctional extends PHPUnit_Framework_TestCase
         $this->assertEquals('Steve',$result);
     }
     
+    function testFileUpload()
+    {
+        $Http = new AkHttpClient();
+        $options['params'] = array('photo'=>array('title'=>'My Photo.'));
+        $options['file'] = array('inputname'=>'photo','filename'=>__FILE__);
+        $result = $Http->post(AK_TESTING_URL.'/person/1/photo',$options);
+        
+        $this->assertEquals("My Photo.|".basename(__FILE__),$result);
+    }
+    
 }
 
 ?>

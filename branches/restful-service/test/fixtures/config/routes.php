@@ -19,6 +19,8 @@ $Map->edit_person('/person/edit/:id',array('controller'=>'person','action'=>'edi
 $Map->update_person('/person/:id/update',array('controller'=>'person','action'=>'update','id'=>COMPULSORY),array(),array('method'=>'post'));
 $Map->delete_person('/person/:id/delete',array('controller'=>'person','action'=>'delete','id'=>COMPULSORY),array(),array('method'=>'post'));
 
+//File-upload
+$Map->upload_file('/person/:id/photo',array('controller'=>'person','action'=>'upload_photo','id'=>COMPULSORY),array(),array('method'=>'post'));
 
 
 #$Map->connect('/:controller/:action/:id', array('controller' => 'page', 'action' => 'index'));

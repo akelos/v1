@@ -34,6 +34,13 @@ class PersonController extends ApplicationController
 	    $this->renderText($Steves_name);
     }
     
+    function upload_photo()
+    {
+        $Title    = $this->params['photo']['title'];
+        $Filename = $this->params['photo']['name'];
+        $this->renderText("$Title|$Filename");
+    }
+    
     protected function renderXml($xml_string,$status=null,$location=null)
     {
         $this->Response->addHeader(array('content-type'=>'text/xml'));

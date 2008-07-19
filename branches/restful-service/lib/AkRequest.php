@@ -410,7 +410,8 @@ class AkRequest extends AkObject
             'application/rss+xml'      => 'rss',
             'application/atom+xml'     => 'atom',
             '*/*'                      => 'html',
-            'application/x-www-form-urlencoded' => 'www-form',
+            'application/x-www-form-urlencoded' => 'html',
+            'multipart/form-data'      => 'html',
             'default'                  => 'html',
         );
         return AkRequest::$mime_types = $mime_types;
@@ -956,7 +957,8 @@ class AkRequest extends AkObject
     function getPostParams()
     {
         if (!$this->isPost()) return array();
-        if ($this->getContentType()=='application/x-www-form-urlencoded') return $_POST;
+        //PHP automatically parses the input on the standard content_types 'application/x-www-form-urlencoded' etc
+        if (!empty($_POST)) return $_POST;
         
         return $_POST = $this->parseMessageBody($this->getMessageBody());
     }
@@ -967,7 +969,7 @@ class AkRequest extends AkObject
 
         $content_type = $this->getContentType();
         switch ($this->lookupMimeType($content_type)){
-            case 'www-form':
+            case 'html':
                 $as_array = array();
                 parse_str($data,$as_array);
                 return $as_array;
