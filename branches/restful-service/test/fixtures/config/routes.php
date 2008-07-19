@@ -22,8 +22,8 @@ $Map->delete_person('/person/:id/delete',array('controller'=>'person','action'=>
 //File-upload
 $Map->upload_file('/person/:id/photo',array('controller'=>'person','action'=>'upload_photo','id'=>COMPULSORY),array(),array('method'=>'post'));
 
-
-#$Map->connect('/:controller/:action/:id', array('controller' => 'page', 'action' => 'index'));
-#$Map->connect('/', array('controller' => 'page', 'action' => 'index'));
+//standard match-all routes
+$Map->connect('/:controller/:action/:id', array('controller' => 'page', 'action' => 'index'));
+$Map->connect('/', array('controller' => 'page', 'action' => 'index'));
 
 ?>
