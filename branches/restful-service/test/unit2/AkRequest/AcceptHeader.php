@@ -80,6 +80,11 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
         $this->assertEquals('html',$this->Request->getFormat());
     }
 
+    function testContentTypeGetsParsed()
+    {
+        $this->Request->env['CONTENT_TYPE'] = 'text/xml;charset=utf-8';
+        $this->assertEquals('text/xml',$this->Request->getContentType());
+    }
     
     /* ============= ============== =========== */
     

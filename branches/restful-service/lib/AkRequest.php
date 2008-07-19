@@ -301,14 +301,14 @@ class AkRequest extends AkObject
 
         $accepts = array();
         foreach (explode(',',$accept_header) as $index=>$acceptable){
-            @list($type,$factor) = preg_split('/;\s*q=/',$acceptable);
-            if (!$factor) $factor = '1.0';
-            $type = trim($type);
+            $mime_struct = $this->parseMimeType($acceptable);
+            if (empty($mime_struct['q'])) $mime_struct['q'] = '1.0';
             
             //we need the original index inside this structure 
             //because usort happily rearranges the array on equality
             //therefore we first compare the 'q' and then 'i'
-            $accepts[] = array('i'=>$index,'type'=>$type,'q'=>$factor);
+            $mime_struct['i'] = $index;
+            $accepts[] = $mime_struct;
         }
         usort($accepts,array($this,'sortAcceptHeader'));
         
@@ -323,6 +323,17 @@ class AkRequest extends AkObject
     {
         //preserve the original order if q is equal
         return $a['q'] == $b['q'] ? ($a['i'] > $b['i']) : ($a['q'] < $b['q']);
+    }
+    
+    private function parseMimeType($mime_type)
+    {
+        @list($type,$parameter_string) = explode(';',$mime_type);
+        $mime_type_struct = array();
+        if ($parameter_string){
+            parse_str($parameter_string,$mime_type_struct);
+        }
+        $mime_type_struct['type'] = trim($type);
+        return $mime_type_struct;
     }
     
     function getMimeType($acceptables)
@@ -387,7 +398,8 @@ class AkRequest extends AkObject
     function getContentType()
     {
         if (empty($this->env['CONTENT_TYPE'])) return false;
-        return $this->env['CONTENT_TYPE'];
+        $mime_type_struct = $this->parseMimeType($this->env['CONTENT_TYPE']);
+        return $mime_type_struct['type'];
     }
     
     function lookupMimeType($mime_type)
