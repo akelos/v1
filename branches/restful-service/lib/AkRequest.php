@@ -339,8 +339,11 @@ class AkRequest extends AkObject
         return $mime_type_struct;
     }
     
-    function getMimeType($acceptables)
+    function getBestAcceptType()
     {
+        if (!isset($this->env['HTTP_ACCEPT'])) return false;
+        $acceptables = $this->getAcceptHeader();
+        
         // we group by 'quality'
         $grouped_acceptables = array();
         foreach ($acceptables as $acceptable){
@@ -353,7 +356,7 @@ class AkRequest extends AkObject
             foreach ($mime_types as $mime_type=>$our_mime_type){
                 foreach ($array_with_acceptables_of_same_quality as $acceptable){
                     if ($mime_type == $acceptable){
-                        return $our_mime_type;
+                        return $mime_type;
                     }
                 }
             }
@@ -361,6 +364,31 @@ class AkRequest extends AkObject
         return $mime_types['default'];
     }
 
+    function getContentType()
+    {
+        if (empty($this->env['CONTENT_TYPE'])) return false;
+        $mime_type_struct = $this->parseMimeType($this->env['CONTENT_TYPE']);
+        return $mime_type_struct['type'];
+    }
+    
+    /**
+     * @return string Their mime_type, f.i. 'application/xml'
+     */
+    function getMimeType()
+    {
+        if ($this->isPost() || $this->isPut()) return $this->getContentType();
+        return $this->getBestAcceptType();
+    }
+    
+    /**
+     * @return string Our mime_type, f.i. 'xml'
+     */
+    function getFormat()
+    {
+        if (isset($this->_request['format'])) return $this->_request['format'];
+        return $this->lookupMimeType($this->getMimeType()); 
+    }
+    
     static $mime_types;
     
     function registeredMimeTypes()
@@ -386,32 +414,6 @@ class AkRequest extends AkObject
             'default'                  => 'html',
         );
         return AkRequest::$mime_types = $mime_types;
-    }
-    
-    function bestMimeType()
-    {
-        return $this->getMimeType($this->getAcceptHeader());
-    }
-    
-    /**
-     * @throws BadRequestException
-     * @return string our mime_type
-     */
-    function getFormat()
-    {
-        if (isset($this->_request['format'])) return $this->_request['format'];
-        
-        if ($this->isPost() || $this->isPut())   return $this->lookupMimeType($this->getContentType());
-        if ($this->isGet() || $this->isDelete()) return $this->bestMimeType();
-        
-        throw new BadRequestException();
-    }
-    
-    function getContentType()
-    {
-        if (empty($this->env['CONTENT_TYPE'])) return false;
-        $mime_type_struct = $this->parseMimeType($this->env['CONTENT_TYPE']);
-        return $mime_type_struct['type'];
     }
     
     function lookupMimeType($mime_type)
