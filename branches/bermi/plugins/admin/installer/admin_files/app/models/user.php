@@ -217,8 +217,12 @@ class User extends ActiveRecord
     function can($task, $extension = null, $force_reload = false)
     {
         if(!isset($this->_activeRecordHasBeenInstantiated)){
-            $User =& User::getCurrentUser();
-            return $User->can($task, $extension, $force_reload);
+            if (User::isLoaded()) {
+                $User =& User::getCurrentUser();
+                return $User->can($task, $extension, $force_reload);
+            } else {
+                return false;
+            }
         }
 
         static $Permissions;
@@ -251,7 +255,7 @@ class User extends ActiveRecord
         }
         return false;
     }
-    
+
     function &getRoles($force_reload = false)
     {
         if((!isset($this->LoadedRoles) || $force_reload) && $this->role->load()){
@@ -302,22 +306,75 @@ class User extends ActiveRecord
         return $extension;
     }
 
+
+    /**
+     * Returns the current user if it is set, otherwise throws an error
+     * 
+     * @see isLoaded() to check before and not throw an error
+     * @return User
+     */
     function getCurrentUser()
     {
-        return User::_setCurrentUser(false);
-    }
-
-    function _setCurrentUser($CurrentUser)
-    {
-        static $_cached;
-        if(!empty($CurrentUser)){
-            $_cached = $CurrentUser;
-        }elseif (empty($_cached)){
+        $User =& Ak::static_var('CurrentUser');
+        if (empty($User)) {
             trigger_error(Ak::t('Current user has not been set yet.'), E_USER_ERROR);
         }
-        return $_cached;
+        return $User;
+    }
+    /**
+     * Checks if the user is set
+     *
+     * @return boolean
+     */
+    function isLoaded()
+    {
+        return Ak::static_var('CurrentUser') != null;
     }
 
+    /**
+     * Sets the current user
+     *
+     * @param User $CurrentUser
+     */
+    function setCurrentUser($CurrentUser)
+    {
+        Ak::static_var('CurrentUser', $CurrentUser);
+    }
+
+    function signOff()
+    {
+        User::setCurrentUser(null);
+        User::serialize(false);
+        if (isset($_SESSION['destination'])) {
+            unset($_SESSION['destination']);
+        }
+    }
+
+    function serialize($User = null)
+    {
+        if ($User === null) {
+            $_SESSION['__CurrentUser'] = serialize(Ak::static_var('CurrentUser'));
+        } elseif ($User == false) {
+            unset($_SESSION['__CurrentUser']);
+            $_SESSION['__CurrentUser'] = null;
+        } else {
+            $_SESSION['__CurrentUser'] = serialize($User);
+        }
+    }
+    function isSerialized()
+    {
+        return isset($_SESSION['__CurrentUser']);
+    }
+    function &unserialize()
+    {
+        if (isset($_SESSION['__CurrentUser'])) {
+            $User = unserialize($_SESSION['__CurrentUser']);
+        } else {
+            $User = false;
+        }
+
+        return $User;
+    }
 }
 
 
