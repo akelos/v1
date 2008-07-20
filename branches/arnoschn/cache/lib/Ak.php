@@ -1913,7 +1913,8 @@ class Ak
      */
     function getSettings($namespace, $raise_error_if_config_file_not_found = true)
     {
-        static $loaded_settings = array();
+        $staticVarNs = 'Ak::getSettings';
+        $loaded_settings = &Ak::getStaticVar($staticVarNs);
         
         if(isset($loaded_settings[$namespace])){
             return $loaded_settings[$namespace];
@@ -1928,7 +1929,9 @@ class Ak
             }
             return false;
         }
-        return $loaded_settings[$namespace] = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));  
+        $return = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));
+        Ak::setStaticVar($staticVarNs,$return);
+        return $return;
     }
 }
 
