@@ -51,6 +51,7 @@ require_once(AK_LIB_DIR.DS.'AkObject.php');
 * @copyright Copyright (c) 2002-2005, Akelos Media, S.L. http://www.akelos.org
 * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
 * @since 0.1
+* @deprecated use AkSession instead
 * @version $Revision 0.1 $
 */
 class AkDbSession extends AkObject

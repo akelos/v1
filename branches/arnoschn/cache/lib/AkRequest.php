@@ -810,20 +810,8 @@ class AkRequest extends AkObject
     {
         if(AK_AUTOMATIC_SESSION_START){
             if(!isset($_SESSION)){
-                if(AK_SESSION_HANDLER == 1 && defined('AK_DATABASE_CONNECTION_AVAILABLE') && AK_DATABASE_CONNECTION_AVAILABLE){
-                    require_once(AK_LIB_DIR.DS.'AkDbSession.php');
-
-                    $AkDbSession = new AkDbSession();
-                    $AkDbSession->session_life = AK_SESSION_EXPIRE;
-                    session_set_save_handler (
-                    array(&$AkDbSession, '_open'),
-                    array(&$AkDbSession, '_close'),
-                    array(&$AkDbSession, '_read'),
-                    array(&$AkDbSession, '_write'),
-                    array(&$AkDbSession, '_destroy'),
-                    array(&$AkDbSession, '_gc')
-                    );
-                }
+                require_once(AK_LIB_DIR.DS.'AkSession.php');
+                $SessionHandler = &AkSession::initHandler();
                 @session_start();
             }
         }
