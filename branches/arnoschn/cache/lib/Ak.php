@@ -1819,20 +1819,24 @@ class Ak
         $PluginManager->loadPlugins();
         return $PluginManager;
     }
+    
     function setStaticVar($name,&$value)
     {
-        return Ak::_staticVar($name,&$value);
+        $refhack =& Ak::_staticVar($name,$value);
+        return $refhack;
     }
     function &getStaticVar($name)
     {
-        $null = null;
-        return Ak::_staticVar($name,&$null);
+        $refhack =& Ak::_staticVar($name,$refhackvar = null);
+        return $refhack;
     }
+    
     function &unsetStaticVar($name)
     {
-        $null = null;
-        return Ak::_staticVar($name,&$null,true);
+        $refhack =& Ak::_staticVar($name,$refhackvar = null,true);
+        return $refhack;
     }
+    
     function &_staticVar($name, &$value, $destruct = false)
     {
         static $_memory;
@@ -1929,7 +1933,8 @@ class Ak
             }
             return false;
         }
-        $return = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));
+        require_once(AK_VENDOR_DIR.DS.'TextParsers'.DS.'spyc.php');
+        $return = Spyc::YAMLLoad(file_get_contents($yaml_file_name));
         Ak::setStaticVar($staticVarNs,$return);
         return $return;
     }

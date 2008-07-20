@@ -148,6 +148,16 @@ class AkMemcache extends AkObject
     
     function clean($group = false, $mode = 'ingroup')
     {
-        return $this->_clearNamespace($group);
+        switch ($mode) {
+            case 'ingroup':
+                return $this->_clearNamespace($group);
+            case 'notingroup':
+                return false;
+            case 'old':
+                return true;
+            default:
+                return true;
+        }
+        
     }
 }

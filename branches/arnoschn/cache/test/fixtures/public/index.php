@@ -2,6 +2,7 @@
 //define('AK_HOST','localhost');
 include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
 $host = AK_HOST;
+require_once(AK_LIB_DIR.DS.'Ak.php');
 $cache_settings = Ak::getSettings('caching', false);
 if ($cache_settings['enabled']) {
     
