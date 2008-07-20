@@ -32,7 +32,7 @@ if(!defined('AK_CONFIG_INCLUDED')){
 /**
  * Check cache here, render cache with headers
 */
-$cache_settings = Ak::getSettings('caching');
+$cache_settings = Ak::getSettings('caching', false);
 if ($cache_settings['enabled']) {
     require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');
     $null = null;

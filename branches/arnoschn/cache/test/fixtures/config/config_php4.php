@@ -32,7 +32,7 @@ defined('AK_ACTIVE_RECORD_ENABLE_AUTOMATIC_SETTERS_AND_GETTERS') ? null : define
 
 //defined('AK_TESTING_URL') ? null : define('AK_TESTING_URL', rtrim(AK_URL,'/').'/test/fixtures/public');
 
-defined('AK_TESTING_URL') ? null : define('AK_TESTING_URL', 'http://localhost:9997/');
+defined('AK_TESTING_URL') ? null : define('AK_TESTING_URL', 'http://localhost:81/test/fixtures/public');
 defined('AK_TESTING_REWRITE_BASE') ? null : define('AK_TESTING_REWRITE_BASE', false);
 
 defined('AK_LIB_TESTS_DIRECTORY') ? null : define('AK_LIB_TESTS_DIRECTORY', AK_TEST_DIR.DS.'unit'.DS.'lib');

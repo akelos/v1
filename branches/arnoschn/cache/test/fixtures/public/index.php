@@ -2,7 +2,7 @@
 //define('AK_HOST','localhost');
 include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
 $host = AK_HOST;
-$cache_settings = Ak::getSettings('caching');
+$cache_settings = Ak::getSettings('caching', false);
 if ($cache_settings['enabled']) {
     
     require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');

@@ -41,7 +41,7 @@ class AkMemcache extends AkObject
         $ping = $this->_memcache->get('ping');
         if (!$ping) {
             if ($this->_memcache->errno==ERR_NO_SOCKET) {
-                trigger_error("Could not connect to MemCache daemon", E_USER_ERROR);
+                trigger_error("Could not connect to MemCache daemon", E_USER_WARNING);
                 return false;
             }
             $this->_memcache->set('ping',1);

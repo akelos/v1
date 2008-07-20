@@ -132,7 +132,7 @@ class AkTestApplication extends AkUnitTest
         $parts = parse_url($url);
         $_REQUEST['ak'] = isset($parts['path'])?$parts['path']:'/';
         $_SERVER['AK_HOST']= isset($parts['host'])?$parts['host']:'localhost';
-        $cache_settings = Ak::getSettings('caching');
+        $cache_settings = Ak::getSettings('caching', false);
         if ($cache_settings['enabled']) {
     
             require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');

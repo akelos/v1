@@ -19,10 +19,7 @@ class AkCache_TestCase extends  AkUnitTest
     {
         $this->resetFrameworkDatabaseTables();
     }
-    function xsetUp()
-    {
-        
-    }
+
     function test_all_caches()
     {
         

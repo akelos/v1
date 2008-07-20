@@ -1,5 +1,6 @@
 <?php
 
+require_once(AK_LIB_DIR.DS.'AkCache.php');
 require_once(AK_LIB_DIR.DS.'AkCache'.DS.'AkMemcache.php');
 
 class Test_AkMemcache extends  UnitTestCase
@@ -10,8 +11,9 @@ class Test_AkMemcache extends  UnitTestCase
     var $memcache;
     function setUp()
     {
-        $this->memcache=new AkMemcache();
-        $this->memcache->init(array('servers'=>array('127.0.0.1:11211')));
+        $cache_settings = Ak::getSettings('caching',false);
+        $this->memcache=AkCache::lookupStore($cache_settings);
+        $this->assertIsA($this->memcache,'AkCache');
     }
     
     function test_init_without_server_fallback_to_default()
@@ -27,6 +29,22 @@ class Test_AkMemcache extends  UnitTestCase
         $res = $this->memcache->init(array('servers'=>array('test:121')));
         $this->assertFalse($res);
         $this->assertError('Could not connect to MemCache daemon');
+    }
+    
+    function test_init_with_wrong_server_using_AkCache_init()
+    {
+        $cache=new AkCache();
+        $res = $cache->init(array('servers'=>array('test:121')),3);
+        $this->assertFalse($res);
+        $this->assertError('Could not connect to MemCache daemon');
+        $this->assertFalse($cache->cache_enabled);
+    }
+    function test_init_with_wrong_server_using_AkCache_lookupStore()
+    {
+        $options = array('enabled'=>true,'handler'=>array('type'=>3,'options'=>array('servers'=>array('test:121'))));
+        $cache=AkCache::lookupStore($options);
+        $this->assertError('Could not connect to MemCache daemon');
+        $this->assertFalse($cache);
     }
     function test_set_and_get_string()
     {

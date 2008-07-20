@@ -138,7 +138,7 @@ class AkCache extends AkObject
     {
         static $cache_store;
         $false = false;
-        if ($options == true && !empty($cache_store)) {
+        if ($options === true && !empty($cache_store)) {
             return $cache_store;
         } else if (is_array($options) && 
                    isset($options['enabled']) && $options['enabled']==true &&
@@ -230,6 +230,7 @@ class AkCache extends AkObject
     * - 0: No cache at all
     * - 1: File based cache using the folder defined at AK_CACHE_DIR or the system /tmp dir
     * - 2: Database based cache. This one has a performance penalty, but works on most servers
+    * - 3: Memcached - The fastest option
     * @return void
     */
     function init($options = null, $cache_type = null)
@@ -250,17 +251,17 @@ class AkCache extends AkObject
                 }
                 $this->_driverInstance =& new Cache_Lite($options);
                 break;
-            case 2:
-                $this->cache_enabled = true;
+            case 2:$this->cache_enabled = true;
                 require_once(AK_LIB_DIR.'/AkCache/AkAdodbCache.php');
                 $this->_driverInstance =& new AkAdodbCache();
-                $this->_driverInstance->init($options);
+                $res = $this->_driverInstance->init($options);
+                $this->cache_enabled = $res;
                 break;
             case 3:
-                $this->cache_enabled = true;
                 require_once(AK_LIB_DIR.'/AkCache/AkMemcache.php');
                 $this->_driverInstance =& new AkMemcache();
-                $this->_driverInstance->init($options);
+                $res = $this->_driverInstance->init($options);
+                $this->cache_enabled = $res;
                 break;
             default:
                 $this->cache_enabled = false;

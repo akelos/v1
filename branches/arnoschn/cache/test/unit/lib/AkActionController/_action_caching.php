@@ -29,7 +29,7 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
     
     function _flushCache($host)
     {
-        $settings = Ak::getSettings('caching');
+        $settings = Ak::getSettings('caching',false);
         $fileCache=AkCache::lookupStore($settings);
         if ($fileCache!==false) {
             $fileCache->clean($host);

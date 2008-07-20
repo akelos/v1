@@ -84,7 +84,7 @@ class AkCacheHandler extends AkObject
     function _loadSettings($settings = null)
     {
         if ($settings == null) {
-            $this->_settings = Ak::getSettings('caching');
+            $this->_settings = Ak::getSettings('caching', false);
         } else if (is_array($settings)) {
             $this->_settings = $settings;
         } else {

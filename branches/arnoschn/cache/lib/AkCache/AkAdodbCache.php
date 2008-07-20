@@ -199,6 +199,7 @@ class AkAdodbCache
             }
         }
         $this->_refreshTime = time() - $this->_lifeTime;
+        return $this->_db?true:false;
     }
 
     /**
