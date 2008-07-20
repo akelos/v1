@@ -79,7 +79,8 @@ class AkPluginManager extends AkObject
                 $repository_candidates = array_diff(array_map('trim', explode("\n",Ak::file_get_contents($this->_getRepositoriesConfigPath()))), array(''));
                 if(!empty($repository_candidates)){
                     foreach ($repository_candidates as $repository_candidate){
-                        if(strlen($repository_candidate) > 0 && $repository_candidate[0] != '#' && strstr($repository_candidate,'plugins')){
+                        if(strlen($repository_candidate) > 0 && isset($repository_candidate[0]) &&
+                           $repository_candidate[0] != '#' && strstr($repository_candidate,'plugins')){
                             $this->repositories[] = $repository_candidate;
                         }
                     }
@@ -196,13 +197,12 @@ class AkPluginManager extends AkObject
         $options = array_merge($default_options, $options);
 
         $plugin_name = Ak::sanitize_include($plugin_name, 'high');
-        
+
         $install_method = $this->guessBestInstallMethod($options);
- 
+
         if($install_method != 'local directory'){
             $repository = $this->getRepositoryForPlugin($plugin_name, $repository);
         }
-
         if(!$options['force'] && is_dir(AK_PLUGINS_DIR.DS.$plugin_name)){
             trigger_error(Ak::t('Destination directory is not empty. Use force option to overwrite exiting files.'), E_USER_NOTICE);
         }else{
@@ -520,7 +520,7 @@ class AkPluginManager extends AkObject
     }
 
 
-    
+
     function _shouldUseSvnExternals()
     {
         return is_dir(AK_PLUGINS_DIR.DS.'.svn');
@@ -544,7 +544,7 @@ class AkPluginManager extends AkObject
         $plugin_dir = AK_PLUGINS_DIR.DS.$name;
         `svn update $plugin_dir`;
     }
-    
+
     function _installUsingLocalDirectory($name, $path, $rev = null)
     {
         $source = $path.DS.$name;
@@ -565,7 +565,7 @@ class AkPluginManager extends AkObject
         $plugin_dir = AK_PLUGINS_DIR.DS.$name;
         `svn export $force $rev $uri/$name $plugin_dir`;
     }
-    
+
     function _updateUsingExport($name, $uri)
     {
         $plugin_dir = AK_PLUGINS_DIR.DS.$name;
@@ -581,12 +581,12 @@ class AkPluginManager extends AkObject
         $this->_setExternals($externals, $extras);
         $this->_installUsingCheckout($name, $uri, $rev, $force);
     }
-    
+
     function _updateUsingExternals($name)
     {
         $this->_updateUsingCheckout($name);
     }
-    
+
     function _updateUsingHttp($name, $uri)
     {
         if(is_file(AK_PLUGINS_DIR.DS.$name.DS.'CHANGELOG') &&
@@ -595,8 +595,8 @@ class AkPluginManager extends AkObject
         }
         $this->_copyRemoteDir(rtrim($uri, '/').'/'.$name.'/', AK_PLUGINS_DIR);
     }
-    
-    
+
+
     function _setExternals($items, $extras = '')
     {
         $externals = array();
@@ -637,7 +637,7 @@ class AkPluginManager extends AkObject
     {
         $this->_copyRemoteDir(rtrim($uri, '/').'/'.$name.'/', AK_PLUGINS_DIR);
     }
-    
+
 }
 
 ?>
