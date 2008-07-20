@@ -251,7 +251,7 @@ class AkCache extends AkObject
                 }
                 $this->_driverInstance =& new Cache_Lite($options);
                 break;
-            case 2:$this->cache_enabled = true;
+            case 2:
                 require_once(AK_LIB_DIR.'/AkCache/AkAdodbCache.php');
                 $this->_driverInstance =& new AkAdodbCache();
                 $res = $this->_driverInstance->init($options);
