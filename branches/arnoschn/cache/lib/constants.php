@@ -28,12 +28,7 @@ defined('AK_CACHE_HANDLER_MEMCACHE') ? null: define('AK_CACHE_HANDLER_MEMCACHE',
 if(AK_ENVIRONMENT != 'setup'){        
     require_once(AK_CONFIG_DIR.DS.'environments'.DS.AK_ENVIRONMENT.'.php');
 }
-/**
- * format: 
- * define('AK_CACHE_OPTIONS','cacheDir=>/tmp; ttl=>180');
- */
-defined('AK_CACHE_OPTIONS') ? null: define('AK_CACHE_OPTIONS','');
-defined('AK_CACHE_ENABLED') ? null : define('AK_CACHE_ENABLED', false);
+
 defined('AK_CACHE_HANDLER') ? null : define('AK_CACHE_HANDLER', AK_CACHE_HANDLER_PEAR);
 
 

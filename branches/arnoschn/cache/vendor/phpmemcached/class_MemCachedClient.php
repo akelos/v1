@@ -167,7 +167,7 @@ class MemCachedClient {
 
 		//echo "\n---END GET---\n";
         
-		return $results;
+		return $results===null?false:$results;
 	}
 	
 	function set($key,$data,$exptime=0,$forcehost=false) {

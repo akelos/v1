@@ -25,29 +25,46 @@ class CacheHelperTests extends HelpersUnitTester
         
         
     }
-    function test_init()
+    function _test_init()
     {
-        $this->fragment_key = 'key_'.time()+microtime(true);
-        $this->fragment_text = "Test Cache Helper With String Key";
+        $this->fragment_key = 'key_'.time().microtime(true).'_'.rand(0,1000000);
+        $this->fragment_text = "Test Cache Helper With String Key:". $this->fragment_key;
     }
-    function test_cache_with_string_key()
+    
+    function test_all_caches()
+    {
+        $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2,'akmemcache'=>3);
+        $unitTests = array('_test_cache_with_string_key','_test_cache_with_string_key_cached');
+        
+        
+        foreach ($cacheHandlers as $class=>$type) {
+            $this->controller->_CacheHandler->_setCacheStore($type);
+            $this->_test_init();
+            foreach ($unitTests as $test) {
+                $this->$test($class);
+            }
+        }
+    }
+    
+    
+    function _test_cache_with_string_key($class)
     {
         if (!$this->cache_helper->begin($this->fragment_key)) {
             $this->assertTrue(true);
             echo $this->fragment_text;
             $this->cache_helper->end($this->fragment_key);
         } else {
-            $this->assertFalse(true,'Should not have been cached');
+            $this->assertFalse(true,'Should not have been cached: ' . $class);
         }
         $fragment = $this->controller->readFragment($this->fragment_key);
         $this->assertEqual($this->fragment_text, $fragment);
     }
 
-    function test_cache_with_string_key_cached()
+    function _test_cache_with_string_key_cached($class)
     {
         ob_start();
         if (!$this->cache_helper->begin($this->fragment_key)) {
-            $this->assertFalse(true,'Should have been cached');
+            $this->assertFalse(true,'Should have been cached: ' . $class);
             echo $this->fragment_text;
             $this->cache_helper->end($this->fragment_key);
         } else {

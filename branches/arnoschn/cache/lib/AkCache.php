@@ -99,30 +99,6 @@ class AkCache extends AkObject
     */
     var $cache_enabled = true;
     
-    /**
-     * parses an option string ala:
-     * 
-     * define('AK_CACHE_OPTIONS','cacheDir=>/tmp; ttl=>180');
-     * 
-     * into:
-     * 
-     * array('cacheDir'=>'/tmp','ttl'=>180)
-     * 
-     */
-    function _parseCacheOptions($option_string)
-    {
-        $options = array();
-        $opts = preg_split('/;\s*/', $option_string);
-        foreach ($opts as $opt) {
-            $c = preg_split('/\s*=>\s*/', $opt);
-            if (count($c)==2) {
-                $options[$c[0]] = $options[$c[1]];
-            } else {
-                $options[] = $c[0];
-            }
-        }
-        return $options;
-    }
     
     /**
      * Instantiates and configures the AkCache store.
@@ -164,12 +140,12 @@ class AkCache extends AkObject
         $false = false;
         if ($options == true && !empty($cache_store)) {
             return $cache_store;
-        } else if (defined('AK_CACHE_HANDLER') && ($options == null || $options == true)) {
-            $type = AK_CACHE_HANDLER;
-            $options = AkCache::_parseCacheOptions(defined('AK_CACHE_OPTIONS')?AK_CACHE_OPTIONS:'');
-        } else if (is_array($options)) {
-            $type = key($options);
-            $options = $options[$type];
+        } else if (is_array($options) && 
+                   isset($options['enabled']) && $options['enabled']==true &&
+                   isset($options['handler']) &&
+                   isset($options['handler']['type'])) {
+            $type = $options['handler']['type'];
+            $options = isset($options['handler']['options'])?$options['handler']['options']:array();
         } else if (is_string($options) || is_int($options)) {
             $type = $options;
             $options = array();
@@ -202,7 +178,7 @@ class AkCache extends AkObject
         } else {
             $expanded_cache_key .= DS . $key;
         }
-        $regex = '/'.addcslashes(DS,"\\/").'+/';
+        $regex = '|'.DS.'+|';
         $expanded_cache_key = preg_replace($regex,DS, $expanded_cache_key);
         $expanded_cache_key = rtrim($expanded_cache_key,DS);
         return $expanded_cache_key;
@@ -256,7 +232,7 @@ class AkCache extends AkObject
     * - 2: Database based cache. This one has a performance penalty, but works on most servers
     * @return void
     */
-    function init($options = null, $cache_type = AK_CACHE_HANDLER)
+    function init($options = null, $cache_type = null)
     {
         $options = is_int($options) ? array('lifeTime'=>$options) : (is_array($options) ? $options : array());
 

@@ -66,19 +66,20 @@ class AkMemcache extends AkObject
     
     function _getNamespace($group)
     {
-        $group = 'group_'.md5($group);
+        $groupName = $group;
+        $group = 'group_'.md5($groupName);
         if (!isset($this->_namespaces[$group])) {
             $ident = $this->_getNamespaceId($group);
-            $namespace = $this->_memcache->get($ident);
-            if (!$namespace) {
+            $namespaceVersion = $this->_memcache->get($ident);
+            if (!$namespaceVersion) {
                 if ($this->_memcache->errno==ERR_NO_SOCKET) {
                     trigger_error("Could not connect to MemCache daemon", E_USER_ERROR);
                 }
-                $namespace = 1;
-                $this->_memcache->set($ident,$namespace);
+                $namespaceVersion = 1;
+                $this->_memcache->set($ident,$namespaceVersion);
                 
             }
-            $this->_namespaces[$group] = $namespace;
+            $this->_namespaces[$group] = $groupName.'_'.$namespaceVersion;
         }
         return $this->_namespaces[$group];
     }

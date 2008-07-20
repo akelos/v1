@@ -53,6 +53,8 @@ class AkCacheHandler extends AkObject
     
     var $_Sweepers = array();
     
+    var $_settings = array();
+    
     /**
      * Reads configuration options from AkActionController and the configured
      * constants
@@ -62,25 +64,35 @@ class AkCacheHandler extends AkObject
      *
      * @param AkActionController $parent
      */
-    function init(&$parent, $cache_store=null)
+    function init(&$parent, $settings = null)
     {
         $this->_action_cache_path = null;
         $this->_action_cache_host = null;
         if ($parent != null) {
             $this->_controller = &$parent;
             
-            $this->_configure();
+            $this->_configure($settings);
 
         } else {
             /**
              * We are in pagecache rendering mode
              */
-            $this->_setCacheStore($cache_store);
+            $this->_loadSettings($settings);
         
         }
     }
-    
-    function _configure()
+    function _loadSettings($settings = null)
+    {
+        if ($settings == null) {
+            $this->_settings = Ak::getSettings('caching');
+        } else if (is_array($settings)) {
+            $this->_settings = $settings;
+        } else {
+            return;
+        }
+        $this->_setCacheStore($this->_settings);
+    }
+    function _configure($settings)
     {
         $configuration_object = &$this->_controller;
         $configuration_options = array('caches_page'=>'_setCachesPage',
@@ -90,14 +102,14 @@ class AkCacheHandler extends AkObject
         /**
          * Load the configured cache store,
          */
-        $this->_setCacheStore(true);
+        $this->_loadSettings($settings);
         
         if (isset($this->_controller->page_cache_extension)) {
             $this->_page_cache_extension = $this->_controller->page_cache_extension;
         }
         
-        if (defined('AK_CACHE_ENABLED')) {
-            $this->_perform_caching = AK_CACHE_ENABLED;
+        if (@$this->_settings['enabled'] == true) {
+            $this->_perform_caching = true;
         }
         
         foreach ($configuration_options as $option => $callback) {
@@ -282,7 +294,7 @@ class AkCacheHandler extends AkObject
         } else if (is_array($path)) {
             $path = $this->_pathFor($path);
         }
-        $cacheId = preg_replace('/\/+/','/',$path);
+        $cacheId = preg_replace('|'.DS.'+|','/',$path);
         $cacheId = rtrim($cacheId,'/');
         $parts = split('/',$cacheId);
         $hasExtension = preg_match('/.+\..{3,4}/',$parts[count($parts)-1]);
@@ -303,7 +315,8 @@ class AkCacheHandler extends AkObject
             $cacheId .= DS . $cacheIdGetPart;
         }
         $cacheId=strlen($cacheId)>$this->_max_url_length?md5($cacheId):$cacheId;
-        $this->_lastCacheId = $forcedLanguage!=null?$forcedLanguage:Ak::lang().DS. $cacheId;
+        $cacheId = ($forcedLanguage!=null?$forcedLanguage:Ak::lang()).DS. $cacheId;
+        $this->_lastCacheId = preg_replace('|'.DS.'+|','/',$cacheId);
         return $this->_lastCacheId;
     }
     
@@ -388,7 +401,9 @@ class AkCacheHandler extends AkObject
     }
     function cacheTplFragmentStart($key, $options = array())
     {
-        if (!$this->cacheConfigured()) return false;
+        if (!$this->cacheConfigured()) {
+            return false;
+        }
         $read = $this->readFragment($key, $options);
         if ($read !== false) {
             echo $read;
@@ -420,7 +435,7 @@ class AkCacheHandler extends AkObject
     
     function readFragment($key, $options = array())
     {
-        if (!$this->cacheConfigured()) return;
+        if (!$this->cacheConfigured()) return false;
         
         $key = $this->fragmentCachekey($key, $options);
         return $this->_cache_store->get($key, isset($options['host'])?
@@ -601,7 +616,7 @@ class AkCacheHandler extends AkObject
      *
      * @param array $options
      */
-    function _setCacheStore($options=true)
+    function _setCacheStore($options=array())
     {
         $this->_cache_store = AkCache::lookupStore($options);
     }

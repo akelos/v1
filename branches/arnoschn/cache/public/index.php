@@ -32,11 +32,12 @@ if(!defined('AK_CONFIG_INCLUDED')){
 /**
  * Check cache here, render cache with headers
 */
-if (defined('AK_CACHE_ENABLED') && AK_CACHE_ENABLED) {
+$cache_settings = Ak::getSettings('caching');
+if ($cache_settings['enabled']) {
     require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');
     $null = null;
     $pageCache = &Ak::singleton('AkCacheHandler', $null);
-    $pageCache->init($null,null);
+    $pageCache->init($null,$cache_settings);
     if ($cachedPage = $pageCache->getCachedPage()) {
         $cachedPage->render();
     }

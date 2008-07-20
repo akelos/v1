@@ -143,7 +143,7 @@ class Test_AkActionControllerSweeper extends AkTestApplication
     }
     function _flushCache($host)
     {
-        $fileCache=AkCache::lookupStore('file');
+        $fileCache=AkCache::lookupStore(true);
         if ($fileCache!==false) {
             $fileCache->clean($host);
         }

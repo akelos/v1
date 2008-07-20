@@ -2900,11 +2900,13 @@ class AkActionController extends AkObject
     }
     function _initCacheHandler() 
     { 
-        if (defined('AK_CACHE_ENABLED') && AK_CACHE_ENABLED && defined('AK_CACHE_HANDLER')) {
+        // TODOARNO
+        $cache_settings = Ak::getSettings('caching');
+        if ($cache_settings['enabled']) {
             $null = null;
             require_once(AK_LIB_DIR . DS . 'AkActionController' . DS . 'AkCacheHandler.php');
             $this->_CacheHandler =& Ak::singleton('AkCacheHandler', $null);
-            $this->_CacheHandler->init(&$this, true);
+            $this->_CacheHandler->init(&$this);
         }
     }
     /**

@@ -1907,6 +1907,29 @@ class Ak
             
         }
     }
+    
+    /**
+     * Returns YAML settings from config/$namespace.yml
+     */
+    function getSettings($namespace, $raise_error_if_config_file_not_found = true)
+    {
+        static $loaded_settings = array();
+        
+        if(isset($loaded_settings[$namespace])){
+            return $loaded_settings[$namespace];
+        }
+        
+        $namespace = Ak::sanitize_include($namespace, 'paranoid');
+        $yaml_file_name = AK_CONFIG_DIR.DS.$namespace.'.yml';
+
+        if (!is_file($yaml_file_name)){
+            if($raise_error_if_config_file_not_found){
+                die(Ak::t('Could not find %namespace settings file in %path.', array('%namespace'=>$namespace, '%path'=>$yaml_file_name))."\n");
+            }
+            return false;
+        }
+        return $loaded_settings[$namespace] = Ak::convert('yaml', 'array', file_get_contents($yaml_file_name));  
+    }
 }
 
 
