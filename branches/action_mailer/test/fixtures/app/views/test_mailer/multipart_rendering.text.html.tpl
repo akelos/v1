@@ -7,6 +7,7 @@
 
 <hidden>
 <img src="http://www.bermilabs.com/images/bermilabs_logo.png" />
+
 <img src="/images/akelos_framework_logo.png" />
 </hidden>
 

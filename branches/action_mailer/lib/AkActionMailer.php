@@ -17,7 +17,7 @@
  */
 
 require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
-require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMail.php');
+require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailMessage.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailParser.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkActionMailerQuoting.php');
 
@@ -275,7 +275,7 @@ class AkActionMailer extends AkBaseModel
     var $default_implicit_parts_order = array('multipart/alternative', 'text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
     var $_MailDriver;
-    var $_defaultMailDriverName = 'AkMail';
+    var $_defaultMailDriverName = 'AkMailMessage';
 
     function __construct($Driver = null)
     {
@@ -455,7 +455,6 @@ class AkActionMailer extends AkBaseModel
     function addAttachment()
     {
         $args = func_get_args();
-        print_r($args);
         return call_user_func_array(array(&$this->_MailDriver, 'setAttachment'), $args);
     }
 
@@ -467,7 +466,7 @@ class AkActionMailer extends AkBaseModel
      * 
      * This simplifies creating mail objects from datasources.
      * 
-     * If the methos does not exists the parameter will be added to the body.
+     * If the method does not exists the parameter will be added to the body.
      */
     function set($attributes = array())
     {
@@ -475,8 +474,15 @@ class AkActionMailer extends AkBaseModel
             $this->setTemplate($attributes['template']);
             unset($attributes['template']);
         }
+
+        if((!empty($attributes['attachment']) || !empty($attributes['attachments'])) &&
+        (empty($attributes['parts']) && empty($attributes['part']) && empty($attributes['body']))){
+            // we can render here the body if there are attachments
+        }
+
         $this->_MailDriver->set($attributes);
     }
+
 
     /**
      * Gets a well formed mail in plain text
@@ -513,7 +519,7 @@ class AkActionMailer extends AkBaseModel
      */
     function receive($raw_mail)
     {
-        $this->_MailDriver =& AkMail::parse($raw_mail);
+        $this->_MailDriver =& AkMailBase::parse($raw_mail);
         return $this->_MailDriver;
     }
 
@@ -528,14 +534,14 @@ class AkActionMailer extends AkBaseModel
      */
     function deliverDirectly(&$Mail)
     {
-        $Mail =& new AkMail($Mail);
+        $Mail =& new $this->_defaultMailDriverName ($Mail);
         $Mail->send();
     }
 
 
     /**
      * Initialize the mailer via the given +method_name+. The body will be
-     * rendered and a new AkMail object created.
+     * rendered and a new AkMailMessage object created.
      */
     function &create($method_name, $parameters, $content_type = '')
     {
@@ -548,28 +554,43 @@ class AkActionMailer extends AkBaseModel
             trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
         }
         $parameters = @array_shift($args);
-        $content_type = @array_shift($args);
 
         $Mail =& $this->_MailDriver;
+
+        $this->_prepareInlineBodyParts($Mail);
+
+        $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
+
+        $this->Mail =& $Mail;
+        return $Mail;
+    }
+
+    function _prepareInlineBodyParts(&$Mail, $mail_content_type = 'multipart/alternative')
+    {
 
         if(!is_string($Mail->body)){
             if(empty($Mail->parts)){
                 $Mail->_avoid_multipart_propagation = true;
                 $templates = $this->_getAvailableTemplates();
+                $alternative_multiparts = array();
                 foreach ($templates as $template_name){
                     if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
                         if($this->template == $match[1]){
                             $content_type = str_replace('.','/', $match[2]);
-                            $Mail->setPart(array(
+
+                            $current_part = array(
                             'content_type' => $content_type,
                             'disposition' => 'inline',
                             'charset' => @$Mail->charset,
-                            'body' => $this->renderMessage($this->getTemplatePath().DS.$template_name, $Mail->body)));
+                            'body' => $this->renderMessage($this->getTemplatePath().DS.$template_name, $Mail->body));
+
+                            $Mail->setPart($current_part);
                         }
                     }
                 }
+
                 if(!empty($Mail->parts)){
-                    $Mail->content_type = 'multipart/alternative';
+                    $Mail->content_type = $mail_content_type;
                     $Mail->parts = $Mail->getSortedParts($Mail->parts, $Mail->implicit_parts_order);
                 }
             }
@@ -594,11 +615,6 @@ class AkActionMailer extends AkBaseModel
                 $this->body = null;
             }
         }
-
-        $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
-
-        $this->Mail =& $Mail;
-        return $Mail;
     }
 
     function _getAvailableTemplates()
@@ -611,7 +627,7 @@ class AkActionMailer extends AkBaseModel
     }
 
     /**
-    * Delivers an AkMail object. By default, it delivers the cached mail
+    * Delivers an AkMailMessage object. By default, it delivers the cached mail
     * object (from the AkActionMailer::create method). If no cached mail object exists, and
     * no alternate has been given as the parameter, this will fail.
     */
@@ -699,7 +715,7 @@ class AkActionMailer extends AkBaseModel
 
     function performTestDelivery(&$Mail)
     {
-        //$this->performSmtpDelivery($Mail); return ;
+        //$this->performSmtpDelivery($Mail);
         $this->deliveries[] =& $Mail->getEncoded();
     }
 

@@ -1,9 +1,12 @@
 <?php
 
-class AkMailEncoder extends Mail_mimeEncode
+class AkMailEncoder extends AkObject
 {
 
 
+    
+    
+    
     function setMimeContents($options = array())
     {
         require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'text_helper.php');

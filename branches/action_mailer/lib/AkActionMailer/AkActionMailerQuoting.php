@@ -48,7 +48,7 @@ class AkActionMailerQuoting
             }
             
             $line = preg_replace($search_pattern, 'sprintf( "=%02X", ord ( "$0" ) ) ;', $line );
-            $length = utf8_strlen($line);
+            $length = strlen($line);
             
             $last_char = ord($line[$length-1]);
             if (!($emulate_imap_8bit && ($k==count($lines)-1)) && ($last_char==0x09) || ($last_char==0x20)) {

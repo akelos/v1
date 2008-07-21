@@ -31,11 +31,11 @@ class AkMailParser
         }
     }
 
-    function parse($raw_message = '', $options = array())
+    function parse($raw_message = '', $options = array(), $object_type = 'AkMailMessage')
     {
         $parser_class = empty($options['parser_class']) ? 'AkMailParser' : $options['parser_class'];
         $Parser =& new $parser_class($options);
-        $Mail = new stdClass();
+        $Mail = new $object_type();
         $raw_message = empty($raw_message) ? $Parser->raw_message : $raw_message;
         if(!empty($raw_message)){
             list($raw_header, $raw_body) = $Parser->_getRawHeaderAndBody($raw_message);
@@ -89,7 +89,7 @@ class AkMailParser
                 trigger_error(Ak::t('Maximum multipart decoding recursion reached.'), E_USER_WARNING);
                 return false;
             }else{
-                $Part = $Parser->parse($raw_part);
+                $Part = $Parser->parse($raw_part, array(), 'AkMailPart');
             }
             $this->parts[] = $Part;
         }
@@ -227,6 +227,7 @@ class AkMailParser
             if($header_value != $header['value']){
                 $header['encoded'] = $header['value'];
                 $header['value'] = $header_value;
+                isset($charset) && $header['charset'] = $charset;
             }
         }
     }
@@ -278,6 +279,89 @@ class AkMailParser
                 }
             }
         }
+    }
+
+    
+    function importStructure(&$MailOrPart, $structure = array())
+    {
+        if(isset($structure['header'])){
+            $structure['headers'] = $structure['header'];
+            unset($structure['header']);
+        }
+        foreach ($structure as $attribute=>$value){
+            if($attribute[0] != '_'){
+                $attribute_setter = 'set'.AkInflector::camelize($attribute);
+                if(method_exists($MailOrPart, $attribute_setter)){
+                    $MailOrPart->$attribute_setter($value);
+                }else{
+                    $MailOrPart->{AkInflector::underscore($attribute)} = $value;
+                }
+            }
+        }
+        return ;
+    }
+    
+    
+    function extractImagesIntoInlineParts(&$Mail, $options = array())
+    {
+        $html =& $Mail->body;
+        require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'text_helper.php');
+        $images = TextHelper::get_image_urls_from_html($html);
+        $html_images = array();
+        if(!empty($images)){
+            require_once(AK_LIB_DIR.DS.'AkImage.php');
+            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'.DS.'asset_tag_helper.php');
+
+            $images = array_diff(array_unique($images), array(''));
+
+            foreach ($images as $image){
+                $original_image_name = $image;
+                $image = $this->_getImagePath($image);
+                if(!empty($image)){
+                    $extenssion = substr($image, strrpos('.'.$image,'.'));
+                    $image_name = Ak::uuid().'.'.$extenssion;
+                    $html_images[$original_image_name] = 'cid:'.$image_name;
+
+                    $Mail->setAttachment('image/'.$extenssion, array(
+                    'body' => Ak::file_get_contents($image),
+                    'filename' => $image_name,
+                    'content_disposition' => 'inline',
+                    'content_id' => '<'.$image_name.'>',
+                    ));
+                }
+            }
+            $modified_html = str_replace(array_keys($html_images),array_values($html_images), $html);
+            if($modified_html != $html){
+                $html = $modified_html;
+                $Mail->_moveBodyToInlinePart(false);
+            }
+        }
+    }
+    
+    function _getImagePath($path)
+    {
+        if(preg_match('/^http(s)?:\/\//', $path)){
+            $path_info = pathinfo($path);
+            $base_file_name = Ak::sanitize_include($path_info['basename'], 'paranaoid');
+            if(empty($path_info['extension'])){ // no extension, we don't do magic stuff
+                $path = '';
+            }else{
+                $local_path = AK_TMP_DIR.DS.'mailer'.DS.'remote_images'.DS.md5($base_file_name['dirname']).DS.$base_file_name.'.'.$path_info['extension'];
+                if(!file_exists($local_path) || (time() > @filemtime($local_path)+7200)){
+                    if(!Ak::file_put_contents($local_path, Ak::url_get_contents($path))){
+                        return '';
+                    }
+                }
+                return $local_path;
+            }
+        }
+
+        $path = AK_PUBLIC_DIR.Ak::sanitize_include($path);
+
+        if(!file_exists($path)){
+            $path = '';
+        }
+        return $path;
     }
 
 }

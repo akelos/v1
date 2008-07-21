@@ -3,7 +3,7 @@
 class TestMailer extends AkActionMailer
 {
     var $delivery_method = 'test';
-    
+
     function signed_up($recipient)
     {
         $this->set(array(
@@ -77,7 +77,7 @@ class TestMailer extends AkActionMailer
         'cc' => "Grytøyr <stian2@example.com>",
         'bcc' => "Grytøyr <stian3@example.com>",
         'body' => "Nothing to see here.",
-        'charset' => "ISO-8859-1" 
+        'charset' => "ISO-8859-1"
         ));
     }
 
@@ -118,7 +118,7 @@ class TestMailer extends AkActionMailer
         'recipients' => $recipient,
         'subject' => "Foo áëô îü",
         'from' => "test@example.com",
-        'charset' => "utf-8",
+        'charset' => "UTF-8",
         'parts' => array(
         array('content_type' => 'text/plain', 'body' => 'blah'),
         array('content_type' => 'text/html', 'body' => '<b>blah</b>'),
@@ -233,15 +233,19 @@ class TestMailer extends AkActionMailer
         'content_type' => "multipart/mixed",
 
         'parts' => array(
-            array('content_type' => 'multipart/alternative', 'content_disposition' => 'inline',  'headers' => array("Foo" => "bar"), 'parts' => array(
-                     array('content_type' => 'text/plain', 'body' => 'test text\nline #2'),
-                    array('content_type' => 'text/html', 'body' => '<b>test</b> HTML<br/>\nline #2')
-                )
-            ),
+        array(
+        'content_type' => 'multipart/alternative',
+        'content_disposition' => 'inline',
+        'headers' => array("Foo" => "bar"),
+        'parts' => array(
+        array('content_type' => 'text/plain', 'body' => "test text\nline #2"),
+        array('content_type' => 'text/html', 'body' => "<b>test</b> HTML<br/>\nline #2")
+        )
         ),
-        
+        ),
+
         'attachment' => array(
-            'content_type' => 'application/octet-stream','filename' => 'test.txt', 'body' => "test abcdefghijklmnopqstuvwxyz"
+        'content_type' => 'application/octet-stream','filename' => 'test.txt', 'body' => "test abcdefghijklmnopqstuvwxyz"
         )
         ));
     }
@@ -255,13 +259,13 @@ class TestMailer extends AkActionMailer
         'content_type' => "multipart/related",
 
         'part' => array('content_type' => 'text/html', 'body' => 'yo'),
-        
+
         'attachment' => array(
-            'content_type' => 'image/jpeg','filename' => 'test.jpeg', 'body' => "i am not a real picture", 'headers' => array('Content-ID' => '<test@test.com>')
+        'content_type' => 'image/jpeg','filename' => 'test.jpeg', 'body' => "i am not a real picture", 'headers' => array('Content-ID' => '<test@test.com>')
         )
         ));
     }
-    
+
     function unnamed_attachment($recipient)
     {
         $this->set(array(
@@ -271,9 +275,9 @@ class TestMailer extends AkActionMailer
         'content_type' => "multipart/mixed",
 
         'part' => array('content_type' => 'text/plain', 'body' => 'hullo'),
-        
+
         'attachment' => array(
-            'content_type' => 'application/octet-stream','body' => "test abcdefghijklmnopqstuvwxyz"
+        'content_type' => 'application/octet-stream','body' => "test abcdefghijklmnopqstuvwxyz"
         )
         ));
     }
@@ -289,7 +293,7 @@ class TestMailer extends AkActionMailer
         'body' => "testing"));
     }
 
-    
+
     function custom_content_type_attributes()
     {
         $this->set(array(
@@ -307,22 +311,19 @@ class TestMailer extends AkActionMailer
         $this->set(array(
         'recipients' => "bermi@bermilabs.com",
         'subject' => "Multipart rendering",
-        'from' => "testing@bermilabs.com"
+        'from' => "testing@bermilabs.com",
+        'attachment' => array('content_type' => 'audio/mp3', 'filename' => 'test.mp3', 'body' => file_get_contents(AK_BASE_DIR.DS.'test/fixtures/data/action_mailer/testing.mp3')),
         ));
-        
-        
-        $this->addAttachment('audio/mp3', array(
-        'body'=>file_get_contents(AK_BASE_DIR.DS.'test/fixtures/data/action_mailer/testing.mp3')
-        ));
-        
+
         return ;
+
         $this->set(array(
         'recipients' => "no.one@example.com",
         'subject' => "Multipart rendering",
         'from' => "some.one@example.com"
         ));
     }
-    
+
     function &receive($raw_email)
     {
         $Mail =& parent::receive($raw_email);
