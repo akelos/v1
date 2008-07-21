@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<project name="LP2 Build File For Unit Tests" basedir="." default="build">
+
+	<property name="report.dir" value="report" />
+	<property name="codecoverage" value="false" override="true" />
+	<property name="coverage.dir" value="report/coverage" />
+	<property name="coverage.subdir" value="coverage" />
+
+	<property name="coverage.database" value="./report/coverage/database" />
+	<fileset dir="lib" id="akelos-classes">
+		<include name="*/**/*.php" />
+	</fileset>
+	
+	<target name="prepare">
+
+		<mkdir dir="${report.dir}" />
+
+	</target>
+
+	<target name="generate-report">
+		<mkdir dir="${report.dir}/${phpversion}" />
+		<mkdir dir="${report.dir}/${phpversion}/${environment}" />
+		<phpunit2report infile="${project.basedir}/../akelos_frameworktests/tests/test/test-results-${phpversion}-${environment}.xml" styledir="resources/xsl" todir="${report.dir}/${phpversion}/${environment}" format="noframes" />
+
+	</target>
+	<target name="test">
+		<taskdef name="ci-tests" classname="CiTestsTask" classpath="${project.basedir}" />
+		<ci-tests akelosPath="${project.basedir}" testPath="${project.basedir}/../akelos_frameworktests/tests" />
+	</target>
+
+	<target name="report">
+		<phingCall target="generate-report">
+			<property name="phpversion" value="php5" />
+			<property name="environment" value="mysql" />
+		</phingCall>
+		<phingCall target="generate-report">
+			<property name="phpversion" value="php4" />
+			<property name="environment" value="mysql" />
+		</phingCall>
+		<phingCall target="generate-report">
+			<property name="phpversion" value="php5" />
+			<property name="environment" value="postgres" />
+		</phingCall>
+		<phingCall target="generate-report">
+			<property name="phpversion" value="php4" />
+			<property name="environment" value="postgres" />
+		</phingCall>
+		<phingCall target="generate-report">
+			<property name="phpversion" value="php5" />
+			<property name="environment" value="sqlite" />
+		</phingCall>
+	</target>
+
+	<target name="build" depends="prepare,test,report">
+	</target>
+
+
+
+</project>
