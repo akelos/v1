@@ -12,6 +12,7 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     var $Router;
     
     protected $params;
+    private   $reciprocity = false;
 
     function setUp()
     {
@@ -43,6 +44,11 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
         $this->Router->connect($url_pattern, $options, $requirements);
     }
     
+    function testReciprocity($bool = true)
+    {
+        return $this->reciprocity = $bool;
+    }
+    
     /**
      * @param string $url
      * @return AkRouterSpec
@@ -50,7 +56,15 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     function get($url)
     {
         $this->params = $this->Router->toParams($url);
+        if ($this->reciprocity && $this->params){
+            $this->assertEquals($this->encloseWithSlashes($url), $this->Router->toUrl($this->params));
+        }
         return $this;
+    }
+    
+    private function encloseWithSlashes($string)
+    {
+        return $string == '/' || $string == '' ? '/' : '/'.trim($string,'/').'/';
     }
     
     /**
