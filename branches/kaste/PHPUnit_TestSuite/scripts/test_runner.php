@@ -9,6 +9,7 @@ class PHPUnit_TestRunner
     private $test_suite;
     private $options = array('verbose'=>false);
     private $filename_filter;
+    private $consider_covers_files = 'white';  // white, black, or false
     
     static function main($args=null)
     {
@@ -64,8 +65,15 @@ class PHPUnit_TestRunner
                 case '-?':
                     $this->drawHelp();
                     break;
-                case '--c':
-                case '--cover':
+                case '-c':
+                case '+c':
+                case '!c':
+                    $sign = $arg{0};
+                    if ($sign=='-') $this->consider_covers_files = 'black';
+                    elseif ($sign=='+') $this->consider_covers_files = 'white';
+                    elseif ($sign=='!') $this->consider_covers_files = false;
+                    break;
+                case '--report':
                     if (!extension_loaded('xdebug')) continue;
                     $this->options['reportDirectory'] = array_shift($args);
                     break;
@@ -137,6 +145,10 @@ class PHPUnit_TestRunner
     {
         if ($file{0}=='_') return false;
         
+        if (basename($file)=='covers'){
+            $this->handleCoverageFilter($file);
+            return false;
+        }
         if (substr($file,-13)=='_TestCase.php'){
             require_once $file;
             return false;
@@ -150,6 +162,24 @@ class PHPUnit_TestRunner
         }
         
         return true;
+    }
+    
+    private function handleCoverageFilter($file)
+    {
+        if ($this->consider_covers_files == false) return;
+        $data = file_get_contents($file);
+        foreach (explode("\n",$data) as $line){
+            $file = str_replace(array('BASE','APP','LIB','FWK','*'),array(AK_BASE_DIR,AK_APP_DIR,AK_LIB_DIR,AK_FRAMEWORK_DIR,''),$line);
+            if (is_file($file)){
+                $this->consider_covers_files == 'white' ?
+                    PHPUnit_Util_Filter::addFileToWhitelist($file) :
+                    PHPUnit_Util_Filter::addFileToFilter($file);
+            }elseif (is_dir($file)){
+                $this->consider_covers_files == 'white' ?
+                    PHPUnit_Util_Filter::addDirectoryToWhitelist($file) :
+                    PHPUnit_Util_Filter::addDirectoryToFilter($file);
+            }
+        }
     }
     
     /**
@@ -181,7 +211,8 @@ test_runner [-v|?] [-|+group] [-|+method] [-|+filename] <filenames|folders>
    -+group         see below
    -+method
    -+file
-   --cover folder  write html-coverage-report to the specified folder 
+   --report folder write html-coverage-report to the specified folder
+   -+!c            black- or whitelist or ignore covers-file (s.b.) 
 
 This script creates TestSuites on-the fly and runs them. 
 It will exclude filenames or folders which start with an underscore. As a 
@@ -194,7 +225,7 @@ A minus [-] means 'except', a plus means 'only'. E.g.:
 
 >  test_runner -v -slow -test*Postgre + DbAdap*.php tests/
 
-this will search through all files in the folder <tests/> and its subfolders, 
+This will search through all files in the folder <tests/> and its subfolders, 
 include the one which filename begins with <DbAdap> and exclude the tests which
 belong to a group called <slow> or which method name matches <test.*Postgre>.
 
@@ -209,6 +240,20 @@ You can specify multiple groups, but only one methodname or filename pattern.
 > test_runner tests/ + Request*.php
 > test_runner tests/AkRequest/ tests/AkRouter/
 > test_runner tests/ +test*Cast*Null
+
+If you have xdebug you can generate a code-coverage report with
+
+> test_runner --report folder_to_save_to
+
+You can whitelist or blacklist files from this report with +c and -c. If you
+place a file with the name <covers> somewhere in your test-folders with the 
+following content f.i.
+
+ LIB/AkRequest/*
+ APP/controllers/person_controller.php
+
+it will take all the specified files and folders to this list. The script expands 
+following constants: LIB, BASE, APP, FWK (=Framework dir).
 
 
 BANNER;
