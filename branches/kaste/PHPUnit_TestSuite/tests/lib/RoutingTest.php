@@ -19,7 +19,7 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testShouldResolveToAdminModule()
     {
-        $this->get('/admin/user/add/');
+        $this->get('/admin/user/add');
 
         $this->assertParameterEquals('admin','module');
         $this->assertController('user');
@@ -28,11 +28,11 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testRouteToAdminLogs()
     {
-        $this->get('/admin/logs/warnings/show/1');
-        $this->assertModule('admin/logs');
-        $this->assertController('warnings');
-        $this->assertAction('show');
-        $this->assertId(1);
+        $this->get('/admin/logs/warnings');
+        $this->assertModule('admin');
+        $this->assertController('logs');
+        $this->assertAction('list');
+        $this->assertParameterEquals('warnings','type');
     }
     
     function testRouteToArtistAlbumTags()

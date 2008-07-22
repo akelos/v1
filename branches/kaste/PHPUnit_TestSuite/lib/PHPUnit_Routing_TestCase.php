@@ -45,7 +45,7 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
         $this->Router->connect($url_pattern, $options, $requirements);
     }
     
-    function testReciprocity($bool = true)
+    function checkReciprocity($bool = true)
     {
         return $this->reciprocity = $bool;
     }
@@ -59,12 +59,11 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
         $Request = $this->createRequest($url);
         try {
             $this->params = $this->Router->match($Request);
+            if ($this->reciprocity){
+                $this->assertEquals($url, $this->Router->urlize($this->params)->path());
+            }
         }catch (NoMatchingRouteException $e){
             $this->errors = true;
-        }
-        #$this->params = $this->Router->match($url);
-        if ($this->reciprocity && $this->params){
-            $this->assertEquals($this->encloseWithSlashes($url), $this->Router->toUrl($this->params));
         }
         return $this;
     }
@@ -80,11 +79,6 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
                 ->will($this->returnValue($url));
                 
         return $Request;
-    }
-    
-    private function encloseWithSlashes($string)
-    {
-        return $string == '/' || $string == '' ? '/' : '/'.trim($string,'/').'/';
     }
     
     /**

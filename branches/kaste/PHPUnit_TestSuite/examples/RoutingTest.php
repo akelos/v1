@@ -7,7 +7,11 @@ class RoutingTestExample extends PHPUnit_Routing_TestCase
     
     function testStandardRoute()
     {
-        $this->get('/blog/index');
+        // after parametrizing the url, check if the router 
+        // can build the same given url from these parameters 
+        $this->checkReciprocity(); 
+        
+        $this->get('/blog');
         $this->assertController('blog');
         $this->assertAction('index');
     }
