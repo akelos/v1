@@ -7,14 +7,14 @@ class RoutingTestExample extends PHPUnit_Routing_TestCase
     
     function testStandardRoute()
     {
-        $this->get('blog/index');
+        $this->get('/blog/index');
         $this->assertController('blog');
         $this->assertAction('index');
     }
     
     function test404()
     {
-        $this->get('should/not/match/anything/or');
+        $this->get('/should/not/match/anything/or');
         $this->assert404();
     }
     
@@ -23,9 +23,9 @@ class RoutingTestExample extends PHPUnit_Routing_TestCase
         $this->instantiateRouter(); # we need a fresh router here
         $this->connect('/:artist/:album',array('controller'=>'artist','action'=>'list'));
 
-        $this->get('autechre/quaristice')->resolvesTo('autechre','quaristice','artist','list');
+        $this->get('/autechre/quaristice')->resolvesTo('autechre','quaristice','artist','list');
         
-        $this->get('boys/girls');
+        $this->get('/boys/girls');
         $this->assertController('artist');
         $this->assertAction('list');
         $this->assertArtist('boys');

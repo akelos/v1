@@ -13,6 +13,7 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     
     protected $params;
     private   $reciprocity = false;
+    private   $errors = false;
 
     function setUp()
     {
@@ -39,7 +40,7 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
         return $this->Router = new AkRouter();
     }
 
-    function connect($url_pattern, $options = array(), $requirements = null)
+    function connect($url_pattern, $options = array(), $requirements = array())
     {
         $this->Router->connect($url_pattern, $options, $requirements);
     }
@@ -51,15 +52,34 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     
     /**
      * @param string $url
-     * @return AkRouterSpec
+     * @return PHPUnit_Routing_TestCase
      */
     function get($url)
     {
-        $this->params = $this->Router->toParams($url);
+        $Request = $this->createRequest($url);
+        try {
+            $this->params = $this->Router->match($Request);
+        }catch (NoMatchingRouteException $e){
+            $this->errors = true;
+        }
+        #$this->params = $this->Router->match($url);
         if ($this->reciprocity && $this->params){
             $this->assertEquals($this->encloseWithSlashes($url), $this->Router->toUrl($this->params));
         }
         return $this;
+    }
+    
+    private function createRequest($url,$method='get')
+    {
+        $Request = $this->getMock('AkRequest',array('getMethod','getRequestedUrl'),array(),'',false);
+        $Request->expects($this->any())
+                ->method('getMethod')
+                ->will($this->returnValue($method));
+        $Request->expects($this->any())
+                ->method('getRequestedUrl')
+                ->will($this->returnValue($url));
+                
+        return $Request;
     }
     
     private function encloseWithSlashes($string)
@@ -96,12 +116,17 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     
     private function ensureNoMatch()
     {
-        if ($this->params) $this->fail("Expected no match, actually got a match.");
+        if (!$this->hasErrors()) $this->fail("Expected no match, actually got a match.");
     }
     
     private function ensureMatch()
     {
-        if (!$this->params) $this->fail("Expected a match, actually got no match.");
+        if ($this->hasErrors()) $this->fail("Expected a match, actually got no match.");
+    }
+    
+    private function hasErrors()
+    {
+        return $this->errors;
     }
     
     private function ensureParameterIsSet($param_name)
