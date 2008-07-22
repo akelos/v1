@@ -48,7 +48,21 @@ abstract class PHPUnit_Controller_TestCase extends PHPUnit_Model_TestCase
     function createRequest($method,$action,$options)
     {
         $params = array_merge(array('controller'=>$this->controller_name,'action'=>$action),$options);
-        return $this->Request = AkTestRequest::createInstance($method,$params);
+
+        $Request = $this->getMock('AkRequest',array('getMethod','getParametersFromRequestedUrl'),array(),'',false);
+        $Request->expects($this->any())
+                ->method('getMethod')
+                ->will($this->returnValue($method));
+        $Request->expects($this->any())
+                ->method('getParametersFromRequestedUrl')
+                ->will($this->returnValue($params));
+                
+        // HACK  fix ->getParams
+        foreach ($params as $k=>$v){
+            $Request->$k = $v;
+            $Request->_request[$k] = $v;
+        }//HACK
+        return $this->Request = $Request;
     }
     
     function createResponse()

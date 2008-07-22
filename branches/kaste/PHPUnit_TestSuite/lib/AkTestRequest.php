@@ -7,7 +7,6 @@ class AkTestRequest extends AkRequest
     {
         $Request = new AkTestRequest();
         $Request->addParamsToRequest($params);
-        $Request->setRequestMethod($method);
         return $Request;
     }
     
@@ -17,17 +16,6 @@ class AkTestRequest extends AkRequest
             $this->_addParam($key,$value);
             $this->_request[$key] = $value;
         }
-    }
-    
-    function setRequestMethod($method)
-    {
-        $this->_requestedMethod = $method;
-    }
-    
-    // mocked
-    function getMethod()
-    {
-        return $this->_requestedMethod;
     }
     
 }
