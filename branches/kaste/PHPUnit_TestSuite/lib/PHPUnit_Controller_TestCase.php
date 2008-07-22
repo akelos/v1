@@ -1,6 +1,6 @@
 <?php
 
-abstract class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase 
+abstract class PHPUnit_Controller_TestCase extends PHPUnit_Model_TestCase  
 {
     var $controller_name;
     
@@ -21,12 +21,12 @@ abstract class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase
         $this->controller_name = $controller;
     }
     
-    function get($action,$options=array())
+    function process($request_type,$action,$options)
     {
         $this->action_name = $action;
         $this->addExpectationsDependendOnActionName($action);
         
-        $Request = $this->createRequest('get',$action,$options);
+        $Request = $this->createRequest($request_type,$action,$options);
         $Response = $this->createResponse();
         $Controller = $this->createController($this->controller_name);
 
@@ -35,9 +35,14 @@ abstract class PHPUnit_Controller_TestCase extends PHPUnit_Framework_TestCase
         $Controller->process($this->Request,$this->Response);
     }
     
+    function get($action,$options=array())
+    {
+        $this->process('get',$action,$options);
+    }
+    
     function post($action,$options=array())
     {
-        return $this->createRequest('post',$action,$options);
+        $this->process('post',$action,$options);
     }
     
     function createRequest($method,$action,$options)
