@@ -64,6 +64,11 @@ class PHPUnit_TestRunner
                 case '-?':
                     $this->drawHelp();
                     break;
+                case '--c':
+                case '--cover':
+                    if (!extension_loaded('xdebug')) continue;
+                    $this->options['reportDirectory'] = array_shift($args);
+                    break;
                 case '-':
                 case '+':
                     $this->addFilter($arg.array_shift($args));
@@ -171,11 +176,12 @@ class PHPUnit_TestRunner
 Usage:
 
 test_runner [-v|?] [-|+group] [-|+method] [-|+filename] <filenames|folders>
-   -v        verbose
-   -?        this help
-   -+group   see below
+   -v              verbose
+   -?              this help
+   -+group         see below
    -+method
    -+file
+   --cover folder  write html-coverage-report to the specified folder 
 
 This script creates TestSuites on-the fly and runs them. 
 It will exclude filenames or folders which start with an underscore. As a 
@@ -204,7 +210,9 @@ You can specify multiple groups, but only one methodname or filename pattern.
 > test_runner tests/AkRequest/ tests/AkRouter/
 > test_runner tests/ +test*Cast*Null
 
+
 BANNER;
+        echo '(xdebug '.(extension_loaded('xdebug') ? 'enabled)' : 'disabled)');
         exit;
         
     }
