@@ -28,6 +28,18 @@ class AcceptHeader extends PHPUnit_Framework_TestCase
         $this->assertEquals(array('type'=>'text/html','q'=>'1.0'),array_pop($this->Request->getAcceptHeader()));
     }
     
+    function testMimetypeParserRecoginzesAdditionalParameters()
+    {
+        $this->Request->env['HTTP_ACCEPT'] = 'text/html;q=0.9;key=value;throw_away';
+        $this->assertEquals(array('type'=>'text/html','q'=>'0.9','key'=>'value','throw_away'),array_pop($this->Request->getAcceptHeader()));
+    }
+    
+    function testMimetypeParserHandleFalseParametersNice()
+    {
+        $this->Request->env['HTTP_ACCEPT'] = 'text/xml;throw_away';
+        $this->assertEquals('xml',$this->Request->getFormat());
+    }
+    
     function testPreserveOriginalOrderIfQIsEqual()
     {
         $this->Request->env['HTTP_ACCEPT'] = 'text/html, application/html';

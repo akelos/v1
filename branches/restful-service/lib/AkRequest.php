@@ -330,10 +330,17 @@ class AkRequest extends AkObject
     
     private function parseMimeType($mime_type)
     {
-        @list($type,$parameter_string) = explode(';',$mime_type);
+        @list($type,$parameter_string) = explode(';',$mime_type,2);
         $mime_type_struct = array();
         if ($parameter_string){
-            parse_str($parameter_string,$mime_type_struct);
+            foreach (explode(';',$parameter_string) as $parameter){
+                if (strstr($parameter,'=')){
+                    list($key,$value) = explode('=',$parameter);
+                    $mime_type_struct[$key] = $value;
+                }else{
+                    $mime_type_struct[] = $parameter;
+                }
+            }
         }
         $mime_type_struct['type'] = trim($type);
         return $mime_type_struct;
