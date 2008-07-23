@@ -1,24 +1,181 @@
 <?php
 
 
-class AkMailComposer extends AkObject 
+class AkMailComposer extends AkObject
 {
-    var $Mail;
+    var $Message;
+    var $ActionMailer;
+    var $parts = array();
     var $composed_message = '';
+
     
-    function setMail(&$Mail)
+    function init(&$ActionMailer)
     {
-        $this->Mail =& $Mail;
+        $this->ActionMailer =& $ActionMailer;
+        $this->Message =& $ActionMailer->Message;
     }
     
-    function getComposedMessage()
+    function build()
+    {
+        $args = func_get_args();
+        $method_name = array_shift($args);
+        $this->ActionMailer->initializeDefaults($method_name);
+        $this->_callActionMailerMethod($method_name, $args);
+        $this->_prepareInlineBodyParts();
+    }
+
+
+    function _callActionMailerMethod($method_name, $params = array())
+    {
+        if(method_exists($this->ActionMailer, $method_name)){
+            call_user_func_array(array(&$this->ActionMailer, $method_name), $params);
+        }else{
+            trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->ActionMailer->getModelName())), E_USER_ERROR);
+        }
+    }
+    
+
+    function _prepareInlineBodyParts($message_content_type = 'multipart/alternative')
+    {
+        if(!$this->_hasRenderedBody()){
+            if(!$this->_renderMultiPartViews($message_content_type)){
+                $this->_renderMainTemplateIfNeeded();
+            }
+            $this->_moveBodyToPart();
+        }
+    }
+
+    function _renderMainTemplateIfNeeded()
+    {
+        if($this->_shouldRenderMainTemplate()){
+            $this->Message->setBody($this->_renderMainTemplate());
+            return true;
+        }
+        return false;
+    }
+
+    function _renderMainTemplate()
+    {
+        return $this->ActionMailer->renderMessage($this->ActionMailer->template, $this->Message->body);
+    }
+
+    function _renderMultiPartViews($message_content_type)
+    {
+        if(empty($this->Message->parts)){
+            $parts = $this->_getPartsWithRenderedTemplates();
+            $this->Message->setParts($parts, 'append', true);
+            if(!empty($this->Message->parts)){
+                $this->Message->content_type = $message_content_type;
+                $this->Message->sortParts();
+            }
+        }
+        return !empty($parts);
+    }
+
+    function _hasRenderedBody()
+    {
+        return is_string($this->Message->body);
+    }
+
+    function _moveBodyToPart()
+    {
+        if (!empty($this->Message->parts) && is_string($this->Message->body)){
+            array_unshift($this->Message->parts, array('charset' => $this->Message->charset, 'body' => $this->Message->body));
+            $this->ActionMailer->body = null;
+        }
+    }
+
+    function _shouldRenderMainTemplate()
+    {
+        $result = empty($this->Message->parts);
+        if(!$result && empty($this->Message->implicit_parts_order) && $this->_hasTemplate()){
+            $result = true;
+        }
+        return $result;
+    }
+
+
+
+    function _hasTemplate()
+    {
+        $templates = $this->_getAvailableTemplates();
+        foreach ($templates as $template){
+            $parts = explode('.',$template);
+            if(count($parts) == 2 && $parts[0] == $this->ActionMailer->template){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    function &_getPartsWithRenderedTemplates()
+    {
+        $templates = $this->_getAvailableTemplates();
+        $alternative_multiparts = array();
+        $parts = array();
+        foreach ($templates as $template_name){
+            if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
+                if($this->ActionMailer->template == $match[1]){
+                    $content_type = str_replace('.','/', $match[2]);
+
+                    $parts[] = array(
+                    'content_type' => $content_type,
+                    'disposition' => 'inline',
+                    'charset' => @$this->Message->charset,
+                    'body' => $this->ActionMailer->renderMessage($this->ActionMailer->getTemplatePath().DS.$template_name, $this->Message->body));
+                }
+            }
+        }
+        return $parts;
+    }
+
+    function _getAvailableTemplates()
+    {
+        $path = $this->ActionMailer->getTemplatePath();
+        if(!isset($templates[$path])){
+            $templates[$path] = array_map('basename', Ak::dir($path, array('dirs'=>false)));
+        }
+        return $templates[$path];
+    }
+
+
+    
+    
+    
+
+    /*
+
+    function create($Mailer, $method_name, $parameters, $content_type)
+    {
+        $args = func_get_args();
+        
+        $this->_initializeDefaults($method_name);
+        if(method_exists($this, $method_name)){
+            call_user_func_array(array(&$this, $method_name), $args);
+        }else{
+            trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
+        }
+        $parameters = @array_shift($args);
+
+        $Mail =& $this->_MailDriver;
+
+        $this->_prepareInlineBodyParts($Mail);
+
+        $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
+
+        $this->Mail =& $Mail;
+        return $Mail;
+    }
+
+    function compose(&$Mail)
     {
         $raw_message = '';
         if(empty($this->parts)){
             if(!empty($Mail->_isPart)){
                 $raw_message .= $Mail->getRawPart();
             }else{
-                $raw_message .= $Mail->getRawHeaders().AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$Mail->getRawBody();
+                $raw_message .= $this->getRawHeaders($Mail).AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$Mail->getBody();
             }
         }else{
             $boundary = $Mail->getBoundary();
@@ -27,7 +184,7 @@ class AkMailComposer extends AkObject
             $raw_message .= $Mail->getRawHeaders();
 
             foreach (array_keys($Mail->parts) as $k){
-                $raw_message .= AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.'--'.$boundary.AK_ACTION_MAILER_EOL.$Mail->parts[$k]->getRawMessage();
+                $raw_message .= AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.'--'.$boundary.AK_ACTION_MAILER_EOL.$this->composePart($Mail->parts[$k]);
             }
 
             $raw_message .= AK_ACTION_MAILER_EOL.'--'.$boundary.'--'.AK_ACTION_MAILER_EOL;
@@ -37,9 +194,14 @@ class AkMailComposer extends AkObject
 
         return $raw_message;
     }
-    
-    
-    
+
+    function composePart($Part)
+    {
+        return $this->compose($Part);
+    }
+
+
+
     function getMultipartMessage()
     {
         $raw_message = '';
@@ -67,11 +229,15 @@ class AkMailComposer extends AkObject
         return $this->getRawHeaders().AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$this->getRawBody();
     }
 
-    function getRawHeaders()
+    function getRawHeaders($Mail)
     {
-        $this->_prepareHeadersForRendering();
-        return $this->_getHeadersAsText();
+        $Mail->_addHeaderAttributes();
+        return $Mail->_getHeadersAsText();
     }
+    
+    */
+
+
 }
 
 ?>

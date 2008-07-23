@@ -272,17 +272,6 @@ class AkMailBase extends Mail
         }
     }
 
-    function getRawBody()
-    {
-        return $this->getBody();
-    }
-
-    function _prepareHeadersForRendering()
-    {
-        $this->_addHeaderAttributes();
-    }
-
-
     function _getHeadersAsText()
     {
         if(empty($this->_headers_as_text)){
@@ -399,6 +388,13 @@ class AkMailBase extends Mail
         return array_reverse(&$parts);
     }
 
+    function sortParts()
+    {
+        if(!empty($this->parts)){
+            $this->parts = $this->getSortedParts($this->parts);
+        }
+    }
+
     function _contentTypeComparison($a, $b)
     {
         if(!isset($a->content_type) || !isset($a->content_type)){
@@ -419,13 +415,13 @@ class AkMailBase extends Mail
 
 
 
-    function setParts($parts, $position = 'append')
+    function setParts($parts, $position = 'append', $propagate_multipart_parts = false)
     {
         foreach ((array)$parts as $k=>$part){
             if(is_numeric($k)){
-                $this->setPart((array)$part, $position);
+                $this->setPart((array)$part, $position, $propagate_multipart_parts);
             }else{
-                $this->setPart($parts, $position);
+                $this->setPart($parts, $position, $propagate_multipart_parts);
                 break;
             }
         }
@@ -445,13 +441,13 @@ class AkMailBase extends Mail
      *     ));
      *   }
      */
-    function setPart($options = array(), $position = 'append')
+    function setPart($options = array(), $position = 'append', $propagate_multipart_parts = false)
     {
         $default_options = array('content_disposition' => 'inline', 'content_transfer_encoding' => 'quoted-printable');
         $options = array_merge($default_options, $options);
         $Part =& new AkMailPart($options);
         $position == 'append' ? array_push($this->parts, $Part) : array_unshift($this->parts, $Part);
-        empty($this->_avoid_multipart_propagation) ? $this->_propagateMultipartParts() : null;
+        empty($propagate_multipart_parts) ? $this->_propagateMultipartParts() : null;
     }
 
     function _propagateMultipartParts()
@@ -562,7 +558,7 @@ class AkMailBase extends Mail
         $options = array_merge(array('content_disposition' => 'attachment', 'content_transfer_encoding' => 'base64'), $options);
         $this->setPart($options);
     }
-    
+
     function setAttachments($attachments = array())
     {
         foreach ($attachments as $attachment){

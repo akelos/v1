@@ -323,6 +323,11 @@ class TestMailer extends AkActionMailer
         'from' => "some.one@example.com"
         ));
     }
+    
+    function alternative_message_from_templates()
+    {
+        
+    } 
 
     function &receive($raw_email)
     {

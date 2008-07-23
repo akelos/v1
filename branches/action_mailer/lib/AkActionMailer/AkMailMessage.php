@@ -93,9 +93,9 @@ class AkMailMessage extends AkMailBase
     /**
      * Defaults to "1.0", but may be explicitly given if needed.
      */
-    function setMimeVersion($mime_version)
+    function setMimeVersion($mime_version = null)
     {
-        $this->mime_version = $mime_version;
+        $this->mime_version = empty($mime_version) ? ((empty($this->mime_version) && !empty($this->parts)) ? '1.0' : $this->mime_version) : $mime_version;
     }
 
     /**

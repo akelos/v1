@@ -21,9 +21,9 @@ class RenderMailer extends AkActionMailer
     }
 
 
-    function _initializeDefaults($method_name)
+    function initializeDefaults($method_name)
     {
-        parent::_initializeDefaults($method_name);
+        parent::initializeDefaults($method_name);
         $this->setMailerName("test_mailer");
     }
 

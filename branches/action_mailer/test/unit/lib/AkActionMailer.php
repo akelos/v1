@@ -180,25 +180,6 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->recipient = 'bermi@bermilabs.com';
     }
 
-    function __test_multipart_rendering()
-    {
-
-        $TestMailer =& new TestMailer();
-        $Delivered = $TestMailer->deliver('multipart_rendering', $this->recipient);
-        echo $Delivered->getRawMessage();
-        
-        return ;
-        $ReceivingTestMailer =& new TestMailer();
-        $Mail =& $ReceivingTestMailer->receive($Delivered->getRawMessage());
-        $Attachment = Ak::first($Mail->attachments);
-        $this->assertEqual('test.txt', $Attachment->original_filename);
-        $this->assertEqual('test abcdefghijklmnopqstuvwxyz', $Attachment->body);
-        
-        $this->assertEqual(trim($Mail->bodyToString()), "test text\nline #2\n\n<b>test</b> HTML<br/>\nline #2\n\n\nAttachment: test.txt");
-        
-        
-        
-    }
     
     
     /**/

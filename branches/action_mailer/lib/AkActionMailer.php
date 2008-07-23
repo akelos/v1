@@ -125,8 +125,8 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 * create it and save it for delivery later:
 *
 *   Notifier::deliver('signup_notification', $David); // sends the email
-*   $Mail = Notifier::create('signup_notification', $David); // => A PEAR::Mail object
-*   Notifier::deliver($Mail);
+*   $Message = Notifier::create('signup_notification', $David); // => A PEAR::Mail object
+*   Notifier::deliver($Message);
 * 
 * You never instantiate your mailer class. Rather, your delivery instance
 * methods are automatically wrapped in class methods that are called statically
@@ -274,16 +274,16 @@ class AkActionMailer extends AkBaseModel
     var $default_mime_version = '1.0';
     var $default_implicit_parts_order = array('multipart/alternative', 'text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
-    var $_MailDriver;
+    var $Message;
     var $_defaultMailDriverName = 'AkMailMessage';
 
     function __construct($Driver = null)
     {
         $this->loadSettings();
         if(empty($Driver)){
-            $this->_MailDriver =& new $this->_defaultMailDriverName();
+            $this->Message =& new $this->_defaultMailDriverName();
         }else{
-            $this->_MailDriver =& $Driver;
+            $this->Message =& $Driver;
         }
     }
 
@@ -329,7 +329,7 @@ class AkActionMailer extends AkBaseModel
         if(is_array($body) && count($body) == 1 && array_key_exists(0,$body)){
             $body = $body[0];
         }
-        $this->_MailDriver->setBody($body);
+        $this->Message->setBody($body);
     }
 
     /**
@@ -337,7 +337,7 @@ class AkActionMailer extends AkBaseModel
     */
     function setCc($cc)
     {
-        $this->_MailDriver->setCc($cc);
+        $this->Message->setCc($cc);
     }
 
     /**
@@ -345,7 +345,7 @@ class AkActionMailer extends AkBaseModel
     */    
     function setBcc($bcc)
     {
-        $this->_MailDriver->setBcc($bcc);
+        $this->Message->setBcc($bcc);
     }
     /**
      * Specify the charset to use for the message. This defaults to the
@@ -353,7 +353,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setCharset($charset)
     {
-        $this->_MailDriver->setCharset($charset);
+        $this->Message->setCharset($charset);
     }
 
     /**
@@ -362,7 +362,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setContentType($content_type)
     {
-        $this->_MailDriver->setContentType($content_type);
+        $this->Message->setContentType($content_type);
     }
 
     /**
@@ -370,7 +370,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setFrom($from)
     {
-        $this->_MailDriver->setFrom($from);
+        $this->Message->setFrom($from);
     }
 
     /**
@@ -378,7 +378,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setHeaders($headers)
     {
-        $this->_MailDriver->setHeaders($headers);
+        $this->Message->setHeaders($headers);
     }
 
     /**
@@ -387,7 +387,7 @@ class AkActionMailer extends AkBaseModel
     */
     function setImplicitPartsOrder($implicit_parts_order)
     {
-        $this->_MailDriver->setImplicitPartsOrder($implicit_parts_order);
+        $this->Message->setImplicitPartsOrder($implicit_parts_order);
     }
 
 
@@ -396,7 +396,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setMimeVersion($mime_version)
     {
-        $this->_MailDriver->setMimeVersion($mime_version);
+        $this->Message->setMimeVersion($mime_version);
     }
 
     /**
@@ -405,7 +405,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setRecipients($recipients)
     {
-        $this->_MailDriver->setRecipients($recipients);
+        $this->Message->setRecipients($recipients);
     }
 
     /**
@@ -414,7 +414,7 @@ class AkActionMailer extends AkBaseModel
     */
     function setSentOn($date)
     {
-        $this->_MailDriver->setSentOn($date);
+        $this->Message->setSentOn($date);
     }
 
 
@@ -423,7 +423,7 @@ class AkActionMailer extends AkBaseModel
      */
     function setSubject($subject)
     {
-        $this->_MailDriver->setSubject($subject);
+        $this->Message->setSubject($subject);
     }
 
     /**
@@ -455,7 +455,7 @@ class AkActionMailer extends AkBaseModel
     function addAttachment()
     {
         $args = func_get_args();
-        return call_user_func_array(array(&$this->_MailDriver, 'setAttachment'), $args);
+        return call_user_func_array(array(&$this->Message, 'setAttachment'), $args);
     }
 
     /**
@@ -480,7 +480,7 @@ class AkActionMailer extends AkBaseModel
             // we can render here the body if there are attachments
         }
 
-        $this->_MailDriver->set($attributes);
+        $this->Message->set($attributes);
     }
 
 
@@ -489,7 +489,7 @@ class AkActionMailer extends AkBaseModel
      */
     function getEncoded()
     {
-        $this->_MailDriver->getEncoded();
+        $this->Message->getEncoded();
     }
 
     /**
@@ -497,7 +497,7 @@ class AkActionMailer extends AkBaseModel
      */
     function &getMail()
     {
-        return $this->_MailDriver;
+        return $this->Message;
     }
 
 
@@ -507,20 +507,20 @@ class AkActionMailer extends AkBaseModel
      * object's #receive method. If you want your mailer to be able to
      * process incoming messages, you'll need to implement a #receive
      * method that accepts the email object as a parameter and then call
-     * the AkActionMailer::recieve method using "parent::recieve($Mail);"
+     * the AkActionMailer::recieve method using "parent::recieve($Message);"
      * 
      *
      *   class MyMailer extends AkActionMailer{
-     *     function receive($Mail){
-     *          parent::recieve($Mail);
+     *     function receive($Message){
+     *          parent::recieve($Message);
      *       ...
      *     }
      *   }
      */
     function receive($raw_mail)
     {
-        $this->_MailDriver =& AkMailBase::parse($raw_mail);
-        return $this->_MailDriver;
+        $this->Message =& AkMailBase::parse($raw_mail);
+        return $this->Message;
     }
 
 
@@ -532,10 +532,10 @@ class AkActionMailer extends AkBaseModel
      *   $email->setHeader("frobnicate");
      *   MyMailer::deliver($email);
      */
-    function deliverDirectly(&$Mail)
+    function deliverDirectly(&$Message)
     {
-        $Mail =& new $this->_defaultMailDriverName ($Mail);
-        $Mail->send();
+        $Message =& new $this->_defaultMailDriverName ($Message);
+        $Message->send();
     }
 
 
@@ -545,110 +545,38 @@ class AkActionMailer extends AkBaseModel
      */
     function &create($method_name, $parameters, $content_type = '')
     {
+        require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailComposer.php');
+        $Composer =& new AkMailComposer();
+        $Composer->init($this);
         $args = func_get_args();
-        $method_name = array_shift($args);
-        $this->_initializeDefaults($method_name);
-        if(method_exists($this, $method_name)){
-            call_user_func_array(array(&$this, $method_name), $args);
-        }else{
-            trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
-        }
-        $parameters = @array_shift($args);
-
-        $Mail =& $this->_MailDriver;
-
-        $this->_prepareInlineBodyParts($Mail);
-
-        $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
-
-        $this->Mail =& $Mail;
-        return $Mail;
+        call_user_func_array(array($Composer, 'build'), $args);
+        return $this->Message;
     }
 
-    function _prepareInlineBodyParts(&$Mail, $mail_content_type = 'multipart/alternative')
-    {
-
-        if(!is_string($Mail->body)){
-            if(empty($Mail->parts)){
-                $Mail->_avoid_multipart_propagation = true;
-                $templates = $this->_getAvailableTemplates();
-                $alternative_multiparts = array();
-                foreach ($templates as $template_name){
-                    if(preg_match('/^([^\.]+)\.([^\.]+\.[^\.]+)\.(tpl)$/',$template_name, $match)){
-                        if($this->template == $match[1]){
-                            $content_type = str_replace('.','/', $match[2]);
-
-                            $current_part = array(
-                            'content_type' => $content_type,
-                            'disposition' => 'inline',
-                            'charset' => @$Mail->charset,
-                            'body' => $this->renderMessage($this->getTemplatePath().DS.$template_name, $Mail->body));
-
-                            $Mail->setPart($current_part);
-                        }
-                    }
-                }
-
-                if(!empty($Mail->parts)){
-                    $Mail->content_type = $mail_content_type;
-                    $Mail->parts = $Mail->getSortedParts($Mail->parts, $Mail->implicit_parts_order);
-                }
-            }
-
-            $template_exists = empty($Mail->parts);
-            if(!$template_exists && empty($Mail->implicit_parts_order)){
-                $templates = $this->_getAvailableTemplates();
-                foreach ($templates as $template){
-                    $parts = explode('.',$template);
-                    if(count($parts) == 2 && $parts[0] == $this->template){
-                        $template_exists = true;
-                    }
-                }
-            }
-
-            if($template_exists){
-                $Mail->setBody($this->renderMessage($this->template, $Mail->body));
-            }
-
-            if (!empty($Mail->parts) && is_string($Mail->body)){
-                array_unshift($Mail->parts, array('charset' => $Mail->charset, 'body' => $Mail->body));
-                $this->body = null;
-            }
-        }
-    }
-
-    function _getAvailableTemplates()
-    {
-        $path = $this->getTemplatePath();
-        if(!isset($templates[$path])){
-            $templates[$path] = array_map('basename', Ak::dir($path, array('dirs'=>false)));
-        }
-        return $templates[$path];
-    }
 
     /**
     * Delivers an AkMailMessage object. By default, it delivers the cached mail
     * object (from the AkActionMailer::create method). If no cached mail object exists, and
     * no alternate has been given as the parameter, this will fail.
     */
-    function deliver($method_name, $parameters = null, $Mail = null)
+    function deliver($method_name, $parameters = null, $Message = null)
     {
-        if(empty($Mail) && empty($this->Mail)){
+        if(empty($Message) && empty($this->Message)){
             $this->create($method_name, $parameters);
-        }elseif(!empty($Mail)){
-            $this->Mail =& $Mail;
+        }elseif(!empty($Message)){
+            $this->Message =& $Message;
         }
 
-        !empty($this->Mail) or trigger_error(Ak::t('No mail object available for delivery!'), E_USER_ERROR);
+        !empty($this->Message) or trigger_error(Ak::t('No mail object available for delivery!'), E_USER_ERROR);
         if(!empty($this->perform_deliveries)){
-            $this->{"perform".ucfirst(strtolower($this->delivery_method))."Delivery"}($this->Mail);
+            $this->{"perform".ucfirst(strtolower($this->delivery_method))."Delivery"}($this->Message);
         }
-        return $this->Mail;
+        return $this->Message;
     }
 
-    function performSmtpDelivery(&$Mail)
+    function performSmtpDelivery(&$Message, $settings = array())
     {
-        $settings = array(
+        $default_settings = array(
         'host'     =>  @$this->server_settings['address'],
         'localhost'     =>  @$this->server_settings['domain'],
         'port'     =>  @$this->server_settings['port'],
@@ -657,90 +585,23 @@ class AkActionMailer extends AkBaseModel
         'auth'     =>  (!empty($this->server_settings['user_name']) || @$this->server_settings['authentication']),
         'debug'    =>  true
         );
-        $SmtpClient =& Mail::factory('smtp', $settings);
+        $settings = array_merge($default_settings, $settings);
 
-        include_once 'Net/SMTP.php';
-
-        if (!($smtp = &new Net_SMTP($SmtpClient->host, $SmtpClient->port, $SmtpClient->localhost))) {
-            return PEAR::raiseError('unable to instantiate Net_SMTP object');
-        }
-
-        if ($SmtpClient->debug) {
-            $smtp->setDebug(true);
-        }
-
-        if (PEAR::isError($smtp->connect($SmtpClient->timeout))) {
-            trigger_error('unable to connect to smtp server '.$SmtpClient->host.':'.$SmtpClient->port, E_USER_NOTICE);
-            return false;
-        }
-
-        if ($SmtpClient->auth) {
-            $method = is_string($SmtpClient->auth) ? $SmtpClient->auth : '';
-
-            if (PEAR::isError($smtp->auth($SmtpClient->username, $SmtpClient->password, $method))) {
-                trigger_error('unable to authenticate to smtp server', E_USER_ERROR);
-            }
-        }
-
-        if (PEAR::isError($smtp->mailFrom($Mail->getFrom()))) {
-            trigger_error('unable to set sender to [' . $from . ']', E_USER_ERROR);
-        }
-
-        $recipients = $SmtpClient->parseRecipients($Mail->getRecipients());
-        if (PEAR::isError($recipients)) {
-            return $recipients;
-        }
-
-        foreach ($recipients as $recipient) {
-            if (PEAR::isError($res = $smtp->rcptTo($recipient))) {
-                return PEAR::raiseError('unable to add recipient [' .
-                $recipient . ']: ' . $res->getMessage());
-            }
-        }
-
-        if (PEAR::isError($smtp->data($Mail->getRawMessage()))) {
-            return PEAR::raiseError('unable to send data');
-        }
-
-        $smtp->disconnect();
-
-        return true;
+        return $this->_deliverUsingMailDeliveryMethod('SMTP', $Message, $settings);
 
     }
 
-    function performPhpDelivery(&$Mail)
+    function performPhpDelivery(&$Message, $settings = array())
     {
-        return mail($Mail->getTo(), $Mail->getSubject(), $Mail->bodyToString(), $Mail->_getHeadersAsText());
+        return $this->_deliverUsingMailDeliveryMethod('PHPMail', $Message, $settings);
     }
 
-    function performTestDelivery(&$Mail)
+    function performTestDelivery(&$Message)
     {
-        //$this->performSmtpDelivery($Mail);
-        $this->deliveries[] =& $Mail->getEncoded();
+        return $this->_deliverUsingMailDeliveryMethod('Test', $Message, array('ActionMailer'=>&$this));
+
     }
 
-
-    /**
-    * Set up the default values for the various instance variables of this
-    * mailer. Subclasses may override this method to provide different
-    * defaults.
-    */
-    function _initializeDefaults($method_name)
-    {
-        $Mail =& $this->_MailDriver;
-        foreach (array('charset','content_type','implicit_parts_order', 'mime_version') as $attribute) {
-            $method = 'set'.AkInflector::camelize($attribute);
-            $Mail->$method(empty($this->$attribute) ? $this->{'default_'.$attribute} : $this->$attribute);
-        }
-        foreach (array('parts','headers','body') as $attribute) {
-            $method = 'set'.AkInflector::camelize($attribute);
-            $Mail->$method(empty($this->$attribute) ? array() : $this->$attribute);
-        }
-
-        $this->templateRoot = empty($this->templateRoot) ? AK_APP_DIR.DS.'views' : $this->templateRoot;
-        $this->template = empty($this->template) ? $method_name : $this->template;
-        $this->mailerName = empty($this->mailerName) ? AkInflector::underscore($this->getModelName()) : $this->mailerName;
-    }
 
     function renderMessage($method_name, $body, $options = array())
     {
@@ -762,6 +623,30 @@ class AkActionMailer extends AkBaseModel
         return $this->templateRoot.DS.$this->mailerName;
     }
 
+
+
+    /**
+    * Set up the default values for the various instance variables of this
+    * mailer. Subclasses may override this method to provide different
+    * defaults.
+    */
+    function initializeDefaults($method_name)
+    {
+        foreach (array('charset','content_type','implicit_parts_order', 'mime_version') as $attribute) {
+            $method = 'set'.AkInflector::camelize($attribute);
+            $this->Message->$method(empty($this->$attribute) ? $this->{'default_'.$attribute} : $this->$attribute);
+        }
+        foreach (array('parts','headers','body') as $attribute) {
+            $method = 'set'.AkInflector::camelize($attribute);
+            $this->Message->$method(empty($this->$attribute) ? array() : $this->$attribute);
+        }
+
+        $this->templateRoot = empty($this->templateRoot) ? AK_APP_DIR.DS.'views' : $this->templateRoot;
+        $this->template = empty($this->template) ? $method_name : $this->template;
+        $this->mailerName = empty($this->mailerName) ? AkInflector::underscore($this->getModelName()) : $this->mailerName;
+    }
+
+
     function &_initializeTemplateClass($assigns)
     {
         require_once(AK_LIB_DIR.DS.'AkActionView.php');
@@ -771,7 +656,7 @@ class AkActionMailer extends AkBaseModel
         return $TemplateInstance;
     }
 
-
+    
     /**
      * Alias for getModelName
      */
@@ -829,6 +714,22 @@ class AkActionMailer extends AkBaseModel
 
         return $helpers;
     }
+    
+    function _deliverUsingMailDeliveryMethod($method, &$Message, $options)
+    {
+        $handler_name = 'Ak'.AkInflector::camelize(Ak::sanitize_include($method, 'paranoid')).'Delivery';
+        $handler_path = AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailDelivery'.DS.$handler_name.'.php';
+        if(file_exists($handler_path)){
+            require_once($handler_path);
+        }
+
+        if(!class_exists($handler_name)){
+            trigger_error(Ak::t('Could not find message handler %handler_name', array('%handler_name'=>$handler_name)), E_USER_ERROR);
+            return false;
+        }
+        $DeliveryHandler = new $handler_name();
+        return $DeliveryHandler->deliver($Message, $options);
+    }
 
     /**
      * Returns a raw version 
@@ -836,9 +737,8 @@ class AkActionMailer extends AkBaseModel
      */
     function getRawMessage()
     {
-        return $this->_MailDriver->getRawMessage();
+        return $this->Message->getRawMessage();
     }
-
 
 }
 
