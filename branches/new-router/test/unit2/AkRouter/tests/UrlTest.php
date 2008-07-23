@@ -46,11 +46,6 @@ class UrlTest extends Route_TestCase
     
     function testRelativeUrlPart()
     {
-        $Request = $this->getMock('AkRequest',array('getRelativeUrlRoot'));
-        $Request->expects($this->any())
-                ->method('getRelativeUrlRoot')
-                ->will($this->returnValue('/subfolder'));
-                
         $url = new AkUrl('/author/martin');
         $url->setOptions(array('skip_relative_url_root'=>false,'relative_url_root'=>'/subfolder'));
             
@@ -78,16 +73,6 @@ class UrlTest extends Route_TestCase
      */
     function createUrl($path,$query='')
     {
-        $Request = $this->getMock('AkRequest',array('getRelativeUrlRoot','getProtocol','getHostWithPort'));
-        $Request->expects($this->any())
-                ->method('getRelativeUrlRoot')
-                ->will($this->returnValue(''));
-        $Request->expects($this->any())
-                ->method('getProtocol')
-                ->will($this->returnValue('http'));
-        $Request->expects($this->any())
-                ->method('getHostWithPort')
-                ->will($this->returnValue('localhost'));
         $url = new AkUrl($path,$query);
         $url->setOptions(array('relative_url_root'=>'','protocol'=>'http','host'=>'localhost'));
         
