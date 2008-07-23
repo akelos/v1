@@ -42,7 +42,7 @@ abstract class UrlWriter_TestCase extends PHPUnit_Framework_TestCase
      */
     function createRequest($params)
     {
-        $Request = $this->getMock('AkRequest',array('getParametersFromRequestedUrl'));
+        $Request = $this->getMock('AkRequest',array('getParametersFromRequestedUrl'),array(),'',false);
         $Request->expects($this->any())
                 ->method('getParametersFromRequestedUrl')
                 ->will($this->returnValue($params));
