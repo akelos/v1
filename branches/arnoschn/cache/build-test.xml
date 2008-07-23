@@ -14,7 +14,7 @@
 	<target name="prepare">
 
 		<mkdir dir="${report.dir}" />
-
+		<mkdir dir="${project.basedir}/ci-tests" />
 	</target>
 
 	<target name="generate-report">
