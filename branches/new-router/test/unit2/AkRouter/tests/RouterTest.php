@@ -49,7 +49,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     
     function testMatchThrowsAnExcpetionIfRequestCannotBeSolved()
     {
-        $Request = new AkRequest();
+        $Request = $this->getMock('AkRequest',array(),array(),'',false);
         $PersonRoute = $this->getMock('AkRoute',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
                     ->method('parametrize')
@@ -64,7 +64,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     
     function testMatchTraversesAllRegisteredRoutesIfFalseIsReturned()
     {
-        $Request = new AkRequest();
+        $Request = $this->getMock('AkRequest',array(),array(),'',false);
         $PersonRoute = $this->getMock('AkRoute',array(),array('person/:name'));
         $PersonRoute->expects($this->once())
                     ->method('parametrize')
