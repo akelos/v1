@@ -4,35 +4,10 @@ class TestRequestTest extends PHPUnit_Framework_TestCase
 {
 
     /**
-     * @var AkTestRequest
+     * @var AkRequest
      */
     var $Request;
     
-    function testInvestigateRequest()
-    {
-        $Request = new AkRequest();
-        $Request->_request['ak'] = 'blog/show/1';
-        $Request->_request['q']  = 'wer';
-        
-        $Router = new AkRouter();
-        $Router->connect(':controller/:action/:id');
-        $Request->checkForRoutedRequests($Router);
-
-        $this->assertEquals(array(
-            'controller'=>'blog',
-            'action'=>'show',
-            'id'=>1,
-            'q'=>'wer',
-            'ak'=>'blog/show/1'),$Request->getParameters());     # we don't need the 'ak'-key, do we?
-        #var_dump($Request->getRequestUri());    # http://localhost/
-        #var_dump($Request->getHost());          # localhost
-        #var_dump($Request->getHostWithPort());  # localhost
-        #var_dump($Request->getMethod());        # env->request_method
-        #var_dump($Request->getLocaleFromUrl()); #
-        #var_dump($Request->getPath());          # env->request_uri    
-        #var_dump($Request->getPathParameters());# possibly orhpaned       
-    }
-        
     function testGetRequest()
     {
         $this->useController('blog');
@@ -78,7 +53,20 @@ class TestRequestTest extends PHPUnit_Framework_TestCase
     function doRequest($method,$action,$options)
     {
         $params = array_merge(array('controller'=>$this->controller_name,'action'=>$action),$options);
-        return $this->Request = AkTestRequest::createInstance($method,$params);
+
+        $Request = $this->getMock('AkRequest',array('getMethod','getParametersFromRequestedUrl'),array(),'',false);
+        $Request->expects($this->any())
+                ->method('getMethod')
+                ->will($this->returnValue($method));
+        $Request->expects($this->any())
+                ->method('getParametersFromRequestedUrl')
+                ->will($this->returnValue($params));
+                
+        // HACK  fix ->getParams
+        foreach ($params as $k=>$v){
+            $Request->_request[$k] = $v;
+        }//HACK
+        return $this->Request = $Request;
     }
     
     function useController($controller_name)
