@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * @group slow
+ */
 class RESTFulPeopleServiceFunctional extends PHPUnit_Framework_TestCase
 {
     
