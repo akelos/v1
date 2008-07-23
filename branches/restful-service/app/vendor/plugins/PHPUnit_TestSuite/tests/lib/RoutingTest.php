@@ -10,7 +10,7 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testShouldResolveUrl()
     {
-        $this->get('blog/add/1');
+        $this->get('/blog/add/1');
 
         $this->assertController('blog');
         $this->assertAction('add');
@@ -19,7 +19,7 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testShouldResolveToAdminModule()
     {
-        $this->get('/admin/user/add/');
+        $this->get('/admin/user/add');
 
         $this->assertParameterEquals('admin','module');
         $this->assertController('user');
@@ -28,16 +28,16 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testRouteToAdminLogs()
     {
-        $this->get('/admin/logs/warnings/show/1');
-        $this->assertModule('admin/logs');
-        $this->assertController('warnings');
-        $this->assertAction('show');
-        $this->assertId(1);
+        $this->get('/admin/logs/warnings');
+        $this->assertModule('admin');
+        $this->assertController('logs');
+        $this->assertAction('list');
+        $this->assertParameterEquals('warnings','type');
     }
     
     function testRouteToArtistAlbumTags()
     {
-        $this->get('autechre/quaristice/tags');
+        $this->get('/autechre/quaristice/tags');
         $this->assertController('tags');
         $this->assertArtist('autechre');
         $this->assertAlbum('quaristice');
@@ -45,19 +45,19 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testAssertIdIsNotSet()
     {
-        $this->get('blog/add/');
+        $this->get('/blog/add/');
         $this->assertParameterNotSet('id');
     }
     
     function testAssertUnrecognizedUrl()
     {
-        $this->get('blog/post/something/here/or/leave');
+        $this->get('/blog/post/something/here/or/leave');
         $this->assert404();
     }
     
     function testShouldMoanAboutWrongController()
     {
-        $this->get('blog');
+        $this->get('/blog');
         try {
             $this->assertController('post_or_whatever');
         }
@@ -70,7 +70,7 @@ class RoutingTest extends PHPUnit_Routing_TestCase
     
     function testShouldMoanAboutWrongAction()
     {
-        $this->get('blog/add');
+        $this->get('/blog/add');
         try {
             $this->assertAction('remove_or_whatever');
         }

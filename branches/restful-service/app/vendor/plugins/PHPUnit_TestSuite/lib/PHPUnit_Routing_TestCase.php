@@ -13,6 +13,7 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     
     protected $params;
     private   $reciprocity = false;
+    private   $errors = false;
 
     function setUp()
     {
@@ -39,32 +40,45 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
         return $this->Router = new AkRouter();
     }
 
-    function connect($url_pattern, $options = array(), $requirements = null)
+    function connect($url_pattern, $options = array(), $requirements = array())
     {
         $this->Router->connect($url_pattern, $options, $requirements);
     }
     
-    function testReciprocity($bool = true)
+    function checkReciprocity($bool = true)
     {
         return $this->reciprocity = $bool;
     }
     
     /**
      * @param string $url
-     * @return AkRouterSpec
+     * @return PHPUnit_Routing_TestCase
      */
     function get($url)
     {
-        $this->params = $this->Router->toParams($url);
-        if ($this->reciprocity && $this->params){
-            $this->assertEquals($this->encloseWithSlashes($url), $this->Router->toUrl($this->params));
+        $Request = $this->createRequest($url);
+        try {
+            $this->params = $this->Router->match($Request);
+            if ($this->reciprocity){
+                $this->assertEquals($url, $this->Router->urlize($this->params)->path());
+            }
+        }catch (NoMatchingRouteException $e){
+            $this->errors = true;
         }
         return $this;
     }
     
-    private function encloseWithSlashes($string)
+    private function createRequest($url,$method='get')
     {
-        return $string == '/' || $string == '' ? '/' : '/'.trim($string,'/').'/';
+        $Request = $this->getMock('AkRequest',array('getMethod','getRequestedUrl'),array(),'',false);
+        $Request->expects($this->any())
+                ->method('getMethod')
+                ->will($this->returnValue($method));
+        $Request->expects($this->any())
+                ->method('getRequestedUrl')
+                ->will($this->returnValue($url));
+                
+        return $Request;
     }
     
     /**
@@ -96,12 +110,17 @@ abstract class PHPUnit_Routing_TestCase extends PHPUnit_Framework_TestCase
     
     private function ensureNoMatch()
     {
-        if ($this->params) $this->fail("Expected no match, actually got a match.");
+        if (!$this->hasErrors()) $this->fail("Expected no match, actually got a match.");
     }
     
     private function ensureMatch()
     {
-        if (!$this->params) $this->fail("Expected a match, actually got no match.");
+        if ($this->hasErrors()) $this->fail("Expected a match, actually got no match.");
+    }
+    
+    private function hasErrors()
+    {
+        return $this->errors;
     }
     
     private function ensureParameterIsSet($param_name)
