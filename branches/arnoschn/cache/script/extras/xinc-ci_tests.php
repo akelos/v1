@@ -39,7 +39,7 @@ class CI_Tests
 
     function loadSettings($filename=AK_CI_CONFIG_FILE)
     {
-        require AK_BASE_DIR.DS.'vendor'.DS.'TextParsers'.DS.'spyc.php';
+        require dirname(__FILE__).DS.'..'.DS.'..'.DS.'..'.DS.'vendor'.DS.'TextParsers'.DS.'spyc.php';
 
         if (!is_file($filename)){
             die ('Could not find ci configuration file in '.AK_CI_CONFIG_FILE.'.');

@@ -1934,9 +1934,21 @@ class Ak
             return false;
         }
         require_once(AK_VENDOR_DIR.DS.'TextParsers'.DS.'spyc.php');
-        $return = Spyc::YAMLLoad(file_get_contents($yaml_file_name));
+        $content = file_get_contents($yaml_file_name);
+        $content = Ak::_parseSettingsConstants($content);
+        $return = Spyc::YAMLLoad($content);
         Ak::setStaticVar($staticVarNs,$return);
         return $return;
+    }
+    
+    function _parseSettingsConstants($settingsStr)
+    {
+        return preg_replace_callback('/\$\{(AK_.*?)\}/',array('Ak','_getConstant'),$settingsStr);
+    }
+    
+    function _getConstant($name)
+    {
+        return defined($name[1])?constant($name[1]):'';
     }
 }
 

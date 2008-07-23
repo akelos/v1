@@ -20,12 +20,24 @@
 	<target name="generate-report">
 		<mkdir dir="${report.dir}/${phpversion}" />
 		<mkdir dir="${report.dir}/${phpversion}/${environment}" />
-		<phpunit2report infile="${project.basedir}/../akelos_frameworktests/tests/test/test-results-${phpversion}-${environment}.xml" styledir="resources/xsl" todir="${report.dir}/${phpversion}/${environment}" format="noframes" />
+		<phpunit2report infile="${project.basedir}/ci-tests/test-results-${phpversion}-${environment}.xml" styledir="resources/xsl" todir="${report.dir}/${phpversion}/${environment}" format="noframes" />
 
 	</target>
 	<target name="test">
 		<taskdef name="ci-tests" classname="CiTestsTask" classpath="${project.basedir}" />
-		<ci-tests akelosPath="${project.basedir}" testPath="${project.basedir}/../akelos_frameworktests/tests" />
+		<copy todir="${project.basedir}/tmp">
+		            <filterchain>
+		                <expandproperties />
+		            </filterchain>
+		            <fileset dir="${project.basedir}/test/nanoweb/etc">
+		                <include name="nanoweb.conf" />
+		            	<include name="modules.conf" />
+		            </fileset>
+		        </copy>
+		<exec command='${project.basedir}/test/nanoweb/bin/nanoweb.php --config=${project.basedir}/tmp/nanoweb.conf --set-option="PidFile=${project.basedir}/tmp/nanoweb.pid"' spawn="true" passthru="true"/>
+		<ci-tests akelosPath="${project.basedir}" />
+		<exec command="kill `cat ${project.basedir}/tmp/nanoweb.pid` >/dev/null 2>/dev/null"/>
+		        <exec command="rm ${project.basedir}/tmp/nanoweb.pid"/>
 	</target>
 
 	<target name="report">

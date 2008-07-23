@@ -25,10 +25,11 @@ class XmlReporter extends SimpleReporter {
             ob_start();
         }
     }
-
+    var $testMethodName;
     function paintMethodStart($test_name){
 
         parent::paintMethodStart($test_name);
+        $this->testMethodName = $this->suiteName.'-'.$this->testFileName.'-'.$test_name;
         $this->_method_starttime = time()+microtime(true);
         if (!isset($this->_sizes[$this->suiteName])) {
             $this->_sizes[$this->suiteName] = 0;
@@ -44,13 +45,17 @@ class XmlReporter extends SimpleReporter {
         $out="";
         $out.='<testcase name="'.$test_name.'" file="" time="'.$time.'">';
         parent::paintMethodEnd($test_name);
-        $message = @array_shift($this->fail_messages);
-        if($message!=null) {
-            $out.='<failure type="General">';
-            $out.="<![CDATA[";
-            $out.=$message;
-            $out.="]]>";
-            $out.='</failure>';
+        if (@$this->_failCounts[$this->testMethodName]+@$this->_exceptionCounts[$this->testMethodName]>0) {
+            for($i=0;$i<@$this->_failCounts[$this->testMethodName]+@$this->_exceptionCounts[$this->testMethodName];$i++) {
+                $message = @array_shift($this->fail_messages);
+                if($message!=null) {
+                    $out.='<failure type="General">';
+                    $out.="<![CDATA[";
+                    $out.=$message;
+                    $out.="]]>";
+                    $out.='</failure>';
+                }
+            }
         }
         $out.="</testcase>";
         $this->_out[$this->group_depth][] = $out;
@@ -65,6 +70,10 @@ class XmlReporter extends SimpleReporter {
         if (!isset($this->_exceptionCounts[$this->testFileName])) {
             $this->_exceptionCounts[$this->testFileName] = 0;
         }
+        if (!isset($this->_exceptionCounts[$this->testMethodName])) {
+            $this->_exceptionCounts[$this->testMethodName] = 0;
+        }
+        $this->_exceptionCounts[$this->testMethodName]++;
         $message = 'Exception:'."\n".$message;
         $this->_exceptionCounts[$this->testFileName]++;
         $this->_exceptionCounts[$this->suiteName]++;
@@ -85,6 +94,10 @@ class XmlReporter extends SimpleReporter {
         if (!isset($this->_failCounts[$this->testFileName])) {
             $this->_failCounts[$this->testFileName] = 0;
         }
+        if (!isset($this->_failCounts[$this->testMethodName])) {
+            $this->_failCounts[$this->testMethodName] = 0;
+        }
+        $this->_failCounts[$this->testMethodName]++;
         $this->_failCounts[$this->testFileName]++;
         $this->_failCounts[$this->suiteName]++;
     }
@@ -138,11 +151,11 @@ class XmlReporter extends SimpleReporter {
             //$this->current_group['tests'][] = array('size'=>$size,'passed'=>0,'failed'=>0,'tests'=>array());
             //$this->current_group = $this->current_group['tests'][count($this->current_group['tests'])-1];
         } else if ($this->group_depth ==4) {
-            $this->testSuiteName = $test_name;
+            $this->testFileName = $test_name;
 
         } else {
-            $this->testSuiteName = $test_name;
-            $this->testFileName = $test_name;
+            //$this->testSuiteName = $test_name;
+            //$this->testFileName = $test_name;
         }
         $this->group_depth++;
     }
@@ -174,7 +187,7 @@ class XmlReporter extends SimpleReporter {
             //ob_end_clean();
             $out="";
             //package="'.$this->suiteName.'"
-            $out.='<testsuite name="'.$this->suiteName.'" package="'.$this->suiteName.'" file="'.$this->fileName.'"  tests="'.$this->_sizes[$this->suiteName].'" failures="'.(isset($this->_failCounts[$this->suiteName])?$this->_failCounts[$this->suiteName]:0).'" errors="'.$this->getExceptionCount().'" time="'.$time.'">';
+            $out.='<testsuite name="'.$this->suiteName.'" package="'.$this->suiteName.'" file="'.$this->fileName.'"  tests="'.$this->_sizes[$this->suiteName].'" failures="'.(isset($this->_failCounts[$this->suiteName])?$this->_failCounts[$this->suiteName]:0).'" errors="'.(isset($this->_exceptionCounts[$this->suiteName])?$this->_exceptionCounts[$this->suiteName]:0).'" time="'.$time.'">';
             if (isset($this->_out[$this->group_depth]) && is_array($this->_out[$this->group_depth])) {
                 foreach ($this->_out[$this->group_depth] as $level=>$string) {
                     $out.=$string;
@@ -188,20 +201,22 @@ class XmlReporter extends SimpleReporter {
             //ob_end_clean();
             $time = time()+microtime(true) - $this->_startsubtime;
             $out = "";
-            $out.='<testsuite name="'.$this->suiteName.'::'.basename($this->testFileName).'" file="'.$this->testFileName.'" package="'.$this->suiteName.'" tests="'.(isset($this->_sizes[$this->testFileName])?$this->_sizes[$this->testFileName]:0).'" failures="'.(isset($this->_failCounts[$this->testFileName])?$this->_failCounts[$this->testFileName]:0).'" errors="'.$this->getExceptionCount().'" time="'.$time.'">';
+            $out.='<testsuite name="'.$this->suiteName.'::'.basename($this->testFileName).'" file="'.$this->testFileName.'" package="'.$this->suiteName.'" tests="'.(isset($this->_sizes[$this->testFileName])?$this->_sizes[$this->testFileName]:0).'" failures="'.(isset($this->_failCounts[$this->testFileName])?$this->_failCounts[$this->testFileName]:0).'" errors="'.(isset($this->_exceptionCounts[$this->testFileName])?$this->_exceptionCounts[$this->testFileName]:0).'" time="'.$time.'">';
             if (isset($this->_out[$this->group_depth+1]) && is_array($this->_out[$this->group_depth+1]) && count($this->_out[$this->group_depth+1])>0) {
                 foreach ($this->_out[$this->group_depth+1] as $level=>$string) {
                     $out.=$string;
                 }
             } else {
-                if (count($this->fail_messages)>0) {
-                    $message = @array_shift($this->fail_messages);
-                    if($message!=null) {
-                        $out.='<error>';
-                        $out.="<![CDATA[";
-                        $out.=$message;
-                        $out.="]]>";
-                        $out.='</error>';
+                if (@$this->_failCounts[$this->suiteName]+@$this->_exceptionCounts[$this->suiteName]>0) {
+                    for($i=0;$i<@$this->_failCounts[$this->suiteName]+@$this->_exceptionCounts[$this->suiteName];$i++) {
+                        $message = @array_shift($this->fail_messages);
+                        if($message!=null) {
+                            $out.='<error>';
+                            $out.="<![CDATA[";
+                            $out.=$message;
+                            $out.="]]>";
+                            $out.='</error>';
+                        }
                     }
                 }
             }

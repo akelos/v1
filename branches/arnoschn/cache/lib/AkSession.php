@@ -109,7 +109,9 @@ class AkSession extends AkObject
         switch ($type) {
             case 1:
                 $this->sessions_enabled = false;
-                // nothing, we are on normal php file sessions
+                if(isset($options['save_path'])) {
+                    session_save_path($options['save_path']);
+                }
                 break;
             case 2:
                 require_once(AK_LIB_DIR.'/AkCache/AkAdodbCache.php');
