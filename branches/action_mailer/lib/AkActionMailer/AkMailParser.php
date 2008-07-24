@@ -333,7 +333,7 @@ class AkMailParser
             $modified_html = str_replace(array_keys($html_images),array_values($html_images), $html);
             if($modified_html != $html){
                 $html = $modified_html;
-                $Mail->_moveBodyToInlinePart(false);
+                $Mail->_moveBodyToInlinePart();
             }
         }
     }

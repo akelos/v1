@@ -12,6 +12,8 @@ class AkMailBase extends Mail
 
     var $parts = array();
     var $attachments = array();
+    
+    var $attach_html_images = true;
 
     function AkMailBase()
     {
@@ -49,7 +51,7 @@ class AkMailBase extends Mail
         if(is_string($body)){
             $content_type = @$this->content_type;
             $this->body = stristr($content_type,'text/') ? str_replace(array("\r\n","\r"),"\n", $body) : $body;
-            if($content_type == 'text/html'){
+            if($this->attach_html_images && $content_type == 'text/html'){
                 $Parser = new AkMailParser();
                 $Parser->extractImagesIntoInlineParts($this);
             }
@@ -134,6 +136,11 @@ class AkMailBase extends Mail
     function getContentType()
     {
         return empty($this->content_type) ? ($this->isMultipart()?'multipart/alternative':null) : $this->content_type.$this->getContenttypeAttributes();
+    }
+    
+    function hasContentType()
+    {
+        return !empty($this->content_type);
     }
 
     function setContenttypeAttributes($attributes = array())
@@ -290,12 +297,16 @@ class AkMailBase extends Mail
         }
     }
 
-    function getRawHeaders()
+    function getRawHeaders($options = array())
     {
         if(empty($this->raw_headers)){
+
             $this->headers = $this->getHeaders(true);
             if($this->isPart()){
-                $this->prepareHeadersForRendering();
+                $this->prepareHeadersForRendering(array(
+                'skip' => (array)@$options['skip'],
+                'only' => (array)@$options['only']
+                ));
             }
             unset($this->headers['Charset']);
             $this->raw_headers = array_pop($this->prepareHeaders($this->headers));
@@ -308,6 +319,7 @@ class AkMailBase extends Mail
         if(empty($this->headers) || $force_reload){
             $this->loadHeaders();
             $this->_addHeaderAttributes();
+           
         }
         return $this->headers;
     }
@@ -514,6 +526,7 @@ class AkMailBase extends Mail
         foreach (array_keys($options) as $k){
             unset($this->$k);
         }
+        
         $this->_multipart_message = true;
         $this->setPart($options, 'preppend');
     }
@@ -586,7 +599,7 @@ class AkMailBase extends Mail
 
         $this->setPart($options);
     }
-
+    
     function setAttachments($attachments = array())
     {
         foreach ($attachments as $attachment){

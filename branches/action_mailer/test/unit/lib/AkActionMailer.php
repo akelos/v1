@@ -182,7 +182,7 @@ class Tests_for_AkActionMailer extends  AkUnitTest
 
 
 
-    /** /
+    /**/
     function test_nested_parts()
     {
         $TestMailer =& new TestMailer();
@@ -737,34 +737,35 @@ EOF;
     }
 
 
-    function _test_should_encode_alternative_message_from_templates()
+    function test_should_encode_alternative_message_from_templates()
     {
         $TestMailer =& new TestMailer();
         $Message = $TestMailer->create('alternative_message_from_templates', $this->recipient);
         $rendered_message = $TestMailer->getRawMessage();
 
+        
         $this->assertPattern(   '/Content-Type: multipart\/alternative;charset=UTF-8;boundary=[a-f0-9]{32}\r\n'.
         'Mime-Version: 1.0\r\n'.
         'Subject:/', $rendered_message);
         $this->assertPattern('/To:/', $rendered_message);
         $this->assertPattern('/Date:/', $rendered_message);
-        $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/plain;charset=UTF-8\r\nContent-Disposition: inline/', $rendered_message);
-        $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/html;charset=UTF-8\r\nContent-Disposition: inline/', $rendered_message);
+        $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/plain;charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Disposition: inline/', $rendered_message);
+        $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/html;charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Disposition: inline/', $rendered_message);
         $this->assertPattern('/--[a-f0-9]{32}--/', $rendered_message);
     }
-*/
+    /**/
     function test_should_encode_alternative_message_from_templates_with_embeded_images()
     {
         $TestMailer =& new TestMailer();
         $Message = $TestMailer->create('alternative_message_from_templates', $this->recipient, true);
 
-        $TestMailer->delivery_method = 'smtp';
+        //$TestMailer->delivery_method = 'smtp';
 
         $TestMailer->deliver($Message);
 
         $rendered_message = $TestMailer->getRawMessage();
         
-        echo $rendered_message;
+        //echo $rendered_message;
         return ;
 
         $this->assertPattern(   '/Content-Type: multipart\/alternative;charset=UTF-8;boundary=[a-f0-9]{32}\r\n'.
@@ -783,7 +784,7 @@ EOF;
     /**/
 }
 
-//Ak::test('Tests_for_Mailers');
+Ak::test('Tests_for_Mailers');
 Ak::test('Tests_for_AkActionMailer');
 
 

@@ -3,26 +3,44 @@
 class AkMailPart extends AkMailBase
 {
 
-    
-    function prepareHeadersForRendering()
+
+    function prepareHeadersForRendering($options = array())
     {
-        $this->_removeUnnecesaryHeaders();
+        if($this->isMultipart()){
+            $this->filterHeaders(array('only' => array('Content-Type')));
+        }else{
+            $this->filterHeaders();
+        }
     }
 
-    function _removeUnnecesaryHeaders()
+    function filterHeaders($options = array())
     {
-        $headers = $this->getHeaders();
+        $default_options = array(
 
-        $this->headers = array();
-        foreach (array(
+        'only' => empty($options['include']) ? array(
         'Content-Type',
         'Content-Transfer-Encoding',
         'Content-Id',
         'Content-Disposition',
         'Content-Description',
-        ) as $allowed_header){
-            if(isset($headers[$allowed_header])){
-                $this->headers[$allowed_header] = $headers[$allowed_header];
+
+        ) : array()
+        );
+
+        $options = array_merge($default_options, $options);
+
+        if(!empty($options['only'])){
+            $headers = $this->getHeaders();
+            $this->headers = array();
+            foreach ($options['only'] as $allowed_header){
+                if(isset($headers[$allowed_header])){
+                    $this->headers[$allowed_header] = $headers[$allowed_header];
+                }
+            }
+        }elseif (!empty($options['except'])){
+            $this->headers = array();
+            foreach ($options['except'] as $skip_header){
+                unset($this->headers[$skip_header]);
             }
         }
     }

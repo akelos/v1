@@ -168,7 +168,9 @@ class AkMailComposer extends AkObject
         if(is_array($raw_body_or_parts)){
             $raw_body = '';
             $this->openMultipartBlock();
-
+            if(!$Message->hasContentType()){
+                $Message->setContentType('multipart/related');
+            }
             $Message->content_type_attributes['boundary'] = $this->getBoundary();
             $Message->_skip_adding_date_to_headers = !$Message->isMainMessage();
             
