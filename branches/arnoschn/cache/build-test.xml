@@ -1,69 +1,188 @@
 <?xml version="1.0"?>
 <project name="LP2 Build File For Unit Tests" basedir="." default="build">
 
-	<property name="report.dir" value="report" />
-	<property name="codecoverage" value="false" override="true" />
-	<property name="coverage.dir" value="report/coverage" />
-	<property name="coverage.subdir" value="coverage" />
-
-	<property name="coverage.database" value="./report/coverage/database" />
+	<property file="build.properties"/>
+	<property name="report.dir" value="${project.basedir}/test/report" />
+	<property name="test.dir" value="${project.basedir}/ci-tests" />
+	<property name="config.dir" value="${project.basedir}/script/extras" />
+	<property name="config.file" value="${config.dir}/ci-config.yaml" />
 	<fileset dir="lib" id="akelos-classes">
 		<include name="*/**/*.php" />
 	</fileset>
+
+	<target name="taskdef">
+		<taskdef name="ci-tests" classname="CiTestsTask" classpath="${project.basedir}" />
+		<taskdef name="ci-reports" classname="CiReportTask" classpath="${project.basedir}" />
+		<taskdef name="ci-rewrite-url" classname="CiRewriteUrlTask" classpath="${project.basedir}" />
+	</target>
+
+	<target name="interactive" depends="taskdef,check-config">
+		<if>
+			<equals arg1="${akelos_path}" arg2="" />
+			<then>
+				<property name="akelos_path" value="${project.basedir}" override="true" />
+			</then>
+		</if>
+		<if>
+			<equals arg1="${test_dir}" arg2="" />
+			<then>
+				<property name="test_dir" value="${test.dir}" override="true" />
+			</then>
+		</if>
+		<echo>
+            params:
+			all
+			
+            run all unit tests in any combination.
+            
+            params:
+            php5 postgres mysql AkHasMany AkBelongsTo
+            
+            run AkHasMany and AkBelongsTo on PHP5 using the postgres and mysql-db.
+		</echo>
+		<input propertyname="akelos_path" message="Please provide the akelos path containing the version you want to test" promptChar=":" defaultValue="${akelos_path}" />
+		<input propertyname="test_dir" message="Please provide the directory the test app should be installed in" promptChar=":" defaultValue="${test_dir}" />
+		<input propertyname="arguments" message="Please provide run arguments. No arguments will run all valid combinations" promptChar=":" defaultValue="${arguments}" />
+		<phingCall target="run-tests">
+			<param name="akelos_path" value="${akelos_path}" />
+			<param name="test_dir" value="${test_dir}" />
+			<param name="arguments" value="${arguments}" />
+		</phingCall>
+	</target>
+	<target name="validate-akelos">
+		<available file="${akelos_path}/akelos" property="akelos_available" />
+		<fail unless="akelos_available" message="akelos could not be found in ${akelos_path}" />
+	</target>
+
+	<target name="run-tests">
+		<copy file="TPL-build.properties" tofile="build.properties" overwrite="true">
+			<filterchain>
+				<expandproperties />
+			</filterchain>
+		</copy>
+		<phingCall target="validate-akelos" />
+		<ci-tests akelosPath="${akelos_path}" testDir="${test_dir}" args="${arguments}" />
+		<phingCall target="generate-reports">
+			<param name="test.dir" value="${test_dir}" />
+		</phingCall>
+	</target>
+	<target name="generate-reports">
+		<ci-reports styledir="resources/xsl" reportdir="${report.dir}" format="noframes">
+			<fileset dir="${test.dir}">
+				<include name="test-results*.xml" />
+			</fileset>
+
+		</ci-reports>
+	</target>
+		
+	<target name="check-config">
+		<echo>Checking configuration</echo>
+		<available file="${config.file}" property="config.exists" value="1" />
+		<if>
+			<equals arg1="${config.exists}" arg2="1" />
+			<then>
+				<echo>${config.file} exists</echo>
+			</then>
+			<else>
+				<echo>${config.file} does not exist</echo>
+				<phingCall target="generate-config" />
+
+			</else>
+		</if>
+	</target>
 	
+	<target name="setup" depends="taskdef,generate-config"/>
+	<target name="generate-config">
+		<echo>Generating config</echo>
+		<input propertyname="testing.url" message="[WebServer] Please provide the url under which the testing website can be found" promptChar=":" defaultValue="http://localhost/test/fixtures/public" />
+		<phingCall target="generate-config-mysql">
+			<param name="testing.url" value="${testing.url}" />
+		</phingCall>
+		<phingCall target="generate-config-postgres">
+			<param name="testing.url" value="${testing.url}" />
+		</phingCall>
+		<phingCall target="generate-config-sqlite">
+			<param name="testing.url" value="${testing.url}" />
+		</phingCall>
+		<phingCall target="generate-yaml-config-file" />
+		<phingCall target="generate-fix-htaccess" />
+	</target>
+	<target name="generate-config-mysql">
+		<phingCall target="generate-config-file">
+			<param name="type" value="mysql" />
+
+			<param name="testing.url" value="${testing.url}" />
+		</phingCall>
+	</target>
+	<target name="generate-config-postgres">
+		<phingCall target="generate-config-file">
+			<param name="type" value="postgres" />
+
+			<param name="testing.url" value="${testing.url}" />
+		</phingCall>
+	</target>
+	<target name="generate-config-sqlite">
+		<phingCall target="generate-config-file">
+			<param name="type" value="sqlite" />
+			<param name="file.based" value="1" />
+			<param name="testing.url" value="${testing.url}" />
+		</phingCall>
+	</target>
+	<target name="generate-config-file">
+
+		<if>
+			<equals arg1="${file.based}" arg2="1" />
+			<then>
+				<input propertyname="file" message="[${type}] Please provide which database-file should be used" promptChar=":" defaultValue="" />
+				<property name="database" value="" />
+				<property name="host" value="" />
+				<property name="user" value="" />
+				<property name="password" value="" />
+			</then>
+
+			<else>
+				<input propertyname="host" message="[${type}] Please provide which host should be used" promptChar=":" defaultValue="localhost" />
+				<property name="file" value="" />
+				<input propertyname="database" message="[${type}] Please provide which database should be used" promptChar=":" defaultValue="framework_tests" />
+				<input propertyname="user" message="[${type}] Please provide which user should be used" promptChar=":" defaultValue="akelos" />
+				<input propertyname="password" message="[${type}] Please provide which password should be used" promptChar=":" />
+			</else>
+		</if>
+
+
+		<copy file="${config.dir}/TPL-config-testing.php" tofile="${config.dir}/${type}-testing.php" overwrite="true">
+			<filterchain>
+				<expandproperties />
+			</filterchain>
+		</copy>
+	</target>
+	<target name="generate-fix-htaccess">
+		<ci-rewrite-url url="${testing.url}" property="rewrite.url"/>
+	        <copy file="${config.dir}/TPL-fix_htaccess.php" tofile="${config.dir}/fix_htaccess.php" overwrite="true">
+	            <filterchain>
+	                <expandproperties />
+	            </filterchain>
+	        </copy>
+	    </target>
+	<target name="generate-yaml-config-file">
+
+		<input propertyname="php5" message="Please provide the path to the php5 executable" promptChar=":" defaultValue="/usr/bin/php5" />
+		<input propertyname="php4" message="Please provide the path to the php4 executable" promptChar=":" defaultValue="/usr/bin/php4" />
+
+
+		<copy file="${config.dir}/TPL-ci-config.yaml" tofile="${config.dir}/ci-config.yaml" overwrite="true">
+			<filterchain>
+				<expandproperties />
+			</filterchain>
+		</copy>
+	</target>
 	<target name="prepare">
 
 		<mkdir dir="${report.dir}" />
-		<mkdir dir="${project.basedir}/ci-tests" />
+		<mkdir dir="${test.dir}" />
 	</target>
 
-	<target name="generate-report">
-		<mkdir dir="${report.dir}/${phpversion}" />
-		<mkdir dir="${report.dir}/${phpversion}/${environment}" />
-		<phpunit2report infile="${project.basedir}/ci-tests/test-results-${phpversion}-${environment}.xml" styledir="resources/xsl" todir="${report.dir}/${phpversion}/${environment}" format="noframes" />
-
-	</target>
-	<target name="test">
-		<taskdef name="ci-tests" classname="CiTestsTask" classpath="${project.basedir}" />
-		<copy todir="${project.basedir}/tmp">
-		            <filterchain>
-		                <expandproperties />
-		            </filterchain>
-		            <fileset dir="${project.basedir}/test/nanoweb/etc">
-		                <include name="nanoweb.conf" />
-		            	<include name="modules.conf" />
-		            </fileset>
-		        </copy>
-		<exec command='${project.basedir}/test/nanoweb/bin/nanoweb.php --config=${project.basedir}/tmp/nanoweb.conf --set-option="PidFile=${project.basedir}/tmp/nanoweb.pid"' spawn="true" passthru="true"/>
-		<ci-tests akelosPath="${project.basedir}" />
-		<exec command="kill `cat ${project.basedir}/tmp/nanoweb.pid` >/dev/null 2>/dev/null"/>
-		        <exec command="rm ${project.basedir}/tmp/nanoweb.pid"/>
-	</target>
-
-	<target name="report">
-		<phingCall target="generate-report">
-			<property name="phpversion" value="php5" />
-			<property name="environment" value="mysql" />
-		</phingCall>
-		<phingCall target="generate-report">
-			<property name="phpversion" value="php4" />
-			<property name="environment" value="mysql" />
-		</phingCall>
-		<phingCall target="generate-report">
-			<property name="phpversion" value="php5" />
-			<property name="environment" value="postgres" />
-		</phingCall>
-		<phingCall target="generate-report">
-			<property name="phpversion" value="php4" />
-			<property name="environment" value="postgres" />
-		</phingCall>
-		<phingCall target="generate-report">
-			<property name="phpversion" value="php5" />
-			<property name="environment" value="sqlite" />
-		</phingCall>
-	</target>
-
-	<target name="build" depends="prepare,test,report">
+	<target name="build" depends="taskdef,check-config,run-tests">
 	</target>
 
 

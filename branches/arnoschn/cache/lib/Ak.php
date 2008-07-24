@@ -357,7 +357,7 @@ class Ak
 
             if(!$result = file_put_contents($options['base_path'].DS.$file_name, $content)){
                 if(!empty($content)){
-                    Ak::trace("Please change file/dir permissions or enable FTP file handling by".
+                    Ak::trace("Could not write to file: \"".$options['base_path'].DS."$file_name\". Please change file/dir permissions or enable FTP file handling by".
                     " setting the following on your config/".AK_ENVIRONMENT.".php file \n<pre>define('AK_UPLOAD_FILES_USING_FTP', true);\n".
                     "define('AK_READ_FILES_USING_FTP', false);\n".
                     "define('AK_DELETE_FILES_USING_FTP', true);\n".

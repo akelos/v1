@@ -30,7 +30,6 @@ class AkelosInstaller
         'skip' => false,
         'quiet' => false,
         'public_html' => false,
-        'exclude' => false,
         'dependencies' => false
         );
         $this->options = array_merge($default_options, $options);
@@ -54,17 +53,7 @@ class AkelosInstaller
                 }
             }
         }
-        if(!empty($this->options['exclude'])){
-            $this->framework_dirs = array('lib', 'vendor', 'test');
-            $excludes = !is_array($this->options['exclude'])?array($this->options['exclude']):$this->options['exclude'];
-            foreach ($excludes as $exclude_dir){
-                foreach ($this->source_tree as $k => $v){
-                    if(isset($v[$exclude_dir])){
-                        unset($this->source_tree[$k]) ;
-                    }
-                }
-            }
-        }
+
         $this->destination_tree = Ak::dir($this->options['directory'],array('dirs'=>true,'recurse'=>true));
     }
 
@@ -102,20 +91,20 @@ class AkelosInstaller
         $source_test_dir = $this->options['source'].DS.'test';
         $test_dir = $this->options['directory'].DS.'test';
 
-        $this->_makeDir($test_dir,true);
+        $this->_makeDir($test_dir);
         $this->_copyFile($source_test_dir.DS.'app.php');
 
-        $this->_makeDir($test_dir.DS.'fixtures',true);
-        $this->_makeDir($test_dir.DS.'fixtures'.DS.'app',true);
+        $this->_makeDir($test_dir.DS.'fixtures');
+        $this->_makeDir($test_dir.DS.'fixtures'.DS.'app');
 
         $this->_copyFile($source_test_dir.DS.'fixtures'.DS.'app'.DS.'application_controller.php');
         $this->_copyFile($source_test_dir.DS.'fixtures'.DS.'app'.DS.'shared_model.php');
 
-        $this->_makeDir($test_dir.DS.'fixtures'.DS.'config',true);
+        $this->_makeDir($test_dir.DS.'fixtures'.DS.'config');
         $this->_copyFile($source_test_dir.DS.'fixtures'.DS.'config'.DS.'config.php');
 
-        $this->_makeDir($test_dir.DS.'fixtures'.DS.'data',true);
-        $this->_makeDir($test_dir.DS.'fixtures'.DS.'public',true);
+        $this->_makeDir($test_dir.DS.'fixtures'.DS.'data');
+        $this->_makeDir($test_dir.DS.'fixtures'.DS.'public');
         $this->_copyFile($source_test_dir.DS.'fixtures'.DS.'public'.DS.'.htaccess');
         $this->_copyFile($source_test_dir.DS.'fixtures'.DS.'public'.DS.'index.php');
     }
@@ -199,20 +188,22 @@ class AkelosInstaller
         }
     }
 
-    function _makeDir($path, $takeAsIs=false)
+    function _makeDir($path)
     {
-        if ($takeAsIs) {
-            $dir = $path;
-        } else {
-            $dir = $this->_getDestinationPath($path);
-        }
-        
+        $dir = $this->_getDestinationPath($path);
+
         if($this->_canUsePath($dir)){
             if(!is_dir($dir)){
                 $this->yield("    Creating directory: ".$dir);
                 if(!@mkdir($dir))
                 return false;
             }
+        }
+        $source_file_mode =  fileperms($path);
+        $target_file_mode =  fileperms($dir);
+        if($source_file_mode != $target_file_mode){
+            $this->yield("    Setting $dir permissions to: ".(sprintf("%o",$source_file_mode)));
+            chmod($dir,$source_file_mode);
         }
         return true;
     }
@@ -455,11 +446,6 @@ $config =  array(
 'min'     => 0,
 'desc'    => 'Show this help message.'),
 
-'exclude' => array(
-'short'   => 'e',
-'max'     => -1,
-'min'     => 0,
-'desc'    => 'Exclude directories when creating the application'),
 
 );
 

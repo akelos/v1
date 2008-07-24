@@ -14,10 +14,12 @@ class Test_AkMemcache extends  UnitTestCase
         $cache_settings = Ak::getSettings('caching',false);
         $this->memcache=AkCache::lookupStore($cache_settings);
         $this->assertIsA($this->memcache,'AkCache');
+        
     }
     
     function test_init_without_server_fallback_to_default()
     {
+        
         $this->memcache=new AkMemcache();
         $res = $this->memcache->init(array());
         $this->assertTrue(true);
@@ -48,6 +50,10 @@ class Test_AkMemcache extends  UnitTestCase
     }
     function test_set_and_get_string()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = 'test';
         $res = $this->memcache->save($original,'test_id_1','strings');
         $stored = $this->memcache->get('test_id_1','strings');
@@ -57,6 +63,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_get_integer()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = 1111;
         $res = $this->memcache->save($original,'test_id_2','integers');
         $stored = $this->memcache->get('test_id_2','integers');
@@ -65,6 +75,10 @@ class Test_AkMemcache extends  UnitTestCase
     }
     function test_set_and_get_float()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = 11.11;
         $res = $this->memcache->save($original,'test_id_3','floats');
         $stored = $this->memcache->get('test_id_3','floats');
@@ -73,6 +87,10 @@ class Test_AkMemcache extends  UnitTestCase
     }
     function test_set_and_get_array()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = array(0,1,2,3,'test');
         $res = $this->memcache->save($original,'test_id_4','arrays');
         $stored = $this->memcache->get('test_id_4','arrays');
@@ -82,6 +100,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_get_object()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = new stdClass;
         $original->id = 1;
         $res = $this->memcache->save($original,'test_id_5','objects');
@@ -93,6 +115,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_get_objects_within_arrays()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $obj1=new stdClass;
         $obj1->id=1;
         $obj2=new stdClass;
@@ -108,6 +134,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_get_large_strings()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = file_get_contents(__FILE__);
         $res = $this->memcache->save($original,'test_id_7','largestrings');
         $stored = $this->memcache->get('test_id_7','largestrings');
@@ -117,6 +147,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_get_binary_data()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = file_get_contents(AK_BASE_DIR.DS.'public'.DS.'images'.DS.'akelos_framework_logo.png');
         $res = $this->memcache->save($original,'test_id_8','binary');
         $stored = $this->memcache->get('test_id_8','binary');
@@ -126,6 +160,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_get_really_large_string()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = $this->_generateLargeString(1000000);
         $res = $this->memcache->save($original,'test_id_9','strings');
         $stored = $this->memcache->get('test_id_9','strings');
@@ -134,6 +172,10 @@ class Test_AkMemcache extends  UnitTestCase
     }
     function test_set_and_get_really_really_large_string()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = $this->_generateLargeString(2000000);
         $res = $this->memcache->save($original,'test_id_10','strings');
         $stored = $this->memcache->get('test_id_10','strings');
@@ -143,6 +185,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_set_and_remove_key()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $original = $this->_generateLargeString(1000);
         $res = $this->memcache->save($original,'test_id_11','strings');
         $stored = $this->memcache->get('test_id_11','strings');
@@ -155,6 +201,10 @@ class Test_AkMemcache extends  UnitTestCase
     
     function test_flush_group()
     {
+        if (!is_a($this->memcache,'AkCache')) {
+            $this->fail('Caching is not enabled. Please enable caching for the unit test');
+            return;
+        }
         $retrieved = $this->memcache->get('test_id_10','strings');
         $this->assertTrue($retrieved!=null);
         

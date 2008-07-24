@@ -2,11 +2,12 @@
 
 $database_settings = array(
 'testing' => array(
-    'type' => 'mysql',
-    'host' => 'localhost',
-    'database_name' => 'framework_tests',
-    'user' => 'arno',
-    'password' => 'arno',
+    'type' => '${type}',
+    'host' => '${host}',
+    'database_name' => '${database}',
+    'database_file' => '${file}',
+    'user' => '${user}',
+    'password' => '${password}',
     'options' => ''
 ));
 
@@ -14,7 +15,7 @@ $database_settings['development'] = $database_settings['production'] = $database
 
 defined('AK_ENVIRONMENT') ? null : define('AK_ENVIRONMENT', 'testing');
 defined('AK_BASE_DIR') ? null : define('AK_BASE_DIR', str_replace(DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php','',__FILE__));
-defined('AK_TESTING_URL') ? null : define('AK_TESTING_URL', 'http://localhost:81/test/fixtures/public');
+defined('AK_TESTING_URL') ? null : define('AK_TESTING_URL', '${testing.url}');
 define('AK_LOG_EVENTS', true);
 
 include('fix_htaccess.php');

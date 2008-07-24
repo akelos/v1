@@ -23,6 +23,9 @@ class CacheHelperTests extends HelpersUnitTester
 
         $this->cache_helper =& $this->controller->cache_helper;
         
+        $this->assertIsA($this->cache_helper,'CacheHelper');
+
+        
         
     }
     function _test_init()
@@ -36,13 +39,16 @@ class CacheHelperTests extends HelpersUnitTester
         $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2,'akmemcache'=>3);
         $unitTests = array('_test_cache_with_string_key','_test_cache_with_string_key_cached');
         
-        
+        if(is_a($this->controller->_CacheHandler,'AkCacheHandler')) {
         foreach ($cacheHandlers as $class=>$type) {
             $this->controller->_CacheHandler->_setCacheStore($type);
             $this->_test_init();
             foreach ($unitTests as $test) {
                 $this->$test($class);
             }
+        }
+        } else {
+            $this->fail('CacheHandler is not initialized. Please enable the caching system for the unit-test');
         }
     }
     
