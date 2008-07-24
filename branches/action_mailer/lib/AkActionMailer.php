@@ -20,6 +20,7 @@ require_once(AK_LIB_DIR.DS.'AkBaseModel.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailMessage.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailParser.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkActionMailerQuoting.php');
+require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailComposer.php');
 
 ak_define('MAIL_EMBED_IMAGES_AUTOMATICALLY_ON_EMAILS', false);
 ak_define('ACTION_MAILER_DEFAULT_CHARSET', AK_CHARSET);
@@ -275,6 +276,7 @@ class AkActionMailer extends AkBaseModel
     var $default_implicit_parts_order = array('multipart/alternative', 'text/html', 'text/enriched', 'text/plain');
     var $helpers = array('mail');
     var $Message;
+    var $Composer;
     var $_defaultMailDriverName = 'AkMailMessage';
 
     function __construct($Driver = null)
@@ -537,6 +539,16 @@ class AkActionMailer extends AkBaseModel
         $Message =& new $this->_defaultMailDriverName ($Message);
         $Message->send();
     }
+    
+    function getRawMessage()
+    {
+        if(empty($this->Message->_has_been_created_by_mailer)){
+            trigger_error(Ak::t('You need to create() a message before getting it as raw text.'),E_USER_ERROR);
+            return false;
+        }
+        $Composer =& $this->getComposer();
+        return $Composer->getRawMessage();
+    }
 
 
     /**
@@ -545,11 +557,10 @@ class AkActionMailer extends AkBaseModel
      */
     function &create($method_name, $parameters, $content_type = '')
     {
-        require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailComposer.php');
-        $Composer =& new AkMailComposer();
-        $Composer->init($this);
+        $Composer =& $this->getComposer();
         $args = func_get_args();
-        call_user_func_array(array($Composer, 'build'), $args);
+        call_user_func_array(array(&$Composer, 'build'), $args);
+        $this->Message->_has_been_created_by_mailer = true;
         return $this->Message;
     }
 
@@ -571,6 +582,7 @@ class AkActionMailer extends AkBaseModel
         if(!empty($this->perform_deliveries)){
             $this->{"perform".ucfirst(strtolower($this->delivery_method))."Delivery"}($this->Message);
         }
+        $this->Message->_has_been_delivered_by_mailer = true;
         return $this->Message;
     }
 
@@ -587,13 +599,13 @@ class AkActionMailer extends AkBaseModel
         );
         $settings = array_merge($default_settings, $settings);
 
-        return $this->_deliverUsingMailDeliveryMethod('SMTP', $Message, $settings);
+        return $this->_deliverUsingMailDeliveryMethod('Smtp', $Message, $settings);
 
     }
 
     function performPhpDelivery(&$Message, $settings = array())
     {
-        return $this->_deliverUsingMailDeliveryMethod('PHPMail', $Message, $settings);
+        return $this->_deliverUsingMailDeliveryMethod('PhpMail', $Message, $settings);
     }
 
     function performTestDelivery(&$Message)
@@ -656,7 +668,25 @@ class AkActionMailer extends AkBaseModel
         return $TemplateInstance;
     }
 
-    
+    function &getComposer()
+    {
+        if(empty($this->Composer)){
+            $this->setComposer();
+        }
+        return $this->Composer;
+    }
+
+    function setComposer($Composer = null)
+    {
+        if(!empty($Composer)){
+            $this->Composer = $Composer;
+        }else{
+            $this->Composer =& new AkMailComposer();
+            $this->Composer->init($this);
+        }
+    }
+
+
     /**
      * Alias for getModelName
      */
@@ -714,7 +744,7 @@ class AkActionMailer extends AkBaseModel
 
         return $helpers;
     }
-    
+
     function _deliverUsingMailDeliveryMethod($method, &$Message, $options)
     {
         $handler_name = 'Ak'.AkInflector::camelize(Ak::sanitize_include($method, 'paranoid')).'Delivery';
@@ -728,17 +758,11 @@ class AkActionMailer extends AkBaseModel
             return false;
         }
         $DeliveryHandler = new $handler_name();
-        return $DeliveryHandler->deliver($Message, $options);
+        $this->Message =& $Message;
+        return $DeliveryHandler->deliver($this, $options);
     }
 
-    /**
-     * Returns a raw version 
-     *
-     */
-    function getRawMessage()
-    {
-        return $this->Message->getRawMessage();
-    }
+
 
 }
 

@@ -6,15 +6,18 @@ class AkMailComposer extends AkObject
     var $Message;
     var $ActionMailer;
     var $parts = array();
-    var $composed_message = '';
+    var $raw_message = '';
+    var $composed_message = array();
+    var $_boundary_stack = array();
+    var $boundary = '';
 
-    
+
     function init(&$ActionMailer)
     {
         $this->ActionMailer =& $ActionMailer;
         $this->Message =& $ActionMailer->Message;
     }
-    
+
     function build()
     {
         $args = func_get_args();
@@ -33,7 +36,7 @@ class AkMailComposer extends AkObject
             trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->ActionMailer->getModelName())), E_USER_ERROR);
         }
     }
-    
+
 
     function _prepareInlineBodyParts($message_content_type = 'multipart/alternative')
     {
@@ -140,33 +143,117 @@ class AkMailComposer extends AkObject
     }
 
 
-    
-    
-    
 
-    /*
 
-    function create($Mailer, $method_name, $parameters, $content_type)
+
+    function getRawMessage($MessageOrPart = null, $force_overload = false)
     {
-        $args = func_get_args();
-        
-        $this->_initializeDefaults($method_name);
-        if(method_exists($this, $method_name)){
-            call_user_func_array(array(&$this, $method_name), $args);
-        }else{
-            trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
+        $Message = empty($MessageOrPart) ? $this->Message : $MessageOrPart;
+        if($force_overload || empty($Message->raw_message)){
+            list($raw_headers, $raw_body) = $this->getRawHeadersAndBody($Message);
+            $Message->raw_message = $raw_headers.
+            AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.
+            $raw_body;
         }
-        $parameters = @array_shift($args);
-
-        $Mail =& $this->_MailDriver;
-
-        $this->_prepareInlineBodyParts($Mail);
-
-        $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
-
-        $this->Mail =& $Mail;
-        return $Mail;
+        return $Message->raw_message;
     }
+
+
+
+    function getRawHeadersAndBody($MessageOrPart = null)
+    {
+        $Message = empty($MessageOrPart) ? $this->Message : $MessageOrPart;
+        $raw_body_or_parts = $this->getRawBodyOrRawParts($Message);
+
+        if(is_array($raw_body_or_parts)){
+            $raw_body = '';
+            $this->openMultipartBlock();
+
+            $Message->content_type_attributes['boundary'] = $this->getBoundary();
+            $Message->_skip_adding_date_to_headers = !$Message->isMainMessage();
+            
+            /*
+            if($Message->isMainMessage()){
+                $Message->setContentType('multipart/mixed');
+            }
+            */
+
+            $raw_headers = $Message->getRawHeaders();
+            foreach ($raw_body_or_parts as $raw_part_headers=>$raw_part_body){
+                $raw_body .=
+                AK_ACTION_MAILER_EOL.
+                AK_ACTION_MAILER_EOL.
+                '--'.
+                $this->getBoundary().
+                AK_ACTION_MAILER_EOL.
+                $raw_part_headers.
+                AK_ACTION_MAILER_EOL.
+                AK_ACTION_MAILER_EOL.
+                $raw_part_body;
+            }
+            $raw_body .= AK_ACTION_MAILER_EOL.'--'.$this->getBoundary().'--'.AK_ACTION_MAILER_EOL;
+
+            $this->closeMultipartBlock();
+        }else{
+            $raw_headers = $Message->getRawHeaders();
+            $raw_body = $raw_body_or_parts;
+        }
+
+        return array($raw_headers, $raw_body);
+    }
+
+
+    function getRawBodyOrRawParts($MessageOrPart = null)
+    {
+        $Message = empty($MessageOrPart) ? $this->Message : $MessageOrPart;
+        $body = $Message->getBody();
+        if(empty($body) && $Message->hasParts()){
+            $result = array();
+            foreach (array_keys($Message->parts) as $k){
+                $Part = $Message->parts[$k];
+                list($raw_headers, $raw_body) = $this->getRawHeadersAndBody($Part);
+                $result[$raw_headers] = $raw_body;
+            }
+            return $result;
+        }
+        return $body;
+    }
+
+    function openMultipartBlock()
+    {
+        $this->setBoundary($this->getBoundaryString());
+    }
+
+    function closeMultipartBlock()
+    {
+        $this->latest_closed_boundary = array_pop($this->_boundary_stack);
+    }
+
+
+    function setBoundary($boundary)
+    {
+        $this->boundary = $boundary;
+        array_push($this->_boundary_stack, $boundary);
+        return $this->boundary;
+    }
+
+    function getBoundary()
+    {
+        return $this->boundary;
+    }
+
+
+    function getBoundaryString()
+    {
+        return md5(Ak::randomString(10).time());
+    }
+
+
+
+
+
+
+
 
     function compose(&$Mail)
     {
@@ -195,46 +282,58 @@ class AkMailComposer extends AkObject
         return $raw_message;
     }
 
+
+    /*
+
+    function create($Mailer, $method_name, $parameters, $content_type)
+    {
+    $args = func_get_args();
+
+    $this->_initializeDefaults($method_name);
+    if(method_exists($this, $method_name)){
+    call_user_func_array(array(&$this, $method_name), $args);
+    }else{
+    trigger_error(Ak::t('Could not find the method %method on the model %model', array('%method'=>$method_name, '%model'=>$this->getModelName())), E_USER_ERROR);
+    }
+    $parameters = @array_shift($args);
+
+    $Mail =& $this->_MailDriver;
+
+    $this->_prepareInlineBodyParts($Mail);
+
+    $Mail->setMimeVersion((empty($Mail->mime_version) && !empty($Mail->parts)) ? '1.0' : $Mail->mime_version);
+
+    $this->Mail =& $Mail;
+    return $Mail;
+    }
+
+
     function composePart($Part)
     {
-        return $this->compose($Part);
+    return $this->compose($Part);
     }
 
 
 
     function getMultipartMessage()
     {
-        $raw_message = '';
-        $boundary = $this->getBoundary();
+    $raw_message = '';
+    $boundary = $this->getBoundary();
 
-        $this->content_type_attributes['boundary'] = $boundary;
-        $this->_skip_adding_date_to_headers = true;
-        $raw_message .= $this->getRawHeaders();
+    $this->content_type_attributes['boundary'] = $boundary;
+    $this->_skip_adding_date_to_headers = true;
+    $raw_message .= $this->getRawHeaders();
 
-        foreach (array_keys($this->parts) as $k){
-            $raw_message .= AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.'--'.$boundary.AK_ACTION_MAILER_EOL.$this->parts[$k]->getRawMessage();
-        }
+    foreach (array_keys($this->parts) as $k){
+    $raw_message .= AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.'--'.$boundary.AK_ACTION_MAILER_EOL.$this->parts[$k]->getRawMessage();
+    }
 
-        $raw_message .= AK_ACTION_MAILER_EOL.'--'.$boundary.'--'.AK_ACTION_MAILER_EOL;
+    $raw_message .= AK_ACTION_MAILER_EOL.'--'.$boundary.'--'.AK_ACTION_MAILER_EOL;
 
     }
 
-    function getBoundary()
-    {
-        return 'mimepart_'.Ak::randomString(8).'..'.Ak::randomString(8);
-    }
 
-    function getRawPart()
-    {
-        return $this->getRawHeaders().AK_ACTION_MAILER_EOL.AK_ACTION_MAILER_EOL.$this->getRawBody();
-    }
 
-    function getRawHeaders($Mail)
-    {
-        $Mail->_addHeaderAttributes();
-        return $Mail->_getHeadersAsText();
-    }
-    
     */
 
 

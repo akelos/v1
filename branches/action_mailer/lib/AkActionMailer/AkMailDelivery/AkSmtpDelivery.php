@@ -3,8 +3,10 @@
 
 class AkSmtpDelivery extends AkObject
 {
-    function deliver(&$Message, $settings = array())
+    function deliver(&$Mailer, $settings = array())
     {
+        $Message =& $Mailer->Message;
+        
         $SmtpClient =& Mail::factory('smtp', $settings);
 
         include_once 'Net/SMTP.php';
@@ -46,7 +48,7 @@ class AkSmtpDelivery extends AkObject
             }
         }
 
-        if (PEAR::isError($smtp->data($Message->getRawMessage()))) {
+        if (PEAR::isError($smtp->data($Mailer->getRawMessage()))) {
             return PEAR::raiseError('unable to send data');
         }
 

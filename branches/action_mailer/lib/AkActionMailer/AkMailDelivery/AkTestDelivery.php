@@ -3,9 +3,9 @@
 
 class AkTestDelivery extends AkObject
 {
-    function deliver(&$Message, $settings = array())
+    function deliver(&$Mailer, $settings = array())
     {
-        $settings['ActionMailer']->deliveries[] =& $Message->getEncoded();
+        $settings['ActionMailer']->deliveries[] =& $Mailer->Message->getEncoded();
     }
 }
 

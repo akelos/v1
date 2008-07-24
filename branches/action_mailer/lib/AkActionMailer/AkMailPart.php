@@ -4,10 +4,9 @@ class AkMailPart extends AkMailBase
 {
 
     
-    function _prepareHeadersForRendering()
+    function prepareHeadersForRendering()
     {
         $this->_removeUnnecesaryHeaders();
-        $this->_addHeaderAttributes();
     }
 
     function _removeUnnecesaryHeaders()

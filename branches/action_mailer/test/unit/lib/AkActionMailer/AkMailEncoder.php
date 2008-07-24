@@ -22,8 +22,7 @@ class AkMailEncoderTestCase extends AkUnitTest
     {
         $TestMailer =& new TestMailer();
         $Delivered = $TestMailer->deliver('alternative_message_from_templates', $this->recipient);
-        $MailComposer = new AkMailComposer($Delivered);
-        
+       
         echo $MailComposer->compose($Delivered);
     }
 

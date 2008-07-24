@@ -323,11 +323,16 @@ class TestMailer extends AkActionMailer
         'from' => "some.one@example.com"
         ));
     }
-    
-    function alternative_message_from_templates()
+
+    function alternative_message_from_templates($recipient, $include_logo = false)
     {
-        
-    } 
+        $this->set(array(
+        'recipients' => $recipient,
+        'subject' => "Alternative message from template",
+        'from' => "some.one@example.com",
+        'body' => array('include_logo' => $include_logo)
+        ));
+    }
 
     function &receive($raw_email)
     {
