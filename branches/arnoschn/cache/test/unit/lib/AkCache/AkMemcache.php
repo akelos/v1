@@ -12,6 +12,7 @@ class Test_AkMemcache extends  UnitTestCase
     function setUp()
     {
         $cache_settings = Ak::getSettings('caching',false);
+        $cache_settings['handler']['type']=3;
         $this->memcache=AkCache::lookupStore($cache_settings);
         $this->assertIsA($this->memcache,'AkCache');
         

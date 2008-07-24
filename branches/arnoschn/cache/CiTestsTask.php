@@ -52,8 +52,6 @@ class CiTestsTask extends Task
         $this->_execute("touch ".$this->_testDir.DS.'log'.DS."testing.log", true);
         $this->_execute("chmod 777 ".$this->_testDir.DS.'log'.DS."testing.log", true);
         $this->_execute("cp -Rf ".$this->_akelosPath.DS.'test'."   ".$this->_testDir.DS, true);
-        $this->_execute("cp  ".$this->_akelosPath.DS.'test'.DS.'.nwaccess'."   ".$this->_testDir.DS, true);
-        //$this->_execute("find ".$this->_testDir.DS."/ -type d  -name '.svn' -exec sh -c 'exec rm -Rf \"$@\"' find-copy {} +",true);
     }
     private function _execute($cmd,$execute=true)
     {

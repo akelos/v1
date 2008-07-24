@@ -89,6 +89,8 @@
 
 			</else>
 		</if>
+        <phingCall target="generate-caching-config" />
+        <phingCall target="generate-sessions-config" />
 	</target>
 	
 	<target name="setup" depends="taskdef,generate-config"/>
@@ -106,7 +108,32 @@
 		</phingCall>
 		<phingCall target="generate-yaml-config-file" />
 		<phingCall target="generate-fix-htaccess" />
+
 	</target>
+	<target name="generate-caching-config">
+	<available file="${config.dir}/caching.yml" property="caching.config.exists"/>
+		<if>
+		<equals arg1="${caching.config.exists}" arg2="true"/>
+			<then>
+				<echo>${config.dir}/caching.yml exists</echo>
+			</then>
+			<else>
+				<copy file="${config.dir}/DEFAULT-caching.yml" tofile="${config.dir}/caching.yml"/>
+			</else>
+		</if>
+	</target>
+	<target name="generate-sessions-config">
+	   <available file="${config.dir}/sessions.yml" property="session.config.exists"/>
+	        <if>
+	        <equals arg1="${session.config.exists}" arg2="true"/>
+	            <then>
+	                <echo>${config.dir}/sessions.yml exists</echo>
+	            </then>
+	            <else>
+	                <copy file="${config.dir}/DEFAULT-sessions.yml" tofile="${config.dir}/sessions.yml"/>
+	            </else>
+	        </if>
+	    </target>
 	<target name="generate-config-mysql">
 		<phingCall target="generate-config-file">
 			<param name="type" value="mysql" />
