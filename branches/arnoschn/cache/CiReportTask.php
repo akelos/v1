@@ -21,9 +21,10 @@ class CiReportTask extends PHPUnitReportTask
             {
                 $files[]=$fs->getDir($this->project).DIRECTORY_SEPARATOR.$f;
             }
-            var_dump($files);
             
         }
+        $environments = array();
+        $summaryFile = $this->reportDir.DIRECTORY_SEPARATOR.'index.html';
         foreach($files as $file)
         {
             $fileName = basename($file);
@@ -34,10 +35,39 @@ class CiReportTask extends PHPUnitReportTask
             if (!is_dir($dir)) {
                 mkdir($dir,0777,true);
             }
+            $xml = new SimpleXMLElement(file_get_contents($file));
+            $suites=$xml->xpath("/testsuites/testsuite");
+            $tests=0;
+            $failures=0;
+            $errors=0;
+            $time=0;
+            
+            foreach($suites as $suite){
+                $attributes = $suite->attributes();
+                $tests += (int)$attributes->tests;
+                $failures += (int)$attributes->failures;
+                $errors += (int)$attributes->errors;
+                $time += (int)$attributes->time;
+            }
+            $environment = array();
+            $environment['php']=$php;
+            $environment['class']=$failures>0?'failure':$errors>0?'error':'';
+            $environment['backend']=$backend;
+            $environment['tests']=$tests;
+            $environment['failures']=$failures;
+            $environment['errors']=$errors;
+            $environment['time']=$time;
+            $environment['details']=$dir.DIRECTORY_SEPARATOR.'phpunit2-noframes.html';
+            $environments[]=$environment;
             $this->setInFile($file);
             $this->log("Report available in:\n\n".$dir.DIRECTORY_SEPARATOR."phpunit2-noframes.html");
             parent::main();
         }
+        ob_start();
+        include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'summary.php');
+        $contents = ob_get_clean();
+        
+        file_put_contents($summaryFile, $contents);
     }
     /**
      * Nested creator, creates a FileSet for this task

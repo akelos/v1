@@ -15,7 +15,7 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
         } else {
             $cacheDir = $settings['handler']['options']['cacheDir'];
         }
-        chmod($cacheDir,0777);
+        //chmod($cacheDir,0777);
         $this->_flushCache('akelos.org');
         $this->_flushCache('www.akelos.org');
         $this->_flushCache('xinc.eu');
