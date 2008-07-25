@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <project name="LP2 Build File For Unit Tests" basedir="." default="build">
 
-	<property file="build.properties"/>
+	<property file="default.build.properties" override="true"/>
+	<property file="build.properties" override="true"/>
 	<property name="report.dir" value="${project.basedir}/test/report" />
 	<property name="test.dir" value="${project.basedir}/ci-tests" />
 	<property name="config.dir" value="${project.basedir}/script/extras" />
@@ -17,24 +18,6 @@
 	</target>
 
 	<target name="interactive" depends="taskdef,check-config">
-		<if>
-			<equals arg1="${akelos_path}" arg2="\${akelos_path}"/>
-			<then>
-				<property name="akelos_path" value="${project.basedir}" override="true" />
-			</then>
-		</if>
-		<if>
-			<equals arg1="${test_dir}" arg2="\${test_dir}" />
-			<then>
-				<property name="test_dir" value="${test.dir}" override="true" />
-			</then>
-		</if>
-		<if>
-		            <equals arg1="${arguments}" arg2="\${arguments}" />
-		            <then>
-		                <property name="arguments" value="all" override="true" />
-		            </then>
-		        </if>
 		<echo>
             params:
 			all
