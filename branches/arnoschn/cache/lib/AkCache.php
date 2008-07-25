@@ -244,11 +244,14 @@ class AkCache extends AkObject
                     require_once(AK_CONTRIB_DIR.'/pear/Cache_Lite/Lite.php');
                 }
                 if(!isset($options['cacheDir'])){
-                    if(!is_dir(AK_CACHE_DIR)){
-                        Ak::make_dir(AK_CACHE_DIR, array('base_path'=>AK_TMP_DIR));
-                        chmod(AK_CACHE_DIR, 0777);
-                    }
                     $options['cacheDir'] = AK_CACHE_DIR.DS;
+                }
+                 if(!is_dir($options['cacheDir'])){
+                    Ak::make_dir($options['cacheDir'], array('base_path'=>dirname($options['cacheDir'])));
+                    $res = @chmod($options['cacheDir'],0777);
+                    if (!$res) {
+                        trigger_error(Ak::t('Cannot change cache dir %dir permissions',array('%dir'=>$options['cacheDir'])), E_USER_WARNING);
+                    }
                 }
                 $this->_driverInstance =& new Cache_Lite($options);
                 break;

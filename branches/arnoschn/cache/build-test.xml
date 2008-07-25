@@ -29,6 +29,12 @@
 				<property name="test_dir" value="${test.dir}" override="true" />
 			</then>
 		</if>
+		<if>
+		            <equals arg1="${arguments}" arg2="\${arguments}" />
+		            <then>
+		                <property name="arguments" value="all" override="true" />
+		            </then>
+		        </if>
 		<echo>
             params:
 			all

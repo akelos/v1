@@ -179,15 +179,17 @@ class CI_Tests
 
     function beforeRun()
     {
-        return copy($this->config_file(),$this->config_backup_file());
+        //return copy($this->config_file(),$this->config_backup_file());
+        return true;
     }
 
     function afterRun()
     {
-        if (copy($this->config_backup_file(),$this->config_file())){
-            return unlink($this->config_backup_file());
-        }
-        return false;
+        //if (copy($this->config_backup_file(),$this->config_file())){
+        //    return unlink($this->config_backup_file());
+        //}
+        //return false;
+        return true;
     }
 
     function prepareEnvironment($environment)
