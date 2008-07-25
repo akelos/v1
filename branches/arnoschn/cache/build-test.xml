@@ -2,7 +2,7 @@
 <project name="LP2 Build File For Unit Tests" basedir="." default="build">
 
 	<property file="default.build.properties" override="true"/>
-	<property file="build.properties" override="true"/>
+
 	<property name="report.dir" value="${project.basedir}/test/report" />
 	<property name="test.dir" value="${project.basedir}/ci-tests" />
 	<property name="config.dir" value="${project.basedir}/script/extras" />
@@ -16,22 +16,31 @@
 		<taskdef name="ci-reports" classname="CiReportTask" classpath="${project.basedir}" />
 		<taskdef name="ci-rewrite-url" classname="CiRewriteUrlTask" classpath="${project.basedir}" />
 	</target>
-
-	<target name="interactive" depends="taskdef,check-config">
-		<echo>
-            params:
-			all
-			
-            run all unit tests in any combination.
-            
-            params:
-            php5 postgres mysql AkHasMany AkBelongsTo
-            
-            run AkHasMany and AkBelongsTo on PHP5 using the postgres and mysql-db.
-		</echo>
-		<input propertyname="akelos_path" message="Please provide the akelos path containing the version you want to test" promptChar=":" defaultValue="${akelos_path}" />
-		<input propertyname="test_dir" message="Please provide the directory the test app should be installed in" promptChar=":" defaultValue="${test_dir}" />
-		<input propertyname="arguments" message="Please provide run arguments. No arguments will run all valid combinations" promptChar=":" defaultValue="${arguments}" />
+    <target name="interactive-config">
+    	<property file="build.properties" override="true"/>
+	<echo>
+	            params:
+	            all
+	            
+	            run all unit tests in any combination.
+	            
+	            params:
+	            php5 postgres mysql AkHasMany AkBelongsTo
+	            
+	            run AkHasMany and AkBelongsTo on PHP5 using the postgres and mysql-db.
+	        </echo>
+	        <propertyprompt propertyname="akelos_path" promptText="Please provide the akelos path containing the version you want to test" promptCharacter=":" defaultValue="${akelos_path}" />
+	        <propertyprompt propertyname="test_dir" promptText="Please provide the directory the test app should be installed in" promptCharacter=":" defaultValue="${test_dir}" />
+	        <propertyprompt propertyname="arguments" promptText="Please provide run arguments. No arguments will run all valid combinations" promptCharacter=":" defaultValue="${arguments}" />
+    	<copy file="TPL-build.properties" tofile="build.properties" overwrite="true">
+    	            <filterchain>
+    	                <expandproperties />
+    	            </filterchain>
+    	        </copy>
+    	
+	</target>
+	<target name="interactive" depends="taskdef,check-config, interactive-config">
+		
 		<phingCall target="run-tests">
 			<param name="akelos_path" value="${akelos_path}" />
 			<param name="test_dir" value="${test_dir}" />
@@ -44,11 +53,7 @@
 	</target>
 
 	<target name="run-tests">
-		<copy file="TPL-build.properties" tofile="build.properties" overwrite="true">
-			<filterchain>
-				<expandproperties />
-			</filterchain>
-		</copy>
+		<property file="build.properties" override="true"/>
 		<phingCall target="validate-akelos" />
 		<ci-tests akelosPath="${akelos_path}" testDir="${test_dir}" args="${arguments}" />
 		<phingCall target="generate-reports">
@@ -78,8 +83,20 @@
 
 			</else>
 		</if>
+		<available file="build.properties" property="build.props" value="1" />
+		        <if>
+		            <equals arg1="${build.props}" arg2="1" />
+		            <then>
+		                <echo>build.properties exists</echo>
+		            </then>
+		            <else>
+		                <phingCall target="interactive-config" />
+
+		            </else>
+		        </if>
         <phingCall target="generate-caching-config" />
         <phingCall target="generate-sessions-config" />
+		
 	</target>
 	
 	<target name="setup" depends="taskdef,generate-config"/>
