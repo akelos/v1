@@ -54,6 +54,10 @@ class CI_Tests
         
         while (count($args) > 0){
             $arg = array_shift($args);
+            $arg = strtolower($arg);
+            if (in_array($arg,array('postgresql','postgressql','pgsql','pg'))) {
+                $arg = 'postgres';
+            }
             if (array_key_exists(strtolower($arg),$this->settings['executables'])){
                 $this->target_executables[] = $arg;
             }elseif (array_key_exists(strtolower($arg),$this->settings['environments'])){
