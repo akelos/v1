@@ -248,10 +248,6 @@ class AkCache extends AkObject
                 }
                  if(!is_dir($options['cacheDir'])){
                     Ak::make_dir($options['cacheDir'], array('base_path'=>dirname($options['cacheDir'])));
-                    $res = @chmod($options['cacheDir'],0777);
-                    if (!$res) {
-                        trigger_error(Ak::t('Cannot change cache dir %dir permissions',array('%dir'=>$options['cacheDir'])), E_USER_WARNING);
-                    }
                 }
                 $this->_driverInstance =& new Cache_Lite($options);
                 break;

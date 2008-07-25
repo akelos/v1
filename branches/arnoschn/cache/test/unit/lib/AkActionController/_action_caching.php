@@ -9,6 +9,13 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
     
     function test_init()
     {
+        $settings = Ak::getSettings('caching',false);
+        if (!isset($settings['handler']['options']['cacheDir'])) {
+            $cacheDir = AK_CACHE_DIR.DS;
+        } else {
+            $cacheDir = $settings['handler']['options']['cacheDir'];
+        }
+        chmod($cacheDir,0777);
         $this->_flushCache('akelos.org');
         $this->_flushCache('www.akelos.org');
         $this->_flushCache('xinc.eu');
