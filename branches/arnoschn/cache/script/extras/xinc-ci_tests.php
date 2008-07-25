@@ -31,7 +31,7 @@ class CI_Tests
 
     function __construct($args)
     {
-        if (!is_file($this->config_file())) die('Not sure where I am and where config/config.php is. Run from inside the test/* folders.');
+        if (!is_file($this->config_file())) die('Not sure where I am and where config/config.php is ('.$this->config_file().'). Run from inside the test/* folders.');
 
         $this->loadSettings();
         $this->parseArgs($args);
