@@ -1316,6 +1316,13 @@ class Ak
 
         return $models;
     }
+    
+    function import_mailer()
+    {
+        require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
+        $args = func_get_args();
+        return call_user_func_array(array('Ak','import'),$args);
+    }
 
     function uses()
     {

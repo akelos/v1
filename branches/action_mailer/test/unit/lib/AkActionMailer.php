@@ -4,9 +4,7 @@
 
 require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
-require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
-
-Ak::import('render_mailer,first_mailer,second_mailer,helper_mailer,test_mailer');
+Ak::import_mailer('render_mailer,first_mailer,second_mailer,helper_mailer,test_mailer');
 
 class Tests_for_Mailers extends  AkUnitTest
 {
@@ -177,12 +175,9 @@ class Tests_for_AkActionMailer extends  AkUnitTest
         $this->Mailer->perform_deliveries = true;
         $this->Mailer->deliveries = array();
         $this->recipient = 'test@localhost';
-        $this->recipient = 'bermi@bermilabs.com';
     }
 
 
-
-    /**/
     function test_nested_parts()
     {
         $TestMailer =& new TestMailer();
@@ -743,7 +738,7 @@ EOF;
         $Message = $TestMailer->create('alternative_message_from_templates', $this->recipient);
         $rendered_message = $TestMailer->getRawMessage();
 
-        
+
         $this->assertPattern(   '/Content-Type: multipart\/alternative;charset=UTF-8;boundary=[a-f0-9]{32}\r\n'.
         'Mime-Version: 1.0\r\n'.
         'Subject:/', $rendered_message);
@@ -753,35 +748,58 @@ EOF;
         $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/html;charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Disposition: inline/', $rendered_message);
         $this->assertPattern('/--[a-f0-9]{32}--/', $rendered_message);
     }
-    /**/
+
     function test_should_encode_alternative_message_from_templates_with_embeded_images()
     {
         $TestMailer =& new TestMailer();
         $Message = $TestMailer->create('alternative_message_from_templates', $this->recipient, true);
 
-        //$TestMailer->delivery_method = 'smtp';
-
-        $TestMailer->deliver($Message);
-
         $rendered_message = $TestMailer->getRawMessage();
-        
-        //echo $rendered_message;
-        return ;
 
-        $this->assertPattern(   '/Content-Type: multipart\/alternative;charset=UTF-8;boundary=[a-f0-9]{32}\r\n'.
-        'Mime-Version: 1.0\r\n'.
-        'Subject:/', $rendered_message);
-        $this->assertPattern('/To:/', $rendered_message);
-        $this->assertPattern('/Date:/', $rendered_message);
-        $this->assertPattern('/Content-Type: multipart\/alternative;charset=UTF-8/', $rendered_message);
-        $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/plain;charset=UTF-8\r\nContent-Disposition: inline/', $rendered_message);
-        $this->assertPattern('/--[a-f0-9]{32}\r\nContent-Type: text\/html;charset=UTF-8\r\nContent-Disposition: inline/', $rendered_message);
-        $this->assertPattern('/--[a-f0-9]{32}--/', $rendered_message);
+        $this->assertPattern('/==\r\n--[a-f0-9]{32}--\r\n\r\n--[a-f0-9]{32}--\r\n$/', $rendered_message, 'Closing 2 boundaries');
+        $this->assertPattern('/([A-Za-z0-9\/+]{76}\r\n){50,}/', $rendered_message, 'large base64 encoded file');
+
+
+        $this->assertPattern(
+        '/<\/html>\r\n\r\n--[a-f0-9]{32}\r\n'.
+        'Content-Type: image\/png;name=([^\.]{20,})\.png\r\n'.
+        'Content-Transfer-Encoding: base64\r\n'.
+        'Content-Id: <\\1\.png>\r\n'.
+        'Content-Disposition: inline;filename=\\1\.png\r\n'.
+        '\r\n[A-Za-z0-9\/+]{76}/', $rendered_message, 'inline image headers');
+
+        $this->assertPattern('/<img src=3D"cid:([^\.]{20,})\.png" \/>/', $rendered_message, 'Image src pointing to cid');
+
+
+        $this->assertPattern('/--([a-f0-9]{32})\r\n'.
+        'Content-Type: text\/plain;charset=UTF-8\r\n'.
+        'Content-Transfer-Encoding: quoted-printable\r\n'.
+        'Content-Disposition: inline\r\n\r\n'.
+        'Rendered as Text\r\n\r\n'.
+        '--\\1\r\n'.
+        'Content-Type: multipart\/related;charset=UTF-8;boundary=([a-f0-9]{32})\r\n\r\n\r\n\r\n'.
+        '--\\2\r\n'.
+        'Content-Type: text\/html;charset=UTF-8\r\n'.
+        'Content-Transfer-Encoding: quoted-printable\r\n'.
+        'Content-Disposition: inline\r\n\r\n'.
+        '<html>/', $rendered_message, 'Multipart nesting');
+
+        $this->assertPattern('/Content-Type: multipart\/alternative;charset=UTF-8;boundary=[a-f0-9]{32}\r\nMime-Version: 1.0/', $rendered_message, 'main headers');
 
 
     }
 
-    /**/
+    function test_should_encode_alternative_message_from_templates_with_external_embeded_images()
+    {
+        $TestMailer =& new TestMailer();
+        $Message = $TestMailer->create('alternative_message_from_templates', $this->recipient, true, true);
+        //$TestMailer->delivery_method = 'php';
+        //$TestMailer->deliver($Message);
+        $rendered_message = $TestMailer->getRawMessage();
+
+        $this->assertPattern('/==\r\n\r\n--[a-f0-9]{32}\r\nContent-Type: image\/png;/', $rendered_message, 'Two images embeded');
+    }
+
 }
 
 Ak::test('Tests_for_Mailers');

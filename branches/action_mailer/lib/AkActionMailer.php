@@ -235,7 +235,7 @@ ak_define('ACTION_MAILER_RFC_2822_DATE_REGULAR_EXPRESSION', "(?:(Mon|Tue|Wed|Thu
 *   * <tt>authentication</tt> If your mail server requires authentication, you need to specify the authentication type here. 
 *     Options are: plain, login, cram_md5
 *
-* * <tt>delivery_method</tt> - Defines a delivery method. Possible values are 'smtp' (default), 'php', and 'test'.
+* * <tt>delivery_method</tt> - Defines a delivery method. Possible values are 'php' (default), 'smtp', and 'test'.
 *
 * * <tt>perform_deliveries</tt> - Determines whether AkActionMailer::deliver(*) methods are actually carried out. By default they are,
 *   but this can be turned off to help functional testing.
@@ -267,7 +267,7 @@ class AkActionMailer extends AkBaseModel
     'authentication' => null
     );
 
-    var $delivery_method = 'smtp';
+    var $delivery_method = 'php';
     var $perform_deliveries = true;
     var $deliveries = array();
     var $default_charset = AK_ACTION_MAILER_DEFAULT_CHARSET;

@@ -18,7 +18,6 @@
 
 
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailBase.php');
-require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailHeader.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailPart.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailParser.php');
 require_once(AK_LIB_DIR.DS.'AkActionMailer'.DS.'AkMailComposer.php');
@@ -132,6 +131,12 @@ class AkMailMessage extends AkMailBase
     function getRawMessage()
     {
         return AkMailComposer::getRawMessage($this);
+    }
+    
+    function getRawHeadersAndBody()
+    {
+        $Composer =& new AkMailComposer();
+        return $Composer->getRawHeadersAndBody($this);
     }
 }
 

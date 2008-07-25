@@ -306,32 +306,31 @@ class TestMailer extends AkActionMailer
     }
 
 
-    function multipart_rendering()
-    {
-        $this->set(array(
-        'recipients' => "bermi@bermilabs.com",
-        'subject' => "Multipart rendering",
-        'from' => "testing@bermilabs.com",
-        'attachment' => array('content_type' => 'audio/mp3', 'filename' => 'test.mp3', 'body' => file_get_contents(AK_BASE_DIR.DS.'test/fixtures/data/action_mailer/testing.mp3')),
-        ));
 
-        return ;
-
-        $this->set(array(
-        'recipients' => "no.one@example.com",
-        'subject' => "Multipart rendering",
-        'from' => "some.one@example.com"
-        ));
-    }
-
-    function alternative_message_from_templates($recipient, $include_logo = false)
+    function alternative_message_from_templates($recipient, $include_logo = false, $include_external_image = false, $add_attachment = false)
     {
         $this->set(array(
         'recipients' => $recipient,
         'subject' => "Alternative message from template",
         'from' => "some.one@example.com",
-        'body' => array('include_logo' => $include_logo)
+        'body' => array('include_logo' => $include_logo, 'include_external_image' => $include_external_image)
         ));
+        
+        
+        /**
+         * @todo Adding an attachment overides rendered views
+         */
+        if($add_attachment){
+           
+            $this->addAttachment(array(
+            
+                'content_type' => 'text/php',
+                'body' => '<?php ?>',
+                'filename' => 'test_mailer.php'
+                
+                ));
+        }
+        
     }
 
     function &receive($raw_email)

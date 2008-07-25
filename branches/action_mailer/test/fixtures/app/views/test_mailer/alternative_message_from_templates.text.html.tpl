@@ -3,14 +3,19 @@
 
 <h1>Rendered as HTML</h1>
 
+{?include_logo}
 <p>Akelos framework Logo</p>
 
-{?include_logo}
 <img src="/images/akelos_framework_logo.png" />
 {end}
-<hidden>
+
+{?include_external_image}
+
+<p>BermiLabs Logo</p>
+
 <img src="http://www.bermilabs.com/images/bermilabs_logo.png" />
-</hidden>
+
+{end}
 
 </body>
 </html>
