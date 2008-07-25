@@ -18,13 +18,13 @@
 
 	<target name="interactive" depends="taskdef,check-config">
 		<if>
-			<equals arg1="${akelos_path}" arg2="" />
+			<equals arg1="${akelos_path}" arg2="\${akelos_path}"/>
 			<then>
 				<property name="akelos_path" value="${project.basedir}" override="true" />
 			</then>
 		</if>
 		<if>
-			<equals arg1="${test_dir}" arg2="" />
+			<equals arg1="${test_dir}" arg2="\${test_dir}" />
 			<then>
 				<property name="test_dir" value="${test.dir}" override="true" />
 			</then>
