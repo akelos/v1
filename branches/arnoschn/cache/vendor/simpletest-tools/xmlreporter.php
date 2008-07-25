@@ -1,6 +1,6 @@
 <?php
 require_once(AK_VENDOR_DIR.DS.'simpletest'.DS.'reporter.php');
-class XmlReporter extends SimpleReporter {
+class XmlReporter extends TextReporter {
 
     var $group_tests = array();
     var $group_depth=0;
@@ -12,6 +12,7 @@ class XmlReporter extends SimpleReporter {
     var $_exceptionCounts = array();
     var $phpversion;
     var $backend;
+    var $_outstring;
     function XmlReporter($character_set = 'ISO-8859-1', $phpversion='php5', $backend='mysql') {
         $this->SimpleReporter();
         $this->phpversion=$phpversion;
@@ -159,7 +160,10 @@ class XmlReporter extends SimpleReporter {
         }
         $this->group_depth++;
     }
-
+    function getXml()
+    {
+        return $this->_outstring;
+    }
     /**
      *    Paints the end of a group test. Will paint the page
      *    footer if the stack of tests has unwound.
@@ -175,12 +179,16 @@ class XmlReporter extends SimpleReporter {
             //ob_end_clean();
             $phpversion='php5';
             $backend="mysql";
-            echo '<?xml version="1.0" encoding="'.$this->_character_set.'"?>
+            $this->_outstring='<?xml version="1.0" encoding="'.$this->_character_set.'"?>
 <testsuites php-version="'.$this->phpversion.'" backend="'.$this->backend.'">';
             //foreach ($this->output as $level=>$out) {
-            echo implode("\n",$this->output);
+            $this->_outstring.=implode("\n",$this->output);
             //}
-            echo '</testsuites>';
+            $this->_outstring.='</testsuites>';
+            unset($this->output);
+            $this->output=array();
+            unset($this->_out);
+            $this->_out=array();
         } else if ($this->group_depth==1) {
             $time = time()+microtime(true) - $this->_starttime;
             //$contents = ob_get_contents();

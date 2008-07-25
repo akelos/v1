@@ -47,7 +47,7 @@ class CiReportTask extends PHPUnitReportTask
                 $tests += (int)$attributes->tests;
                 $failures += (int)$attributes->failures;
                 $errors += (int)$attributes->errors;
-                $time += (int)$attributes->time;
+                $time += (float)$attributes->time;
             }
             $environment = array();
             $environment['php']=$php;

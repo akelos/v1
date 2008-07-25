@@ -43,15 +43,16 @@ if (TextReporter::inCli()) {
         $file = isset($_SERVER['argv'][2])?$_SERVER['argv'][2]:false;
         $phpversion = isset($_SERVER['argv'][3])?$_SERVER['argv'][3]:'php5';
         $backend = isset($_SERVER['argv'][4])?$_SERVER['argv'][4]:'mysql';
-        ob_start();
         $writeXml=true;
-        $run = $test->run(new XmlReporter('UTF-8',$phpversion,$backend));
+        $reporter = new XmlReporter('UTF-8',$phpversion,$backend);
+        $run = $test->run($reporter);
     } else {
-        $run = $test->run(new TextReporter());
+        $reporter = new TextReporter();
+        $run = $test->run($reporter);
     }
     
     if ($writeXml) {
-        $contents = ob_get_clean();
+        $contents = $reporter->getXml();
         file_put_contents($file,$contents);
     }
     exit ($run ? 0 : 1);
