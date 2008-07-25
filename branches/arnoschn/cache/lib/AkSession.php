@@ -71,7 +71,7 @@ class AkSession extends AkObject
     
     function initHandler()
     {
-        $settings = Ak::getSettings('sessions');
+        $settings = Ak::getSettings('sessions', false);
         $SessionHandler = &AkSession::lookupStore($settings);
         return $SessionHandler;
     }
