@@ -194,13 +194,19 @@ class AkCacheHandler extends AkObject
         }
         $cacheId = $this->_buildCacheId($path, $language);
         $cacheGroup = $this->_buildCacheGroup();
-        return $this->_cache_store->remove($cacheId,$cacheGroup);
+        $notGzippedRes=$this->_cache_store->remove($cacheId,$cacheGroup);
+        $gZippedCacheId = $this->_scopeWithGzip($cacheId);
+        $gzippedRes=$this->_cache_store->remove($gZippedCacheId,$cacheGroup);
+        return ($notGzippedRes || $gzippedRes);
     }
-    function cachePage($content, $path = null, $language = null)
+    function cachePage($content, $path = null, $language = null, $gzipped=false)
     {
         if (!($this->_cachingAllowed() && $this->_perform_caching)) return;
         
         $cacheId = $this->_buildCacheId($path, $language);
+        if ($gzipped) {
+            $cacheId = $this->_scopeWithGzip($cacheId);
+        }
         $cacheGroup = $this->_buildCacheGroup();
         $content = $this->_modifyCacheContent($content);
         return $this->_cache_store->save($content,$cacheId,$cacheGroup);
@@ -208,6 +214,7 @@ class AkCacheHandler extends AkObject
     }
     function _modifyCacheContent($content)
     {
+        
         $headers = $this->_controller->Response->_headers_sent;
         $headerString = serialize($headers);
         $content = time().$this->_header_separator.$headerString . $this->_header_separator . $content;
@@ -276,15 +283,48 @@ class AkCacheHandler extends AkObject
         ob_start();
         return true;
     }
-    
+
+    function _scopeWithGzip($cacheId)
+    {
+        $cacheId = 'gzip' . DS . $cacheId;
+        return $cacheId;
+    }
     function afterPageCache()
     {
-        $this->_controller->handleResponse();
-        $contents = ob_get_flush();
-        
-        $this->cachePage($contents);
+        $encodings = $this->_getAcceptedEncodings();
+        $xgzip = false;
+        $gzip = false;
+        if (($gzip=in_array('gzip',$encodings)) || ($xgzip=in_array('x-gzip',$encodings))) {
+            $this->_controller->Response->addHeader('Content-Encoding',$xgzip?'x-gzip':'gzip');
+            $gzip = $gzip || $xgzip;
+            $this->_controller->handleResponse();
+            $contents = ob_get_flush();
+            /**
+             *  Caching unzipped content
+             */
+            $this->cachePage($contents,null,null,false);
+            $contents = $this->_gzipCache($contents);
+        } else {
+            $this->_controller->handleResponse();
+            $contents = ob_get_flush();
+            /**
+             *  Caching gzipped content
+             */
+            $gzippedContents = $this->_gzipCache($contents);
+            $this->cachePage($gzippedContents,null,null,true);
+        }
+        $this->cachePage($contents,null,null,$gzip);
         return true;
-        
+    }
+    
+    function _gzipCache($cache)
+    {
+        $pre ='\x1f\x8b\x08\x00\x00\x00\x00\x00';
+        $size = strlen($cache);
+        $gzipped = gzcompress($cache, 9);
+        $gzipped = substr($gzipped, 0, $size);
+        $gzipped = $pre.$gzipped;
+        return $gzipped;
     }
     
     function _buildCacheId($path, $forcedLanguage = null)
@@ -319,7 +359,12 @@ class AkCacheHandler extends AkObject
         $this->_lastCacheId = preg_replace('|'.DS.'+|','/',$cacheId);
         return $this->_lastCacheId;
     }
-    
+    function _getAcceptedEncodings()
+    {
+        $encodings = isset($_SERVER['HTTP_ACCEPT_ENCODING'])?$_SERVER['HTTP_ACCEPT_ENCODING']:'';
+        $encodings = preg_split('/\s*,\s*/',$encodings);
+        return $encodings;
+    }
     function &getCachedPage($path = null,$forcedLanguage = null)
     {
         $false = false;
@@ -330,6 +375,10 @@ class AkCacheHandler extends AkObject
                 $path = @$_REQUEST['ak'];
             }
             $cacheId = $this->_buildCacheId($path, $forcedLanguage);
+            $encodings = $this->_getAcceptedEncodings();
+            if (($gzip=in_array('gzip',$encodings)) || ($xgzip=in_array('x-gzip',$encodings))) {
+                $cacheId = $this->_scopeWithGzip($cacheId);
+            }
             $cacheGroup = $this->_buildCacheGroup();
             $cache = $this->_cache_store->get($cacheId, $cacheGroup);
             if ($cache != false) {
@@ -576,7 +625,7 @@ class AkCacheHandler extends AkObject
     }
     function _addExtension($path, $extension)
     {
-        if (!empty($extension)) {
+        if (!empty($extension) && substr($path,-strlen($extension))!==$extension) {
             $path = $path.'.'.$extension;
         }
         return $path;
@@ -620,7 +669,6 @@ class AkCacheHandler extends AkObject
     {
         $this->_cache_store = AkCache::lookupStore($options);
     }
-    
     
     /**
      * @access protected

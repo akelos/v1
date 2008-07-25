@@ -695,8 +695,8 @@ class AkRequest extends AkObject
     {
         if (preg_match('/^([^\.]+)\.(.+)$/', @$_REQUEST['ak'], $matches)) {
             $this->_format = isset($matches[2])?$matches[2]:null;
-            $_REQUEST['ak'] = $matches[1];
-            $this->_request['ak'] = $matches[1];
+            $_REQUEST['ak'] = $matches[0];
+            $this->_request['ak'] = $matches[0];
         }
     }
     

@@ -32,10 +32,56 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
 
         $this->assertText('/^\s*$/');
         $this->assertResponse(200);
-        $this->_assertPageCached('/page_caching/ok');
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
         
         
     }
+    function test_should_cache_get_with_ok_status_gzipped_and_unzipped()
+    {
+        $this->_flushCache('www.example.com');
+        
+        $this->assertTrue($this->_assertPageNotCached('/page_caching/ok'));
+        $this->setAcceptEncoding('gzip');
+        $this->assertTrue($this->_assertPageNotCached('/page_caching/ok'));
+        $this->setAcceptEncoding('');
+        
+        $this->setIp('212.121.121.121');
+        $this->get('http://www.example.com/page_caching/ok');
+        $this->assertFalse($this->getHeader('Content-Encoding'));
+        $this->assertResponse(200);
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
+        $this->setAcceptEncoding('gzip');
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
+    }
+    
+    function test_should_cache_get_with_ok_status_gzipped()
+    {
+        $this->_flushCache('www.example.com');
+        $this->setIp('212.121.121.121');
+        $this->setAcceptEncoding('gzip');
+        $this->get('http://www.example.com/page_caching/ok');
+        $this->assertHeader('Content-Encoding','gzip');
+        $this->assertResponse(200);
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
+        $this->setAcceptEncoding('gzip');
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
+        
+    }
+    
+    function test_should_cache_get_with_ok_status_xgzipped()
+    {
+        $this->_flushCache('www.example.com');
+        $this->setIp('212.121.121.121');
+        $this->setAcceptEncoding('x-gzip');
+        $this->get('http://www.example.com/page_caching/ok');
+        $this->assertHeader('Content-Encoding','x-gzip');
+        $this->assertResponse(200);
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
+        $this->setAcceptEncoding('gzip');
+        $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
+        
+    }
+    
     function _getCachedPage($path)
     {
         $controller=$this->getController();
@@ -49,16 +95,19 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
         }
         return $cachedPage;
     }
+    
     function _assertPageCached($path, $message = false)
     {
         $cachedPage = $this->_getCachedPage($path);
         $this->assertTrue($cachedPage!=false,$message);
         $this->assertIsA($cachedPage,'AkCachedPage');
+        return $cachedPage!=false && is_a($cachedPage,'AkCachedPage');
     }
     function _assertPageNotCached($path, $message = '%s')
     {
         $cachedPage = $this->_getCachedPage($path);
         $this->assertTrue($cachedPage==false,$message);
+        return $cachedPage==false;
     }
     function test_last_modified()
     {
@@ -84,30 +133,30 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
         $this->setIp('212.121.121.121');
         $this->get('http://www.example.com/page_caching/custom_path');
         $this->assertText('Akelos rulez');
-        $this->_assertPageCached('/index.html');
+        $this->assertTrue($this->_assertPageCached('/index.html'));
     }
     
     function test_should_expire_cache_with_custom_path()
     {
         $this->get('http://www.example.com/page_caching/custom_path');
-        $this->_assertPageCached('/index.html');
+        $this->assertTrue($this->_assertPageCached('/index.html'));
         
         $this->get('http://www.example.com/page_caching/expire_custom_path');
-        $this->_assertPageNotCached('/index.html');
+        $this->assertTrue($this->_assertPageNotCached('/index.html'));
     }
     
     function test_should_cache_without_trailing_slash_on_url()
     {
         $controller=$this->getController();
         $controller->cachePage('cached content', '/page_caching_test/trailing_slash');
-        $this->_assertPageCached('/page_caching_test/trailing_slash.html');
+        $this->assertTrue($this->_assertPageCached('/page_caching_test/trailing_slash.html'));
     }
     
     function test_should_cache_with_trailing_slash_on_url()
     {
         $controller=$this->getController();
         $controller->cachePage('cached content', '/page_caching_test/trailing_slash/');
-        $this->_assertPageCached('/page_caching_test/trailing_slash.html');
+        $this->assertTrue($this->_assertPageCached('/page_caching_test/trailing_slash.html'));
     }
     
     function test_caches_only_get_and_ok()
@@ -119,9 +168,9 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
                 $path='/page_caching/'.$action;
                 $this->$method($path);
                 if ($this->getHeader('Status') == 200 && $method=='get') {
-                    $this->_assertPageCached($path, 'action ok with GET request should be cached');
+                    $this->assertTrue($this->_assertPageCached($path, 'action ok with GET request should be cached'));
                 } else {
-                    $this->_assertPageNotCached($path,' action '.$action.' with '.strtoupper($method).' should not be cached');
+                    $this->assertTrue($this->_assertPageNotCached($path,' action '.$action.' with '.strtoupper($method).' should not be cached'));
                 }
             }
         }

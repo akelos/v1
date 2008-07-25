@@ -5,6 +5,7 @@ class AkCachedPage extends AkObject
     var $_raw_contents;
     var $_headerSeparator;
     var $_options;
+    var $_encodingAliases = array('gzip','x-gzip', 'compress', 'x-compress');
     function __construct(&$contents, $header_separator, $options = array())
     {
         $this->_raw_contents = $contents;
@@ -70,9 +71,11 @@ class AkCachedPage extends AkObject
         
         $headers = @unserialize($headersSerialized);
         $headers = !is_array($headers)?array():$headers;
+        $acceptedEncodings = $this->_getAcceptedEncodings();
         if ($sendHeaders) {
             foreach ($headers as $header) {
-                header($header);
+                
+                header($this->_handleEncodingAliases($header, $acceptedEncodings));
             }
             
         }
@@ -85,6 +88,25 @@ class AkCachedPage extends AkObject
             return array_merge($sentHeaders,$headers);
         }
         $exit?exit:null;
+    }
+    function _handleEncodingAliases($header, $acceptedEncodings)
+    {
+        $parts = split(': ',$header);
+        if (strtolower($parts[0])=='content-encoding' && 
+            isset($parts[1]) &&
+            in_array($parts[1],$this->_encodingAliases)) {
+            $acceptedEncodings = array_intersect($acceptedEncodings,$this->_encodingAliases);
+            if (isset($acceptedEncodings[0])) {
+                $header =$parts[0].': '.$acceptedEncodings[0];
+            }
+        }
+        return $header;
+    }
+    function _getAcceptedEncodings()
+    {
+        $encodings = isset($_SERVER['HTTP_ACCEPT_ENCODING'])?$_SERVER['HTTP_ACCEPT_ENCODING']:'';
+        $encodings = preg_split('/\s*,\s*/',$encodings);
+        return $encodings;
     }
     
     function _sendAdditionalHeaders($sendHeaders = true, $returnHeaders = false)

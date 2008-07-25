@@ -97,6 +97,10 @@ class AkTestApplication extends AkUnitTest
     {
         $_SERVER['HTTP_X_REQUESTED_WITH']='xmlhttprequest';
     }
+    function setAcceptEncoding($encoding)
+    {
+        $_SERVER['HTTP_ACCEPT_ENCODING']=$encoding;
+    }
     function &getHeader($name)
     {
         if ($this->Dispatcher) {
@@ -122,12 +126,14 @@ class AkTestApplication extends AkUnitTest
     {
         $_REQUEST = array();
         $_POST = array();
+        
     }
     
     function _init($url, $constants = array(), $controllerVars = array())
     {
         $this->_reset();
         $this->_response = null;
+        $this->_cacheHeaders = array();
         $this->_setConstants($constants);
         $parts = parse_url($url);
         $_REQUEST['ak'] = isset($parts['path'])?$parts['path']:'/';
@@ -164,7 +170,14 @@ class AkTestApplication extends AkUnitTest
         } else {
             $res=true;
         }
+        $this->_cleanUp();
         return $res;
+    }
+    function _cleanUp()
+    {
+        unset($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+        unset($_SERVER['HTTP_X_REQUESTED_WITH']);
+        unset($_SERVER['HTTP_ACCEPT_ENCODING']);
     }
     function post($url, $data = null, $constants = array(), $controllerVars = array())
     {
