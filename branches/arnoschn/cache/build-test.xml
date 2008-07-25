@@ -98,8 +98,10 @@
         <phingCall target="generate-sessions-config" />
 		
 	</target>
-	
-	<target name="setup" depends="taskdef,generate-config"/>
+	<target name="load-build-props">
+		<property file="build.properties" override="true"/>
+		</target>
+	<target name="setup" depends="taskdef,load-build-props,generate-config"/>
 	<target name="generate-config">
 		<echo>Generating config</echo>
 		<input propertyname="testing.url" message="[WebServer] Please provide the url under which the testing website can be found" promptChar=":" defaultValue="http://localhost/test/fixtures/public" />
