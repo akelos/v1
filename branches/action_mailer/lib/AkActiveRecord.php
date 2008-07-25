@@ -956,17 +956,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
     function &_findEvery($options)
     {
-        $limit = isset($options['limit']) ? $options['limit'] : null;
-        $offset = isset($options['offset']) ? $options['offset'] : null;
-
-        $sql = $this->constructFinderSql($options);
-        if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
-            $sql = array_merge(array($sql),$options['bind']);
-        }
-
         if((!empty($options['include']) && $this->hasAssociations())){
             $result =& $this->findWithAssociations($options);
         }else{
+            $sql = $this->constructFinderSql($options);
+            if(!empty($options['bind']) && is_array($options['bind']) && strstr($sql,'?')){
+                $sql = array_merge(array($sql),$options['bind']);
+            }
+            
             $result =& $this->findBySql($sql);
         }
 
@@ -1030,7 +1027,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if (isset($options[0])){
             return false;
         }
-        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'sort', 'bind', 'select','select_prefix', 'readonly');
+        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'group', 'order', 'sort', 'bind', 'select','select_prefix', 'readonly');
         foreach (array_keys($options) as $key){
             if (!in_array($key,$valid_keys)){
                 return false;
@@ -1094,14 +1091,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             }
         }
         
-    }
-
-    function _validateFindOptions(&$options)
-    {
-        $valid_keys = array('conditions', 'include', 'joins', 'limit', 'offset', 'order', 'bind', 'select','select_prefix', 'readonly');
-        foreach (array_keys($options) as $key){
-            if (!in_array($key,$valid_keys)) unset($options[$key]);
-        }
     }
 
     function &findFirst()
@@ -1356,7 +1345,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $options['order'] = $options['sort'];
         }
 
-        $sql  .= !empty($options['order']) ? ' ORDER BY  '.$options['order'] : '';
+        $sql .= !empty($options['group']) ? ' GROUP BY '.$options['group'] : ''; 
+        $sql .= !empty($options['order']) ? ' ORDER BY '.$options['order'] : '';
 
         $this->_db->addLimitAndOffset($sql,$options);
 
@@ -3992,24 +3982,19 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         $attribute_names = Ak::toArray($attribute_names);
         foreach ($attribute_names as $attribute_name){
-            if(
-            $allow_null ?
-            (
-            isset($this->$attribute_name) ?
-            (
-            $only_integer ?
-            !is_integer(@$this->$attribute_name) :
-            !is_numeric(@$this->$attribute_name)
-            ) :
-            false
-            ) :
-            (
-            isset($this->$attribute_name) ?
-            ($only_integer ? !is_integer(@$this->$attribute_name) : !is_numeric(@$this->$attribute_name)) :
-            true
-            )
-            )
-            {
+            if (isset($this->$attribute_name)){
+                $value = $this->$attribute_name;
+                if ($only_integer){
+                    $is_int = is_numeric($value) && (int)$value == $value;
+                    $has_error = !$is_int;
+                }else{
+                    $has_error = !is_numeric($value);
+                }
+            }else{
+                $has_error = $allow_null ? false : true;
+            }
+
+            if ($has_error){
                 $this->addError($attribute_name, $message);
             }
         }
