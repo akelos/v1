@@ -60,7 +60,7 @@ class CiReportTask extends PHPUnitReportTask
             $environment['details']=$dir.DIRECTORY_SEPARATOR.'phpunit2-noframes.html';
             $environments[]=$environment;
             $this->setInFile($file);
-            $this->log("Report available in:\n\n".$dir.DIRECTORY_SEPARATOR."phpunit2-noframes.html");
+            
             parent::main();
         }
         ob_start();
@@ -68,6 +68,7 @@ class CiReportTask extends PHPUnitReportTask
         $contents = ob_get_clean();
         
         file_put_contents($summaryFile, $contents);
+        $this->log("Reports available in:\n\n".$summaryFile);
     }
     /**
      * Nested creator, creates a FileSet for this task
