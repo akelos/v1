@@ -51,6 +51,7 @@ class CiTestsTask extends Task
         $this->_execute($this->_akelosPath.'/akelos -d '.$this->_testDir.' -deps --force',true);
         $this->_execute("touch ".$this->_testDir.DS.'log'.DS."testing.log", true);
         $this->_execute("chmod 777 ".$this->_testDir.DS.'log'.DS."testing.log", true);
+        $this->_execute("chmod -Rf 777 ".$this->_testDir.DS.'tmp', true);
         $this->_execute("cp -Rf ".$this->_akelosPath.DS.'test'."   ".$this->_testDir.DS, true);
     }
     private function _execute($cmd,$execute=true)
