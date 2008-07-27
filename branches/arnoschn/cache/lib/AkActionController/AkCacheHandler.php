@@ -1,4 +1,13 @@
 <?php
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
+
+// +----------------------------------------------------------------------+
+// | Akelos PHP Framework - http://www.akelos.org                         |
+// +----------------------------------------------------------------------+
+// | Copyright (c) 2008 The Akelos Framework Team                         |
+// | Released under the GNU Lesser General Public License, see LICENSE.txt|
+// +----------------------------------------------------------------------+
+
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 
 /**
@@ -9,7 +18,7 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  */
 
 /**
- * 
+ *
  * Akelos supports three types of caching:
  * 
  * - Page Caching
@@ -17,10 +26,53 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  * - Fragment Caching
  * 
  * 
- * == Page Caching
+ * = Page Caching
+ *  
+ *  Page caching is an approach to caching where the entire action output of is stored as a HTML file that the web server
+ *  can serve without going through the Action Controller. This is the fastest way to cache your content as opposed to going dynamically
+ *  through the process of generating the content. Unfortunately, this incredible speed-up is only available to stateless pages
+ *  where all visitors are treated the same. Content management systems -- including weblogs and wikis -- have many pages that are
+ *  a great fit for this approach, but account-based systems where people log in and manipulate their own data are often less
+ *  likely candidates.
+ * 
+ *  Specifying which actions to cache is done through the <tt>caches_page</tt> class method:
+ * 
+ *      class WeblogController extends ApplicationController
+ *      {
+ *          var $caches_page = array('show', 'add');
+ *      }
+ * 
+ *  This will generate cache files such as <tt>weblog/show/5.html</tt> and <tt>weblog/add.html</tt>,
+ *  which match the URLs used to trigger the dynamic generation. This is how the web server is able
+ *  pick up a cache file when it exists and otherwise let the request pass on to Action Pack to generate it.
+ * 
+ *  Expiration of the cache is handled by deleting the cached file, which results in a lazy regeneration approach where the cache
+ *  is not restored before another hit is made against it. The API for doing so mimics the options from +url_for+ and friends:
+ * 
+ *      class WeblogController extends ApplicationController
+ *      {
+ *          function update()
+ *          {
+ *              $this->List->update($this->params['list']['id'], $this->params['list']);
+ *              $this->expirePage(array('action' => 'show', 'id' => $this->params['list']['id']));
+ *              $this->redirectTo(array('action' => 'show', 'id' => $this->params['list']['id']));
+ *          }
+ *      }
+ * 
+ *  Additionally, you can expire caches using Sweepers that act on changes in the model to determine when a cache is supposed to be
+ *  expired.
+ * 
+ *  == Setting the cache extension
+ * 
+ *  Most Akelos requests do not have an extension, such as <tt>/weblog/add</tt>. In these cases, the page caching mechanism will add one in
+ *  order to make it easy for the cached files to be picked up properly by the web server. By default, this cache extension is <tt>.html</tt>.
+ *  If you want something else, like <tt>.php</tt> or <tt>.shtml</tt>, just set $this->_page_cache_extension. In cases where a request already has an
+ *  extension, such as <tt>.xml</tt> or <tt>.rss</tt>, page caching will not add an extension. This allows it to work well with RESTful apps.
  * 
  * 
- * == Action Caching
+ *
+ *
+ * = Action Caching
  * 
  * Action caching is similar to page caching by the fact that the entire output
  * of the response is cached, but unlike page caching,
@@ -70,8 +122,8 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  * 
  * Keep in mind when expiring an action cache that 
  * 
- * <tt>:action => 'lists'</tt> is not the same
- * as <tt>:action => 'list', :format => :xml</tt>.
+ * <tt>'action' => 'lists'</tt> is not the same
+ * as <tt>'action' => 'list', 'format' => 'xml'</tt>.
  *
  * If you use the Filebased Cache, you can set modify the default action cache path 
  * by passing a "cache_path" option.
@@ -92,6 +144,38 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  *   }
  * 
  * The action cache for the action show will then be stored under /tmp/show.
+ *
+ *
+ *
+ *
+ * = Fragment Caching
+ *
+ * Fragment caching is used for caching various blocks within templates without caching the entire action as a whole. This is useful when
+ * certain elements of an action change frequently or depend on complicated state while other parts rarely change or can be shared amongst multiple
+ * parties. The caching is done using the cache helper available in the Action View. A template with caching might look something like:
+ *
+ * <b>Hello {name}</b>
+ * <%= begin %>
+ * All the topics in the system:
+ * <? $Topics = $Topic->find(); ?>
+ * <%= render :partial => "topic", :collection => Topics %>
+ * <%= end %>
+ *
+ * This cache will bind to the name of the action that called it, so if this code was part of the view for the topics/list action, you would
+ * be able to invalidate it using <tt>expire_fragment(array('controller' => "topics", 'action' => "list")</tt>.
+ *
+ * This default behavior is of limited use if you need to cache multiple fragments per action or if the action itself is cached using
+ * <tt>caches_action</tt>, so we also have the option to qualify the name of the cached fragment with something like:
+ *
+ * <%= cache :action => "list", :action_suffix => "all_topics" %>
+ *
+ * That would result in a name such as "/topics/list/all_topics", avoiding conflicts with the action cache and with any fragments that use a
+ * different suffix. Note that the URL doesn't have to really exist or be callable - the url_for system is just used to generate unique
+ * cache names that we can refer to when we need to expire the cache.
+ *
+ * The expiration call for this example is:
+ *
+ * AkCacheHandler::expireFragment(array('controller' => "topics", 'action => "list", 'action_suffix' => "all_topics"))
  *
  */
 class AkCacheHandler extends AkObject
