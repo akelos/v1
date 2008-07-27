@@ -1,42 +1,136 @@
 <?php
 require_once(AK_LIB_DIR.DS.'AkCache.php');
+
+/**
+ * @package ActionController
+ * @subpackage Caching
+ * @author Arno Schneider
+ * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
+ */
+
+/**
+ * 
+ * Akelos supports three types of caching:
+ * 
+ * - Page Caching
+ * - Action Caching
+ * - Fragment Caching
+ * 
+ * 
+ * == Page Caching
+ * 
+ * 
+ * == Action Caching
+ * 
+ * Action caching is similar to page caching by the fact that the entire output
+ * of the response is cached, but unlike page caching,
+ * every request still goes through the AkActionController.
+ * 
+ * The key benefit of this is that filters are run before the cache is served,
+ * which allows for authentication and other restrictions on whether someone is 
+ * allowed to see the cache. 
+ * 
+ * Example:
+ *
+ *   class ListsController extends ApplicationController {
+ * 
+ *     var $caches_page   = 'public';
+ *     var $caches_action = array('show', 'feed');
+ * 
+ *     function __construct(){
+ *         $this->beforeFilter(array('authenticate' => array('except' => array('public'))));
+ *     }
+ *   }
+ *
+ * In this example, the public action doesn't require authentication, so it's 
+ * possible to use the faster page caching method.
+ * 
+ * But both the show and feed action are to be shielded behind the authenticate filter,
+ * so we need to implement those as action caches.
+ *
+ * Action caching internally uses the fragment caching and an before/after filter combination
+ * to do the job.
+ * 
+ * The fragment cache is named according to both
+ * the current host and the path as well as the locale.
+ * 
+ * So a page that is accessed at http://david.somewhere.com/lists/show/1 with an english locale
+ * will result in a fragment named
+ * 
+ * cacheId: "en/lists/show/1", cacheGroup: "david.somewhere.com" 
+ * 
+ * This allows the cacher to differentiate between "david.somewhere.com/lists/" and
+ * "jamis.somewhere.com/lists/" -- which is a helpful way of assisting the
+ * subdomain-as-account-key pattern.
+ *
+ * Different representations of the same resource, 
+ * e.g. <tt>http://david.somewhere.com/lists</tt> and 
+ * <tt>http://david.somewhere.com/lists.xml</tt>
+ * are treated like separate requests and so are cached separately.
+ * 
+ * Keep in mind when expiring an action cache that 
+ * 
+ * <tt>:action => 'lists'</tt> is not the same
+ * as <tt>:action => 'list', :format => :xml</tt>.
+ *
+ * If you use the Filebased Cache, you can set modify the default action cache path 
+ * by passing a "cache_path" option.
+ * 
+ * This will be passed directly to _setCachesAction method.
+ * This is handy for actions with multiple possible routes that should be cached differently.
+ * 
+ * If a block is given, it is called with the current controller instance.
+ *
+ *   class ListsController extends ApplicationController {
+ * 
+ *     var $caches_page   = 'public';
+ *     var $caches_action = array('show'=>array('cache_path'=>'/tmp/show/'), 'feed');
+ * 
+ *     function __construct(){
+ *         $this->beforeFilter(array('authenticate' => array('except' => array('public'))));
+ *     }
+ *   }
+ * 
+ * The action cache for the action show will then be stored under /tmp/show.
+ *
+ */
 class AkCacheHandler extends AkObject
 {
     /**
      * @var AkCache
      */
     var $_cache_store = false;
-    
+
     var $_perform_caching = true;
-    
+
     var $_page_cache_extension = '.html';
-    
+
     var $_controller;
-    
+
     /**
      * ########### Start: Page Caching ###########
      */
-    
+
     var $_lastCacheGroup;
-    
+
     var $_lastCacheId;
-    
+
     var $_include_get_parameters = array();
-    
+
     var $_caches_page = array();
-    
+
     var $_additional_headers = array();
-    
+
     var $_header_separator = '@#@';
-    
+
     /**
      * ########### End: Page Caching ###########
      */
-    
+
     /**
      * Max key size on memcache is 250 chars,
      * to support memcache, we need to md5() the keysize in case it becomes too long
-     * 
+     *
      * @var int
      */
     var $_max_cache_id_length = 240;
@@ -44,21 +138,21 @@ class AkCacheHandler extends AkObject
      * @var int
      */
     var $_max_url_length = 120;
-    
-    
+
+
     /**
      * Sweeper
      */
     var $observe = array();
-    
+
     var $_Sweepers = array();
-    
+
     var $_settings = array();
-    
+
     /**
      * Reads configuration options from AkActionController and the configured
      * constants
-     * 
+     *
      * AkCache::lookupStore(true) - to detect which cache shall be used
      * $perform_caching - to detect whether caching shall be enabled or not
      *
@@ -70,7 +164,7 @@ class AkCacheHandler extends AkObject
         $this->_action_cache_host = null;
         if ($parent != null) {
             $this->_controller = &$parent;
-            
+
             $this->_configure($settings);
 
         } else {
@@ -78,7 +172,7 @@ class AkCacheHandler extends AkObject
              * We are in pagecache rendering mode
              */
             $this->_loadSettings($settings);
-        
+
         }
     }
     function _loadSettings($settings = null)
@@ -103,15 +197,15 @@ class AkCacheHandler extends AkObject
          * Load the configured cache store,
          */
         $this->_loadSettings($settings);
-        
+
         if (isset($this->_controller->page_cache_extension)) {
             $this->_page_cache_extension = $this->_controller->page_cache_extension;
         }
-        
+
         if (@$this->_settings['enabled'] == true) {
             $this->_perform_caching = true;
         }
-        
+
         foreach ($configuration_options as $option => $callback) {
             if (isset($configuration_object->$option)) {
                 if (is_array($callback)) {
@@ -128,7 +222,7 @@ class AkCacheHandler extends AkObject
         if (isset($this->_controller->caches_page)) {
             $this->_cachesPage($this->_controller->caches_page);
         }
-        
+
         /**
          * ######## Action Caching #########
          */
@@ -151,17 +245,17 @@ class AkCacheHandler extends AkObject
         $return=&$this->_controller;
         return $return;
     }
-    
+
     function &getCacheStore()
     {
         return $this->_cache_store;
     }
-    
+
     /**
      * ########################################################################
      * #
      * #               The following methods have to be callable
-     * #               from AkActionController   
+     * #               from AkActionController
      * #
      * ########################################################################
      */
@@ -202,7 +296,7 @@ class AkCacheHandler extends AkObject
     function cachePage($content, $path = null, $language = null, $gzipped=false)
     {
         if (!($this->_cachingAllowed() && $this->_perform_caching)) return;
-        
+
         $cacheId = $this->_buildCacheId($path, $language);
         if ($gzipped) {
             $cacheId = $this->_scopeWithGzip($cacheId);
@@ -210,24 +304,24 @@ class AkCacheHandler extends AkObject
         $cacheGroup = $this->_buildCacheGroup();
         $content = $this->_modifyCacheContent($content);
         return $this->_cache_store->save($content,$cacheId,$cacheGroup);
-      
+
     }
     function _modifyCacheContent($content)
     {
-        
+
         $headers = $this->_controller->Response->_headers_sent;
         $headerString = serialize($headers);
         $content = time().$this->_header_separator.$headerString . $this->_header_separator . $content;
         return $content;
     }
-    
+
     function _setCacheSweeper($options)
     {
         $default_options = array('only'=>array(),
                                  'except'=>array());
-        
+
         Ak::parseOptions($options, $default_options,array(),true);
-                                          
+
         foreach ($options as $sweeper => $params) {
             if (is_int($sweeper)) {
                 $sweeper = $params;
@@ -236,14 +330,14 @@ class AkCacheHandler extends AkObject
             $this->_initSweeper($sweeper, $params);
         }
     }
-    
+
     function _initSweeper($sweeper, $options = array())
     {
         if (!empty($only) && !in_array($this->_controller->getActionName(), $options['only'])) return;
         if (!empty($except) && !in_array($this->_controller->getActionName(), $options['except'])) return;
-        
+
         $sweeper_class = AkInflector::classify($sweeper);
-        
+
         if (!class_exists($sweeper_class)) {
             $filePath = AK_APP_DIR . DS . 'sweepers' . DS . $sweeper.'.php';
             if (file_exists($filePath)) {
@@ -257,16 +351,16 @@ class AkCacheHandler extends AkObject
         }
         $this->_Sweepers[] = &new $sweeper_class(&$this);
     }
-    
+
     function _setCachesPage($options)
     {
         if (!$this->_perform_caching) return;
-        
+
         $default_options = array('include_get_parameters'=>array(),
                                  'headers'=> array('X-Cached-By'=>'Akelos'));
         Ak::parseOptions($options, $default_options,array(),true);
         $this->_caches_page = &$options;
-        
+
         $actionName = $this->_controller->getActionName();
         if (isset($this->_caches_page[$actionName])) {
 
@@ -316,7 +410,7 @@ class AkCacheHandler extends AkObject
         $this->cachePage($contents,null,null,$gzip);
         return true;
     }
-    
+
     function _gzipCache($cache)
     {
         $pre ='\x1f\x8b\x08\x00\x00\x00\x00\x00';
@@ -326,7 +420,7 @@ class AkCacheHandler extends AkObject
         $gzipped = $pre.$gzipped;
         return $gzipped;
     }
-    
+
     function _buildCacheId($path, $forcedLanguage = null)
     {
         if ($path == null) {
@@ -387,14 +481,14 @@ class AkCacheHandler extends AkObject
                                                                                 'headers'=>array('X-Cached-By: Akelos')));
                 return $page;
             } else {
-                
+
                 return $false;
             }
         } else {
             return $false;
         }
     }
-    
+
     function _buildCacheGroup()
     {
         $this->_lastCacheGroup = $this->_convertGroup(isset($_SERVER['AK_HOST'])?$_SERVER['AK_HOST']:AK_HOST);
@@ -409,7 +503,7 @@ class AkCacheHandler extends AkObject
             return empty($_POST) && empty($_ENV['HTTP_RAW_POST_DATA']) && (isset($_SERVER['REQUEST_METHOD']) && strtolower($_SERVER['REQUEST_METHOD'])=='get');
         }
     }
-    
+
     function _convertGroup($group)
     {
         if ($group == '127.0.0.1') return 'localhost';
@@ -429,9 +523,9 @@ class AkCacheHandler extends AkObject
         } else if ($options==null) {
             $options = $this->_pathFor($this->_controller->params);
         }
-        
+
         $key = AkCache::expandCacheKey($options, isset($parameters['namespace'])?$parameters['namespace']:'fragments');
-        
+
         return $key;
     }
     function _cacheTplRendered($key)
@@ -446,7 +540,7 @@ class AkCacheHandler extends AkObject
             $_cached[$key] = true;
             return false;
         }
-        
+
     }
     function cacheTplFragmentStart($key, $options = array())
     {
@@ -463,7 +557,7 @@ class AkCacheHandler extends AkObject
             return false;
         }
     }
-    
+
     function cacheTplFragmentEnd($key, $options = array())
     {
         if (!$this->_cacheTplRendered($key)) {
@@ -471,26 +565,26 @@ class AkCacheHandler extends AkObject
             $this->writeFragment($key, $contents, $options);
         }
     }
-    
+
     function writeFragment($key, $content, $options = array())
     {
         if (!$this->cacheConfigured()) return;
-        
+
         $key = $this->fragmentCachekey($key, $options);
-        
+
         return $this->_cache_store->save($content, $key, isset($options['host'])?
-                                                  $options['host']:$this->_buildCacheGroup());
+        $options['host']:$this->_buildCacheGroup());
     }
-    
+
     function readFragment($key, $options = array())
     {
         if (!$this->cacheConfigured()) return false;
-        
+
         $key = $this->fragmentCachekey($key, $options);
         return $this->_cache_store->get($key, isset($options['host'])?
-                                                  $options['host']:$this->_buildCacheGroup());
+        $options['host']:$this->_buildCacheGroup());
     }
-    
+
     function expireFragment($key, $options = array())
     {
         if (!$this->cacheConfigured()) return;
@@ -505,7 +599,7 @@ class AkCacheHandler extends AkObject
         }
         $key = $this->fragmentCachekey($key, $options);
         return $this->_cache_store->remove($key, isset($options['host'])?
-                                                  $options['host']:$this->_buildCacheGroup());
+        $options['host']:$this->_buildCacheGroup());
     }
     /*
      * ########################################################################
@@ -528,7 +622,7 @@ class AkCacheHandler extends AkObject
             $getString = '';
         }
         if (empty($this->_action_cache_path)) {
-            //$this->_action_cache_path = 
+            //$this->_action_cache_path =
             $path = $this->_pathFor($this->_controller->params).(!empty($getString)?DS.$getString:'');
             $this->_action_cache_path = $path;
         }
@@ -549,7 +643,7 @@ class AkCacheHandler extends AkObject
         }
         return true;
     }
-    
+
     function afterActionCache()
     {
         if (!$this->_cachingAllowed() || $this->_rendered_action_cache === true) return;
@@ -563,19 +657,19 @@ class AkCacheHandler extends AkObject
         $this->writeFragment($this->_action_cache_path , $contents, $options);
         return true;
     }
-    
+
     function _setCachesAction($options)
     {
         if (!$this->_perform_caching) return;
-        
-        
+
+
         $default_options = array('include_get_parameters'=>array(),
                                  'cache_path'=>'');
         Ak::parseOptions($options, $default_options,array(),true);
         $this->_caches_action = $options;
-        
+
         $actionName = $this->_controller->getActionName();
-        
+
         if (isset($this->_caches_action[$actionName])) {
 
             $this->_action_include_get_parameters = $this->_caches_action[$actionName]['include_get_parameters'];
@@ -587,7 +681,7 @@ class AkCacheHandler extends AkObject
             } else {
                 $this->_action_cache_path = $path;
             }
-            
+
             if (!isset($this->_action_cache_host)) {
                 $this->_action_cache_host = $this->_controller->Request->getHost();
             }
@@ -595,9 +689,9 @@ class AkCacheHandler extends AkObject
             $this->_controller->prependBeforeFilter(array(&$this,'beforeActionCache'));
             $this->_controller->appendAfterFilter(array(&$this,'afterActionCache'));
         }
-        
+
     }
-    
+
     function _actionPath($options)
     {
         $extension = $this->_controller->Request->getFormat();//$this->_extractExtension($this->_controller->Request->getPath());
@@ -612,7 +706,7 @@ class AkCacheHandler extends AkObject
         $path = $this->_addExtension($path, $extension);
         return $path;
     }
-    
+
     function expireAction($options, $params = array())
     {
         $params['namespace'] = 'actions';
@@ -630,7 +724,7 @@ class AkCacheHandler extends AkObject
         }
         return $path;
     }
-    
+
     function _extractExtension($file_path)
     {
         preg_match('/^[^\.]+\.(.+)$/',$file_path, $matches);
@@ -651,7 +745,7 @@ class AkCacheHandler extends AkObject
         $path = rtrim($path,'/');
         return $path;
     }
-    
+
     /**
      * ########################################################################
      * #
@@ -659,7 +753,7 @@ class AkCacheHandler extends AkObject
      * #
      * #########################################################################
      */
-    
+
     /**
      * Looks up the cache store from the option array
      *
@@ -669,7 +763,7 @@ class AkCacheHandler extends AkObject
     {
         $this->_cache_store = AkCache::lookupStore($options);
     }
-    
+
     /**
      * @access protected
      */
@@ -681,6 +775,6 @@ class AkCacheHandler extends AkObject
         }
         return $return;
     }
-    
-    
+
+
 }

@@ -39,7 +39,6 @@ class Test_of_AkSession_Class extends  WebTestCase
         foreach ($cacheHandlers as $class=>$type) {
             foreach ($unitTests as $test) {
                 $this->$test($type,$class);
-                
             }
         }
     }

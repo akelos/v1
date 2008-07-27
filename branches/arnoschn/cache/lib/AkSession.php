@@ -169,7 +169,7 @@ class AkSession extends AkObject
     */
     function _open()
     {
-        return $this->_handler_enabled;
+        return true;
     }
 
     /**

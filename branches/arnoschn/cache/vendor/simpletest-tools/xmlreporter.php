@@ -62,7 +62,24 @@ class XmlReporter extends TextReporter {
         $this->_out[$this->group_depth][] = $out;
     }
 
-
+    function paintFormattedMessage($message)
+    {
+        parent::paintFormattedMessage($message);
+        if (!isset($this->_exceptionCounts[$this->suiteName])) {
+            $this->_exceptionCounts[$this->suiteName] = 0;
+        }
+        if (!isset($this->_exceptionCounts[$this->testFileName])) {
+            $this->_exceptionCounts[$this->testFileName] = 0;
+        }
+        if (!isset($this->_exceptionCounts[$this->testMethodName])) {
+            $this->_exceptionCounts[$this->testMethodName] = 0;
+        }
+        $this->_exceptionCounts[$this->testMethodName]++;
+        $message = 'Debug Message:'."\n".$message;
+        $this->_exceptionCounts[$this->testFileName]++;
+        $this->_exceptionCounts[$this->suiteName]++;
+        $this->fail_messages[] = $message;
+    }
     function paintError($message) {
         parent::paintError($message);
         if (!isset($this->_exceptionCounts[$this->suiteName])) {

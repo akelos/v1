@@ -1,5 +1,11 @@
 <?php
 require_once(AK_LIB_DIR . DS . 'AkActiveRecord' . DS . 'AkObserver.php');
+/**
+ * @package ActionController
+ * @subpackage Caching
+ * @author Arno Schneider
+ * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
+ */
 
 class AkCacheSweeper extends AkObserver
 {

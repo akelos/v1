@@ -79,8 +79,7 @@ class AkPluginManager extends AkObject
                 $repository_candidates = array_diff(array_map('trim', explode("\n",Ak::file_get_contents($this->_getRepositoriesConfigPath()))), array(''));
                 if(!empty($repository_candidates)){
                     foreach ($repository_candidates as $repository_candidate){
-                        if(strlen($repository_candidate) > 0 && isset($repository_candidate[0]) &&
-                           $repository_candidate[0] != '#' && strstr($repository_candidate,'plugins')){
+                        if(strlen($repository_candidate) > 0 && $repository_candidate[0] != '#' && strstr($repository_candidate,'plugins')){
                             $this->repositories[] = $repository_candidate;
                         }
                     }
@@ -215,7 +214,7 @@ class AkPluginManager extends AkObject
 
     function guessBestInstallMethod($options = array())
     {
-        if(isset($options['parameters']) && is_dir($options['parameters'])){
+        if(!empty($options['parameters']) && is_dir($options['parameters'])){
             return 'local directory';
         }elseif($this->canUseSvn()){
             if(!empty($options['externals']) && $this->_shouldUseSvnExternals()){
