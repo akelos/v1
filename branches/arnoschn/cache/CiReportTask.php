@@ -57,7 +57,8 @@ class CiReportTask extends PHPUnitReportTask
             $environment['failures']=$failures;
             $environment['errors']=$errors;
             $environment['time']=$time;
-            $environment['details']=$dir.DIRECTORY_SEPARATOR.'phpunit2-noframes.html';
+            $link = str_replace($this->reportDir,'',$dir).DIRECTORY_SEPARATOR.'phpunit2-noframes.html';
+            $environment['details']=ltrim($link,'/');
             $environments[]=$environment;
             $this->setInFile($file);
             

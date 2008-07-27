@@ -236,8 +236,8 @@ class XmlReporter extends TextReporter {
             $this->_out[$this->group_depth+1] = array();
         }
 
-        $this->_fails = 0;
-        $this->_passes = 0;
+        //$this->_fails = 0;
+        //$this->_passes = 0;
     }
 
 

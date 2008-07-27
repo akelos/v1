@@ -1319,6 +1319,13 @@ class Ak
 
         return $models;
     }
+    
+    function import_mailer()
+    {
+        require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
+        $args = func_get_args();
+        return call_user_func_array(array('Ak','import'),$args);
+    }
 
     function uses()
     {
@@ -1368,7 +1375,24 @@ class Ak
         }
         return $result;
     }
-
+    
+    /**
+     * Gets a copy of the first element of an array. Similar to array_shift but it does not modify the original array 
+     */
+    function first()
+    {
+        $args = func_get_args();
+        return array_shift(array_slice(is_array($args[0]) ? $args[0] : $args , 0));
+    }
+    
+    /**
+     * Gets a copy of the last element of an array. Similar to array_pop but it does not modify the original array 
+     */
+    function last()
+    {
+        $args = func_get_args();
+        return array_shift(array_slice(is_array($args[0]) ? $args[0] : $args , -1));
+    }
 
     /**
      * Includes PHP functions that are not available on current PHP version
@@ -1468,12 +1492,12 @@ class Ak
         return $Charset->RecodeString($text,'UTF-8',$input_string_encoding);
     }
 
-    function recode($text, $output_string_encoding = null, $input_string_encoding = null)
+    function recode($text, $output_string_encoding = null, $input_string_encoding = null, $engine = null)
     {
         $input_string_encoding = empty($input_string_encoding) ? Ak::encoding() : $input_string_encoding;
         require_once(AK_LIB_DIR.DS.'AkCharset.php');
         $Charset =& Ak::singleton('AkCharset',$text);
-        return $Charset->RecodeString($text,$output_string_encoding,$input_string_encoding);
+        return $Charset->RecodeString($text,$output_string_encoding,$input_string_encoding, $engine);
     }
 
     function encoding()
@@ -1825,6 +1849,28 @@ class Ak
         $refhack =& Ak::_staticVar($name,$value);
         return $refhack;
     }
+    
+    /**
+    * Strategy for unifying in-function static vars used mainly for performance improvements framework-wide.
+    *
+    * Before we had
+    *
+    *     class A{
+    *       function b($var){
+    *         static $chache;
+    *         if(!isset($cache[$var])){
+    *           $cache[$var] = some_heavy_function($var);
+    *         }
+    *         return $cache[$var]; 
+    *       } 
+    *     }
+    *
+    * Now imagine we want to create an application server which handles multiple requests on a single instantiation, with the showcased implementation this is not possible as we can't reset $cache, unless we hack badly every single method that uses this strategy.
+    *
+    * We can refresh this static values the new Ak::getStaticVar method. So from previous example we will have to replace 
+    *
+    *     static $chache;
+    */
     function &getStaticVar($name)
     {
         $refhack =& Ak::_staticVar($name,$refhackvar = null);
