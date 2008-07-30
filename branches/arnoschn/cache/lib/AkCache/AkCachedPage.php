@@ -15,7 +15,7 @@ class AkCachedPage extends AkObject
     function _handleIfModifiedSince($modifiedTimestamp, $exit=true,$sendHeaders = true, $returnHeaders = false)
     {
         $headers = array();
-        $expiryTimestamp = $modifiedTimestamp + 60*60;
+        $expiryTimestamp = time() + 60*60;
         $time = null;
         if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
             $time = $_SERVER['HTTP_IF_MODIFIED_SINCE'];
@@ -48,29 +48,49 @@ class AkCachedPage extends AkObject
             }
         } else {
             if ($sendHeaders) {
-                header('Expires: '.gmdate('D, d M Y H:i:s', $expiryTimestamp) .' GMT');
                 header('Last-Modified: '.gmdate('D, d M Y H:i:s', $modifiedTimestamp).' GMT');
-                header('Cache-Control: must-revalidate');
             } else if ($returnHeaders) {
-                $headers[]='Expires: '.gmdate('D, d M Y H:i:s', $expiryTimestamp) .' GMT';
                 $headers[]='Last-Modified: '.gmdate('D, d M Y H:i:s', $modifiedTimestamp).' GMT';
-                $headers[]='Cache-Control: must-revalidate';
             }
         }
         return $headers;
     }
+    
+    function _handleEtag($headers,$sendHeaders, $returnHeaders, $exit)
+    {
+        $outHeaders = array();
+        if (isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
+            foreach ($headers as $header) {
+                if (stristr($header,'etag: '.$_SERVER['HTTP_IF_NONE_MATCH'])) {
+                    if ($sendHeaders) {
+                        header('HTTP/1.1 304 Not Modified');
+                    }
+                    if ($returnHeaders) {
+                        $outHeaders[] = 'Status: 304';
+                        
+                    }
+                    if ($exit) {
+                        exit;
+                    }
+                    break;
+                }
+            }
+        }
+        return $outHeaders;
+    }
+    
     function render($exit=true, $sendHeaders=true, $returnHeaders=false)
     {
 
         list($modifiedTimestamp,$headersSerialized,$contents) = @split($this->_headerSeparator,$this->_raw_contents,3);
         
-        $sentHeaders = array();
-        if (isset($this->_options['use_if_modified_since']) && $this->_options['use_if_modified_since']==true) {
-            $sentHeaders = $this->_handleIfModifiedSince(intval($modifiedTimestamp),$exit, $sendHeaders, $returnHeaders);
-        }
-        
+
         $headers = @unserialize($headersSerialized);
         $headers = !is_array($headers)?array():$headers;
+        $etagHeaders = $this->_handleEtag($headers, $sendHeaders,$returnHeaders, $exit);
+        $sentHeaders = array();
+        $sentHeaders = $this->_handleIfModifiedSince(intval($modifiedTimestamp),$exit, $sendHeaders, $returnHeaders);
+        
         $acceptedEncodings = $this->_getAcceptedEncodings();
         if ($sendHeaders) {
             foreach ($headers as $header) {
@@ -83,6 +103,7 @@ class AkCachedPage extends AkObject
         if (is_array($addHeaders)) {
             $headers = array_merge($addHeaders, $headers);
         }
+        $headers = array_merge($etagHeaders, $headers);
         echo $contents;
         if ($returnHeaders) {
             return array_merge($sentHeaders,$headers);

@@ -245,6 +245,8 @@ class AkCache extends AkObject
                 }
                 if(!isset($options['cacheDir'])){
                     $options['cacheDir'] = AK_CACHE_DIR.DS;
+                } else {
+                    $options['cacheDir'].=DS;
                 }
                  if(!is_dir($options['cacheDir'])){
                     Ak::make_dir($options['cacheDir'], array('base_path'=>dirname($options['cacheDir'])));

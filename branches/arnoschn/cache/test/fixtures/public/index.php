@@ -18,7 +18,7 @@ if ($cache_settings['enabled']) {
     if (isset($_GET['use_if_modified_since'])) {
         $options['use_if_modified_since'] = true;
     }
-    if ($cachedPage = $pageCache->getCachedPage()) {
+    if (($cachedPage = $pageCache->getCachedPage())!==false) {
         $cachedPage->render();
     }
 }

@@ -1,13 +1,4 @@
 <?php
-/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
-
-// +----------------------------------------------------------------------+
-// | Akelos PHP Framework - http://www.akelos.org                         |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2008 The Akelos Framework Team                         |
-// | Released under the GNU Lesser General Public License, see LICENSE.txt|
-// +----------------------------------------------------------------------+
-
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 
 /**
@@ -18,7 +9,7 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  */
 
 /**
- *
+ * 
  * Akelos supports three types of caching:
  * 
  * - Page Caching
@@ -26,53 +17,10 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  * - Fragment Caching
  * 
  * 
- * = Page Caching
- *  
- *  Page caching is an approach to caching where the entire action output of is stored as a HTML file that the web server
- *  can serve without going through the Action Controller. This is the fastest way to cache your content as opposed to going dynamically
- *  through the process of generating the content. Unfortunately, this incredible speed-up is only available to stateless pages
- *  where all visitors are treated the same. Content management systems -- including weblogs and wikis -- have many pages that are
- *  a great fit for this approach, but account-based systems where people log in and manipulate their own data are often less
- *  likely candidates.
- * 
- *  Specifying which actions to cache is done through the <tt>caches_page</tt> class method:
- * 
- *      class WeblogController extends ApplicationController
- *      {
- *          var $caches_page = array('show', 'add');
- *      }
- * 
- *  This will generate cache files such as <tt>weblog/show/5.html</tt> and <tt>weblog/add.html</tt>,
- *  which match the URLs used to trigger the dynamic generation. This is how the web server is able
- *  pick up a cache file when it exists and otherwise let the request pass on to Action Pack to generate it.
- * 
- *  Expiration of the cache is handled by deleting the cached file, which results in a lazy regeneration approach where the cache
- *  is not restored before another hit is made against it. The API for doing so mimics the options from +url_for+ and friends:
- * 
- *      class WeblogController extends ApplicationController
- *      {
- *          function update()
- *          {
- *              $this->List->update($this->params['list']['id'], $this->params['list']);
- *              $this->expirePage(array('action' => 'show', 'id' => $this->params['list']['id']));
- *              $this->redirectTo(array('action' => 'show', 'id' => $this->params['list']['id']));
- *          }
- *      }
- * 
- *  Additionally, you can expire caches using Sweepers that act on changes in the model to determine when a cache is supposed to be
- *  expired.
- * 
- *  == Setting the cache extension
- * 
- *  Most Akelos requests do not have an extension, such as <tt>/weblog/add</tt>. In these cases, the page caching mechanism will add one in
- *  order to make it easy for the cached files to be picked up properly by the web server. By default, this cache extension is <tt>.html</tt>.
- *  If you want something else, like <tt>.php</tt> or <tt>.shtml</tt>, just set $this->_page_cache_extension. In cases where a request already has an
- *  extension, such as <tt>.xml</tt> or <tt>.rss</tt>, page caching will not add an extension. This allows it to work well with RESTful apps.
+ * == Page Caching
  * 
  * 
- *
- *
- * = Action Caching
+ * == Action Caching
  * 
  * Action caching is similar to page caching by the fact that the entire output
  * of the response is cached, but unlike page caching,
@@ -122,8 +70,8 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  * 
  * Keep in mind when expiring an action cache that 
  * 
- * <tt>'action' => 'lists'</tt> is not the same
- * as <tt>'action' => 'list', 'format' => 'xml'</tt>.
+ * <tt>array('action' => 'lists')</tt> is not the same
+ * as <tt>array('action' => 'lists', 'format' => 'xml')</tt>.
  *
  * If you use the Filebased Cache, you can set modify the default action cache path 
  * by passing a "cache_path" option.
@@ -144,38 +92,6 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  *   }
  * 
  * The action cache for the action show will then be stored under /tmp/show.
- *
- *
- *
- *
- * = Fragment Caching
- *
- * Fragment caching is used for caching various blocks within templates without caching the entire action as a whole. This is useful when
- * certain elements of an action change frequently or depend on complicated state while other parts rarely change or can be shared amongst multiple
- * parties. The caching is done using the cache helper available in the Action View. A template with caching might look something like:
- *
- * <b>Hello {name}</b>
- * <%= begin %>
- * All the topics in the system:
- * <? $Topics = $Topic->find(); ?>
- * <%= render :partial => "topic", :collection => Topics %>
- * <%= end %>
- *
- * This cache will bind to the name of the action that called it, so if this code was part of the view for the topics/list action, you would
- * be able to invalidate it using <tt>expire_fragment(array('controller' => "topics", 'action' => "list")</tt>.
- *
- * This default behavior is of limited use if you need to cache multiple fragments per action or if the action itself is cached using
- * <tt>caches_action</tt>, so we also have the option to qualify the name of the cached fragment with something like:
- *
- * <%= cache :action => "list", :action_suffix => "all_topics" %>
- *
- * That would result in a name such as "/topics/list/all_topics", avoiding conflicts with the action cache and with any fragments that use a
- * different suffix. Note that the URL doesn't have to really exist or be callable - the url_for system is just used to generate unique
- * cache names that we can refer to when we need to expire the cache.
- *
- * The expiration call for this example is:
- *
- * AkCacheHandler::expireFragment(array('controller' => "topics", 'action => "list", 'action_suffix' => "all_topics"))
  *
  */
 class AkCacheHandler extends AkObject
@@ -202,7 +118,8 @@ class AkCacheHandler extends AkObject
     var $_include_get_parameters = array();
 
     var $_caches_page = array();
-
+    var $_caches_action = array();
+    
     var $_additional_headers = array();
 
     var $_header_separator = '@#@';
@@ -232,7 +149,10 @@ class AkCacheHandler extends AkObject
     var $_Sweepers = array();
 
     var $_settings = array();
-
+    var $_rendered_action_cache = false;
+    
+    var $_caching_type = null;
+    
     /**
      * Reads configuration options from AkActionController and the configured
      * constants
@@ -244,6 +164,7 @@ class AkCacheHandler extends AkObject
      */
     function init(&$parent, $settings = null)
     {
+        $this->_caching_type = null;
         $this->_action_cache_path = null;
         $this->_action_cache_host = null;
         if ($parent != null) {
@@ -299,26 +220,6 @@ class AkCacheHandler extends AkObject
                 }
             }
         }
-        return;
-        /**
-         * ######## Page Caching ##########
-         */
-        if (isset($this->_controller->caches_page)) {
-            $this->_cachesPage($this->_controller->caches_page);
-        }
-
-        /**
-         * ######## Action Caching #########
-         */
-        if (isset($this->_controller->caches_action)) {
-            $this->_cachesAction($this->_controller->caches_action);
-        }
-        /**
-         * ######## Sweeping ############
-         */
-        if (isset($this->_controller->cache_sweeper)) {
-            $this->_cacheSweeper($this->_controller->cache_sweeper);
-        }
     }
     function _setPageCacheExtension($extension)
     {
@@ -365,37 +266,91 @@ class AkCacheHandler extends AkObject
         if ((is_array($path) && isset($path['lang']) && $path['lang'] == '*') || $language == '*') {
             $langs = AkLocaleManager::getPublicLocales();
             $res = true;
+            $mpath = $path;
+            unset($mpath['lang']);
             foreach ($langs as $lang) {
-                $res = $res || $this->expirePage($path, $lang);
+                $res = $this->expirePage($mpath, $lang) || $res;
             }
             return $res;
         }
         $cacheId = $this->_buildCacheId($path, $language);
+        $notNormalizedCacheId = $this->_buildCacheId($path, $language, false);
         $cacheGroup = $this->_buildCacheGroup();
         $notGzippedRes=$this->_cache_store->remove($cacheId,$cacheGroup);
         $gZippedCacheId = $this->_scopeWithGzip($cacheId);
         $gzippedRes=$this->_cache_store->remove($gZippedCacheId,$cacheGroup);
+        
+        if ($notNormalizedCacheId != $cacheId) {
+            $notNormalizedNotGzippedRes=$this->_cache_store->remove($notNormalizedCacheId,$cacheGroup);
+            $notNormalizedGZippedCacheId = $this->_scopeWithGzip($notNormalizedCacheId);
+            $notNormalizedGzippedRes=$this->_cache_store->remove($notNormalizedGZippedCacheId,$cacheGroup);
+        }
+        
+        
         return ($notGzippedRes || $gzippedRes);
     }
-    function cachePage($content, $path = null, $language = null, $gzipped=false)
+    function cachePage($content, $path = null, $language = null, $gzipped=false, $sendETag = false)
     {
+        static $ETag;
         if (!($this->_cachingAllowed() && $this->_perform_caching)) return;
-
+        //var_dump($_SERVER['REQUEST_URI']);
         $cacheId = $this->_buildCacheId($path, $language);
+        
+        $notNormalizedCacheId = $this->_buildCacheId($path, $language,false);
+        $removeHeaders = array();
+        $addHeaders = array();
         if ($gzipped) {
             $cacheId = $this->_scopeWithGzip($cacheId);
+            $notNormalizedCacheId = $this->_scopeWithGzip($notNormalizedCacheId);
+            $addHeaders = array('Content-Encoding'=>'gzip');
+        } else {
+            $removeHeaders = array('content-encoding');
         }
+        
         $cacheGroup = $this->_buildCacheGroup();
-        $content = $this->_modifyCacheContent($content);
-        return $this->_cache_store->save($content,$cacheId,$cacheGroup);
+        
+        if ($sendETag && !headers_sent()) {
+            $ETag = Ak::uuid();
+            $etagHeader = 'ETag: '.$ETag;
+            $this->_controller->Response->addSentHeader($etagHeader);
+            header($etagHeader);
+        }
+        //$addHeaders['ETag'] = $ETag;
+        
+        
+        
+        $content = $this->_modifyCacheContent($content,$addHeaders, $removeHeaders);
+        $res = $this->_cache_store->save($content,$cacheId,$cacheGroup);
+        if ($notNormalizedCacheId != $cacheId) {
+            // Store the not normalized cacheid
+            $this->_cache_store->save($content,$notNormalizedCacheId,$cacheGroup);
+        }
+        return $res;
 
     }
-    function _modifyCacheContent($content)
+    function _modifyCacheContent($content,$addHeaders = array(), $removeHeaders = array())
     {
 
         $headers = $this->_controller->Response->_headers_sent;
-        $headerString = serialize($headers);
-        $content = time().$this->_header_separator.$headerString . $this->_header_separator . $content;
+        $finalHeaders = array();
+        foreach ($headers as $header) {
+            $parts = split(': ',$header);
+            $type = $parts[0];
+            if (!in_array(strtolower($type),$removeHeaders)) {
+                if (isset($addHeaders[$type])) {
+                    $finalHeaders[] = $type.($addHeaders[$type]!==true?': '.$addHeaders[$type]:'');
+                    unset($addHeaders[$type]);
+                } else {
+                    $finalHeaders[] = $header;
+                }
+            }
+        }
+        foreach ($addHeaders as $type=>$val) {
+            $finalHeaders[] = $type.($val!==true?': '.$val:'');
+        }
+        $timestamp = time();
+        $headerString = serialize($finalHeaders);
+        $content = $timestamp.$this->_header_separator.$headerString . $this->_header_separator . $content;
         return $content;
     }
 
@@ -446,8 +401,8 @@ class AkCacheHandler extends AkObject
         $this->_caches_page = &$options;
 
         $actionName = $this->_controller->getActionName();
-        if (isset($this->_caches_page[$actionName])) {
-
+        if ($this->_caching_type == null && isset($this->_caches_page[$actionName])) {
+            $this->_caching_type = 'page';
             $this->_include_get_parameters = $this->_caches_page[$actionName]['include_get_parameters'];
             $this->_additional_headers = $this->_caches_page[$actionName]['headers'];
 
@@ -472,45 +427,60 @@ class AkCacheHandler extends AkObject
         $encodings = $this->_getAcceptedEncodings();
         $xgzip = false;
         $gzip = false;
+        $this->_controller->Response->addHeader('Cache-Control','private, max-age=0, must-revalidate');
         if (($gzip=in_array('gzip',$encodings)) || ($xgzip=in_array('x-gzip',$encodings))) {
             $this->_controller->Response->addHeader('Content-Encoding',$xgzip?'x-gzip':'gzip');
             $gzip = $gzip || $xgzip;
             $this->_controller->handleResponse();
-            $contents = ob_get_flush();
+            $contents = ob_get_clean();
             /**
              *  Caching unzipped content
              */
-            $this->cachePage($contents,null,null,false);
+            $this->cachePage($contents,array(),null,false,true);
             $contents = $this->_gzipCache($contents);
+            echo $contents;
         } else {
             $this->_controller->handleResponse();
-            $contents = ob_get_flush();
+            $contents = ob_get_clean();
             /**
              *  Caching gzipped content
              */
             $gzippedContents = $this->_gzipCache($contents);
-            $this->cachePage($gzippedContents,null,null,true);
+            $this->cachePage($gzippedContents,array(),null,true,true);
+            echo $contents;
         }
-        $this->cachePage($contents,null,null,$gzip);
+        $this->cachePage($contents,array(),null,$gzip);
         return true;
     }
 
     function _gzipCache($cache)
     {
-        $pre ='\x1f\x8b\x08\x00\x00\x00\x00\x00';
-        $size = strlen($cache);
-        $gzipped = gzcompress($cache, 9);
-        $gzipped = substr($gzipped, 0, $size);
-        $gzipped = $pre.$gzipped;
-        return $gzipped;
+        $pre ="\x1f\x8b\x08\x00\x00\x00\x00\x00";
+        $gzip_size = strlen($cache);
+        $gzip_crc = crc32($cache);
+        $gzip_contents = gzcompress($cache, 9);
+        $gzip_contents = substr($gzip_contents, 0, strlen($gzip_contents) - 4);
+        $gzip_contents = $pre.$gzip_contents;
+        $gzip_contents.=pack('V', $gzip_crc);
+        $gzip_contents.=pack('V', $gzip_size);
+        return $gzip_contents;
     }
 
-    function _buildCacheId($path, $forcedLanguage = null)
+    function _buildCacheId($path, $forcedLanguage = null, $normalize = true)
     {
-        if ($path == null) {
+        if ($path === null) {
             $path = @$_REQUEST['ak'];
+            
         } else if (is_array($path)) {
-            $path = $this->_pathFor($path);
+            $path = $this->_pathFor($path, $normalize);
+        } else if (is_string($path)) {
+            ;
+        }
+        $path = ltrim($path,'/');
+        if (preg_match('|^[a-z]{2,2}/.*$|', $path)) {
+            $parts = split('/',$path);
+            $forcedLanguage = array_shift($parts);
+            $path = implode('/',$parts);
         }
         $cacheId = preg_replace('|'.DS.'+|','/',$path);
         $cacheId = rtrim($cacheId,'/');
@@ -706,8 +676,7 @@ class AkCacheHandler extends AkObject
             $getString = '';
         }
         if (empty($this->_action_cache_path)) {
-            //$this->_action_cache_path =
-            $path = $this->_pathFor($this->_controller->params).(!empty($getString)?DS.$getString:'');
+            $path = $this->_pathFor().(!empty($getString)?DS.$getString:'');
             $this->_action_cache_path = $path;
         }
         $options = array();
@@ -741,7 +710,10 @@ class AkCacheHandler extends AkObject
         $this->writeFragment($this->_action_cache_path , $contents, $options);
         return true;
     }
-
+    function getCacheType()
+    {
+        return $this->_caching_type;
+    }
     function _setCachesAction($options)
     {
         if (!$this->_perform_caching) return;
@@ -754,8 +726,8 @@ class AkCacheHandler extends AkObject
 
         $actionName = $this->_controller->getActionName();
 
-        if (isset($this->_caches_action[$actionName])) {
-
+        if ($this->_caching_type == null && isset($this->_caches_action[$actionName])) {
+            $this->_caching_type = 'action';
             $this->_action_include_get_parameters = $this->_caches_action[$actionName]['include_get_parameters'];
             $path = $this->_caches_action[$actionName]['cache_path'];
             $parts = parse_url($path);
@@ -814,16 +786,17 @@ class AkCacheHandler extends AkObject
         preg_match('/^[^\.]+\.(.+)$/',$file_path, $matches);
         return isset($matches[1])?$matches[1]:null;
     }
-    function _pathFor($options = array())
+    function _pathFor($options = array(), $normalize = true)
     {
         $options = empty($options)?$this->_controller->params:$options;
+        $options['skip_relative_url_root']=true;
         $url = $this->_controller->urlFor($options);
         $parts = parse_url($url);
         $path = $parts['path'];
-        if (!isset($options['action']) || (isset($options['action']) && $options['action']=='index' && !strstr($path,'/index/'))) {
+        if ($normalize && (!isset($options['action']) || (isset($options['action']) && $options['action']==AK_DEFAULT_ACTION && !strstr($path,'/'.AK_DEFAULT_ACTION)))) {
             $path = rtrim($path,'/');
             $parts = preg_split('/\/+/',$path);
-            $parts[] = "index";
+            $parts[] = AK_DEFAULT_ACTION;
             $path = implode('/', $parts);
         }
         $path = rtrim($path,'/');

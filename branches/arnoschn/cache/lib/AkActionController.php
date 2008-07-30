@@ -145,6 +145,23 @@ class AkActionController extends AkObject
         $Dispatcher->dispatch();
     }
     
+    function _configure($settings)
+    {
+        $configuration_object = &$this->_controller;
+        $configuration_options = array('beforeFilter'=>'_setBeforeFilters',
+                                       'afterFilter'=>'_setAfterFilters');
+        foreach ($configuration_options as $option => $callback) {
+            if (isset($configuration_object->$option)) {
+                if (is_array($callback)) {
+                    call_user_func_array($callback,$configuration_object->$option);
+                } else {
+                    $this->$callback($configuration_object->$option);
+                }
+            }
+        }
+    }
+    
+    
     function process(&$Request, &$Response)
     {
         AK_LOG_EVENTS && empty($this->_Logger) ? ($this->_Logger =& Ak::getLogger()) : null;
@@ -2908,6 +2925,13 @@ class AkActionController extends AkObject
             $this->_CacheHandler =& Ak::singleton('AkCacheHandler', $null);
             $this->_CacheHandler->init(&$this);
         }
+    }
+    function getAppliedCacheType()
+    {
+        if ($this->cacheConfigured()) {
+            return $this->_CacheHandler->getCacheType();
+        }
+        return null;
     }
     /**
      * ########################################################################

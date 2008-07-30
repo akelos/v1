@@ -128,7 +128,10 @@ class AkResponse extends AkObject
         
         $terminate_if_redirected ? (!empty($_redirected) ? exit() : null) : null;
     }
-    
+    function addSentHeader($header)
+    {
+        $this->_headers_sent[] = $header;
+    }
     function deleteHeader($header)
     {
         unset($this->_headers[$header]);

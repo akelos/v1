@@ -3,15 +3,31 @@
 class PageCachingController extends ApplicationController
 {
 
-    var $caches_page = array('ok','no_content','found','not_found');
+    var $caches_page = array('index','ok','no_content','found','not_found','simple', 'priority');
 
+    var $caches_action = array('priority');
+    
     function ok()
     {
         
         $this->renderNothing(200);
         
     }
+    function index()
+    {
+        $this->renderText('index');
+    }
+    function priority()
+    {
+        $this->renderText($this->getAppliedCacheType());
+    }
     
+    function simple()
+    {
+        
+        $this->renderText('Simple Text');
+        
+    }
     function no_content()
     {
         $this->renderNothing(204);

@@ -39,7 +39,7 @@ if ($cache_settings['enabled']) {
     $null = null;
     $pageCache = &Ak::singleton('AkCacheHandler', $null);
     $pageCache->init($null,$cache_settings);
-    if ($cachedPage = $pageCache->getCachedPage()) {
+    if (($cachedPage = $pageCache->getCachedPage())!==false) {
         $cachedPage->render();
     }
 }

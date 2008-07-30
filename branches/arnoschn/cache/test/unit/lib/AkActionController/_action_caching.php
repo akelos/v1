@@ -183,4 +183,17 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
         $this->assertTrue($fragment===false);
     }
     
+    function test_normalized_action_paths()
+    {
+        $this->assertTrue(true,'Need to test that /page is the same cache as /page/index');
+        $this->_flushCache('xinc.eu');
+        $cache_this_xinc = date('Y-m-d, H:i:s', time()+30);
+        $this->get('http://xinc.eu/action_caching/',array(),array('cache_this'=>$cache_this_xinc));
+        $xinc_cached_normalized = $this->_getActionCache('/'.Ak::lang().'/action_caching/index',array('host'=>'xinc.eu'));
+        $this->assertTextMatch($cache_this_xinc);
+        $this->assertEqual($cache_this_xinc,$xinc_cached_normalized);
+        
+        $this->get('http://xinc.eu/action_caching/index',array(),array('cache_this'=>$cache_this_xinc));
+        $this->assertTextMatch($cache_this_xinc);
+    }
 }
