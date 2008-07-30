@@ -41,12 +41,12 @@ class CacheHelper extends AkActionViewHelper
      * @param unknown_type $key
      * @param unknown_type $options
      */
-    function begin ($key, $options = array())
+    function begin ($key = array(), $options = array())
     {
         return $this->_controller->cacheTplFragmentStart($key, $options);
     }
 
-    function end($key, $options = array())
+    function end($key = array(), $options = array())
     {
         return $this->_controller->cacheTplFragmentEnd($key, $options);
     }

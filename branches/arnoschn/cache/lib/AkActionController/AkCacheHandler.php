@@ -9,90 +9,212 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  */
 
 /**
+ *
  * 
  * Akelos supports three types of caching:
- * 
+ *
  * - Page Caching
  * - Action Caching
  * - Fragment Caching
- * 
- * 
+ *
+ *
  * == Page Caching
- * 
- * 
+ *
+ * Page caching is an approach to caching where the entire action output of
+ * is stored as in a special format containing the output and the headers
+ * which have to be sent for the response.
+ * This cache the web server can serve without even starting up the Framework.
+ *
+ * This can be as much as 100 times faster than going through the process of dynamically
+ * generating the content.
+ * Unfortunately, this incredible speed-up is only available to stateless pages
+ * where all visitors are treated the same.
+ *
+ * Content management systems -- including weblogs and wikis -- have many pages
+ * that are a great fit for this approach, but account-based systems
+ * where people log in and manipulate their own data are often less likely candidates.
+ *
+ * Specifying which actions to cache is done through the <tt>caches</tt> class method:
+ *
+ *   class WeblogController extends ActionController {
+ *     var $caches_page = array('show','new');
+ *     function show() {
+ *        ....
+ *     }
+ *
+ *     function new() {
+ *        ....
+ *     }
+ *   }
+ *
+ * This will generate caches such as weblog/show/5 and weblog/new, which match the URLs
+ * used to trigger the dynamic generation.
+ * This is how the web server is able pick up a cache when it exists by just purely reading
+ * the Requested URL. Otherwise it lets the request pass on to the Framework to generate it.
+ *
+ * Expiration of the cache is handled by deleting the cache, which results in a lazy regeneration
+ * approach where the cache is not restored before another hit is made against it.
+ *
+ * The API for doing so mimics the options from url_for and friends:
+ *
+ *   class WeblogController extends ActionController {
+ *     function update() {
+ ....
+ *       $this->expirePage(array("action" => "show", "id" => $this->params["list"]["id"]));
+ *       $this->redirectTo(array("action => "show", "id" => $this->params["list"]["id"]));
+ *     }
+ *   }
+ *
+ * Additionally, you can expire caches using Sweepers that act on changes in the model to determine
+ * when a cache is supposed to be expired.
+ *
+ * == Configuring the cache
+ *
+ * There are different types of caches:
+ *
+ * - File based cache using PEAR Cache_Lit
+ * - Database Cache using AdoDB
+ * - Memcache
+ *
+ * The config file for the cache can be found in BASE_DIR/config/caching.yml
+ *
+ * === File Based Cache
+ *
+ * ==== Setting the cache directory
+ *
+ * If no cache directory is set, the Cache_Lite will use the AK_TMP_DIR constant value for the
+ * cache dir. The cache dir can be set inside the Yaml-Config file as follows:
+ *
+ * enabled: true
+ * handler:
+ *   type: 1 #1=PEAR,2=AdoDB,3=Memcache
+ *   options:
+ *           cacheDir: /tmp
+ *
+ * === Database Cache
+ *
+ * The DB cache will use the configured database settings and use the cache table to store caches.
+ *
+ * === Memcache
+ *
+ * The MemCache needs to know which memcache servers to talk to. You have to configure a set
+ * of servers inside the caching.yml:
+ *
+ * enabled: true
+ * handler:
+ *   type: 3 #1=PEAR,2=AdoDB,3=Memcache
+ *   options:
+ *           servers:
+ *                    - memcache1.example.com:9810
+ *                    - memcache2.example.com:9810
+ *
  * == Action Caching
- * 
+ *
  * Action caching is similar to page caching by the fact that the entire output
  * of the response is cached, but unlike page caching,
  * every request still goes through the AkActionController.
- * 
+ *
  * The key benefit of this is that filters are run before the cache is served,
- * which allows for authentication and other restrictions on whether someone is 
- * allowed to see the cache. 
- * 
+ * which allows for authentication and other restrictions on whether someone is
+ * allowed to see the cache.
+ *
  * Example:
  *
  *   class ListsController extends ApplicationController {
- * 
+ *
  *     var $caches_page   = 'public';
  *     var $caches_action = array('show', 'feed');
- * 
+ *
  *     function __construct(){
  *         $this->beforeFilter(array('authenticate' => array('except' => array('public'))));
  *     }
  *   }
  *
- * In this example, the public action doesn't require authentication, so it's 
+ * In this example, the public action doesn't require authentication, so it's
  * possible to use the faster page caching method.
- * 
+ *
  * But both the show and feed action are to be shielded behind the authenticate filter,
  * so we need to implement those as action caches.
  *
  * Action caching internally uses the fragment caching and an before/after filter combination
  * to do the job.
- * 
+ *
  * The fragment cache is named according to both
  * the current host and the path as well as the locale.
- * 
+ *
  * So a page that is accessed at http://david.somewhere.com/lists/show/1 with an english locale
  * will result in a fragment named
- * 
- * cacheId: "en/lists/show/1", cacheGroup: "david.somewhere.com" 
- * 
+ *
+ * cacheId: "en/lists/show/1", cacheGroup: "david.somewhere.com"
+ *
  * This allows the cacher to differentiate between "david.somewhere.com/lists/" and
  * "jamis.somewhere.com/lists/" -- which is a helpful way of assisting the
  * subdomain-as-account-key pattern.
  *
- * Different representations of the same resource, 
- * e.g. <tt>http://david.somewhere.com/lists</tt> and 
+ * Different representations of the same resource,
+ * e.g. <tt>http://david.somewhere.com/lists</tt> and
  * <tt>http://david.somewhere.com/lists.xml</tt>
  * are treated like separate requests and so are cached separately.
- * 
- * Keep in mind when expiring an action cache that 
- * 
+ *
+ * Keep in mind when expiring an action cache that
+ *
  * <tt>array('action' => 'lists')</tt> is not the same
  * as <tt>array('action' => 'lists', 'format' => 'xml')</tt>.
  *
- * If you use the Filebased Cache, you can set modify the default action cache path 
+ * If you use the Filebased Cache, you can set modify the default action cache path
  * by passing a "cache_path" option.
- * 
+ *
  * This will be passed directly to _setCachesAction method.
  * This is handy for actions with multiple possible routes that should be cached differently.
- * 
+ *
  * If a block is given, it is called with the current controller instance.
  *
  *   class ListsController extends ApplicationController {
- * 
+ *
  *     var $caches_page   = 'public';
- *     var $caches_action = array('show'=>array('cache_path'=>'/tmp/show/'), 'feed');
- * 
+ *     var $caches_action = array('show'=>array('cache_path'=>'/custom/show/'), 'feed');
+ *
  *     function __construct(){
  *         $this->beforeFilter(array('authenticate' => array('except' => array('public'))));
  *     }
  *   }
- * 
- * The action cache for the action show will then be stored under /tmp/show.
  *
+ * The action cache for the action show will then be stored under the cacheId "en/custom/show".
+ *
+ * == Fragment Caching
+ *
+ * Fragment caching is used for caching various blocks within templates without caching the entire action
+ * as a whole.
+ * This is useful when certain elements of an action change frequently or depend on complicated state
+ * while other parts rarely change or can be shared amongst multiple parties.
+ * 
+ * The caching is doing using the cache helper available in the Action View.
+ * A template with caching might look something like:
+ *
+ *   <b>Hello {name}</b>
+ *   <?php if (!$this->cache_helper->begin()) { ?>
+ *     All the topics in the system:
+ *     <?php $this->renderPartial("topic", $Topic->findAll()); ?>
+ *   <?php $this->cache_helper->end();} ?>
+ *
+ * This cache by default will bind to the action it was called from,
+ * so if this code was part of the view for the topics/list action, you would
+ * be able to invalidate it using:
+ * 
+ *    <tt>$this>expireFragment(array("controller" => "topics", "action" => "list"))</tt>.
+ *
+ * This default behavior is of limited use if you need to cache multiple fragments per action
+ * or if the action itself is cached using <tt>caches_action</tt>,
+ * so we also have the option to qualify the name of the cached fragment with something like:
+ *
+ *   <?php if (!$this->cache_helper->begin('cacheFragmentKey')) { ?>
+ *
+ * Like this you can assure unique fragment caches.
+ *
+ * The expiration call for this example is:
+ *
+ *   $this->expireFragment("cacheFragmentKey")
+ * 
  */
 class AkCacheHandler extends AkObject
 {
@@ -119,7 +241,7 @@ class AkCacheHandler extends AkObject
 
     var $_caches_page = array();
     var $_caches_action = array();
-    
+
     var $_additional_headers = array();
 
     var $_header_separator = '@#@';
@@ -150,9 +272,9 @@ class AkCacheHandler extends AkObject
 
     var $_settings = array();
     var $_rendered_action_cache = false;
-    
+
     var $_caching_type = null;
-    
+
     /**
      * Reads configuration options from AkActionController and the configured
      * constants
@@ -279,14 +401,14 @@ class AkCacheHandler extends AkObject
         $notGzippedRes=$this->_cache_store->remove($cacheId,$cacheGroup);
         $gZippedCacheId = $this->_scopeWithGzip($cacheId);
         $gzippedRes=$this->_cache_store->remove($gZippedCacheId,$cacheGroup);
-        
+
         if ($notNormalizedCacheId != $cacheId) {
             $notNormalizedNotGzippedRes=$this->_cache_store->remove($notNormalizedCacheId,$cacheGroup);
             $notNormalizedGZippedCacheId = $this->_scopeWithGzip($notNormalizedCacheId);
             $notNormalizedGzippedRes=$this->_cache_store->remove($notNormalizedGZippedCacheId,$cacheGroup);
         }
-        
-        
+
+
         return ($notGzippedRes || $gzippedRes);
     }
     function cachePage($content, $path = null, $language = null, $gzipped=false, $sendETag = false)
@@ -295,7 +417,7 @@ class AkCacheHandler extends AkObject
         if (!($this->_cachingAllowed() && $this->_perform_caching)) return;
         //var_dump($_SERVER['REQUEST_URI']);
         $cacheId = $this->_buildCacheId($path, $language);
-        
+
         $notNormalizedCacheId = $this->_buildCacheId($path, $language,false);
         $removeHeaders = array();
         $addHeaders = array();
@@ -306,9 +428,9 @@ class AkCacheHandler extends AkObject
         } else {
             $removeHeaders = array('content-encoding');
         }
-        
+
         $cacheGroup = $this->_buildCacheGroup();
-        
+
         if ($sendETag && !headers_sent()) {
             $ETag = Ak::uuid();
             $etagHeader = 'ETag: '.$ETag;
@@ -316,9 +438,9 @@ class AkCacheHandler extends AkObject
             header($etagHeader);
         }
         //$addHeaders['ETag'] = $ETag;
-        
-        
-        
+
+
+
         $content = $this->_modifyCacheContent($content,$addHeaders, $removeHeaders);
         $res = $this->_cache_store->save($content,$cacheId,$cacheGroup);
         if ($notNormalizedCacheId != $cacheId) {
@@ -470,7 +592,7 @@ class AkCacheHandler extends AkObject
     {
         if ($path === null) {
             $path = @$_REQUEST['ak'];
-            
+
         } else if (is_array($path)) {
             $path = $this->_pathFor($path, $normalize);
         } else if (is_string($path)) {
@@ -596,7 +718,7 @@ class AkCacheHandler extends AkObject
         }
 
     }
-    function cacheTplFragmentStart($key, $options = array())
+    function cacheTplFragmentStart($key = array(), $options = array())
     {
         if (!$this->cacheConfigured()) {
             return false;
@@ -612,7 +734,7 @@ class AkCacheHandler extends AkObject
         }
     }
 
-    function cacheTplFragmentEnd($key, $options = array())
+    function cacheTplFragmentEnd($key = array(), $options = array())
     {
         if (!$this->_cacheTplRendered($key)) {
             $contents = ob_get_clean();
