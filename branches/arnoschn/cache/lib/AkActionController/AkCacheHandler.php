@@ -313,6 +313,85 @@ class AkCacheHandler extends AkObject
 
         }
     }
+    function _getPublicLocales()
+    {
+        static $public_locales;
+        if(empty($public_locales)){
+            $public_locales = defined('AK_PUBLIC_LOCALES') ?
+            Ak::toArray(AK_PUBLIC_LOCALES) :
+            array_keys($this->_getAvailableLocales());
+        }
+        return $public_locales;
+    }
+    
+    function _getAvailableLocales()
+    {
+        static $available_locales;
+
+        if(empty($available_locales)){
+            $available_locales = array();
+            $d = dir(AK_CONFIG_DIR.DS.'locales');
+            while (false !== ($entry = $d->read())) {
+                if (preg_match('/\\.php$/', $entry)){
+                    $locale = str_replace('.php','',$entry);
+                    $available_locales[$locale] = array($locale);
+                }
+            }
+            $d->close();
+        }
+
+        return $available_locales;
+    }
+    function _startSession()
+    {
+        if(isset($_COOKIE[AK_SESSION_NAME])&& !isset($_SESSION)){
+            require_once(AK_LIB_DIR.DS.'AkSession.php');
+            $SessionHandler = &AkSession::initHandler();
+            @session_start();
+        }
+    }
+    
+    function _getDefaultLanguageForUser()
+    {
+        $this->_startSession();
+        if (isset($_SESSION['lang'])) {
+            return $_SESSION['lang'];
+        } else {
+            $langs = $this->_getPublicLocales();
+            $browser_languages = $this->_getBrowserLanguages();
+            // First run for full locale (en_us, en_uk)
+            foreach ($browser_languages as $browser_language){
+                if(in_array($browser_language,$langs)){
+                    return $browser_language;
+                }
+            }
+    
+            // Second run for only language code (en, es)
+            foreach ($browser_languages as $browser_language){
+                if($pos = strpos($browser_language,'_')){
+                    $browser_language = substr($browser_language,0, $pos);
+                    if(in_array($browser_language,$langs)){
+                        return $browser_language;
+                    }
+                }
+            }
+            return Ak::lang();
+        }
+    }
+    function _getDefaultLocale()
+    {
+        return Ak::lang();
+    }
+    function _getBrowserLanguages()
+    {
+        $browser_accepted_languages = str_replace('-','_', strtolower(preg_replace('/q=[0-9\.]+,*/','',@$_SERVER['HTTP_ACCEPT_LANGUAGE'])));
+        $browser_languages = (array_diff(split(';|,',$browser_accepted_languages.','), array('')));
+        if(empty($browser_languages)){
+            return array($this->_getDefaultLocale());
+        }
+        return array_unique($browser_languages);
+    }
+    
     function _loadSettings($settings = null)
     {
         if ($settings == null) {
@@ -397,7 +476,7 @@ class AkCacheHandler extends AkObject
     {
         if (!$this->_perform_caching || !$this->_cache_store) return;
         if ((is_array($path) && isset($path['lang']) && $path['lang'] == '*') || $language == '*') {
-            $langs = AkLocaleManager::getPublicLocales();
+            $langs = $this->_getPublicLocales();
             $res = true;
             $mpath = $path;
             unset($mpath['lang']);
@@ -605,6 +684,7 @@ class AkCacheHandler extends AkObject
             $path = @$_REQUEST['ak'];
 
         } else if (is_array($path)) {
+            unset($path['lang']);
             $path = $this->_pathFor($path, $normalize);
         } else if (is_string($path)) {
             ;
@@ -622,7 +702,7 @@ class AkCacheHandler extends AkObject
         if (!$hasExtension) {
             $cacheId.= $this->_page_cache_extension;
         }
-
+        
         $getParameters = $_GET;
         unset($getParameters['ak']);
         if (is_array($this->_include_get_parameters) && !empty($this->_include_get_parameters) && !empty($getParameters)) {
@@ -636,7 +716,8 @@ class AkCacheHandler extends AkObject
             $cacheId .= DS . $cacheIdGetPart;
         }
         $cacheId=strlen($cacheId)>$this->_max_url_length?md5($cacheId):$cacheId;
-        $cacheId = ($forcedLanguage!=null?$forcedLanguage:Ak::lang()).DS. $cacheId;
+        $cacheId = ($forcedLanguage!=null?$forcedLanguage:$this->_getDefaultLanguageForUser()).DS. $cacheId;
+        //var_dump($cacheId);
         $this->_lastCacheId = preg_replace('|'.DS.'+|','/',$cacheId);
         return $this->_lastCacheId;
     }
