@@ -1,2 +1,0 @@
-
-  RewriteRule ^/test/fixtures/public/(.*)$ /test/fixtures/public/index.php?ak=$1 [L,QSA]  
