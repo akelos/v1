@@ -1937,6 +1937,7 @@ class Ak
         if ($walk_keys) {
             foreach ($options as $key=>$value) {
                 if (!is_array($value)) {
+                    unset($options[$key]);
                     $options[$value] = $default_options;
                 } else {
                     Ak::parseOptions($value, $default_options, $parameters);
