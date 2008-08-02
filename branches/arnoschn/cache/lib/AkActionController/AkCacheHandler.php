@@ -705,12 +705,16 @@ class AkCacheHandler extends AkObject
      */
     function fragmentCacheKey($options, $parameters = array())
     {
-        if (is_array($options)) {
-            $options = $this->_pathFor($options);
-        } else if ($options==null) {
-            $options = $this->_pathFor($this->_controller->params);
+        if (isset($parameters['namespace']) && $parameters['namespace'] == 'actions') {
+            $options = $this->_actionPath($options);
+        } else {
+            if (is_array($options)) {
+                $options = $this->_pathFor($options);
+            } else if ($options==null) {
+                $options = $this->_pathFor($this->_controller->params);
+            }
         }
-
+        
         $key = AkCache::expandCacheKey($options, isset($parameters['namespace'])?$parameters['namespace']:'fragments');
 
         return $key;

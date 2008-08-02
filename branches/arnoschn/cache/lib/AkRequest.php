@@ -71,8 +71,25 @@ class AkRequest extends AkObject
     * @var array
     */
     var $env = array();
-
-
+    
+    var $mime_types = array( 
+                'text/html'                => 'html', 
+                'application/xhtml+xml'    => 'html', 
+                'application/xml'          => 'xml', 
+                'text/xml'                 => 'xml', 
+                'text/javascript'          => 'js', 
+                'application/javascript'   => 'js', 
+                'application/x-javascript' => 'js', 
+                'application/json'         => 'json',  
+                'text/x-json'              => 'json', 
+                'application/rss+xml'      => 'rss', 
+                'application/atom+xml'     => 'atom', 
+                '*/*'                      => 'html', 
+                'application/x-www-form-urlencoded' => 'www-form', 
+                'default'                  => 'html', 
+            );
+            
+    var $_format;
     /**
     * String parse method.
     * 
@@ -690,20 +707,108 @@ class AkRequest extends AkObject
             $item = urldecode($item);
         }
     }
-    
-    function _detectFormat()
+    function getAccepts()
     {
-        if (preg_match('/^([^\.]+)\.(.+)$/', @$_REQUEST['ak'], $matches)) {
-            $this->_format = isset($matches[2])?$matches[2]:null;
-            $_REQUEST['ak'] = $matches[0];
-            $this->_request['ak'] = $matches[0];
-        }
+        $accept_header = isset($this->env['HTTP_ACCEPT'])?$this->env['HTTP_ACCEPT']:'';
+        $accepts = array();
+        foreach (explode(',',$accept_header) as $index=>$acceptable){ 
+                 $mime_struct = $this->_parseMimeType($acceptable); 
+                 if (empty($mime_struct['q'])) $mime_struct['q'] = '1.0'; 
+                  
+                 //we need the original index inside this structure  
+                 //because usort happily rearranges the array on equality 
+                 //therefore we first compare the 'q' and then 'i' 
+                 $mime_struct['i'] = $index; 
+                 $accepts[] = $mime_struct; 
+             } 
+             usort($accepts,array(&$this,'_sortAcceptHeader')); 
+              
+             //we throw away the old index 
+             foreach ($accepts as $array){ 
+                 unset($array['i']); 
+             } 
+             return $accepts; 
+    }
+    function setFormat($format)
+    {
+        $this->_format = $format;
     }
     
     function getFormat()
     {
-        return isset($this->_format)?$this->_format:null;
+        if (isset($this->_format)) {
+            return $this->_format;
+        } else if (isset($this->_request['format'])) {
+            $this->_format = $this->_request['format'];
+        } elseif (preg_match('/^([^\.]+)\.(.+)$/', @$_REQUEST['ak'], $matches)) {
+            $this->_format = isset($matches[2])?$matches[2]:null;
+            $this->_request['format'] = $this->_format;
+        } else if ($this->isGet() || $this->isDelete()) {
+            $this->_format = $this->_bestMimeType();
+        } else if ($this->isPost() || $this->isPut()) {
+            $this->_format = $this->_lookupMimeType($this->getContentType());
+        }
+        
+        if (empty($this->_format)) {
+            $this->_format = $this->mime_types['default'];
+        }
+        
+        return $this->_format;
     }
+    
+    function _sortAcceptHeader($a,$b) 
+    { 
+         //preserve the original order if q is equal 
+        return $a['q'] == $b['q'] ? ($a['i'] > $b['i']) : ($a['q'] < $b['q']); 
+    } 
+    function _parseMimeType($mime_type) 
+    { 
+        @list($type,$parameter_string) = explode(';',$mime_type); 
+        $mime_type_struct = array(); 
+        if ($parameter_string){ 
+            parse_str($parameter_string,$mime_type_struct); 
+        } 
+        $mime_type_struct['type'] = trim($type); 
+        return $mime_type_struct; 
+    }
+    function _getMimeType($acceptables)
+    { 
+        // we group by 'quality' 
+        $grouped_acceptables = array(); 
+        foreach ($acceptables as $acceptable){ 
+            $grouped_acceptables[$acceptable['q']][] = $acceptable['type']; 
+        } 
+         
+         
+        foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){ 
+            foreach ($this->mime_types as $mime_type=>$our_mime_type){ 
+                foreach ($array_with_acceptables_of_same_quality as $acceptable){ 
+                    if ($mime_type == $acceptable){ 
+                        return $our_mime_type; 
+                    } 
+                } 
+            } 
+        } 
+        return $this->mime_types['default']; 
+    } 
+    function getContentType() 
+    { 
+        if (empty($this->env['CONTENT_TYPE'])) return false; 
+        $mime_type_struct = $this->_parseMimeType($this->env['CONTENT_TYPE']); 
+        return $mime_type_struct['type']; 
+    } 
+    function _lookupMimeType($mime_type) 
+    { 
+        if (!isset($this->mime_types[$mime_type])) {
+            //trigger_error(Ak::t('Unsupported mime %mime',array('%mime'=>$mime_type)), E_USER_WARNING);
+            return null;
+        }
+        return $this->mime_types[$mime_type]; 
+    }
+    function _bestMimeType() 
+    { 
+        return $this->_getMimeType($this->getAccepts()); 
+    } 
     // {{{ recognize()
 
     /**
@@ -716,7 +821,6 @@ class AkRequest extends AkObject
         AK_ENVIRONMENT != 'setup' ? $this->_connectToDatabase() : null;
         $this->_startSession();
         $this->_enableInternationalizationSupport();
-        $this->_detectFormat();
         $this->_mapRoutes($Map);
 
         $params = $this->getParams();

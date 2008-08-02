@@ -145,21 +145,6 @@ class AkActionController extends AkObject
         $Dispatcher->dispatch();
     }
     
-    function _configure($settings)
-    {
-        $configuration_object = &$this->_controller;
-        $configuration_options = array('beforeFilter'=>'_setBeforeFilters',
-                                       'afterFilter'=>'_setAfterFilters');
-        foreach ($configuration_options as $option => $callback) {
-            if (isset($configuration_object->$option)) {
-                if (is_array($callback)) {
-                    call_user_func_array($callback,$configuration_object->$option);
-                } else {
-                    $this->$callback($configuration_object->$option);
-                }
-            }
-        }
-    }
     
     
     function process(&$Request, &$Response)
@@ -174,7 +159,8 @@ class AkActionController extends AkObject
         $actionExists = $this->_ensureActionExists();
         
         if (!$actionExists) {
-            return;
+            $this->handleResponse();
+            return false;
         }
         $this->_initExtensions();
         Ak::t('Akelos'); // We need to get locales ready
@@ -258,6 +244,9 @@ class AkActionController extends AkObject
             if(!empty($this->validate_output)){
                 $this->_validateGeneratedXhtml();
             }
+            if (!isset($this->Response->_headers['Status']) && !empty($this->_default_render_status_code)) {
+                $this->Response->_headers['Status'] = $this->_default_render_status_code;
+            }
             $this->Response->outputResults();
             $handled[$this->_request_id]=true;
         }
@@ -266,7 +255,6 @@ class AkActionController extends AkObject
     function _loadActionView()
     {
         empty($this->_assigns) ? ($this->_assigns = array()) : null;
-        empty($this->_default_render_status_code) ? ($this->_default_render_status_code = 200) : null;
         $this->_enableLayoutOnRender = !isset($this->_enableLayoutOnRender) ? true : $this->_enableLayoutOnRender;
         $this->passed_args = !isset($this->Request->pass)? array() : $this->Request->pass;
         empty($this->cookies) && isset($_COOKIE) ? ($this->cookies =& $_COOKIE) : null;
@@ -725,7 +713,9 @@ class AkActionController extends AkObject
     function renderText($text = null, $status = null)
     {
         $this->performed_render = true;
-        $this->Response->_headers['Status'] = !empty($status) ? $status : $this->_default_render_status_code;
+        if($status != null) {
+            $this->Response->_headers['Status'] = $status;
+        }
         $this->Response->body = $text;
         return $text;
     }
@@ -2892,8 +2882,7 @@ class AkActionController extends AkObject
                 return false;
             }else{
                 $this->Response->addHeader('Status',405);//("HTTP/1.1 405 Method Not Allowed");
-                $this->Response->sendHeaders();
-                die('405 Method Not Allowed');
+                $this->renderText('405 Method Not Allowed');
                 return false;
             }
         }
