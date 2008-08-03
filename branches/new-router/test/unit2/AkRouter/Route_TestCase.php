@@ -53,7 +53,7 @@ abstract class Route_TestCase extends PHPUnit_Framework_TestCase
     {
         try{
             $actual = $this->Route->parametrize($this->Request);
-            $this->fail('Expected \'no match\', but actually matched: '.$actual);
+            $this->fail("Expected 'no match', but actually matched: \n\r".var_export($actual,true));
         } catch (RouteDoesNotMatchRequestException $e) {}
     }
     
