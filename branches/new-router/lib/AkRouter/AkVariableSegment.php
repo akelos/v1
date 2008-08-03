@@ -25,7 +25,7 @@ class AkVariableSegment extends AkSegment
     function getRegEx()
     {
         $optional_switch = $this->isOptional() ? '?': '';
-        return "(?:$this->delimiter(?P<$this->name>{$this->getInnerRegEx()}))$optional_switch";
+        return "(?:[$this->delimiter](?P<$this->name>{$this->getInnerRegEx()}))$optional_switch";
     }
 
     function addToParams($match)

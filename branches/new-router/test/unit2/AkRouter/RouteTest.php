@@ -294,6 +294,45 @@ class RouteTest extends Route_TestCase
         $this->assertEquals(array('name','age'),$this->Route->getNamesOfDynamicSegments());
     }
     
+    function testRouteRecognizesThePointAsADelimiter()
+    {
+        $this->withRoute('/author/:name.:age');
+        
+        $this->assertEquals(array('name','age'),$this->Route->getNamesOfDynamicSegments());
+    }
+    
+    function testTypicalFormatSegment()
+    {
+        $this->withRoute('/author/:name.:format');
+        
+        $this->get('/author/Steve.html')->matches(array('name'=>'Steve','format'=>'html'));
+        $this->get('/author/Steve')     ->matches(array('name'=>'Steve'));
+        $this->get('/author')           ->matches();
+        
+        $this->urlize(array('name'=>'Steve','format'=>'html'))->returns('/author/Steve.html');
+    }
+    
+    function testTypicalFormatSegmentWithHtmlAsDefault()
+    {
+        $this->withRoute('/author/:name.:format',array('format'=>'html'));
+        
+        $this->get('/author/Steve.html')->matches(array('name'=>'Steve','format'=>'html'));
+        $this->get('/author/Steve')     ->matches(array('name'=>'Steve','format'=>'html'));
+
+        $this->urlize(array('name'=>'Steve','format'=>'html'))->returns('/author/Steve');
+        $this->urlize(array('name'=>'Steve','format'=>'xml')) ->returns('/author/Steve.xml');
+    }
+    
+    function testTypicalFeed()
+    {
+        $this->withRoute('/authors/:scope.rss',array('controller'=>'authors','action'=>'get_feed','scope'=>COMPULSORY),array('scope'=>'(recent|all)'));
+        
+        $this->get('/authors/.rss')       ->doesntMatch();
+        $this->get('/authors/unknown.rss')->doesntMatch();
+        $this->get('/authors/recent.rss') ->matches(array('controller'=>'authors','action'=>'get_feed','scope'=>'recent'));
+        $this->get('/authors/all.rss')    ->matches(array('controller'=>'authors','action'=>'get_feed','scope'=>'all'));
+    }
+    
 }
 
 ?>

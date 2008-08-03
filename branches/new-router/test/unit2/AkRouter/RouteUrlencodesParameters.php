@@ -6,7 +6,7 @@ class RouteUrlencodesParameters extends Route_TestCase
 
     function setUp()
     {
-        $this->withRoute('/author/:name');
+        $this->withRoute('/author/:name',array(),array('name'=>'[^/]+')); //default requirement would stop on a dot
     }
     
     function testParametrizeDecodesReturnedParameters()

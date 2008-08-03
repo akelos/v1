@@ -38,6 +38,7 @@ class AkRoute extends AkObject
     private $conditions;
     private $regex;
     private $segments;
+    const   DELIMITER_CHAR_CLASS = '[/.]';   // Note: If you change this, take a look at AkSegment::$DEFAULT_REQUIREMENT too
     
     function __construct($url_pattern, $defaults = array(), $requirements = array(), $conditions = array())
     {
@@ -177,27 +178,31 @@ class AkRoute extends AkObject
     protected function buildSegments($url_pattern,$defaults,$requirements)
     {
         $segments = array();
-        $url_parts = explode('/',trim($url_pattern,'/'));
-        foreach ($url_parts as $url_part){
-            if (empty($url_part)) continue;
+        
+        $subject = $url_pattern;
+        $pattern = '@'.self::DELIMITER_CHAR_CLASS.'@';
+        $matches = preg_split($pattern,$subject,-1,PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
+        foreach ($matches as $match){
+            $url_part  = $match[0];
+            $delimiter = $subject{$match[1]-1};
             
             $name = substr($url_part,1);
             switch ($this->segmentType($url_part)) {
             	case ':':
             	    switch ($name){
             	        case 'lang':
-                            $segments[$name] = new AkLangSegment($name,'/',@$defaults[$name],@$requirements[$name]);
+                            $segments[$name] = new AkLangSegment($name,$delimiter,@$defaults[$name],@$requirements[$name]);
                             break;
             	        default:
-                            $segments[$name] = new AkVariableSegment($name,'/',@$defaults[$name],@$requirements[$name]);
+                            $segments[$name] = new AkVariableSegment($name,$delimiter,@$defaults[$name],@$requirements[$name]);
                             break;
             	    }
             	    break;
             	case '*':
-                    $segments[$name] = new AkWildcardSegment($name,'/',@$defaults[$name],@$requirements[$name]);
+                    $segments[$name] = new AkWildcardSegment($name,$delimiter,@$defaults[$name],@$requirements[$name]);
             	    break;
             	default:
-                    $segments[] = '/'.$url_part;
+                    $segments[] = $delimiter.$url_part;
                     break;
             }
         }
@@ -210,9 +215,13 @@ class AkRoute extends AkObject
         return false;
     }
     
+    /*
+     * Returns an array with the names of the dynamic segments. 
+     * It's only used in AkRouterHelper; to avoid building the full segments-graph it uses a regex-match
+     */
     function getNamesOfDynamicSegments()
     {
-        preg_match_all('@/[:*](\w+)@',$this->url_pattern,$matches);
+        preg_match_all('@'.self::DELIMITER_CHAR_CLASS.'[:*](\w+)@',$this->url_pattern,$matches);
         return ($matches[1]);
     }
     

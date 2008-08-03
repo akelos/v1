@@ -26,7 +26,7 @@ class AkSegment
     public     $default;
     protected  $requirement;  //default requirement matches all but stops on dashes
     
-    static  $DEFAULT_REQUIREMENT='[^/]*';  //default requirement matches all but stops on dashes
+    static  $DEFAULT_REQUIREMENT='[^/.]+';  //default requirement matches all but stops on dashes
     
     function __construct($name,$delimiter,$default=null,$requirement=null)
     {
