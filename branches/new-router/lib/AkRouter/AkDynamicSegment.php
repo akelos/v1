@@ -57,13 +57,13 @@ abstract class AkDynamicSegment extends AkSegment
     public function generateUrlFromValue($value,$omit_optional_segments)
     {
         if (is_null($value)){
-            if ($this->isCompulsory()) throw new SegmentDoesNotMatchParametersException("Segment {$this->name} is compulsory, but was not set.");
+            if ($this->isCompulsory()) throw new SegmentDoesNotMatchParameterException("Segment {$this->name} is compulsory, but was not set.");
             if ($omit_optional_segments || $this->isOmitable()) return false;
-            throw new SegmentDoesNotMatchParametersException("Segment {$this->name} must be set.");
+            throw new SegmentDoesNotMatchParameterException("Segment {$this->name} must be set.");
         }else{
             if ($this->default == $value && $omit_optional_segments) return false;
             
-            if (!$this->fulfillsRequirement($value)) throw new SegmentDoesNotMatchParametersException("Value {$value} does not fulfills the requirements of {$this->name}.");
+            if (!$this->fulfillsRequirement($value)) throw new SegmentDoesNotMatchParameterException("Value {$value} does not fulfills the requirements of {$this->name}.");
             return $this->generateUrlFor($value);
         }
     }

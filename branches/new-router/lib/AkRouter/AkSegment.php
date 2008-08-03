@@ -18,7 +18,7 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
-class SegmentDoesNotMatchParametersException extends RouteDoesNotMatchParametersException 
+class SegmentDoesNotMatchParameterException extends RouteDoesNotMatchParametersException 
 { }
 
 
