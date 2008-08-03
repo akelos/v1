@@ -59,8 +59,8 @@ class AkRoute extends AkObject
         
         $params = $this->extractParamsFromUrl($Request->getRequestedUrl());
         $this->addDefaults($params);
-        
-        $params = $this->urlDecode($params);
+        $this->urlDecode($params);
+
         return $params;
     }
     
@@ -110,17 +110,17 @@ class AkRoute extends AkObject
      */
     function urlize($params)
     {
-        $params = $this->urlEncode($params);
+        $this->urlEncode($params);
 
-        $url = $this->buildUrlFromSegments($params);
+        $url = $this->assembleUrlFromSegments($params);
 
         // $params now holds additional values which are not present in the url-pattern as 'dynamic-segments'
-        $key_value_list = $this->getAdditionalKeyValueListForUrl($params);
+        $query_string = $this->buildQueryStringFor($params);
 
-        return new AkUrl($url,$key_value_list);
+        return new AkUrl($url,$query_string);
     }
     
-    protected function buildUrlFromSegments(&$params)
+    protected function assembleUrlFromSegments(&$params)
     {
         $url_pieces    = array();
         $omit_defaults = true;
@@ -134,7 +134,7 @@ class AkRoute extends AkObject
         return join('',array_reverse($url_pieces));
     }
     
-    protected function getAdditionalKeyValueListForUrl($params)
+    protected function buildQueryStringFor($params)
     {
         if (empty($params)) return '';
         
@@ -216,7 +216,7 @@ class AkRoute extends AkObject
     /**
     * Url decode a string or an array of strings
     */
-    private function urlDecode($input)
+    private function urlDecode(&$input)
     {
         array_walk_recursive($input,array($this,'_urldecode'));
         return $input;
@@ -230,7 +230,7 @@ class AkRoute extends AkObject
     /**
     * Url encodes a string or an array of strings
     */
-    private function urlEncode($input)
+    private function urlEncode(&$input)
     {
         array_walk_recursive($input,array($this,'_urlencode'));
         return $input;
