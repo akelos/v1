@@ -66,7 +66,7 @@ class AkRoute extends AkObject
     {
         if ($url=='/') $url = '';
         
-        if (!preg_match($this->getRegex(),$url,$matches)) throw new RouteDoesNotMatchRequestException();
+        if (!preg_match($this->getRegex(),$url,$matches)) throw new RouteDoesNotMatchRequestException("Route doesn't match the regex.");
         array_shift($matches);   //throw away the "all-match", we only need the groups
 
         $params = array();

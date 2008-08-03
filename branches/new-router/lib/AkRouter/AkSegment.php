@@ -70,16 +70,22 @@ class AkSegment
         return $this->getRegEx();
     }
     
-    function getUrlPartFor($value=null,$omit_defaults)
+    /**
+     * @param mixed $value                  the value we urlize         
+     * @param bool $omit_optional_segments  true if optional segments should be supressed
+     * @return string|false                 return false if url_part should or can be supressed
+     *                                      otherwise return the url_part as a string
+     */
+    function getUrlPartFor($value=null,$omit_optional_segments)
     {
         if (is_null($value)){
-            if ($this->isCompulsory()) throw new SegmentDoesNotMatchParametersException();
-            if (!$omit_defaults && !$this->isOmitable()) throw new SegmentDoesNotMatchParametersException();
-            return false;
+            if ($this->isCompulsory()) throw new SegmentDoesNotMatchParametersException("Segment {$this->name} is compulsory, but was not set.");
+            if ($omit_optional_segments || $this->isOmitable()) return false;
+            throw new SegmentDoesNotMatchParametersException("Segment {$this->name} must be set.");
         }else{
-            if ($omit_defaults && $this->default == $value) return false;
+            if ($this->default == $value && $omit_optional_segments) return false;
             
-            if (!$this->meetsRequirement($value)) throw new SegmentDoesNotMatchParametersException();
+            if (!$this->meetsRequirement($value)) throw new SegmentDoesNotMatchParametersException("Value {$value} does not fulfills the requirements of {$this->name}.");
             return $this->insertPieceForUrl($value);
         }
     }
