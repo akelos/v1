@@ -203,7 +203,7 @@ class RouteTest extends Route_TestCase
     
     function testVariableSegmentFollowedByWildcardSegment()
     {
-        $this->withRoute(':controller/*options');
+        $this->withRoute('/:controller/*options');
         
         $this->get('/admin')->matches(array('controller'=>'admin'));
         $this->get('/admin/style=blue')->matches(array('controller'=>'admin','options'=>array('style=blue')));
@@ -272,7 +272,7 @@ class RouteTest extends Route_TestCase
     
     function testWilcardSegmentWithDefaults()
     {
-        $this->withRoute('feel/*how',array('how'=>array('blue','or','green')));
+        $this->withRoute('/feel/*how',array('how'=>array('blue','or','green')));
         
         $this->get('/feel')->matches(array('how'=>array('blue','or','green')));
         
@@ -287,44 +287,11 @@ class RouteTest extends Route_TestCase
         $this->urlize(array('controller'=>'author'))->returns('/author');
     }
     
-    function testRouteCanBeAskedForDynamicSegments()
+    function testRouteCanBeAskedAboutDynamicSegments()
     {
         $this->withRoute('/author/:name/:age');
         
         $this->assertEquals(array('name','age'),$this->Route->getNamesOfDynamicSegments());
-        
-    }
-    
-    function _testRegex()
-    {
-        $pattern = "|^person(/.*)/?$|";
-        #"(?:$this->delimiter({$this->getInnerRegEx()}))$optional_switch";
-        $pattern = "|^/set(?:/([^/]*))?$|";
-        $pattern = "|^/set
-                (?:/((?:/?[^/]*)+))?
-                /steve
-            $|x";
-        $delimiter = '/';
-        $inner =  '[^/]+';
-        
-        $pattern = "|^/set
-                (?:$delimiter((?:$inner/?)+))?
-                /steve
-            $|x";
-        $pattern = "|^
-                /set
-                (?:
-                    (
-                        #(?:[^/]+/?)
-                        (?:/[^/]+){3}
-                        #(?:/[^/]+)
-                    )
-                )
-            $|x";
-        $subject = "/set/martin/dave/steve";
-        var_dump($pattern,$subject);
-        var_dump(preg_match($pattern,$subject,$matches));
-        var_dump($matches);
     }
     
 }
