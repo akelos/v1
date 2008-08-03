@@ -131,9 +131,7 @@ class AkRoute extends AkObject
             unset ($params[$name]); 
             $omit_defaults = false;
         }
-        $url = join('',array_reverse($url_pieces));
-        if ($url=='') $url = '/';
-        return $url;
+        return join('',array_reverse($url_pieces));
     }
     
     protected function getAdditionalKeyValueListForUrl($params)

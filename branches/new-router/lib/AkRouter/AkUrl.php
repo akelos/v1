@@ -18,7 +18,7 @@ class AkUrl
     
     function __construct($path,$query_string = '')
     {
-        $this->path = $path;
+        $this->path = $path ? $path : '/';
         $this->query_string = $query_string;    
     }
     
