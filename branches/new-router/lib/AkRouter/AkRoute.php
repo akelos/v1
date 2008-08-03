@@ -67,7 +67,7 @@ class AkRoute extends AkObject
     {
         if ($url=='/') $url = '';
         
-        if (!preg_match($this->getRegex(),$url,$matches)) throw new RouteDoesNotMatchRequestException("Route doesn't match the regex.");
+        if (!preg_match($this->getRegex(),$url,$matches)) throw new RouteDoesNotMatchRequestException("Url doesn't match the regex of the route.");
         array_shift($matches);   //throw away the "all-match", we only need the groups
 
         $params = array();
@@ -80,7 +80,7 @@ class AkRoute extends AkObject
                 }
                 continue;  
             }
-            if ($skipped_optional) throw new RouteDoesNotMatchRequestException();
+            if ($skipped_optional) throw new RouteDoesNotMatchRequestException("Segment $name is missing.");
             $params[$name] = $this->segments[$name]->addToParams($match);
         }
         return $params;
@@ -101,7 +101,7 @@ class AkRoute extends AkObject
         if ($this->conditions['method'] === ANY) return true;
 
         if (strstr($this->conditions['method'],$method)) return true;
-        throw new RouteDoesNotMatchRequestException();
+        throw new RouteDoesNotMatchRequestException("Method does not match.");
     }
 
     /**
@@ -143,7 +143,7 @@ class AkRoute extends AkObject
         foreach ($params as $name=>$value){
             if (isset($this->defaults[$name])){
                 // don't override defaults that don't correspond to dynamic segments, but break
-                if ($this->defaults[$name] != $value) throw new RouteDoesNotMatchParametersException();
+                if ($this->defaults[$name] != $value) throw new RouteDoesNotMatchParametersException("Parameter $name is not dynamic.");
                 // don't append defaults
                 continue;
             }
