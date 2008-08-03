@@ -19,26 +19,26 @@
  */
 
 
-class AkVariableSegment extends AkSegment 
+class AkVariableSegment extends AkDynamicSegment  
 {
 
-    function getRegEx()
+    public function getRegEx()
     {
         $optional_switch = $this->isOptional() ? '?': '';
         return "(?:[$this->delimiter](?P<$this->name>{$this->getInnerRegEx()}))$optional_switch";
     }
 
-    function addToParams($match)
+    public function extractValueFromUrl($url_part)
     {
-        return $match;
+        return $url_part;
     }
 
-    function insertPieceForUrl($value)
+    protected function generateUrlFor($value)
     {
         return $this->delimiter.$value;
     }
     
-    function meetsRequirement($value)
+    protected function fulfillsRequirement($value)
     {
         if (!$this->hasRequirement()) return true;
         

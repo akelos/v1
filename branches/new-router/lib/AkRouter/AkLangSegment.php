@@ -30,12 +30,12 @@ class AkLangSegment extends AkVariableSegment
         parent::__construct($name,$delimiter,$default,$requirement);
     }
     
-    function isOmitable()
+    public function isOmitable()
     {
         return true;
     }
     
-    function availableLocales()
+    private function availableLocales()
     {
         return Ak::langs();
     }

@@ -19,38 +19,38 @@
  */
 
 
-class AkWildcardSegment extends AkSegment 
+class AkWildcardSegment extends AkDynamicSegment  
 {
 
-    function isCompulsory()
+    public function isCompulsory()
     {
         return $this->default === COMPULSORY || $this->expectsExactSize();    
     }
     
-    function expectsExactSize()
-    {
-        return is_int($this->default) ? $this->default : false;
-    }
-    
-    function getRegEx()
+    public function getRegEx()
     {
         $optional_switch = $this->isOptional() ? '?': '';
         $multiplier = ($size = $this->expectsExactSize()) ? '{'. $size .'}' : '+';
         return "(?P<$this->name>(?:$this->delimiter{$this->getInnerRegEx()})$multiplier)$optional_switch";
     }
     
-    function addToParams($match)
+    public function extractValueFromUrl($url_part)
     {
-        $match = substr($match,1); // the first char is the delimiter
-        return explode('/',$match);
+        $url_part = substr($url_part,1); // the first char is the delimiter
+        return explode('/',$url_part);
     }
     
-    function insertPieceForUrl($value)
+    private function expectsExactSize()
+    {
+        return is_int($this->default) ? $this->default : false;
+    }
+    
+    protected function generateUrlFor($value)
     {
         return $this->delimiter.join('/',$value);
     }
     
-    function meetsRequirement($values)
+    protected function fulfillsRequirement($values)
     {
         if (!$this->hasRequirement()) return true;
         if (($size = $this->expectsExactSize()) && count($values) != $size) return false;

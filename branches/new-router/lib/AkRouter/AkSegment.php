@@ -22,45 +22,27 @@ class SegmentDoesNotMatchParametersException extends RouteDoesNotMatchParameters
 { }
 
 
-class AkSegment 
+abstract class AkSegment 
 {
     public     $name;
     protected  $delimiter;
-    public     $default;
-    protected  $requirement;  //default requirement matches all but stops on dashes
+
+    static protected $DEFAULT_REQUIREMENT='[^/.]+';  //default requirement matches all but stops on dashes
     
-    static  $DEFAULT_REQUIREMENT='[^/.]+';  //default requirement matches all but stops on dashes
-    
-    function __construct($name,$delimiter,$default=null,$requirement=null)
+    function __construct($name,$delimiter)
     {
         $this->name        = $name;
         $this->delimiter   = $delimiter;
-        $this->default     = $default;
-        $this->requirement = $requirement;
     }
     
-    function hasRequirement()
-    {
-        return $this->requirement ? true : false;
-    }
+    abstract public function isCompulsory();
     
-    function getInnerRegEx()
-    {
-        if ($this->hasRequirement()) return $this->requirement;
-        return self::$DEFAULT_REQUIREMENT;
-    }
-    
-    function isOptional()
+    public function isOptional()
     {
         return !$this->isCompulsory();
     }
     
-    function isCompulsory()
-    {
-        return $this->default === COMPULSORY;
-    }
-    
-    function isOmitable()
+    public function isOmitable()
     {
         return false;
     }
@@ -69,26 +51,9 @@ class AkSegment
     {
         return $this->getRegEx();
     }
-    
-    /**
-     * @param mixed $value                  the value we urlize         
-     * @param bool $omit_optional_segments  true if optional segments should be supressed
-     * @return string|false                 return false if url_part should or can be supressed
-     *                                      otherwise return the url_part as a string
-     */
-    function getUrlPartFor($value=null,$omit_optional_segments)
-    {
-        if (is_null($value)){
-            if ($this->isCompulsory()) throw new SegmentDoesNotMatchParametersException("Segment {$this->name} is compulsory, but was not set.");
-            if ($omit_optional_segments || $this->isOmitable()) return false;
-            throw new SegmentDoesNotMatchParametersException("Segment {$this->name} must be set.");
-        }else{
-            if ($this->default == $value && $omit_optional_segments) return false;
-            
-            if (!$this->meetsRequirement($value)) throw new SegmentDoesNotMatchParametersException("Value {$value} does not fulfills the requirements of {$this->name}.");
-            return $this->insertPieceForUrl($value);
-        }
-    }
+
+    abstract public function getRegEx();
+    abstract public function generateUrlFromValue($value,$omit_optional_segments);
     
 }
 

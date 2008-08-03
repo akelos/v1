@@ -24,10 +24,11 @@ class RouteDoesNotMatchParametersException extends Exception
 { }
 
 require_once 'AkSegment.php';
+require_once 'AkDynamicSegment.php';
+require_once 'AkStaticSegment.php';
 require_once 'AkVariableSegment.php';
 require_once 'AkLangSegment.php';
 require_once 'AkWildcardSegment.php';
-require_once 'AkStaticSegment.php';
 require_once 'AkUrl.php';
 
 class AkRoute extends AkObject 
@@ -81,7 +82,7 @@ class AkRoute extends AkObject
                 continue;  
             }
             if ($skipped_optional) throw new RouteDoesNotMatchRequestException("Segment $name is missing.");
-            $params[$name] = $this->segments[$name]->addToParams($match);
+            $params[$name] = $this->segments[$name]->extractValueFromUrl($match);
         }
         return $params;
     }
@@ -124,7 +125,7 @@ class AkRoute extends AkObject
         $url_pieces    = array();
         $omit_defaults = true;
         foreach (array_reverse($this->getSegments()) as $name=>$segment){
-            if (!$url_piece = $segment->getUrlPartFor(@$params[$name],$omit_defaults)) continue;
+            if (!$url_piece = $segment->generateUrlFromValue(@$params[$name],$omit_defaults)) continue;
 
             $url_pieces[] = $url_piece;
             unset ($params[$name]); 

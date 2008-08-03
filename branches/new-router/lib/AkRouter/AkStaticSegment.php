@@ -22,12 +22,17 @@
 class AkStaticSegment extends AkSegment
 {
 
-    function getRegEx()
+    public function isCompulsory()
+    {
+        return true;
+    }
+    
+    public function getRegEx()
     {
         return preg_quote($this->delimiter,'@').$this->name;    
     }
     
-    function getUrlPartFor()
+    public function generateUrlFromValue($value,$omit_optional_segments)
     {
         return $this->delimiter.$this->name;    
     }
