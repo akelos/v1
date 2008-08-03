@@ -122,21 +122,13 @@ class AkRoute extends AkObject
     {
         $url_pieces    = array();
         $omit_defaults = true;
-        foreach (array_reverse($this->getSegments()) as $segment){
+        foreach (array_reverse($this->getSegments()) as $name=>$segment){
             if ($segment instanceof AkSegment){
-                $name = $segment->name;
-                if (!isset($params[$name])){
-                    if ($segment->isCompulsory()) throw new RouteDoesNotMatchParametersException();
-                    if (!$omit_defaults && !$segment->isOmitable()) throw new RouteDoesNotMatchParametersException();
-                }else{
-                    $desired_value = $params[$name];
-                    if ($omit_defaults && $segment->default == $desired_value) continue;
-                    
-                    if (!$segment->meetsRequirement($desired_value)) throw new RouteDoesNotMatchParametersException();
-                    $url_pieces[] = $segment->insertPieceForUrl($desired_value);
-                    unset ($params[$name]); 
-                    $omit_defaults = false;
-                }
+                if (!$url_piece = $segment->getUrlPartFor(@$params[$name],$omit_defaults)) continue;
+
+                $url_pieces[] = $url_piece;
+                unset ($params[$name]); 
+                $omit_defaults = false;
             }else{
                 $url_pieces[] = $segment;
             }

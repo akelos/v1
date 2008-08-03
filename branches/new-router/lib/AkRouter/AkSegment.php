@@ -18,6 +18,9 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
+class SegmentDoesNotMatchParametersException extends RouteDoesNotMatchParametersException 
+{ }
+
 
 class AkSegment 
 {
@@ -65,6 +68,20 @@ class AkSegment
     function __toString()
     {
         return $this->getRegEx();
+    }
+    
+    function getUrlPartFor($value=null,$omit_defaults)
+    {
+        if (is_null($value)){
+            if ($this->isCompulsory()) throw new SegmentDoesNotMatchParametersException();
+            if (!$omit_defaults && !$this->isOmitable()) throw new SegmentDoesNotMatchParametersException();
+            return false;
+        }else{
+            if ($omit_defaults && $this->default == $value) return false;
+            
+            if (!$this->meetsRequirement($value)) throw new SegmentDoesNotMatchParametersException();
+            return $this->insertPieceForUrl($value);
+        }
     }
     
 }
