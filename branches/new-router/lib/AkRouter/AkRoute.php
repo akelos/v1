@@ -27,6 +27,7 @@ require_once 'AkSegment.php';
 require_once 'AkVariableSegment.php';
 require_once 'AkLangSegment.php';
 require_once 'AkWildcardSegment.php';
+require_once 'AkStaticSegment.php';
 require_once 'AkUrl.php';
 
 class AkRoute extends AkObject 
@@ -123,15 +124,11 @@ class AkRoute extends AkObject
         $url_pieces    = array();
         $omit_defaults = true;
         foreach (array_reverse($this->getSegments()) as $name=>$segment){
-            if ($segment instanceof AkSegment){
-                if (!$url_piece = $segment->getUrlPartFor(@$params[$name],$omit_defaults)) continue;
+            if (!$url_piece = $segment->getUrlPartFor(@$params[$name],$omit_defaults)) continue;
 
-                $url_pieces[] = $url_piece;
-                unset ($params[$name]); 
-                $omit_defaults = false;
-            }else{
-                $url_pieces[] = $segment;
-            }
+            $url_pieces[] = $url_piece;
+            unset ($params[$name]); 
+            $omit_defaults = false;
         }
         $url = join('',array_reverse($url_pieces));
         if ($url=='') $url = '/';
@@ -194,7 +191,7 @@ class AkRoute extends AkObject
                     $segments[$name] = new AkWildcardSegment($name,$delimiter,@$defaults[$name],@$requirements[$name]);
             	    break;
             	default:
-                    $segments[] = $delimiter.$url_part;
+                    $segments[] = new AkStaticSegment($url_part,$delimiter);
                     break;
             }
         }

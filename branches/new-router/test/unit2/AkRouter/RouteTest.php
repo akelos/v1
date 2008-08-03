@@ -333,6 +333,28 @@ class RouteTest extends Route_TestCase
         $this->get('/authors/all.rss')    ->matches(array('controller'=>'authors','action'=>'get_feed','scope'=>'all'));
     }
     
+    function testADotIsNotAnyCharacterButADot()
+    {
+        $this->withRoute('/authors.:format');
+
+        $this->get('/authors#rss')->doesntMatch();
+    }
+
+    function testStaticSegmentMasksDot()
+    {
+        $this->withRoute('/authors.rss');
+        
+        $this->get('/authors.rss')->matches();
+        $this->get('/authors#rss')->doesntMatch();
+    }
+    
+    function testStaticSegmentUnmasksDotOnUrlize()
+    {
+        $this->withRoute('/authors/:scope.rss');
+
+        $this->urlize(array('scope'=>'recent'))->returns('/authors/recent.rss');
+    }
+    
 }
 
 ?>
