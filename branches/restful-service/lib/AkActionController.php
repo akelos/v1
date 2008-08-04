@@ -165,8 +165,6 @@ class AkActionController extends AkObject
             if(!empty($this->helpers)){
                 $this->instantiateHelpers();
             }
-        }else{
-            $this->_enableLayoutOnRender = false;
         }
 
         $this->_ensureProperProtocol();
@@ -184,7 +182,7 @@ class AkActionController extends AkObject
         $this->performActionWithFilters($this->_action_name);
 
         if (!$this->_hasPerformed()){
-            $this->_enableLayoutOnRender ? $this->renderWithLayout() : $this->renderWithoutLayout();
+            $this->defaultRender();
         }
 
         if(!empty($this->validate_output)){
@@ -205,7 +203,6 @@ class AkActionController extends AkObject
     function _loadActionView()
     {
         empty($this->_assigns) ? ($this->_assigns = array()) : null;
-        $this->_enableLayoutOnRender = !isset($this->_enableLayoutOnRender) ? true : $this->_enableLayoutOnRender;
         $this->passed_args = !isset($this->Request->pass)? array() : $this->Request->pass;
         empty($this->cookies) && isset($_COOKIE) ? ($this->cookies =& $_COOKIE) : null;
 
@@ -696,6 +693,11 @@ class AkActionController extends AkObject
         $this->performed_render = false;
 
         return $result;
+    }
+    
+    function defaultRender()
+    {
+        return $this->_high_load_mode ? $this->renderWithoutLayout() : $this->renderWithLayout();
     }
 
     function renderWithLayout($template_name = null, $status = null, $layout = null)
