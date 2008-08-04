@@ -63,7 +63,7 @@ abstract class AkDynamicSegment extends AkSegment
         }else{
             if ($this->default == $value && $omit_optional_segments) return false;
             
-            if (!$this->fulfillsRequirement($value)) throw new SegmentDoesNotMatchParameterException("Value {$value} does not fulfills the requirements of {$this->name}.");
+            if (!$this->fulfillsRequirement($value)) throw new SegmentDoesNotMatchParameterException("Value {$value} does not fulfill the requirements of {$this->name}.");
             return $this->generateUrlFor($value);
         }
     }
