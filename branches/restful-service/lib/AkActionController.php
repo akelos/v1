@@ -1092,6 +1092,11 @@ class AkActionController extends AkObject
             trigger_error(Ak::t('Missing %template_type %full_template_path',array('%template_type'=>$template_type, '%full_template_path'=>$this->full_template_path)), E_USER_WARNING);
         }
     }
+    
+    protected function respondTo()
+    {
+        return $this->Request->getFormat();
+    }
 
     function getDefaultTemplateName($default_action_name = null)
     {

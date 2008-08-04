@@ -47,10 +47,6 @@ class PersonController extends ApplicationController
         $this->renderText($xml_string,$status);
     }
     
-    protected function respondTo()
-    {
-        return $this->Request->getFormat();
-    }
 }
 
 ?>
