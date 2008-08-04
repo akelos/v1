@@ -128,6 +128,8 @@ class AkActionController extends AkObject
 
     var $module_name;
     var $_module_path;
+    
+    const DEFAULT_RENDER_STATUS_CODE = '***l';
 
     /**
      * Old fashioned way of dispatching requests. Please use AkDispatcher or roll your own.
@@ -203,7 +205,6 @@ class AkActionController extends AkObject
     function _loadActionView()
     {
         empty($this->_assigns) ? ($this->_assigns = array()) : null;
-        empty($this->_default_render_status_code) ? ($this->_default_render_status_code = 200) : null;
         $this->_enableLayoutOnRender = !isset($this->_enableLayoutOnRender) ? true : $this->_enableLayoutOnRender;
         $this->passed_args = !isset($this->Request->pass)? array() : $this->Request->pass;
         empty($this->cookies) && isset($_COOKIE) ? ($this->cookies =& $_COOKIE) : null;
@@ -659,10 +660,10 @@ class AkActionController extends AkObject
         return $this->renderText($this->Template->renderTemplate($type, $template, null, $local_assigns), $status);
     }
 
-    function renderText($text = null, $status = null)
+    function renderText($text = null, $status = self::DEFAULT_RENDER_STATUS_CODE)
     {
         $this->performed_render = true;
-        $this->Response->_headers['Status'] = !empty($status) ? $status : $this->_default_render_status_code;
+        $this->Response->_headers['Status'] = !empty($status) ? $status : self::DEFAULT_RENDER_STATUS_CODE;
         $this->Response->body = $text;
         return $text;
     }
