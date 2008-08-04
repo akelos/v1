@@ -6,7 +6,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
 
     function testSettingLayoutToFalseMeansYouDontWantALayout() 
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/application.tpl');
         $controller = $this->createControllerFor('index');
         $controller->layout = false;
@@ -17,7 +17,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testPickApplicationLayoutIfWeDontHaveAControllerLayout()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/application.tpl');
         $controller = $this->createControllerFor('index');
         
@@ -27,7 +27,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testDontPickAnyLayoutIfNoneIsPresent()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $controller = $this->createControllerFor('index');
         
         $this->expectRender(array('index'));
@@ -36,7 +36,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testPickControllerLayoutIfPresent()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/template_paths.tpl');
         $controller = $this->createControllerFor('index');
         
@@ -46,7 +46,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testPickExplicitlySetLayout()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('render_tests/my_layout.tpl');
         $controller = $this->createControllerFor('index');
         $controller->setLayout('render_tests/my_layout');
@@ -57,7 +57,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testPickALayoutUsingADefinedMethod()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/picked_from_method.tpl');
         $controller = $this->createControllerFor('index');
         $controller->setLayout('my_layout_picker');
@@ -68,7 +68,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testPickALayoutUsingAnObject()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/picked_from_method.tpl');
         $controller = $this->createControllerFor('index');
         $controller->setLayout(array($controller,'my_layout_picker'));
@@ -79,7 +79,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
     
     function testPickLayoutIfActionameMatches()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/application.tpl');
         $controller = $this->createControllerFor('index');
         $controller->setLayout('application',array('only'=>'index'));
@@ -90,7 +90,7 @@ class TemplatePathsTests extends TemplatePicking_TestCase
 
     function testPickLayoutUnlessActionameMatches()
     {
-        $this->createViewFor('index');
+        $this->createViewTemplate('index');
         $this->createTemplate('layouts/application.tpl');
         $controller = $this->createControllerFor('index');
         $controller->setLayout('application',array('except'=>'index'));

@@ -68,7 +68,7 @@ abstract class TemplatePicking_TestCase extends PHPUnit_Framework_TestCase
         return $this->Controller = $controller;
     }
     
-    function createViewFor($action_name)
+    function createViewTemplate($action_name)
     {
         $view_for_action = $this->controller_name.DS.$action_name.'.tpl';
         $this->createTemplate($view_for_action);
