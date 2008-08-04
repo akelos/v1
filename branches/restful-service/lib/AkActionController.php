@@ -646,7 +646,7 @@ class AkActionController extends AkObject
             $this->_assertExistanceOfTemplateFile($template_path);
         }
 
-        AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->message("Rendering $this->full_template_path" . (!empty($status) ? " ($status)":'')) : null;
+        AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->message("Rendering {$this->getControllerName()}::$template_path " . (!empty($status) ? " ($status)":'')) : null;
         return $this->renderText($this->Template->renderFile($template_path, $use_full_path, $locals), $status);
     }
 
@@ -1082,14 +1082,13 @@ class AkActionController extends AkObject
 
     function _assertExistanceOfTemplateFile($template_name)
     {
-        $extension = $this->Template->delegateTemplateExists($template_name);
-        $this->full_template_path = $this->Template->getFullTemplatePath($template_name, $extension ? $extension : 'tpl');
-        if(!$this->_hasTemplate($this->full_template_path)){
+        if($this->Template->delegateTemplateExists($template_name) === false){
             if(!empty($this->_ignore_missing_templates) && $this->_ignore_missing_templates === true){
                 return;
             }
+            $template_name = $template_name.'.tpl';
             $template_type = strstr($template_name,'layouts') ? 'layout' : 'template';
-            trigger_error(Ak::t('Missing %template_type %full_template_path',array('%template_type'=>$template_type, '%full_template_path'=>$this->full_template_path)), E_USER_WARNING);
+            trigger_error(Ak::t('Missing %template_type %controller_name::%template_name',array('%template_type'=>$template_type, '%template_name'=>$template_name,'%controller_name'=>$this->getControllerName())), E_USER_WARNING);
         }
     }
     
