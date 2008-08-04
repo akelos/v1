@@ -147,10 +147,7 @@ class AkActionController extends AkObject
     {
         AK_LOG_EVENTS && empty($this->_Logger) ? ($this->_Logger =& Ak::getLogger()) : null;
 
-        $this->Request =& $Request;
-        $this->Response =& $Response;
-        $this->params = $this->Request->getParams();
-        $this->_action_name = $this->Request->getAction();
+        $this->setRequestAndResponse($Request,$Response);
 
         $this->_ensureActionExists();
 
@@ -193,6 +190,14 @@ class AkActionController extends AkObject
         }
 
         $this->Response->outputResults();
+    }
+    
+    function setRequestAndResponse($Request,$Response)
+    {
+        $this->Request  = $Request;
+        $this->Response = $Response;
+        $this->params   = $this->Request->getParams();
+        $this->_action_name = $this->Request->getAction();
     }
 
     function _loadActionView()
@@ -1388,9 +1393,12 @@ class AkActionController extends AkObject
             $layout = strstr($layout,'/') || strstr($layout,DS) ? $layout : 'layouts'.DS.$layout;
             $layout = preg_replace('/\.tpl$/', '', $layout);
 
-            $layout = substr($layout,0,7) === 'layouts' ?
-            (empty($this->_module_path) || !empty($this->layout) ? AK_VIEWS_DIR.DS.$layout.'.tpl' : AK_VIEWS_DIR.DS.'layouts'.DS.trim($this->_module_path, DS).'.tpl') :
-            $layout.'.tpl';
+            $layout = substr($layout,0,7) === 'layouts' 
+                ? (empty($this->_module_path) || !empty($this->layout) 
+                    ? AK_VIEWS_DIR.DS.$layout.'.tpl' 
+                    : AK_VIEWS_DIR.DS.'layouts'.DS.trim($this->_module_path, DS).'.tpl'
+                ) 
+                : $layout.'.tpl';
 
             if (file_exists($layout)) {
                 return $layout;
