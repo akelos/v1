@@ -152,15 +152,8 @@ class AkActionView extends AkObject
             $this->first_render = $template_path;
         }
 
+        //probably unused
         $template_path = substr($template_path,0,7) === 'layouts' ? AK_VIEWS_DIR.DS.$template_path.'.tpl' : $template_path;
-
-        //mostly for compatibility, we register a handler for the '.html.tpl' extension
-        //on old installations we cannot expect to find .html.tpl templates
-        //so we remove the html-extension first, because of the extra html-handler, we will add it 
-        //again (automatically) if a corresponding file exists. 
-        if (substr($template_path,-5)=='.html'){
-            $template_path = substr($template_path,0,-5);
-        }
 
         if(!$use_full_path && strstr($template_path,'.')){
             $template_file_name = $template_path;
@@ -260,6 +253,12 @@ class AkActionView extends AkObject
 
     function getFullTemplatePath($template_path, $extension)
     {
+        //the '.html'-extension is handled by a special ExtensionHandler, so we remove this here
+        //that is of course a hack, basically to allow that you can use either index.tpl or index.html.tpl
+        //as your template-filename
+        if(substr($template_path,-5)=='.html'){
+            $template_path = substr($template_path,0,-5);
+        }
         $template_path = substr($template_path,-1*strlen($extension)) == $extension ? $template_path : $template_path.'.'.$extension;
         return substr($template_path,0,strlen(AK_VIEWS_DIR)) == AK_VIEWS_DIR ? $template_path : $this->base_path.DS.$template_path;
     }

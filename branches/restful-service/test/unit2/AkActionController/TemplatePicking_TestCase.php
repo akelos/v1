@@ -64,6 +64,9 @@ abstract class TemplatePicking_TestCase extends PHPUnit_Framework_TestCase
         $Response = $this->getMock('AkResponse',array('outputResults'));
         $controller->setRequestAndResponse($Request,$Response);
         $this->Template = $controller->Template = $this->getMock('AkActionView',array('renderFile'),array(AK_VIEWS_DIR.DS.$this->controller_name));
+        $this->Template->_registerTemplateHandler('tpl','AkPhpTemplateHandler');
+        $this->Template->_registerTemplateHandler('html.tpl','AkPhpTemplateHandler');            
+        
         
         $this->action_name = $action_name;
         return $this->Controller = $controller;

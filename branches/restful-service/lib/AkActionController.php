@@ -214,6 +214,9 @@ class AkActionController extends AkObject
 
             $this->Template->_controllerInstance =& $this;
             $this->Template->_registerTemplateHandler('tpl','AkPhpTemplateHandler');
+            //we register a handler for the '.html.tpl' extension, so its optional to 
+            //use the html-extension in template filenames. use index.tpl <=or=> index.html.tpl
+            $this->Template->_registerTemplateHandler('html.tpl','AkPhpTemplateHandler');            
         }
     }
 
@@ -1099,7 +1102,8 @@ class AkActionController extends AkObject
 
     function getDefaultTemplateName($default_action_name = null)
     {
-        return empty($default_action_name) ? (empty($this->_default_template_name) ? $this->_action_name : $this->_default_template_name) : $default_action_name;
+        $template_name = empty($default_action_name) ? (empty($this->_default_template_name) ? $this->_action_name : $this->_default_template_name) : $default_action_name;
+        return $template_name.'.'.$this->respondTo();
     }
 
     function setDefaultTemplateName($template_name)
@@ -1372,7 +1376,7 @@ class AkActionController extends AkObject
 
             return $this->renderText($this->Template->renderFile($layout, true, &$this->_assigns), $status);
         }else{
-            return $this->render($options, $status, &$this->_assigns);
+            return $this->render($options, $status, &$this->_assigns);  //render doesn't take a thord argument
         }
     }
 
