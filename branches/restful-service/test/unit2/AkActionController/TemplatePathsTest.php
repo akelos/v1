@@ -21,7 +21,7 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
         $controller->layout = false;
         
         $this->expectRender(array('index'));
-        $controller->renderWithLayout('index');
+        $controller->defaultRender();
     }
     
     function testPickApplicationLayoutIfWeDontHaveAControllerLayout()
@@ -31,7 +31,7 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
         $controller = $this->createControllerFor('index');
         
         $this->expectRender(array('index',AK_VIEWS_DIR.DS.'layouts/application.tpl'));
-        $controller->renderWithLayout('index');
+        $controller->defaultRender();
     }
     
     function testDontPickAnyLayoutIfNoneIsPresent()
@@ -40,7 +40,7 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
         $controller = $this->createControllerFor('index');
         
         $this->expectRender(array('index'));
-        $controller->renderWithLayout('index');
+        $controller->defaultRender();
     }
     
     function testPickControllerLayoutIfPresent()
@@ -50,17 +50,18 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
         $controller = $this->createControllerFor('index');
         
         $this->expectRender(array('index',AK_VIEWS_DIR.DS.'layouts/template_paths.tpl'));
-        $controller->renderWithLayout('index');
+        $controller->defaultRender();
     }
     
     function testPickExplicitlySetLayout()
     {
         $this->createViewFor('index');
-        $this->createTemplate('layouts/template_paths.tpl');
+        $this->createTemplate('render_tests/my_layout.tpl');
         $controller = $this->createControllerFor('index');
+        $controller->setLayout('render_tests/my_layout');
         
-        $this->expectRender(array('index',AK_VIEWS_DIR.DS.'layouts/template_paths.tpl'));
-        $controller->renderWithLayout('index');
+        $this->expectRender(array('index',AK_VIEWS_DIR.DS.'render_tests/my_layout.tpl'));
+        $controller->defaultRender();
     }
     
     /* - - - - -  Test Helper */
