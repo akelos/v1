@@ -1327,15 +1327,15 @@ class AkActionController extends AkObject
             $layout =& $passed_layout;
         }
         if(is_array($layout) &&  is_object($layout[0]) && method_exists($layout[0], $layout[1])){
-            $this->active_layout = $layout[0]->{$layout[1]}();
+            $active_layout = $layout[0]->{$layout[1]}();
         }elseif(method_exists($this,$layout) &&  strtolower(get_class($this)) !== strtolower($layout)){
-            $this->active_layout = $this->$layout();
+            $active_layout = $this->$layout();
         }else{
-            $this->active_layout = $layout;
+            $active_layout = $layout;
         }
 
-        if(!empty($this->active_layout)){
-            return strstr($this->active_layout,DS) ? $this->active_layout : 'layouts'.DS.$this->active_layout;
+        if(!empty($active_layout)){
+            return strstr($active_layout,DS) ? $active_layout : 'layouts'.DS.$active_layout;
         }
     }
 
