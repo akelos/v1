@@ -259,8 +259,7 @@ class AkActionView extends AkObject
     function _templateExists($template_path, $extension)
     {
         $file_path = $this->getFullTemplatePath($template_path, $extension);
-
-        return !empty($this->_method_names[$file_path]) || file_exists($file_path);
+        return file_exists($file_path);
     }
 
     /**
