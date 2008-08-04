@@ -16,40 +16,51 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
     function testSettingLayoutToFalseMeansYouDontWantALayout() 
     {
         $this->createViewFor('index');
+        $this->createTemplate('layouts/application.tpl');
         $controller = $this->createControllerFor('index');
         $controller->layout = false;
         
-        $this->assertFalse($controller->getActiveLayout());
-        $this->assertNoLayout();
+        $this->expectRender(array('index'));
+        $controller->renderWithLayout('index');
     }
     
     function testPickApplicationLayoutIfWeDontHaveAControllerLayout()
     {
         $this->createViewFor('index');
-        $controller = $this->createControllerFor('index');
-        unset($controller->layout);
-        
         $this->createTemplate('layouts/application.tpl');
-        $this->assertLayout('layouts/application.tpl');
+        $controller = $this->createControllerFor('index');
+        
+        $this->expectRender(array('index',AK_VIEWS_DIR.DS.'layouts/application.tpl'));
+        $controller->renderWithLayout('index');
     }
     
     function testDontPickAnyLayoutIfNoneIsPresent()
     {
         $this->createViewFor('index');
         $controller = $this->createControllerFor('index');
-        unset($controller->layout);
         
-        $this->assertNoLayout();
+        $this->expectRender(array('index'));
+        $controller->renderWithLayout('index');
     }
     
     function testPickControllerLayoutIfPresent()
     {
         $this->createViewFor('index');
-        $controller = $this->createControllerFor('index');
-        unset($controller->layout);
-        
         $this->createTemplate('layouts/template_paths.tpl');
-        $this->assertLayout('layouts/template_paths.tpl');
+        $controller = $this->createControllerFor('index');
+        
+        $this->expectRender(array('index',AK_VIEWS_DIR.DS.'layouts/template_paths.tpl'));
+        $controller->renderWithLayout('index');
+    }
+    
+    function testPickExplicitlySetLayout()
+    {
+        $this->createViewFor('index');
+        $this->createTemplate('layouts/template_paths.tpl');
+        $controller = $this->createControllerFor('index');
+        
+        $this->expectRender(array('index',AK_VIEWS_DIR.DS.'layouts/template_paths.tpl'));
+        $controller->renderWithLayout('index');
     }
     
     /* - - - - -  Test Helper */
@@ -60,9 +71,27 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
      * @var ApplicationController
      */
     private $Controller;
+    
+    /**
+     * @var AkActionView
+     */
+    private $Template;
     private $action_name;
     
     private $controller_name = 'template_paths';
+    
+    function expectRender($arg_list)
+    {
+        $method = 'renderFile';
+        
+        $this->Template->expects($this->exactly(count($arg_list)))->method($method);
+        foreach ($arg_list as $i=>$args){
+            $method_invoker = $this->Template->expects($this->at($i))->method($method);
+            $args           = is_array($args) ? $args : array($args);
+            $args[0] = str_replace('/',DS,$args[0]); // @args[0] we must have a string, the template_path
+            call_user_func_array(array($method_invoker,'with'),$args);
+        }
+    }
     
     function assertLayout($expected,$actual=null)
     {
@@ -89,11 +118,12 @@ class TemplatePathsTests extends PHPUnit_Framework_TestCase
         $Request = $this->createGetRequest($action_name,$mime_type);
         $Response = $this->getMock('AkResponse',array('outputResults'));
         $controller->setRequestAndResponse($Request,$Response);
+        $this->Template = $controller->Template = $this->getMock('AkActionView',array('renderFile'),array(AK_VIEWS_DIR.DS.$this->controller_name));
         
         $this->action_name = $action_name;
         return $this->Controller = $controller;
     }
-
+    
     function createViewFor($action_name)
     {
         $view_for_action = $this->controller_name.DS.$action_name.'.tpl';
