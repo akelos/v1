@@ -9,6 +9,11 @@ class TemplatePathsController extends AkActionController
         
     }
     
+    function my_layout_picker()
+    {
+        return 'picked_from_method';
+    }
+    
 }
 
 ?>
