@@ -3,6 +3,8 @@
 abstract class TemplatePicking_TestCase extends PHPUnit_Framework_TestCase 
 {
 
+    protected $controller_name = 'template_paths';
+
     function tearDown()
     {
         $this->deleteCreatedFiles();
@@ -17,10 +19,9 @@ abstract class TemplatePicking_TestCase extends PHPUnit_Framework_TestCase
     /**
      * @var AkActionView
      */
-    private $Template;
+    protected $Template;
     
     private $action_name;
-    private $controller_name = 'template_paths';
 
     private $created_files = array();
     

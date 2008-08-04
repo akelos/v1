@@ -154,6 +154,14 @@ class AkActionView extends AkObject
 
         $template_path = substr($template_path,0,7) === 'layouts' ? AK_VIEWS_DIR.DS.$template_path.'.tpl' : $template_path;
 
+        //mostly for compatibility, we register a handler for the '.html.tpl' extension
+        //on old installations we cannot expect to find .html.tpl templates
+        //so we remove the html-extension first, because of the extra html-handler, we will add it 
+        //again (automatically) if a corresponding file exists. 
+        if (substr($template_path,-5)=='.html'){
+            $template_path = substr($template_path,0,-5);
+        }
+
         if(!$use_full_path && strstr($template_path,'.')){
             $template_file_name = $template_path;
             $template_extension = substr($template_path,strpos($template_path,'.')+1);
