@@ -1343,7 +1343,7 @@ class AkActionController extends AkObject
         }
 
         if(!empty($active_layout)){
-            return strstr($active_layout,DS) ? $active_layout : 'layouts'.DS.$active_layout;
+            return strstr($active_layout,'/') ? str_replace('/',DS,$active_layout) : 'layouts'.DS.$active_layout;
         }
         return false;
     }
@@ -1392,16 +1392,12 @@ class AkActionController extends AkObject
             $layout = $this->_doesActionHasLayout() ? $this->getActiveLayout() : false;
         }
         if(!empty($layout)){
-
             $layout = strstr($layout,'/') || strstr($layout,DS) ? $layout : 'layouts'.DS.$layout;
             $layout = preg_replace('/\.tpl$/', '', $layout);
 
-            $layout = substr($layout,0,7) === 'layouts' 
-                ? (empty($this->_module_path) || !empty($this->layout) 
+            $layout = empty($this->_module_path) || !empty($this->layout) 
                     ? AK_VIEWS_DIR.DS.$layout.'.tpl' 
-                    : AK_VIEWS_DIR.DS.'layouts'.DS.trim($this->_module_path, DS).'.tpl'
-                ) 
-                : $layout.'.tpl';
+                    : AK_VIEWS_DIR.DS.'layouts'.DS.trim($this->_module_path, DS).'.tpl'; 
 
             if (file_exists($layout)) {
                 return $layout;
