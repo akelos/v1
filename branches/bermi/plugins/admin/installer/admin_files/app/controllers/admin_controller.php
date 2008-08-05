@@ -29,19 +29,11 @@ class AdminController extends ApplicationController
 
     function authenticate()
     {
-        if(empty($_SESSION['__CurrentUser'])){
-            if($this->CurrentUser =& $this->_authenticateOrRequestWithHttpBasic($this->t('Application Administration'), new User())){
-                $_SESSION['__CurrentUser'] = serialize($this->CurrentUser);
-            }
-        }else{
-            $this->CurrentUser = unserialize($_SESSION['__CurrentUser']);
-        }
-        if($result = !empty($_SESSION['__CurrentUser'])){
-            User::_setCurrentUser($this->CurrentUser);
-        }
-        return $result;
+        Ak::import('sentinel');
+        $Sentinel =& new Sentinel();
+        $Sentinel->init($this);
+        return $Sentinel->authenticate();
     }
-
 
     function access_denied()
     {

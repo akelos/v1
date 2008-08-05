@@ -315,7 +315,7 @@ class User extends ActiveRecord
      */
     function getCurrentUser()
     {
-        $User =& Ak::static_var('CurrentUser');
+        $User =& Ak::getStaticVar('CurrentUser');
         if (empty($User)) {
             trigger_error(Ak::t('Current user has not been set yet.'), E_USER_ERROR);
         }
@@ -328,7 +328,7 @@ class User extends ActiveRecord
      */
     function isLoaded()
     {
-        return Ak::static_var('CurrentUser') != null;
+        return Ak::getStaticVar('CurrentUser') != null;
     }
 
     /**
@@ -338,7 +338,7 @@ class User extends ActiveRecord
      */
     function setCurrentUser($CurrentUser)
     {
-        Ak::static_var('CurrentUser', $CurrentUser);
+        Ak::_staticVar('CurrentUser', $CurrentUser);
     }
 
     function signOff()
@@ -353,7 +353,7 @@ class User extends ActiveRecord
     function serialize($User = null)
     {
         if ($User === null) {
-            $_SESSION['__CurrentUser'] = serialize(Ak::static_var('CurrentUser'));
+            $_SESSION['__CurrentUser'] = serialize(Ak::getStaticVar('CurrentUser'));
         } elseif ($User == false) {
             unset($_SESSION['__CurrentUser']);
             $_SESSION['__CurrentUser'] = null;
