@@ -1495,7 +1495,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         $object =& new $model_name('attributes', $record);
 
         $object->_newRecord = $set_as_new;
-
+        
+        /**
+         * call afterInstantiate hook, return value has no impact on the object
+         * since its already instantiated
+         */
+        $object->afterInstantiate();
+        
         (AK_CLI && AK_ENVIRONMENT == 'development') ? $object ->toString() : null;
 
         return $object;
@@ -3408,6 +3414,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function afterValidation(){return true;}
     function afterValidationOnCreate(){return true;}
     function afterValidationOnUpdate(){return true;}
+    function afterInstantiate(){return true;}
     function afterCreate(){return true;}
     function afterDestroy(){return true;}
     function beforeDestroy(){return true;}

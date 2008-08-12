@@ -1949,8 +1949,8 @@ class Ak
         
         $options = array_merge($default_options, $options);
         foreach($options as $key => $value) {
-            if(isset($params['available_options'])) {
-               if (!isset($params['available_options'][$key])) {
+            if(isset($parameters['available_options'])) {
+               if (!isset($parameters['available_options'][$key])) {
                    continue;
                }
             }
