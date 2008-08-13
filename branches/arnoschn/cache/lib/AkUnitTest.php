@@ -143,6 +143,7 @@ class AkUnitTest extends UnitTestCase
 
     function populateTables()
     {
+        
         $args = func_get_args();
         $tables = !empty($args) ? (is_array($args[0]) ? $args[0] : (count($args) > 1 ? $args : Ak::toArray($args))) : array();
         foreach ($tables as $table){
@@ -152,7 +153,14 @@ class AkUnitTest extends UnitTestCase
             }
             $class_name = AkInflector::classify($table);
             if($this->instantiateModel($class_name)){
-                $items = Ak::convert('yaml','array',file_get_contents($file));
+                $contents = &Ak::getStaticVar('yaml_fixture_'.$file);
+                if (!$contents) {
+                    ob_start();
+                    require_once($file);
+                    $contents = ob_get_clean();
+                    Ak::setStaticVar('yaml_fixture_'.$file, $contents);
+                }
+                $items = Ak::convert('yaml','array',$contents);
                 foreach ($items as $item){
                     $this->{$class_name}->create($item);
                 }
