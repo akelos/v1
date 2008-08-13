@@ -162,7 +162,13 @@ class AkUnitTest extends UnitTestCase
                 }
                 $items = Ak::convert('yaml','array',$contents);
                 foreach ($items as $item){
-                    $this->{$class_name}->create($item);
+                    
+                    $obj=&$this->{$class_name}->create($item);
+                    if (isset($item['created_at'])) {
+                        $obj->updateAttribute('created_at',$item['created_at']);
+                    } else if (isset($item['created_on'])) {
+                        $obj->updateAttribute('created_on',$item['created_on']);
+                    }
                 }
             }
         }
