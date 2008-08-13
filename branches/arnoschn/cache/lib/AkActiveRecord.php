@@ -1496,11 +1496,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
 
         $object->_newRecord = $set_as_new;
         
-        /**
-         * call afterInstantiate hook, return value has no impact on the object
-         * since its already instantiated
-         */
         $object->afterInstantiate();
+        $object->notifyObservers('afterInstantiate');
         
         (AK_CLI && AK_ENVIRONMENT == 'development') ? $object ->toString() : null;
 
