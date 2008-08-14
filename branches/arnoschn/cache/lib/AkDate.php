@@ -109,7 +109,7 @@ class AkDate extends AkObject
     
     function toWords()
     {
-        return AkDate::toDistanceFromNowInWords();
+        return $this->toDistanceFromNowInWords();
     }
     function _parseDatePortion($string)
     {
