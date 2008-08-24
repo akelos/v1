@@ -26,6 +26,13 @@
 <body>
 <div id="layout">
     <div id="canvas">
+      <div id="header">
+          {?admin_settings-application_name}
+            <div id="site_name"><h1>{admin_settings-application_name}</h1></div>
+          {end}
+          <div id="user_menu"><%= user_menu %></div>
+          <div class="cls"></div>
+      </div>
       <div id="menu" class="{!controller_menu_options}simple{end}">
           <%= admin_menu %>
           {?content_for_controller_menu}

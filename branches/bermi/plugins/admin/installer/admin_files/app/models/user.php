@@ -26,14 +26,17 @@ class User extends ActiveRecord
     /**
      * Main authentication method
      * 
-     * @param string $login
+     * @param string $login user name or password
      * @param string $password
      * @return False if not found or not enabled, User instance if succedes
      */
     function authenticate($login, $password)
     {
         $UserInstance =& new User();
-        if($User =& $UserInstance->find('first', array('conditions'=>array('login = ? AND __owner.is_enabled = ? AND _roles.is_enabled = ?', $login, true, true), 'include'=>'role')) && $User->isValidPassword($password)){
+        
+        $login_or_email = preg_match(AK_EMAIL_REGULAR_EXPRESSION, $login) ? 'email' : 'login';
+        
+        if($User =& $UserInstance->find('first', array('conditions'=>array($login_or_email.' = ? AND __owner.is_enabled = ? AND _roles.is_enabled = ?', $login, true, true), 'include'=>'role')) && $User->isValidPassword($password)){
             $User->set('last_login_at', Ak::getDate());
             $User->save();
             return $User;
@@ -341,39 +344,10 @@ class User extends ActiveRecord
         Ak::_staticVar('CurrentUser', $CurrentUser);
     }
 
-    function signOff()
+    
+    function unsetCurrentUser()
     {
         User::setCurrentUser(null);
-        User::serialize(false);
-        if (isset($_SESSION['destination'])) {
-            unset($_SESSION['destination']);
-        }
-    }
-
-    function serialize($User = null)
-    {
-        if ($User === null) {
-            $_SESSION['__CurrentUser'] = serialize(Ak::getStaticVar('CurrentUser'));
-        } elseif ($User == false) {
-            unset($_SESSION['__CurrentUser']);
-            $_SESSION['__CurrentUser'] = null;
-        } else {
-            $_SESSION['__CurrentUser'] = serialize($User);
-        }
-    }
-    function isSerialized()
-    {
-        return isset($_SESSION['__CurrentUser']);
-    }
-    function &unserialize()
-    {
-        if (isset($_SESSION['__CurrentUser'])) {
-            $User = unserialize($_SESSION['__CurrentUser']);
-        } else {
-            $User = false;
-        }
-
-        return $User;
     }
 }
 
