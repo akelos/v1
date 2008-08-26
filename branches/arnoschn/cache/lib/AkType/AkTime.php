@@ -5,6 +5,8 @@ class AkTime extends AkType
     {
         if (!empty($date_format)) {
             $format = $date_format.'_';
+        } else {
+            $format = '';
         }
         $format = Ak::locale($format.'date_time_format');
         if (null == $format) {
