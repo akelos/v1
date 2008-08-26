@@ -1,0 +1,75 @@
+<?php
+class AkString extends AkType
+{
+
+    function at($pos)
+    {
+        return @$this->value{$pos};
+    }
+    
+    function from($pos)
+    {
+        return @substr($this->value,$pos);
+    }
+    
+    function to($pos)
+    {
+        return @substr($this->value,0,$pos);
+    }
+    
+    function first($number = 1)
+    {
+        return @substr($this->value,0,$number);
+    }
+    
+    function last($number = 1)
+    {
+        return @substr($this->value,-$number);
+    }
+    
+    function startsWith($string)
+    {
+        return $this->first(strlen($string))==$string;
+    }
+    
+    function endsWith($string)
+    {
+        return $this->last(strlen($string))==$string;
+    }
+    
+    function pluralize()
+    {
+        return AkInflector::pluralize($this->value);
+    }
+    
+    function singularize()
+    {
+        return AkInflector::singularize($this->value);
+    }
+    
+    function humanize()
+    {
+        return AkInflector::humanize($this->value);
+    }
+    
+    function titleize()
+    {
+        return AkInflector::titleize($this->value);
+    }
+    
+    function tableize()
+    {
+        return AkInflector::tableize($this->value);
+    }
+    
+    function length()
+    {
+        if (function_exists('mb_strlen')) {
+            return mb_strlen($this->value);
+        } else {
+            return strlen($this->value);
+        }
+    }
+}
+
+?>

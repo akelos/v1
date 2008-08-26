@@ -4,7 +4,6 @@ require_once(AK_LIB_DIR.DS.'AkUnitTestSuite.php');
 class CoreTestSuite extends AkUnitTestSuite {
     var $partial_tests = array(
         'Ak',
-        'AkDate',
         'AkUnitTest',
         'AkSession',
         'AkRouter',
