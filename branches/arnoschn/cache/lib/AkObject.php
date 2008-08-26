@@ -35,7 +35,6 @@ class AkObject
 {
 
 
-
     // ------ CLASS METHODS ------ //
 
 
@@ -59,16 +58,12 @@ class AkObject
     */
     function AkObject()
     {
-        static $_callback_called;
         Ak::profile('Instantiating '.get_class($this));
         $args = func_get_args();
         ____ak_shutdown_function(&$this);
         call_user_func_array(array(&$this, '__construct'), $args);
-
-        if(empty($_callback_called)){
-            $_callback_called = true;
-            register_shutdown_function('____ak_shutdown_function');
-        }
+        ____ak_shutdown_function(true);
+        
     }
     
     // }}}
@@ -130,7 +125,6 @@ class AkObject
 
     // }}}
 
-
     // {{{ __clone()
 
     /**
@@ -171,11 +165,11 @@ class AkObject
 
 }
 
-
 function ____ak_shutdown_function($details = false)
 {
-    static $___registered_objects;
-    if(!$details){
+    static $_registered = false;
+    static $___registered_objects = array();
+    if($details === false){
         Ak::profile('Calling shutdown destructors');
         foreach (array_keys($___registered_objects) as $k){
             if(!empty($___registered_objects[$k]) && is_object($___registered_objects[$k]) && method_exists($___registered_objects[$k],'__destruct')){
@@ -183,7 +177,10 @@ function ____ak_shutdown_function($details = false)
                 $___registered_objects[$k]->__destruct();
             }
         }
-    }else{
+    } else if ($details === true && $_registered === false) {
+        register_shutdown_function('____ak_shutdown_function');
+        $_registered = true;
+    } else {
         $___registered_objects[] =& $details;
     }
 }
