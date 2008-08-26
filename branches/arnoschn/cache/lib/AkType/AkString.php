@@ -24,7 +24,7 @@ class AkString extends AkType
     
     function last($number = 1)
     {
-        return @substr($this->value,-$number);
+        return @substr($this->value,$number>$this->length()?-$this->length():-$number);
     }
     
     function startsWith($string)
