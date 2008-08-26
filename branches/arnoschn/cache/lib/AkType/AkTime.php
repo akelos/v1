@@ -9,8 +9,8 @@ class AkTime extends AkType
             $format = '';
         }
         $format = Ak::locale($format.'date_time_format');
-        if (null == $format) {
-            $format = $date_format;
+        if (!$format) {
+            $format = Ak::locale('date_time_format');
         }
         return date($format, $this->value);
     }
