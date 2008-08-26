@@ -31,7 +31,69 @@ class AkUnitTest extends UnitTestCase
     var $module = '';
     var $insert_models_data = false;
     var $instantiate_models = false;
-
+    
+    function AkUnitTest($label = false) {
+        parent::UnitTestCase($label);
+        $this->_configure();
+    }
+    
+    function _configure()
+    {
+        
+        $this->_loadFixtures();
+    }
+    
+    function _loadFixtures($loadFixture = null)
+    {
+        if (isset($this->fixtures)) {
+            $this->fixtures = is_array($this->fixtures)?$this->fixtures:Ak::toArray($this->fixtures);
+        } else {
+            $this->fixtures = array();
+        }
+        
+        foreach ($this->fixtures as $fixture) {
+            $file = AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.$fixture.'.yaml';
+            if(!file_exists($file)){
+                continue;
+            }
+            if ($loadFixture!=null && $fixture!=$loadFixture) {
+                continue;
+            }
+            $setAlias=false;
+            if (!isset($this->$fixture)) {
+                $this->$fixture = array();
+                $setAlias=true;
+                $this->{$fixture.'_set'}=true;
+            } else if ($this->{$fixture.'_set'}) {
+                $setAlias = true;
+            }
+            $class_name = AkInflector::classify($fixture);
+            if($this->instantiateModel($class_name)){
+                $contents = &Ak::getStaticVar('yaml_fixture_'.$file);
+                if (!$contents) {
+                    ob_start();
+                    require_once($file);
+                    $contents = ob_get_clean();
+                    Ak::setStaticVar('yaml_fixture_'.$file, $contents);
+                }
+                $items = Ak::convert('yaml','array',$contents);
+                foreach ($items as $alias=>$item){
+                    $obj=&$this->{$class_name}->create($item);
+                    if (isset($item['created_at'])) {
+                        $obj->updateAttribute('created_at',$item['created_at']);
+                    } else if (isset($item['created_on'])) {
+                        $obj->updateAttribute('created_on',$item['created_on']);
+                    }
+                    if ($setAlias) {
+                        $array=&$this->$fixture;
+                        $array[$alias] = &$obj;
+                        $this->$fixture = &$array;
+                    }
+                }
+            }
+        }
+    }
+    
     function resetFrameworkDatabaseTables()
     {
         require_once(AK_APP_DIR.DS.'installers'.DS.'framework_installer.php');
@@ -96,6 +158,12 @@ class AkUnitTest extends UnitTestCase
             $installer =& new AkInstaller();
             $installer->dropTable($table_name,array('sequence'=>true));
             $installer->createTable($table_name,$table_definition,array('timestamp'=>false));
+            
+        } else {
+            $table_name = AkInflector::tableize($model);
+        }
+        if (isset($this->fixtures) && is_array($this->fixtures) && in_array($table_name,$this->fixtures)) {
+            $this->_loadFixtures($table_name);
         }
     }
 

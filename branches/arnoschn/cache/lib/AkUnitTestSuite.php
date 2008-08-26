@@ -17,7 +17,9 @@ class AkUnitTestSuite extends GroupTest
     {
         foreach ($files as $test) {
             if (!is_dir($test)) {
-                $this->addTestFile($test);
+                if (!in_array($test,$this->excludes)) {
+                    $this->addTestFile($test);
+                }
             } else {
                 $dirFiles = glob($test.DS.'*');
                 $this->_includeFiles($dirFiles);
@@ -29,6 +31,16 @@ class AkUnitTestSuite extends GroupTest
         $base = AK_TEST_DIR.DS.'unit'.DS.'lib'.DS;
         $this->GroupTest($this->title);
         $allFiles = glob($base.$this->baseDir);
+        if (isset($this->excludes)) {
+            $excludes = array();
+            $this->excludes = @Ak::toArray($this->excludes);
+            foreach ($this->excludes as $pattern) {
+                $excludes = array_merge($excludes,glob($base.$pattern));
+            }
+            $this->excludes = $excludes;
+        } else {
+            $this->excludes = array();
+        }
         if (count($allFiles)>=1 && $allFiles[0]!=$base.$this->baseDir && $this->partial_tests === true) {
             $this->_includeFiles($allFiles);
         } else if (is_array($this->partial_tests)){
