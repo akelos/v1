@@ -9,10 +9,12 @@ class CoreTestSuite extends AkUnitTestSuite {
         'AkRouter',
         'AkLocaleManager',
         'AkInstaller',
+        'AkPluginInstaller',
         'AkInflector',
         'AkImage',
         'AkHttpClient',
         'AkDbSession',
+        'AkReflection'
         
         );
     var $baseDir = '';
