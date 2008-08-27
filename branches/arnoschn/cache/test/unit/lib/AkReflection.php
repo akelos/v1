@@ -48,11 +48,12 @@ class AkReflection_TestCase extends  UnitTestCase
         
         $this->reflection->_parse($function);
         $functionStructure = $this->reflection->getDefinitions();
-        $this->assertEqual('/**
-         * comment
-         *
-         * @return boolean
-         */', trim($functionStructure[0]['docBlock']));
+        $this->assertEqual(
+'/**
+ * comment
+ *
+ * @return boolean
+ */', trim($functionStructure[0]['docBlock']));
         $this->assertEqual('function',$functionStructure[0]['type']);
         $this->assertEqual(true,$functionStructure[0]['returnByReference']);
         $this->assertEqual('_getPriorizedPlugins',$functionStructure[0]['name']);
