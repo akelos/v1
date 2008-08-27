@@ -25,6 +25,17 @@ class AkNumber extends AkType
     {
         return $this->week();
     }
+    
+    function fortnights()
+    {
+        return $this->fortnight();
+    }
+    
+    function fortnight()
+    {
+        return new AkNumber(14*24*60*60*$this->value);
+    }
+    
     function week()
     {
         return new AkNumber(7*24*60*60*$this->value);

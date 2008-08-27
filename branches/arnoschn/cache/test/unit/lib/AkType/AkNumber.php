@@ -31,6 +31,7 @@ class Test_AkNumber extends AkUnitTest
         $this->assertEqual(72000,AkT(20,'hours'));
         $this->assertEqual(1728000,AkT(20,'days'));
         $this->assertEqual(12096000,AkT(20,'weeks'));
+        $this->assertEqual(12096000,AkT(10,'fortnights'));
         $this->assertEqual(51840000,AkT(20,'months'));
         $this->assertEqual(630720000,AkT(20,'years'));
     }
