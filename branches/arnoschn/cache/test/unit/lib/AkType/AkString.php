@@ -117,6 +117,9 @@ class Test_AkString extends AkUnitTest
         
         $string = &AkT($text,'pluralize');
         $this->assertEqual('Comments',$string);
+        
+        $string = AkT('inglés','pluralize(es)');
+        $this->assertEqual('ingleses',$string);
     }
     
     function test_singularize()

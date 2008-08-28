@@ -37,14 +37,14 @@ class AkString extends AkType
         return $this->last(strlen($string))==$string;
     }
     
-    function pluralize()
+    function pluralize($dictionary = null)
     {
-        return AkInflector::pluralize($this->value);
+        return AkInflector::pluralize($this->value,null,$dictionary);
     }
     
-    function singularize()
+    function singularize($dictionary = null)
     {
-        return AkInflector::singularize($this->value);
+        return AkInflector::singularize($this->value,null,$dictionary);
     }
     
     function humanize()

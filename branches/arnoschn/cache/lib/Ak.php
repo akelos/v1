@@ -1962,18 +1962,18 @@ class Ak
     /**
      * Returns YAML settings from config/$namespace.yml
      */
-    function getSettings($namespace, $raise_error_if_config_file_not_found = true)
+    function getSettings($namespace, $raise_error_if_config_file_not_found = true, $sanitize_level = 'paranoid')
     {
         $staticVarNs = 'Ak::getSettings';
         $loaded_settings = &Ak::getStaticVar($staticVarNs);
         
         if(isset($loaded_settings[$namespace])){
             return $loaded_settings[$namespace];
+        } else if (!is_array($loaded_settings)) {
+            $loaded_settings = array();
         }
-        
-        $namespace = Ak::sanitize_include($namespace, 'paranoid');
+        $namespace = Ak::sanitize_include($namespace, $sanitize_level);
         $yaml_file_name = AK_CONFIG_DIR.DS.$namespace.'.yml';
-
         if (!is_file($yaml_file_name)){
             if($raise_error_if_config_file_not_found){
                 die(Ak::t('Could not find %namespace settings file in %path.', array('%namespace'=>$namespace, '%path'=>$yaml_file_name))."\n");
@@ -1984,7 +1984,8 @@ class Ak
         $content = file_get_contents($yaml_file_name);
         $content = Ak::_parseSettingsConstants($content);
         $return = Spyc::YAMLLoad($content);
-        Ak::setStaticVar($staticVarNs,$return);
+        $loaded_settings[$namespace] = $return;
+        Ak::setStaticVar($staticVarNs,$loaded_settings);
         return $return;
     }
     
