@@ -199,12 +199,6 @@ class AkelosInstaller
                 return false;
             }
         }
-        $source_file_mode =  fileperms($path);
-        $target_file_mode =  fileperms($dir);
-        if($source_file_mode != $target_file_mode){
-            $this->yield("    Setting $dir permissions to: ".(sprintf("%o",$source_file_mode)));
-            chmod($dir,$source_file_mode);
-        }
         return true;
     }
 

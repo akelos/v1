@@ -680,12 +680,11 @@ class test_AkActiveRecord_validators extends  AkUnitTest
         unset($Person->age);
         $Person->validatesNumericalityOf('age', 'not_valid',false, true);
         $this->assertFalse($Person->hasErrors());
-        
+
         $Person->clearErrors();
         $Person->age = null;
         $Person->validatesNumericalityOf('age', 'not_valid',false, false);
         $this->assertTrue($Person->hasErrors());
-
     }
 
     function Test_of_validateOnCreate()
