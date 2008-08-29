@@ -30,8 +30,9 @@ class AkType extends AkObject
 require_once(AK_LIB_DIR.DS.'AkType'.DS.'AkNumber.php');
 require_once(AK_LIB_DIR.DS.'AkType'.DS.'AkString.php');
 require_once(AK_LIB_DIR.DS.'AkType'.DS.'AkTime.php');
+require_once(AK_LIB_DIR.DS.'AkType'.DS.'AkArray.php');
 /**require_once(AK_LIB_DIR.DS.'AkType'.DS.'AkDate.php');
-require_once(AK_LIB_DIR.DS.'AkType'.DS.'AkArray.php');*/
+*/
 
 function &AkT($param,$command=null)
 {
