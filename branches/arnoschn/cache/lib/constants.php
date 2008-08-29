@@ -15,6 +15,7 @@
  * internationalization options, edit the files at config/environments/*
  */
 
+defined('AK_PHP5') ? null : define('AK_PHP5', version_compare(PHP_VERSION, '5', '>=') == 1 ? true : false);
 
 defined('AK_CONFIG_DIR') ? null : define('AK_CONFIG_DIR', AK_BASE_DIR.DS.'config');
 
@@ -79,36 +80,7 @@ defined('AK_SCRIPT_DIR') ? null : define('AK_SCRIPT_DIR',AK_BASE_DIR.DS.'script'
 defined('AK_APP_VENDOR_DIR') ? null : define('AK_APP_VENDOR_DIR',AK_APP_DIR.DS.'vendor');
 defined('AK_APP_PLUGINS_DIR') ? null : define('AK_APP_PLUGINS_DIR',AK_APP_VENDOR_DIR.DS.'plugins');
 
-
-
-/**
- * Getting the temporary directory
- */
-function ak_get_tmp_dir_name(){
-    if(!defined('AK_TMP_DIR')){
-        if(defined('AK_BASE_DIR') && is_writable(AK_BASE_DIR.DS.'tmp')){
-            return AK_BASE_DIR.DS.'tmp';
-        }
-        if(!function_exists('sys_get_temp_dir')){
-            $dir = empty($_ENV['TMP']) ? (empty($_ENV['TMPDIR']) ? (empty($_ENV['TEMP']) ? false : $_ENV['TEMP']) : $_ENV['TMPDIR']) : $_ENV['TMP'];
-            if(empty($dir) && $fn = tempnam(md5(rand()),'')){
-                $dir = dirname($fn);
-                unlink($fn);
-            }
-        }else{
-            $dir = sys_get_temp_dir();
-        }
-        if(empty($dir)){
-            trigger_error('Could not find a path for temporary files. Please define AK_TMP_DIR in your config.php', E_USER_ERROR);
-        }
-        $dir = rtrim(realpath($dir), DS).DS.'ak_'.md5(AK_BASE_DIR);
-        if(!is_dir($dir)){
-            mkdir($dir);
-        }
-        return $dir;
-    }
-    return AK_TMP_DIR;
-}
+include_once(AK_LIB_DIR.DS.'functions.php');
 
 defined('AK_TMP_DIR') ? null : define('AK_TMP_DIR', ak_get_tmp_dir_name());
 defined('AK_COMPILED_VIEWS_DIR') ? null : define('AK_COMPILED_VIEWS_DIR', AK_TMP_DIR.DS.'views');
@@ -141,7 +113,6 @@ if(AK_ENVIRONMENT != 'setup'){
 @ini_set("arg_separator.output","&");
 
 @ini_set("include_path",(AK_LIB_DIR.PATH_SEPARATOR.AK_MODELS_DIR.PATH_SEPARATOR.AK_CONTRIB_DIR.DS.'pear'.PATH_SEPARATOR.ini_get("include_path")));
-defined('AK_PHP5') ? null : define('AK_PHP5', version_compare(PHP_VERSION, '5', '>=') == 1 ? true : false);
 
 if(!AK_CLI && AK_WEB_REQUEST){
 
