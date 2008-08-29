@@ -1,4 +1,5 @@
 <?php
+require_once(AK_LIB_DIR.DS.DS.'AkType.php');
 require_once(AK_LIB_DIR.DS.'AkInstaller.php');
 require_once(AK_LIB_DIR.DS.'AkReflection'.DS.'AkReflectionFile.php');
 
@@ -45,6 +46,7 @@ class AkPluginInstaller extends AkInstaller
                 
                 break;
             case 'down':
+            case 'uninstall':
                 $depdenciesOk = $this->_checkUninstallDependencies();
                 break;
             default:
@@ -71,10 +73,11 @@ class AkPluginInstaller extends AkInstaller
                 }
             }
         }
-        if ($method_prefix == 'down') {
+        if ($method_prefix == 'down' || $method_prefix == 'uninstall') {
             if ($auto_remove_extensions) {
                 $this->removeExtensions();
             }
+            $this->_removeDependency();
         }
         if($this->$method_name($options) === false){
             $this->transactionFail();
@@ -126,7 +129,27 @@ class AkPluginInstaller extends AkInstaller
             mkdir($dir);
         }
     }
-
+    function _removeDependency()
+    {
+        if (!empty($this->dependencies)) {
+            $this->dependencies = Ak::toArray($this->dependencies);
+            
+            foreach ($this->dependencies as $dependency) {
+                $dependencyFile = AK_PLUGINS_DIR.DS.$dependency.DS.'dependent_plugins';
+                if (($fileExists = file_exists($dependencyFile))) {
+                    $dependendPlugins = file($dependencyFile);
+                } else {
+                    $dependendPlugins = array();
+                }
+                $dependendPlugins = array_diff($dependendPlugins,array($this->plugin_name));
+                if (!empty($dependendPlugins)) {
+                    Ak::file_put_contents($dependencyFile,implode("\n",$dependendPlugins));
+                } else if ($fileExists) {
+                    unlink($dependencyFile);
+                }
+            }
+        }
+    }
     function _copyFile($path, $base_path)
     {
         $destination_file = str_replace($base_path, AK_BASE_DIR,$path);
@@ -263,20 +286,22 @@ $methodString
             if (!empty($dependendPlugins)) {
                 if (empty($this->options['force'])) {
                     echo "\n";
-                    echo Ak::t("The following %plugin %pluginList depend on the plugin you are about to uninstall.",array('%plugin'=>AkT('plugin','quantify('.count($dependendPlugins).')'),'%pluginList'=>AkT($dependendPlugins,'toSentence')));
+                    echo Ak::t("The following %plugin %dependent depend on the plugin you are about to uninstall.",array('%plugin'=>AkT('plugin','quantify('.count($dependendPlugins).')'),'%dependent'=>AkT($dependendPlugins,'toSentence')));
                     echo Ak::t("Please uninstall the dependent %plugin first.",array('%plugin'=>AkT('plugin','quantify('.count($dependendPlugins).')')));
                     echo "\n";
-                    return false;
+                    $this->transactionFail();
+                    die();
                 } else {
                     echo "\n";
-                    echo Ak::t("The following %plugin %pluginList depend on the plugin you are about to uninstall.",array('%plugin'=>AkT('plugin','quantify('.count($dependendPlugins).')'),'%pluginList'=>AkT($dependendPlugins,'toSentence')));
+                    echo Ak::t("The following %plugin %dependent depend on the plugin you are about to uninstall.",array('%plugin'=>AkT('plugin','quantify('.count($dependendPlugins).')'),'%dependent'=>AkT($dependendPlugins,'toSentence')));
                     echo "\n";
                     $uninstall = AkInstaller::promptUserVar(
         'Are you sure you want to continue uninstalling (Answer with Yes)? The other plugins will malfunction.', array('default'=>'N'));
                     if ($uninstall != 'Yes') {
                         echo Ak::t('Uninstall cancelled.');
                         echo "\n";
-                        return false;
+                        $this->transactionFail();
+                        die();
                     } else {
                         return true;
                     }
@@ -316,7 +341,8 @@ $methodString
             }
             if (!empty($missing)) {
                 echo "\n";
-                echo Ak::t("This plugin depends on the %plugin %pluginList. Please install the missing plugins first.",array('%plugin'=>AkT('plugin','quantify('.count($missing).')'),'%pluginList'=>AkT($missing,'toSentence')));
+                $params = array('plugin'=>AkT('plugin','quantify('.count($missing).')'),'missing'=>AkT($missing,'toSentence'));
+                echo Ak::t("This plugin depends on the %plugin %missing. Please install the missing plugins first.",$params);
                 echo "\n";
                 return false;
             } else {
@@ -325,13 +351,21 @@ $methodString
                  */
                 foreach ($this->dependencies as $dependency) {
                     $dependencyFile = AK_PLUGINS_DIR.DS.$dependency.DS.'dependent_plugins';
-                    if (file_exists($dependencyFile)) {
+                    if (($fileExists = file_exists($dependencyFile))) {
                         $dependendPlugins = file($dependencyFile);
-                        if (!in_array($dependency,$dependendPlugins)) {
-                            $dependendPlugins[] = $dependency;
-                            Ak::file_put_contents($dependencyFile,implode("\n",$dependendPlugins));
-                        }
+                    } else {
+                        $dependendPlugins = array();
                     }
+                    if (!in_array($this->plugin_name,$dependendPlugins)) {
+                        $dependendPlugins[] = $this->plugin_name;
+                        
+                    }
+                    if (!empty($dependendPlugins)) {
+                        Ak::file_put_contents($dependencyFile,implode("\n",$dependendPlugins));
+                    } else if ($fileExists) {
+                        unlink($dependencyFile);
+                    }
+                    
                 }
             }
         }
