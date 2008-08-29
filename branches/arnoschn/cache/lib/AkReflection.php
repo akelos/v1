@@ -57,11 +57,11 @@ class AkReflection
 
                             $doclines[0]=$indent.$doclines[0];
                             foreach($doclines as $idx=>$line) {
-                                $first = substr(0,strlen($indent));
-                                if ($first == $indent) {
-                                    $line = substr($line,strlen($first));
-                                    $doclines[$idx] = $line;
+                                $pre = '';
+                                if ($idx>0) {
+                                    $pre = ' ';
                                 }
+                                $doclines[$idx] = $pre.trim($line);
                             }
                             $docBlock=implode("\n",$doclines);
                         }
