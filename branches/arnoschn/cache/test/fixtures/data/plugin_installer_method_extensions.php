@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @WingsPluginInstallExtension PluginInstallerTargetClass
+ * @ExtensionPoint PluginInstallerTargetClass
  *
  */
 class PluginInstallerMethodExtensions

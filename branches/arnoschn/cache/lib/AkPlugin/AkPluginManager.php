@@ -210,8 +210,7 @@ class AkPluginManager extends AkObject
             $this->_runInstaller($plugin_name, 'install', $options);
         }
     }
-
-
+    
     function guessBestInstallMethod($options = array())
     {
         if(!empty($options['parameters']) && is_dir($options['parameters'])){
@@ -345,7 +344,7 @@ class AkPluginManager extends AkObject
             require_once($plugin_dir.DS.'installer'.DS.$plugin_name.'_installer.php');
             $class_name = AkInflector::camelize($plugin_name.'_installer');
             if(class_exists($class_name)){
-                $Installer =& new $class_name();
+                $Installer =& new $class_name(null,$plugin_name);
                 $Installer->options = $options;
                 $Installer->db->debug = false;
                 $Installer->warn_if_same_version = false;

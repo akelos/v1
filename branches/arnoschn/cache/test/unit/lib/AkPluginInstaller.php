@@ -18,13 +18,13 @@ class AkPluginInstaller_TestCase extends  AkUnitTest
         $tplFilename = AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'plugin_installer_target_class.php.tpl';
         $targetFilename = AK_APP_DIR.DS.'plugin_installer_target_class.php';
         copy($tplFilename,$targetFilename);
-        $this->installer->pluggable_classes=array('PluginInstallerTargetClass'=>'plugin_installer_target_class.php');
+        $this->installer->extension_points=array('PluginInstallerTargetClass'=>'plugin_installer_target_class.php');
     }
 
     
     function test_install_methods()
     {
-        $this->installer->installPluginMethods(AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'plugin_installer_method_extensions.php','TEST');
+        $this->installer->installExtensions('file:'.AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'plugin_installer_method_extensions.php','TEST');
         $checkFilename = AK_APP_DIR.DS.'plugin_installer_target_class.php';
         $reflection = new AkReflectionFile($checkFilename);
         $classes = $reflection->getClasses();
@@ -36,7 +36,7 @@ class AkPluginInstaller_TestCase extends  AkUnitTest
     
     function test_remove_methods()
     {
-        $this->installer->installPluginMethods(AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'plugin_installer_method_extensions.php','TEST');
+        $this->installer->installExtensions('file:'.AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'plugin_installer_method_extensions.php','TEST');
         $checkFilename = AK_APP_DIR.DS.'plugin_installer_target_class.php';
         $reflection = new AkReflectionFile($checkFilename);
         $classes = $reflection->getClasses();
@@ -48,7 +48,7 @@ class AkPluginInstaller_TestCase extends  AkUnitTest
         $newContents = file_get_contents($checkFilename);
         $this->assertNotEqual($orgContents,$newContents);
         
-        $this->installer->removePluginMethods('TEST');
+        $this->installer->removeExtensions('TEST');
         $orgContents = file_get_contents($tplFilename = AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'plugin_installer_target_class.php.tpl');
         $newContents = file_get_contents($checkFilename);
         $this->assertEqual($orgContents,$newContents);
