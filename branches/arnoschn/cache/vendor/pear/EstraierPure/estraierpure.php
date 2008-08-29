@@ -518,7 +518,6 @@ class EstraierPure_Condition
             $parts[$idx]=$part;
         }
         $this->phrase=implode(' ',$parts);
-        var_dump($this->phrase);
     }
 
     /**
