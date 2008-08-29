@@ -5,6 +5,9 @@ require_once(AK_LIB_DIR.DS.'AkReflection'.DS.'AkReflectionFile.php');
 
 class AkPluginInstaller extends AkInstaller
 {
+    var $auto_install_files = true;
+    var $auto_install_extensions = true;
+    var $auto_remove_extensions = true;
     
     var $plugin_name;
     
