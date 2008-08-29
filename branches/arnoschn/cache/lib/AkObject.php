@@ -142,7 +142,7 @@ class AkObject
         require_once 'Log.php';
         $ident = empty($ident) ? 'main' : $ident;
 
-        $log = Log::singleton('file', AK_LOGS_DIR.DS.$ident.'.log',$ident);
+        $log = Log::singleton('file', AK_LOG_DIR.DS.$ident.'.log',$ident);
         $log->log($type, $message);
     }
 
