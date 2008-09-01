@@ -4751,6 +4751,22 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $resulting_array;
     }
 
+    /**
+     * Generate a json representation of the model record.
+     * 
+     * parameters:
+     *
+     * @param array $options 
+     *  
+     *              option parameters:
+     *             array(
+     *              'collection' => array($Person1,$Person), // array of ActiveRecords
+     *              'include' => array('association1','association2'), // include the associations when exporting
+     *              'exclude' => array('id','name'), // exclude the attribtues
+     *              'only' => array('email','last_name') // only export these attributes
+     *              )
+     * @return string in Json Format
+     */
     function toJson($options = array())
     {
         if (is_array($options) && isset($options[0]) && is_a($options[0], 'AkActiveRecord')) {
@@ -4897,7 +4913,24 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return count($values)==1?$values[0]:$values;
     }
     
-    
+    /**
+     * Reads Xml in the following format:
+     * 
+     * 
+     * <?xml version="1.0" encoding="UTF-8"?>
+     * <person>
+     *    <id>1</id>
+     *    <first-name>Hansi</first-name>
+     *    <last-name>Müller</last-name>
+     *    <email>hans@mueller.com</email>
+     *    <created-at type="datetime">2008-01-01 13:01:23</created-at>
+     * </person>
+     * 
+     * and returns an ActiveRecord Object
+     *
+     * @param string $xml
+     * @return AkActiveRecord
+     */
     function fromXml($xml)
     {
         $array = Ak::xml_to_array($xml);
@@ -4918,7 +4951,17 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         }
         return $array;
     }
-    
+    /**
+     * Reads Json string in the following format:
+     * 
+     * {"id":1,"first_name":"Hansi","last_name":"M\u00fcller",
+     *  "email":"hans@mueller.com","created_at":"2008-01-01 13:01:23"}
+     * 
+     * and returns an ActiveRecord Object
+     *
+     * @param string $json
+     * @return AkActiveRecord
+     */
     function fromJson($json)
     {
         $json = Ak::fromJson($json);
@@ -4926,6 +4969,33 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $this->_fromArray($array);
     }
     
+    /**
+     * Generate a xml representation of the model record.
+     * 
+     * Example result:
+     * 
+     * <?xml version="1.0" encoding="UTF-8"?>
+     * <person>
+     *    <id>1</id>
+     *    <first-name>Hansi</first-name>
+     *    <last-name>Müller</last-name>
+     *    <email>hans@mueller.com</email>
+     *    <created-at type="datetime">2008-01-01 13:01:23</created-at>
+     * </person>
+     * 
+     * parameters:
+     *
+     * @param array $options 
+     *  
+     *              option parameters:
+     *             array(
+     *              'collection' => array($Person1,$Person), // array of ActiveRecords
+     *              'include' => array('association1','association2'), // include the associations when exporting
+     *              'exclude' => array('id','name'), // exclude the attribtues
+     *              'only' => array('email','last_name') // only export these attributes
+     *              )
+     * @return string in Xml Format
+     */
     function toXml($options = array())
     {
         if (is_array($options) && isset($options[0]) && is_a($options[0], 'AkActiveRecord')) {
