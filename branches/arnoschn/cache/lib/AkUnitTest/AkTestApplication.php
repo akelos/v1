@@ -39,7 +39,7 @@ class AkTestApplication extends AkUnitTest
                 $parts = split(': ', $ch);
                 if ($parts[0] == $header) {
                     if ($content != null) {
-                        $this->assertEqual($content, $parts[1]);
+                        $this->assertEqual($content, $parts[1],'1 Header content does not match: '.$parts[1].':'.var_export($this->_cacheHeaders,true));
                         return;
                     } else {
                         $this->assertTrue(true);
@@ -52,7 +52,7 @@ class AkTestApplication extends AkUnitTest
             $value = $this->Dispatcher->Response->getHeader($header);
             $this->assertTrue($value!=false,'Header "'.$header.'" not found');
             if ($content != null) {
-                $this->assertEqual($value, $content);
+                $this->assertEqual($value, $content,'2 Header content does not match: '.$content.':'.var_export($this->Dispatcher->Response->_headers,true).':'.var_export($this->Dispatcher->Response->_headers_sent,true));;
             }
         } else {
             $this->assertTrue(false,'Header "'.$header.'" not found');
@@ -126,7 +126,9 @@ class AkTestApplication extends AkUnitTest
     {
         $_REQUEST = array();
         $_POST = array();
-        
+        $_SESSION = array();
+        $_GET = array();
+        $_POST = array();
     }
     
     function _init($url, $constants = array(), $controllerVars = array())
@@ -159,6 +161,8 @@ class AkTestApplication extends AkUnitTest
         require_once(AK_LIB_DIR.DS.'AkUnitTest'.DS.'AkTestDispatcher.php');
         $this->Dispatcher =& new AkTestDispatcher($controllerVars);
     }
+    
+    
     function get($url,$constants = array(), $controllerVars = array())
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';

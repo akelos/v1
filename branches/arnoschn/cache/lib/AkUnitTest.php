@@ -39,9 +39,9 @@ class AkUnitTest extends UnitTestCase
     
     function _configure()
     {
-        
         $this->_loadFixtures();
     }
+    
     
     function _loadFixtures($loadFixture = null)
     {

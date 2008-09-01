@@ -62,7 +62,20 @@ class AkResponse extends AkObject
             $this->_headers[] = $args[0];
         }
     }
-
+    function setContentTypeForFormat($format)
+    {
+        static $mime_types;
+        if (!empty($format)) {
+            $parts = preg_split('/\./',$format);
+            if (empty($mime_types)) {
+                require_once(AK_LIB_DIR.DS.'utils'.DS.'mime_types.php');
+            }
+            if (isset($mime_types[$parts[count($parts)-1]])) {
+                $mime_type = $mime_types[$parts[count($parts)-1]];
+                $this->addHeader('Content-Type', $mime_type);
+            }
+        }
+    }
     function outputResults()
     {
         $this->sendHeaders();

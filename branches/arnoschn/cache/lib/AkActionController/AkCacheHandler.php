@@ -906,8 +906,9 @@ class AkCacheHandler extends AkObject
             $this->_controller->renderText($content);
             $this->_rendered_action_cache = true;
             $this->_controller->performed_render = true;
-            $this->_controller->_sendMimeContentType();
+            $format = $this->_controller->Request->getFormat();
             $this->_controller->Response->addHeader('X-Cached-By','Akelos-Action-Cache');
+            $this->_controller->Response->setContentTypeForFormat($format);
         } else {
             ob_start();
             $this->_rendered_action_cache = false;

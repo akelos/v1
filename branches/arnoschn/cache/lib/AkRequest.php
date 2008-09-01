@@ -121,9 +121,9 @@ class AkRequest extends AkObject
     function __construct ()
     {
         $this->init();
+        $this->getFormat();
+        
     }
-
-
 
     /**
     * Initialization method.
@@ -305,7 +305,7 @@ class AkRequest extends AkObject
     */
     function getMethod()
     {
-        return strtolower($this->env['REQUEST_METHOD']);
+        return strtolower(isset($this->env['REQUEST_METHOD'])?$this->env['REQUEST_METHOD']:'get');
     }
 
     /**
@@ -740,9 +740,10 @@ class AkRequest extends AkObject
             return $this->_format;
         } else if (isset($this->_request['format'])) {
             $this->_format = $this->_request['format'];
-        } elseif (preg_match('/^([^\.]+)\.(.+)$/', @$_REQUEST['ak'], $matches)) {
+        } elseif (preg_match('/^([^\.]+)\.(.+)$/', @$this->_request['ak'], $matches)) {
             $this->_format = isset($matches[2])?$matches[2]:null;
             $this->_request['format'] = $this->_format;
+            $this->_request['ak'] = preg_replace('/^(.*)\.'.$this->_format.'$/','\1',$this->_request['ak']);
         } else if ($this->isGet() || $this->isDelete()) {
             $this->_format = $this->_bestMimeType();
         } else if ($this->isPost() || $this->isPut()) {
@@ -752,7 +753,6 @@ class AkRequest extends AkObject
         if (empty($this->_format)) {
             $this->_format = $this->mime_types['default'];
         }
-        
         return $this->_format;
     }
     

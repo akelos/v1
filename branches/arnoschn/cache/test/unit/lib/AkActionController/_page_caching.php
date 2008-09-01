@@ -7,7 +7,6 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
 
     var $lastModified;
 
-
     function testRequest()
     {
         $this->_flushCache('www.example.com');
@@ -368,5 +367,11 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
         $this->_assertPageNotCached('/page_caching/');
         $this->_assertPageNotCached('/page_caching/index');
         $this->_assertPageNotCached('/page_caching/index.html');
+    }
+    
+    function test_clean_cache()
+    {
+        $this->_flushCache('www.example.com');
+
     }
 }
