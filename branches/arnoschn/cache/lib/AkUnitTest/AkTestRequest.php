@@ -69,6 +69,19 @@ class AkTestRequest extends AkRequest
         return $Controller;
 
     }
+    
+    function _fixGpcMagic()
+    {
+        if(!defined('AK_TEST_REQUEST_GPC_MAGIC_FIXED')){
+            if (get_magic_quotes_gpc()) {
+                array_walk($_GET, array('AkRequest', '_fixGpc'));
+                array_walk($_POST, array('AkRequest', '_fixGpc'));
+                array_walk($_COOKIE, array('AkRequest', '_fixGpc'));
+            }
+            define('AK_TEST_REQUEST_GPC_MAGIC_FIXED',true);
+        }
+    }
+    
     function getHost()
     {
         if(!empty($this->_host)){
