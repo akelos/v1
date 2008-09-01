@@ -5159,13 +5159,14 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     function &objectCache()
     {
         static $cache;
+        $false = false;
         $args =& func_get_args();
         if(count($args) == 2){
             if(!isset($cache[$args[0]])){
                 $cache[$args[0]] =& $args[1];
             }
         }elseif(!isset($cache[$args[0]])){
-            return false;
+            return $false;
         }
         return $cache[$args[0]];
     }
