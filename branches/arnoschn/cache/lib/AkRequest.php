@@ -80,7 +80,7 @@ class AkRequest extends AkObject
                 'text/javascript'          => 'js', 
                 'application/javascript'   => 'js', 
                 'application/x-javascript' => 'js', 
-                'application/json'         => 'json',  
+                'application/json'         => 'json',
                 'text/x-json'              => 'json', 
                 'application/rss+xml'      => 'rss', 
                 'application/atom+xml'     => 'atom', 

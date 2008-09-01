@@ -159,6 +159,7 @@ $mime_types = array(
 'jpeg' => 'image/jpeg',
 'jpg' => 'image/jpeg',
 'js' => 'application/x-javascript',
+'json' => 'application/json',
 'kar' => 'audio/midi',
 'karbon' => 'application/vnd.kde.karbon',
 'kfo' => 'application/vnd.kde.kformula',

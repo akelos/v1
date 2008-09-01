@@ -202,17 +202,69 @@ class AkActionController extends AkObject
     
     function _sendMimeContentType()
     {
-        static $mime_types;
-        if (($format = $this->Request->getFormat()) != null) {
-            $parts = preg_split('/\./',$format);
-            if (empty($mime_types)) {
-                require_once(AK_LIB_DIR.DS.'utils'.DS.'mime_types.php');
-            }
-            if (isset($mime_types[$parts[count($parts)-1]])) {
-                $mime_type = $mime_types[$parts[count($parts)-1]];
-                $this->Response->addHeader('Content-Type', $mime_type);
-            }
+        $this->Response->setContentTypeForFormat($this->Request->getFormat());
+    }
+    
+    /**
+     * Used to respond to multiple formats on the same action.
+     * The format gets detected by the requested file extension or the
+     * accept headers.
+     * 
+     * Example 1:
+     * If you need to perform some calculations inste
+     * ----
+     * 
+     * function listing()
+     * {
+     *    $this->listings = $this->listing->find(..);
+     *    if (!$this->respondToFormat()) {
+     *        // default html response here
+     *    }
+     * }
+     * // handles action listing in format xml
+     * function _handleListingAsXml()
+     * {
+     *    $this->renderText($this->listing->toXml($this->listings));
+     * }
+     * 
+     * 
+     * Example 2:
+     * If you just render a standard template by default
+     * 
+     * function listing()
+     * {  
+     *    // if its the standard format it will render the template post.tpl
+     *    $this->respondToFormat();
+     * }
+     * // handles action listing in format xml
+     * function _handleListingAsXml()
+     * {
+     *    $this->renderText($this->listing->toXml($this->listings));
+     * }
+     *
+     * @param array $options
+     * @return boolean true if there is a format action, false if not
+     */
+    function respondToFormat($options = array())
+    {
+        $default_options = array('default'=>'html');
+        
+        $options = array_merge($default_options,$options);
+        
+        $format = $this->Request->getFormat();
+        $action = $this->getActionName();
+        $formatAction = '_handle'.$action.'As'.ucfirst($format);
+        $isDefaultAction = $format == null || $format == $options['default'];
+        $formatActionExists = method_exists($this,$formatAction);
+        if (!$formatActionExists && !$isDefaultAction) {
+            $this->renderText('404 Not found',404);
+            
         }
+        if (!$isDefaultAction && $formatActionExists) {
+                $this->performActionWithoutFilters($formatAction);
+                return true;
+        }
+        return false;
     }
     
     function _identifyRequest()

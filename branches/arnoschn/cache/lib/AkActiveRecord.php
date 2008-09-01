@@ -4751,11 +4751,279 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         return $resulting_array;
     }
 
-    function toJson()
+    function toJson($options = array())
     {
-        return Ak::toJson($this->getAttributes());
-    }
+        if (is_array($options) && isset($options[0]) && is_a($options[0], 'AkActiveRecord')) {
+            $options = array('collection'=>$options);
+        }
+        if (isset($options['collection']) && is_array($options['collection']) && $options['collection'][0]->_modelName == $this->_modelName) {
+            $json = '';
 
+            $collection = $options['collection'];
+            unset($options['collection']);
+            $jsonVals = array();
+            foreach ($collection as $element) {
+                $jsonVals[]= $element->toJson($options);
+            }
+            $json = '['.implode(',',$jsonVals).']';
+            return $json;
+        }
+        /**
+         * see if we need to include associations
+         */
+        $associatedIds = array();
+        if (isset($options['include']) && !empty($options['include'])) {
+            $options['include'] = is_array($options['include'])?$options['include']:preg_split('/,\s*/',$options['include']);
+            foreach ($this->_associations as $key => $obj) {
+                if (in_array($key,$options['include'])) {
+                    $associatedIds[$obj->getAssociationId() . '_id'] = array('name'=>$key,'type'=>$obj->getType());
+                }
+            }
+        }
+        if (isset($options['only'])) {
+            $options['only'] = is_array($options['only'])?$options['only']:preg_split('/,\s*/',$options['only']);
+        }
+        if (isset($options['except'])) {
+            $options['except'] = is_array($options['except'])?$options['except']:preg_split('/,\s*/',$options['except']);
+        }
+        foreach ($this->_columns as $key => $def) {
+            
+            if (isset($options['except']) && in_array($key, $options['except'])) {
+                continue;
+            } else if (isset($options['only']) && !in_array($key, $options['only'])) {
+                continue;
+            } else {
+                $val = $this->$key;
+                $type = $this->getColumnType($key);
+                if (($type == 'serial' || $type=='integer') && $val!==null) $val = intval($val);
+                if ($type == 'float' && $val!==null) $val = floatval($val);
+                if ($type == 'boolean') $val = $val?1:0;
+                $data[$key] = $val;
+            }
+        }
+        if (isset($options['include'])) {
+            foreach($this->_associationIds as $key=>$val) {
+                if ((in_array($key,$options['include']) || in_array($val,$options['include']))) {
+                    $this->$key->load();
+                    $associationElement = $key;
+                    $associationElement = $this->_convert_column_to_xml_element($associationElement);
+                    if (is_array($this->$key)) {
+                        $data[$associationElement] = array();
+                        foreach ($this->$key as $el) {
+                            if (is_a($el,'AkActiveRecord')) {
+                                $attributes = $el->getAttributes();
+                                foreach($attributes as $ak=>$av) {
+                                    $type = $el->getColumnType($ak);
+                                    if (($type == 'serial' || $type=='integer') && $av!==null) $av = intval($av);
+                                    if ($type == 'float' && $av!==null) $av = floatval($av);
+                                    if ($type == 'boolean') $av = $av?1:0;
+                                    $attributes[$ak]=$av;
+                                }
+                                $data[$associationElement][] = $attributes;
+                            }
+                        }
+                    } else {
+                        $el = &$this->$key->load();
+                        if (is_a($el,'AkActiveRecord')) {
+                            $attributes = $el->getAttributes();
+                            foreach($attributes as $ak=>$av) {
+                                $type = $el->getColumnType($ak);
+                                if (($type == 'serial' || $type=='integer') && $av!==null) $av = intval($av);
+                                if ($type == 'float' && $av!==null) $av = floatval($av);
+                                if ($type == 'boolean') $av = $av?1:0;
+                                $attributes[$ak]=$av;
+                            }
+                            $data[$associationElement] = $attributes;
+                        }
+                    }
+                }
+            }
+        }
+        return Ak::toJson($data);
+    }
+    function _convert_column_to_xml_element($col)
+    {
+        return str_replace('_','-',$col);
+    }
+    function _convert_column_from_xml_element($col)
+    {
+        return str_replace('-','_',$col);
+    }
+    
+    function _parseXmlAttributes($attributes)
+    {
+        $new = array();
+        foreach($attributes as $key=>$value)
+        {
+            $new[$this->_convert_column_from_xml_element($key)] = $value;
+        }
+        return $new;
+    }
+    
+    function &_generateModelFromArray($modelName,$attributes)
+    {
+        if (isset($attributes[0]) && is_array($attributes[0])) {
+            $attributes = $attributes[0];
+        }
+        $record = new $modelName('attributes',$this->_parseXmlAttributes($attributes));
+        $record->_newRecord = !empty($attributes['id']);
+
+        $associatedIds = array();
+        foreach ($record->getAssociatedIds() as $key) {
+            if (isset($attributes[$key]) && is_array($attributes[$key])) {
+                $class = $record->$key->_AssociationHandler->getOption($key,'class_name');
+                $related = $this->_generateModelFromArray($class,$attributes[$key]);
+                $record->$key->build($related->getAttributes(),false);
+                $related = &$record->$key->load();
+                $record->$key = &$related;
+            }
+        }
+        return $record;
+    }
+    
+    function _fromArray($array)
+    {
+        $data  = $array;
+        $modelName = $this->getModelName();
+        $values = array();
+        if (!isset($data[0])) {
+            $data = array($data);
+        }
+        foreach ($data as $key => $value) {
+            if (is_array($value)){
+                $values[] = &$this->_generateModelFromArray($modelName,$value);
+            }
+        }
+        return count($values)==1?$values[0]:$values;
+    }
+    
+    
+    function fromXml($xml)
+    {
+        $array = Ak::xml_to_array($xml);
+        $array = $this->_fromXmlCleanup($array);
+         return $this->_fromArray($array);
+    }
+    
+    function _fromXmlCleanup($array)
+    {
+        $result = array();
+        $key = key($array);
+        while(is_string($key) && is_array($array[$key]) && count($array[$key])==1) {
+            $array = $array[$key][0];
+            $key = key($array);
+        }
+        if (is_string($key) && is_array($array[$key])) {
+            $array = $array[$key];
+        }
+        return $array;
+    }
+    
+    function fromJson($json)
+    {
+        $json = Ak::fromJson($json);
+        $array = Ak::convert('Object','Array',$json);
+        return $this->_fromArray($array);
+    }
+    
+    function toXml($options = array())
+    {
+        if (is_array($options) && isset($options[0]) && is_a($options[0], 'AkActiveRecord')) {
+            $options = array('collection'=>$options);
+        }
+        if (isset($options['collection']) && is_array($options['collection']) && $options['collection'][0]->_modelName == $this->_modelName) {
+            $root = strtolower(AkInflector::pluralize($this->_modelName));
+            $root = $this->_convert_column_to_xml_element($root);
+            $xml = '';
+            if (!(isset($options['skip_instruct']) && $options['skip_instruct'] == true)) {
+                $xml .= '<?xml version="1.0" encoding="UTF-8"?>';
+            }
+            $xml .= '<' . $root . '>';
+            $collection = $options['collection'];
+            unset($options['collection']);
+            $options['skip_instruct'] = true;
+            foreach ($collection as $element) {
+                $xml .= $element->toXml($options);
+            }
+            $xml .= '</' . $root .'>';
+            return $xml;
+        }
+        /**
+         * see if we need to include associations
+         */
+        $associatedIds = array();
+        if (isset($options['include']) && !empty($options['include'])) {
+            $options['include'] = is_array($options['include'])?$options['include']:preg_split('/,\s*/',$options['include']);
+            foreach ($this->_associations as $key => $obj) {
+                if (in_array($key,$options['include'])) {
+                    if ($obj->getType()!='hasAndBelongsToMany') {
+                        $associatedIds[$obj->getAssociationId() . '_id'] = array('name'=>$key,'type'=>$obj->getType());
+                    } else {
+                        $associatedIds[$key] = array('name'=>$key,'type'=>$obj->getType());
+                    }
+                }
+            }
+        }
+        if (isset($options['only'])) {
+            $options['only'] = is_array($options['only'])?$options['only']:preg_split('/,\s*/',$options['only']);
+        }
+        if (isset($options['except'])) {
+            $options['except'] = is_array($options['except'])?$options['except']:preg_split('/,\s*/',$options['except']);
+        }
+        $xml = '';
+        if (!(isset($options['skip_instruct']) && $options['skip_instruct'] == true)) {
+            $xml .= '<?xml version="1.0" encoding="UTF-8"?>';
+        }
+        $root = $this->_convert_column_to_xml_element(strtolower($this->_modelName));
+        
+        $xml .= '<' . $root . '>';
+        $xml .= "\n";
+        foreach ($this->_columns as $key => $def) {
+            
+            if (isset($options['except']) && in_array($key, $options['except'])) {
+                continue;
+            } else if (isset($options['only']) && !in_array($key, $options['only'])) {
+                continue;
+            } else {
+                $columnType = $def['type'];
+                $elementName = $this->_convert_column_to_xml_element($key);
+                $xml .= '<' . $elementName;
+                $val = $this->$key;
+                if (!in_array($columnType,array('string','text','serial'))) {
+                    $xml .= ' type="' . $columnType . '"';
+                    if ($columnType=='boolean') $val = $val?1:0;
+                }
+                $xml .= '>' . Ak::utf8($val) . '</' . $elementName . '>';
+                $xml .= "\n";
+            }
+        }
+        if (isset($options['include'])) {
+            foreach($this->_associationIds as $key=>$val) {
+                if ((in_array($key,$options['include']) || in_array($val,$options['include']))) {
+                    if (is_array($this->$key)) {
+                        
+                        $associationElement = $key;
+                        $associationElement = AkInflector::pluralize($associationElement);
+                        $associationElement = $this->_convert_column_to_xml_element($associationElement);
+                        $xml .= '<'.$associationElement.'>';
+                        foreach ($this->$key as $el) {
+                            if (is_a($el,'AkActiveRecord')) {
+                                $xml .= $el->toXml(array('skip_instruct'=>true));
+                            }
+                        }
+                        $xml .= '</' . $associationElement .'>';
+                    } else {
+                        $el = &$this->$key->load();
+                        if (is_a($el,'AkActiveRecord')) {
+                            $xml.=$el->toXml(array('skip_instruct'=>true));
+                        }
+                    }
+                }
+            }
+        }
+        $xml .= '</' . $root . '>';
+        return $xml;
+    }
     /**
      * converts to yaml-strings 
      * 
