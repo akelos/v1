@@ -463,7 +463,10 @@ CONFIG;
     {
         return $this->_writeToTemporaryFile(AK_TMP_DIR.DS.'test_file.txt');
     }
-    
+    function canWriteToLocaleDir()
+    {
+        return $this->_writeToTemporaryFile(AK_APP_DIR.DS.'locales'.DS.'test_file.txt');
+    }
     function needsFtpFileHandling()
     {
         return !$this->_writeToTemporaryFile(AK_CONFIG_DIR.DS.'test_file.txt');

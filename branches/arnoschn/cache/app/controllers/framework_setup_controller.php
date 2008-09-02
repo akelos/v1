@@ -146,7 +146,9 @@ class FrameworkSetupController extends AkActionController
         }
 
         if(!empty($this->params['check'])){
-            if($this->FrameworkSetup->needsFtpFileHandling()){
+            if (!$this->FrameworkSetup->canWriteToLocaleDir()) {
+                $this->flash_now = $this->t('Bad file permission. Please change file system privileges for "%dir"',array('%dir'=>AK_APP_DIR.DS.'locales'));
+            }else if($this->FrameworkSetup->needsFtpFileHandling()){
                 $this->flash_now = $this->t('Bad file permission. Please change file system privileges for "%dir" or set up a FTP account below',array('%dir'=>AK_CONFIG_DIR));
             }else if (!$this->FrameworkSetup->canWriteToTmpDir()) {
                 $this->flash_now = $this->t('Bad file permission. Please change file system privileges for "%dir"',array('%dir'=>AK_TMP_DIR));
