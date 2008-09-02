@@ -461,7 +461,7 @@ CONFIG;
 
     function canWriteToTempDir()
     {
-        return $this->_writeToTemporaryFile(AK_TMP_DIR.DS.'test_file.txt');
+        return $this->_writeToTemporaryFile(AK_BASE_DIR.DS.'tmp'.DS.'test_file.txt');
     }
     function canWriteToLocaleDir()
     {
