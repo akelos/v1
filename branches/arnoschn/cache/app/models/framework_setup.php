@@ -459,6 +459,11 @@ CONFIG;
         return empty($application_name) ? 'my_app' : $application_name;
     }
 
+    function canWriteToTempDir()
+    {
+        return $this->_writeToTemporaryFile(AK_TMP_DIR.DS.'test_file.txt');
+    }
+    
     function needsFtpFileHandling()
     {
         return !$this->_writeToTemporaryFile(AK_CONFIG_DIR.DS.'test_file.txt');
