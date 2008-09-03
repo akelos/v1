@@ -1964,29 +1964,12 @@ class Ak
      */
     function getSettings($namespace, $raise_error_if_config_file_not_found = true, $sanitize_level = 'paranoid')
     {
-        $staticVarNs = 'Ak::getSettings';
-        $loaded_settings = &Ak::getStaticVar($staticVarNs);
-        
-        if(isset($loaded_settings[$namespace])){
-            return $loaded_settings[$namespace];
-        } else if (!is_array($loaded_settings)) {
-            $loaded_settings = array();
+        static $_config;
+        if (!isset($_config)) {
+            require_once(AK_LIB_DIR.DS.'AkConfig.php');
+            $_config = new AkConfig();
         }
-        $namespace = Ak::sanitize_include($namespace, $sanitize_level);
-        $yaml_file_name = AK_CONFIG_DIR.DS.$namespace.'.yml';
-        if (!is_file($yaml_file_name)){
-            if($raise_error_if_config_file_not_found){
-                die(Ak::t('Could not find %namespace settings file in %path.', array('%namespace'=>$namespace, '%path'=>$yaml_file_name))."\n");
-            }
-            return false;
-        }
-        require_once(AK_VENDOR_DIR.DS.'TextParsers'.DS.'spyc.php');
-        $content = file_get_contents($yaml_file_name);
-        $content = Ak::_parseSettingsConstants($content);
-        $return = Spyc::YAMLLoad($content);
-        $loaded_settings[$namespace] = $return;
-        Ak::setStaticVar($staticVarNs,$loaded_settings);
-        return $return;
+        return $_config->get($namespace,AK_ENVIRONMENT,$raise_error_if_config_file_not_found);
     }
     
     function _parseSettingsConstants($settingsStr)
