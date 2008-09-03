@@ -76,15 +76,19 @@ CACHE;
         $cacheFileName = $this->_generateCacheFileName($namespace,$environment);
         $cacheDir = dirname($cacheFileName);
         if (!file_exists($cacheDir)) {
-            $res = mkdir($cacheDir,null,true);
+            $oldumask = umask();
+            umask(0);
+            $res = @mkdir($cacheDir,0777,true);
             if (!$res) {
                 trigger_error(Ak::t('Could not create config cache dir %dir',array('%dir'=>$cacheDir)),E_USER_ERROR);
             }
+            umask($oldumask);
         }
         $fh = fopen($cacheFileName,'w+');
         if ($fh) {
             fputs($fh,$cache);
             fclose($fh);
+            @chmod($cacheFileName,0777);
         } else {
             trigger_error(Ak::t('Could not create config cache file %file',array('%file'=>$cacheFileName)),E_USER_ERROR);
         }
@@ -104,10 +108,9 @@ CACHE;
                 if (!is_array($value)) {
                     $env[$key] = isset($env[$key])?$env[$key]:$value;
                 } else {
-                    $env[$key] = $this->_merge($value,$env[$key]);
+                    $env[$key] = $this->_merge($value,isset($env[$key])?$env[$key]:array());
                 }
             }
-            ksort($env);
         } else {
             $env = empty($env)?$default:$env;
         }
@@ -137,10 +140,11 @@ CACHE;
         
         unset($config['default']);
         $environments = array_keys($config);
-        
+        $default_environments = array('testing','development','production');
+        $environments = array_merge($default_environments, $environments);
         foreach($environments as $env) {
             
-            $envConfig = $this->_merge($default, $config[$env]);
+            $envConfig = $this->_merge($default, isset($config[$env])?$config[$env]:array());
             $this->_writeCache($envConfig,$namespace,$env,$this->_useWriteCache($environment));
             $configs[$env] = $envConfig;
         }

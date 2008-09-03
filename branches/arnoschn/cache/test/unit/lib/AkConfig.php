@@ -72,6 +72,7 @@ class AkConfig_TestCase extends  AkUnitTest
         $this->config->_writeCache($config,'testconfig1','testing');
         $cachedConfig = $this->config->_readCache('testconfig1','testing',true);
         $this->assertEqual($config, $cachedConfig);
+        
     }
     
     function test_read_config()
@@ -81,6 +82,15 @@ class AkConfig_TestCase extends  AkUnitTest
         $config = $this->config->_readConfig('testconfig1','testing');
 
         $this->assertEqual($expectedConfig, $config);
+        
+        $expectedFileNameTesting = AK_TEST_DIR.DS.'fixtures'.DS.'config'.DS.'cache'.DS.'testing'.DS.'testconfig1.php';
+        $this->assertTrue(file_exists($expectedFileNameTesting));
+        
+        $expectedFileNameDev = AK_TEST_DIR.DS.'fixtures'.DS.'config'.DS.'cache'.DS.'development'.DS.'testconfig1.php';
+        $this->assertTrue(file_exists($expectedFileNameDev));
+        
+        $expectedFileNameProd = AK_TEST_DIR.DS.'fixtures'.DS.'config'.DS.'cache'.DS.'production'.DS.'testconfig1.php';
+        $this->assertTrue(file_exists($expectedFileNameProd));
         
     }
     
