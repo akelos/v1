@@ -208,6 +208,10 @@ class CI_Tests
         $return = true;
         
         $parts = parse_url($url);
+        if (!isset($parts['host'])) {
+            $this->error('No host found in: '.$url);
+            return false;
+        }
         $rewritebase = isset($parts['path'])?$parts['path']:'/';
         $htaccessTemplateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-htaccess';
         $htaccessFile = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'public'.DS.'.htaccess';
@@ -344,7 +348,7 @@ class CI_Tests
     }
     function _promptForTestingUrl()
     {
-        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (point to test/fixtures/public)')) && !$this->_checkWebServer($testingUrl))) {
+        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (example: http://localhost/test/fixtures/public)')) && !$this->_checkWebServer($testingUrl))) {
             $this->error('Could not verify the testing url. Please make sure a webserver is running and handling that request.');
         }
         return $testingUrl;
@@ -356,7 +360,7 @@ class CI_Tests
     function _createTestInstallation($testDir = null)
     {
         if ($testDir == null) {
-            while ((($testDir = $this->promptUserVar('Where shall the akelos testinstallation be installed?')) && ((file_exists($testDir) && !is_writable($testDir)) || (!is_writable(dirname(dirname($testDir))))))) {
+            while ((($testDir = $this->promptUserVar('Please insert the path for installing the CI tests for Akelos')) && ((file_exists($testDir) && !is_writable($testDir)) || (!is_writable(dirname(dirname($testDir))))))) {
                 $this->error('Directory '.$testDir.' is not writable');
             }
         }
