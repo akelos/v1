@@ -184,7 +184,7 @@ class CI_Tests
         } else {
             $this->_createCiPhpConfigFile();
         }
-        
+        $returnVal = $this->_checkWebserver2($this->settings['test-url']) && $returnVal;
         return $returnVal;
         // if all passes return true
     }
@@ -203,6 +203,19 @@ class CI_Tests
         }
         return true;
     }
+    function _checkWebserver2($url)
+    {
+        $return = true;
+        $testIndexPage = @file_get_contents($url.'/');
+        if ($testIndexPage!='Test::page::index') {
+            $this->error('Webserver Configuration problems:'."\n" .$testIndexPage."\n\n");
+            $return = false;
+        } else {
+            $this->info('Web Server is configured correctly');
+        }
+        return $return;
+    }
+    
     function _checkWebServer($url)
     {
         $return = true;
@@ -244,13 +257,7 @@ class CI_Tests
         }
         $this->info('Web Server is reachable at '.$url);
         
-        $testIndexPage = @file_get_contents($url.'/');
-        if ($testIndexPage!='Test::page::index') {
-            $this->error('Webserver Configuration problems:'."\n" .$testIndexPage."\n\n");
-            $return = false;
-        } else {
-            $this->info('Web Server is configured correctly');
-        }
+        
 
         return $return;
     }
@@ -323,8 +330,7 @@ class CI_Tests
         $templateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-ci-config.php';
         $file = AK_BASE_DIR.DS.'config'.DS.'ci-config.php';
         $settings = array();
-        $settings['${testing-url}'] = $this->_promptForTestingUrl();
-
+        $settings['${testing-url}'] = $this->settings['test-url'];
         return file_put_contents($file,str_replace(array_keys($settings),array_values($settings),file_get_contents($templateFile)))>0;
     }
     function _createCiConfigFile()
@@ -336,6 +342,7 @@ class CI_Tests
         $settings['${test-installation}'] = $this->_createTestInstallation();
         $settings['${php4}'] = $this->_promptForPhp('php4');
         $settings['${php5}'] = $this->_promptForPhp('php5');
+        $settings['${test-url}'] = $this->_promptForTestingUrl();
         return file_put_contents($file,str_replace(array_keys($settings),array_values($settings),file_get_contents($templateFile)))>0;
     }
     
