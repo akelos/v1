@@ -151,7 +151,7 @@ class CI_Tests
             $this->_createCiConfigFile();
             $this->loadSettings();
         }
-        
+        $this->_fixTestInstallationPermissions();
         $this->configured['ci-config.yaml'] = true;
         $this->configured['environments'] = array();
         foreach ($this->settings['environments'] as $type) {
@@ -370,8 +370,6 @@ class CI_Tests
         
         if ($ret!=0) {
             $this->error('Could not install akelos testing app in: '.$testDir,true);
-        } else {
-            $this->_fixTestInstallationPermissions();
         }
         return $testDir;
     }
