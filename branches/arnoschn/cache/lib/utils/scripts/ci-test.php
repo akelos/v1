@@ -364,7 +364,7 @@ class CI_Tests
     }
     function _promptForTestingUrl($test_installation)
     {
-        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (example: http://localhost/test/fixtures/public)') && !$this->_checkWebServer($testingUrl,$test_installation)))) {
+        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (example: http://localhost/test/fixtures/public)')) && !$this->_checkWebServer($testingUrl,$test_installation))) {
             $this->error('Could not verify the testing url. Please make sure a webserver is running and handling that request.');
         }
         return $testingUrl;
