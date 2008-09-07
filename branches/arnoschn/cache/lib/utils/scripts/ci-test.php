@@ -223,10 +223,12 @@ class CI_Tests
         return $return;
     }
     
-    function _checkWebServer($url)
+    function _checkWebServer($url, $test_installation = null)
     {
         $return = true;
-        
+        if ($test_installation == null && defined('AK_CI_TEST_DIR')) {
+            $test_installation = AK_CI_TEST_DIR;
+        }
         $parts = parse_url($url);
         if (!isset($parts['host'])) {
             $this->error('No host found in: '.$url);
@@ -234,15 +236,15 @@ class CI_Tests
         }
         $rewritebase = isset($parts['path'])?$parts['path']:'/';
         $htaccessTemplateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-htaccess';
-        $htaccessFile = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'public'.DS.'.htaccess';
+        $htaccessFile = $test_installation.DS.'test'.DS.'fixtures'.DS.'public'.DS.'.htaccess';
         $htaccessRes = file_put_contents($htaccessFile,str_replace('${rewrite-base}',$rewritebase,file_get_contents($htaccessTemplateFile)))>0;
         
         $this->debug('Copying '.$htaccessTemplateFile.' template to '.$htaccessFile.':'.(($htaccessRes)?'Success':'failure'));
         
         //$htaccess = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'public'.DS.'.htaccess';
         //$htaccess_backup =AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'public'.DS.'.htaccess.backup';
-        $test_htaccess = AK_CI_TEST_DIR.DS.'test'.DS.'.htaccess';
-        $test_htaccess_backup =AK_CI_TEST_DIR.DS.'test'.DS.'.htaccess.backup'; 
+        $test_htaccess = $test_installation.DS.'test'.DS.'.htaccess';
+        $test_htaccess_backup =$test_installation.DS.'test'.DS.'.htaccess.backup'; 
         //copy($htaccess,$htaccess_backup);
         //unlink($htaccess);
         copy($test_htaccess,$test_htaccess_backup);
@@ -251,7 +253,7 @@ class CI_Tests
         $this->debug('Unlinking '.$test_htaccess);
         $this->debug('Checking if webserver is reachable at: '.$url.'/ci-setup-test.html');
         $content = time().' - '.rand(0,10000);
-        $file = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'public'.DS.'ci-setup-test.html';
+        $file = $test_installation.DS.'test'.DS.'fixtures'.DS.'public'.DS.'ci-setup-test.html';
         file_put_contents($file,$content);
         $res = @file_get_contents($url.'/ci-setup-test.html');
         if ($res!=$content) {
@@ -349,7 +351,7 @@ class CI_Tests
         $settings['${test-installation}'] = $this->_createTestInstallation();
         $settings['${php4}'] = $this->_promptForPhp('php4');
         $settings['${php5}'] = $this->_promptForPhp('php5');
-        $settings['${test-url}'] = $this->_promptForTestingUrl();
+        $settings['${test-url}'] = $this->_promptForTestingUrl($settings['${test-installation}']);
         return file_put_contents($file,str_replace(array_keys($settings),array_values($settings),file_get_contents($templateFile)))>0;
     }
     
@@ -360,9 +362,9 @@ class CI_Tests
         }
         return $executable;
     }
-    function _promptForTestingUrl()
+    function _promptForTestingUrl($test_installation)
     {
-        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (example: http://localhost/test/fixtures/public)')) && !$this->_checkWebServer($testingUrl))) {
+        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (example: http://localhost/test/fixtures/public)') && !$this->_checkWebServer($testingUrl,$test_installation)))) {
             $this->error('Could not verify the testing url. Please make sure a webserver is running and handling that request.');
         }
         return $testingUrl;
