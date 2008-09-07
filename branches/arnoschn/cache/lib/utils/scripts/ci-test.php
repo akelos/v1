@@ -150,7 +150,10 @@ class CI_Tests
             
         } else {
             $this->debug('File '.AK_CI_CONFIG_FILE.' does not exist');
-            $this->_createCiConfigFile();
+            $res = $this->_createCiConfigFile();
+            if (!$res) {
+                $this->error('Could not create: '.AK_CI_CONFIG_FILE,true);
+            }
             $this->loadSettings();
         }
         $this->_fixTestInstallationPermissions();
