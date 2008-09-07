@@ -349,8 +349,6 @@ CONFIG;
     {
 
         $configuration_template = <<<CONFIG
-<?php
-
 production:
         type: %production_database_type
         database_file: %production_database_file
