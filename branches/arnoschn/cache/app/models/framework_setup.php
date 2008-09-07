@@ -348,7 +348,7 @@ CONFIG;
     function getDatabaseConfigurationFile($settings = array())
     {
 
-        $database_config_template = <<<CONFIG
+        $configuration_template = <<<CONFIG
 <?php
 
 production:
