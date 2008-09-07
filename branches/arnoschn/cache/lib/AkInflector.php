@@ -50,7 +50,7 @@ class AkInflector
                 Ak::setStaticVar('AkInflectorConfig::'.$dictionary,$return);
                 $_loaded[$dictionary] = true;
             } else {
-                trigger_error(Ak::t('Could not load inflector rules file: %file',array('%file'=>'config'.DS.$dictionary.'.yml')));
+                trigger_error(Ak::t('Could not load inflector rules file: %file',array('%file'=>'config'.DS.$dictionary.'.yml')),E_USER_ERROR);
             }
             
         }
