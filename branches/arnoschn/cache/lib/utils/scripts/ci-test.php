@@ -1,7 +1,9 @@
 <?php
 defined('DS')          ? null : define('DS',DIRECTORY_SEPARATOR);
 defined('AK_BASE_DIR') ? null : define('AK_BASE_DIR',preg_replace('@\\'.DS.'(test|script)($|\\'.DS.'.*)@','',getcwd()));
-require_once(AK_BASE_DIR.DS.'config'.DS.'config.php');
+if (!@include_once(AK_BASE_DIR.DS.'config'.DS.'config.php')) {
+    require_once(AK_BASE_DIR.DS.'config'.DS.'DEFAULT-config.php');
+}
 define('AK_CI_CONFIG_FILE',AK_BASE_DIR.DS.'config'.DS.'ci-config.yaml');
 
 class CI_Tests
