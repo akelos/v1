@@ -558,7 +558,7 @@ class CI_Tests
 
     function beforeRun()
     {
-        $res = copy($this->config_file(),$this->config_backup_file()) && $res;
+        $res = copy($this->config_file(),$this->config_backup_file());
         $res = copy($this->ci_config_file(),$this->config_file()) && $res;
         return $res;
     }
