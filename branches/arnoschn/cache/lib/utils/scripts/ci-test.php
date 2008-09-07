@@ -191,7 +191,7 @@ class CI_Tests
         } else {
             $this->_createCiPhpConfigFile();
         }
-        $returnVal = $this->_checkWebserver2($this->settings['test-url']) && $returnVal;
+        
         return $returnVal;
         // if all passes return true
     }
@@ -694,7 +694,10 @@ class CI_Tests
     function runCommand($php,$filename,$environment)
     {
         $this->drawBox(array($filename,strtoupper($environment),$php));
-
+        $returnVal = $this->_checkWebserver2($this->settings['test-url']);
+        if (!$returnVal) {
+            $this->error('Webserver is not configured properly. Exiting',true);
+        }
         if ($this->prepareEnvironment($environment)){
             $xmlFile = getcwd().DIRECTORY_SEPARATOR.'test-results-'.$php.'-'.str_replace(' ','-',$environment).'.xml';
             $command = $this->settings['executables'][$php].' '.$filename.' --xml '.$xmlFile.' "'.$php.'" "'.$environment.'"';
