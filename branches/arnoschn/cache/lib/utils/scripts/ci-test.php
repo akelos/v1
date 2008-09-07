@@ -587,7 +587,12 @@ class CI_Tests
         include_once(AK_BASE_DIR.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'summary.php');
         $contents = ob_get_clean();
         
-        file_put_contents($summaryFile, $contents);
+        $res = file_put_contents($summaryFile, $contents) > 0;
+        if ($res) {
+            $this->info('Summary Report available at: '.$summaryFile);
+        } else {
+            $this->error('Could not generate Summary Report: '.$summaryFile);
+        }
     }
     function _generateReport($xmlFile,$php,$env)
     {
