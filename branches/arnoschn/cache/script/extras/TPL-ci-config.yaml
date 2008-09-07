@@ -1,5 +1,6 @@
 #this file must be located in config/ci-config.yaml
 test-installation: ${test-installation}
+test-url: ${test-url}
 
 executables: 
   php5:    ${php5}                         
