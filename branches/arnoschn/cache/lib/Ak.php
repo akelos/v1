@@ -1966,6 +1966,7 @@ class Ak
     {
         static $_config;
         if (!in_array($environment,Ak::toArray(AK_AVAILABLE_ENVIRONMENTS))) {
+            trigger_error('The environment '.$environment.' is not allowed. Allowed environments: '.AK_AVAILABLE_ENVIRONMENTS);
             return false;
         }
         if (!isset($_config)) {
