@@ -171,13 +171,14 @@ class CI_Tests
         }
         copy(AK_BASE_DIR.DS.'config'.DS.'sqlite.yml',AK_CI_TEST_DIR.DS.'config'.DS.'database.yml');
         if (file_exists(AK_BASE_DIR.DS.'config'.DS.'ci-config.php')) {
-            $ciConfigContents = file_get_contents(AK_BASE_DIR.DS.'config'.DS.'ci-config.php');
+            /**$ciConfigContents = file_get_contents(AK_BASE_DIR.DS.'config'.DS.'ci-config.php');
             // check the config.php file (needs the webroot), check if the webserver is reachable
             preg_match("/define\('AK_TESTING_URL', '(.*?)'\);/",$ciConfigContents,$matches);
             $testing_url = '';
             if(isset($matches[1])) {
                 $testing_url = $matches[1];
-            }
+            }*/
+            $testing_url = $this->settings['test-url'];
             $res = $this->_checkWebServer($testing_url);
             $this->configured['ci-config.php'] = $res;
             $returnVal = $res && $returnVal;
