@@ -324,7 +324,12 @@ if($command == 'install') {
         die("Cannot install using checkout because this project is not under subversion.");
     }
 
-    $plugins = Ak::toArray($options['parameters']);
+    if ($best == 'local directory') {
+        $plugins = array($options['parameters']);
+    } else {
+        $plugins = Ak::toArray($options['parameters']);
+    }
+    //$plugins = Ak::toArray($options['parameters']);
 
     foreach ($plugins as $plugin){
         $repository = null;
