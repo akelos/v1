@@ -38,6 +38,9 @@ class CI_Tests
         
         
         $this->args = $args;
+        if (in_array('-d',$this->args)) {
+            $this->debug = true;
+        }
         if (!$this->_isConfigured()) {
 
             $this->setup();
