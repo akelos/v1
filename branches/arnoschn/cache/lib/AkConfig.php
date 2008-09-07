@@ -58,7 +58,6 @@ class AkConfig
         if (file_exists($cacheFileName)) {
             $config = include $cacheFileName;
         } else {
-            echo "$cacheFileName does not exist\n";
             $config = false;
         }
         return $config;
