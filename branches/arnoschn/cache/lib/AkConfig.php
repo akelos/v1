@@ -55,8 +55,12 @@ class AkConfig
     {
         if (!$force && !$this->_useReadCache($environment)) return false;
         $cacheFileName = $this->_generateCacheFileName($namespace,$environment);
-
-        $config = include $cacheFileName;
+        if (file_exists($cacheFileName)) {
+            $config = include $cacheFileName;
+        } else {
+            echo "$cacheFileName does not exist\n";
+            $config = false;
+        }
         return $config;
     }
     function _writeCache($config, $namespace, $environment = AK_ENVIRONMENT, $force = false)

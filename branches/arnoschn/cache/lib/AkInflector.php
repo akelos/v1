@@ -44,7 +44,8 @@ class AkInflector
     {
         static $_loaded = array();
         if (!($return=Ak::getStaticVar('AkInflectorConfig::'.$dictionary))) {
-            $return = Ak::getSettings($dictionary,false,'high');
+            $return = Ak::getSettings($dictionary,false);
+            
             if ($return !== false) {
                 Ak::setStaticVar('AkInflectorConfig::'.$dictionary,$return);
                 $_loaded[$dictionary] = true;

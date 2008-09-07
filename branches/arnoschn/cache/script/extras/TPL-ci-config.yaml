@@ -1,12 +1,14 @@
 #this file must be located in config/ci-config.yaml
+test-installation: ${test-installation}
+
 executables: 
   php5:    ${php5}                         
   php4:    ${php4}
 
 environments:                          
-  mysql:    mysql-testing              # will look for config/mysql-testing.php
-  postgres: postgres-testing
-  sqlite:   sqlite-testing
+  - mysql  # will look for config/mysql.yml
+  - postgres
+  - sqlite
 
 default_executables: 
   - php5 

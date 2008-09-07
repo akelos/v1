@@ -187,8 +187,11 @@ class FrameworkSetupController extends AkActionController
     function perform_setup()
     {
         $this->configuration_file = $this->FrameworkSetup->getConfigurationFile();
-        if($this->FrameworkSetup->canWriteConfigurationFile()){
+        $this->db_configuration_file = $this->FrameworkSetup->getDatabaseConfigurationFile();
+        if($this->FrameworkSetup->canWriteConfigurationFile() && 
+           $this->FrameworkSetup->canWriteDbConfigurationFile()){
             if( $this->FrameworkSetup->writeConfigurationFile($this->configuration_file) &&
+            $this->FrameworkSetup->writeDbConfigurationFile($this->db_configuration_file) &&
             $this->FrameworkSetup->writeRoutesFile() &&
             $this->FrameworkSetup->runFrameworkInstaller()){
 
