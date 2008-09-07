@@ -558,7 +558,6 @@ class CI_Tests
 
     function beforeRun()
     {
-        $res = copy($this->ci_fix_htaccess_file(),$this->fix_htaccess_file());
         $res = copy($this->config_file(),$this->config_backup_file()) && $res;
         $res = copy($this->ci_config_file(),$this->config_file()) && $res;
         return $res;
