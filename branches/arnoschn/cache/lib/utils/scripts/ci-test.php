@@ -466,8 +466,9 @@ class CI_Tests
         $file1 = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'config'.DS.'caching.yml';
         $file2 = AK_CI_TEST_DIR.DS.'config'.DS.'caching.yml';
         $templateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-caching.yml';
-        $this->info('Creating caching configuration for');
+        $this->info('Creating caching configuration: ' .$file1);
         $res1 = file_put_contents($file1,str_replace('${memcached_server}',$socket,file_get_contents($templateFile)))>0;
+        $this->info('Creating caching configuration: ' .$file2);
         $res2 = file_put_contents($file1,str_replace('${memcached_server}',$socket,file_get_contents($templateFile)))>0;
         $res3 = file_put_contents(AK_CI_CONFIG_FILE,str_replace('memcached-socket: ','memcached-socket: '.$socket,file_get_contents(AK_CI_CONFIG_FILE)));
         return $res1 && $res2 && $res3;
