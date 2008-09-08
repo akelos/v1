@@ -16,6 +16,20 @@ class Test_of_AkSession_Class extends  WebTestCase
 {
     var $sessionLife = NULL;
    
+    function _checkIfEnabled($file = null)
+    {
+        if ($file == null) {
+            $file = isset($this->check_file)?$this->check_file:null;
+        }
+        if ($file!=null && file_exists($file)) {
+            $val = file_get_contents($file);
+            if ($val == '0') {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     function test_install_db_tables()
     {
         require_once(dirname(__FILE__).'/../../fixtures/app/installers/framework_installer.php');
