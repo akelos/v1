@@ -741,7 +741,10 @@ class AkRequest extends AkObject
         } else if (isset($this->_request['format'])) {
             $this->_format = $this->_request['format'];
         } elseif (preg_match('/^([^\.]+)\.(.+)$/', @$this->_request['ak'], $matches)) {
-            $this->_format = isset($matches[2])?$matches[2]:null;
+            $this->_format = isset($matches[2])?strtolower($matches[2]):null;
+            if ($this->_format == 'htm') {
+                $this->_format = 'html';
+            }
             $this->_request['format'] = $this->_format;
             $this->_request['ak'] = preg_replace('/^(.*)\.'.$this->_format.'$/','\1',$this->_request['ak']);
         } else if ($this->isGet() || $this->isDelete()) {
