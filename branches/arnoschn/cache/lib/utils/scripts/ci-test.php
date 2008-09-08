@@ -303,14 +303,14 @@ class CI_Tests
     function debug($message)
     {
         if ($this->debug) {
-            echo "[DEBUG] $message\n";
+            echo "[DEBUG]\t$message\n";
         }
     }
     function error($message, $fatal = false)
     {
-        echo "[ERROR] $message\n";
+        echo "[ERROR]\t$message\n";
         if ($fatal) {
-            die("[FATAL-ERROR] exiting.\n");
+            die("[FATAL-ERROR]\texiting.\n");
         }
     }
     function _checkExecutables($executables = array())
@@ -364,14 +364,32 @@ class CI_Tests
     }
     function _promptForTestingUrl($test_installation)
     {
-        while ((($testingUrl = $this->promptUserVar('Please provide the testing url of the webserver (example: http://localhost/test/fixtures/public)')) && !$this->_checkWebServer($testingUrl,$test_installation))) {
+        while ((($testingUrl = $this->promptUserVar("Please provide the testing url of the webserver.
+        
+        Example:
+        
+        In case you are running apache on localhost you can add the following in the apache conf:
+        
+        Alias /akelos-ci-tests \"$test_installation\"
+
+        <Directory \"$test_installation\">
+            Options Indexes FollowSymLinks
+            AllowOverride All
+            Order allow,deny
+            Allow from all
+        </Directory>
+        
+        If you are running apache on localhost, the testing url would be:
+        
+        http://localhost/akelos-ci-tests/test/fixtures/public
+        ")) && !$this->_checkWebServer($testingUrl,$test_installation))) {
             $this->error('Could not verify the testing url. Please make sure a webserver is running and handling that request.');
         }
         return $testingUrl;
     }
     function info($message)
     {
-        echo "[INFO] $message \n";
+        echo "[INFO]\t$message \n";
     }
     function _createTestInstallation($testDir = null)
     {
