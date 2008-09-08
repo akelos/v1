@@ -1,6 +1,7 @@
 #this file must be located in config/ci-config.yaml
 test-installation: ${test-installation}
 test-url: ${test-url}
+memcached-socket: ${memcached-socket}
 
 executables: 
   php5:    ${php5}                         

@@ -6,6 +6,9 @@ require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 
+defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.'lib'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached');
+
+
 class AkCache_TestCase extends  AkUnitTest 
 {
     
@@ -22,8 +25,11 @@ class AkCache_TestCase extends  AkUnitTest
 
     function test_all_caches()
     {
-        
-        $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2,'akmemcache'=>3);
+        $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2);
+        $memcacheEnabled = $this->_checkIfEnabled(AK_TEST_MEMCACHED_CHECKFILE);
+        if ($memcacheEnabled) {
+            $cacheHandlers['akmemcache'] = 3;
+        }
         $unitTests = array('_testInit','_test_get_and_save','_testremove', '_Testclean');
         
         

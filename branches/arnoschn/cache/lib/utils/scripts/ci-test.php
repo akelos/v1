@@ -150,6 +150,9 @@ class CI_Tests
                 return false;
             }
             
+            if (!$this->_checkMemcacheInstallation()) {
+                return false;
+            }
             
         } else {
             $this->debug('File '.AK_CI_CONFIG_FILE.' does not exist');
@@ -158,7 +161,9 @@ class CI_Tests
                 $this->error('Could not create: '.AK_CI_CONFIG_FILE,true);
             }
             $this->loadSettings();
+            $this->_setupMemcache();
         }
+        
         $this->_fixTestInstallationPermissions();
         $this->configured['ci-config.yaml'] = true;
         $this->configured['environments'] = array();
@@ -427,6 +432,67 @@ class CI_Tests
         foreach ($dirs as $dir) {
             exec('chmod -Rf 777 '.AK_CI_TEST_DIR.$dir);
         }
+    }
+    
+    function _setupMemcache()
+    {
+        $memcachedInstalled = $this->promptUserVar('Certain tests need a memcached running. Do you have a memcached installation?',array('default'=>'No'));
+        
+        if (!in_array(strtolower($memcachedInstalled),array('y','yes','si','ja','1'))) {
+            $installation = $this->settings['test-installation'];
+            $memcacheTestConfigFile = $installation.DS.'test'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached';
+            file_put_contents($memcacheTestConfigFile,'0');
+            return;
+        } else {
+            $socket = $this->_configureMemcache();
+            if ($socket !== false) {
+                $res = $this->_createMemcachedConfig($socket);
+                if (!$res) {
+                    $this->error('Could not create caching.yml. Disabling memcached support.');
+                    $installation = $this->settings['test-installation'];
+                    $memcacheTestConfigFile = $installation.DS.'test'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached';
+                    file_put_contents($memcacheTestConfigFile,'0');
+                    return;
+                } else {
+                    
+                }
+            }
+        }
+    }
+    
+    function _createMemcachedConfig($socket)
+    {
+        $file1 = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'app'.DS.'config'.DS.'caching.yml';
+        $file2 = AK_CI_TEST_DIR.DS.'config'.DS.'caching.yml';
+        $templateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-caching.yml';
+        $this->info('Creating caching configuration for');
+        $res1 = file_put_contents($file1,str_replace('${memcached_server}',$socket,file_get_contents($templateFile)))>0;
+        $res2 = file_put_contents($file1,str_replace('${memcached_server}',$socket,file_get_contents($templateFile)))>0;
+        $res3 = file_put_contents(AK_CI_CONFIG_FILE,str_replace('${memcached-socket}',$socket,file_get_contents(AK_CI_CONFIG_FILE)));
+        return $res1 && $res2 && $res3;
+    }
+    
+    function _checkMemcacheInstallation($socket = null)
+    {
+        if ($socket == null) {
+            $socket = $this->settings['memcached-socket'];
+        }
+        require_once(AK_BASE_DIR.DS.'lib'.DS.'AkCache'.DS.'AkMemcache.php');
+        $memcache = new AkMemcache();
+        return @$memcached->init(array('servers'=>array($socket)));
+    }
+    function _configureMemcache()
+    {
+        require_once(AK_BASE_DIR.DS.'lib'.DS.'AkCache'.DS.'AkMemcache.php');
+        $memcache = new AkMemcache();
+        while (($socket = $this->promptUserVar('Please provide the socket memcached is running on',array('default'=>'localhost:11211')) && !$this->_checkMemcacheInstallation($socket))) {
+            $this->error('Could not connect to memcached at socket: '.$socket);
+            $tryAgain = $this->promptUserVar('Want to try again configuring memcached support?',array('default'=>'Yes'));
+            if (!in_array(strtolower($memcachedInstalled),array('y','yes','si','ja','1'))) {
+                return false;
+            }
+        }
+        return $socket;
     }
     function loadSettings($filename=AK_CI_CONFIG_FILE)
     {

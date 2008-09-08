@@ -37,9 +37,46 @@ class AkUnitTest extends UnitTestCase
         $this->_configure();
     }
     
+    /**
+     *    Gets a list of test names. Normally that will
+     *    be all internal methods that start with the
+     *    name "test". This method should be overridden
+     *    if you want a different rule.
+     *    @return array        List of test names.
+     *    @access public
+     */
+    function getTests() {
+        $methods = array();
+        if (isset($this->skip) && $this->skip == true) {
+            return $methods;
+        }
+        foreach (get_class_methods(get_class($this)) as $method) {
+            if ($this->_isTest($method)) {
+                $methods[] = $method;
+            }
+        }
+        return $methods;
+    }
+    
     function _configure()
     {
+        $this->skip = !$this->_checkIfEnabled();
         $this->_loadFixtures();
+        
+    }
+    
+    function _checkIfEnabled($file = null)
+    {
+        if ($file == null) {
+            $file = isset($this->check_file)?$this->check_file:null;
+        }
+        if ($file!=null && file_exists($file)) {
+            $val = file_get_contents($file);
+            if ($val == 0) {
+                return false;
+            }
+        }
+        return true;
     }
     
     
