@@ -3,7 +3,7 @@
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 require_once(AK_LIB_DIR.DS.'AkCache'.DS.'AkMemcache.php');
 
-defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.'lib'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached');
+defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.'lib'.DS.'unit'.DS.'config'.DS.'memcached');
 
 class Test_AkMemcache extends  UnitTestCase
 {

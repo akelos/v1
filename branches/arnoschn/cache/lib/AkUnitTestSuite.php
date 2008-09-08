@@ -8,7 +8,7 @@ class AkUnitTestSuite extends GroupTest
     var $baseDir = '';
     var $partial_tests = array();
     var $title = 'Akelos Tests';
-    var $excludes = 'config';
+
     function AkUnitTestSuite()
     {
         $this->_init();
