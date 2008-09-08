@@ -441,7 +441,7 @@ class CI_Tests
         
         if (!in_array(strtolower($memcachedInstalled),array('y','yes','si','ja','1'))) {
             $installation = $this->settings['test-installation'];
-            $memcacheTestConfigFile = $installation.DS.'test'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached';
+            $memcacheTestConfigFile = $installation.DS.'test'.DS.'unit'.DS.'config'.DS.'memcached';
             file_put_contents($memcacheTestConfigFile,'0');
             return;
         } else {
@@ -451,7 +451,7 @@ class CI_Tests
                 if (!$res) {
                     $this->error('Could not create caching.yml. Disabling memcached support.');
                     $installation = $this->settings['test-installation'];
-                    $memcacheTestConfigFile = $installation.DS.'test'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached';
+                    $memcacheTestConfigFile = $installation.DS.'test'.DS.'unit'.DS.'config'.DS.'memcached';
                     file_put_contents($memcacheTestConfigFile,'0');
                     return;
                 } else {
