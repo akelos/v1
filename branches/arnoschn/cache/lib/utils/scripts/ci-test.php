@@ -463,7 +463,7 @@ class CI_Tests
     
     function _createMemcachedConfig($socket)
     {
-        $file1 = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'app'.DS.'config'.DS.'caching.yml';
+        $file1 = AK_CI_TEST_DIR.DS.'test'.DS.'fixtures'.DS.'config'.DS.'caching.yml';
         $file2 = AK_CI_TEST_DIR.DS.'config'.DS.'caching.yml';
         $templateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-caching.yml';
         $this->info('Creating caching configuration for');
