@@ -357,6 +357,7 @@ class CI_Tests
         $settings['${php4}'] = $this->_promptForPhp('php4');
         $settings['${php5}'] = $this->_promptForPhp('php5');
         $settings['${test-url}'] = $this->_promptForTestingUrl($settings['${test-installation}']);
+        $settings['${memcached-socket}'] = '';
         return file_put_contents($file,str_replace(array_keys($settings),array_values($settings),file_get_contents($templateFile)))>0;
     }
     
@@ -468,7 +469,7 @@ class CI_Tests
         $this->info('Creating caching configuration for');
         $res1 = file_put_contents($file1,str_replace('${memcached_server}',$socket,file_get_contents($templateFile)))>0;
         $res2 = file_put_contents($file1,str_replace('${memcached_server}',$socket,file_get_contents($templateFile)))>0;
-        $res3 = file_put_contents(AK_CI_CONFIG_FILE,str_replace('${memcached-socket}',$socket,file_get_contents(AK_CI_CONFIG_FILE)));
+        $res3 = file_put_contents(AK_CI_CONFIG_FILE,str_replace('memcached-socket: ','memcached-socket: '.$socket,file_get_contents(AK_CI_CONFIG_FILE)));
         return $res1 && $res2 && $res3;
     }
     
