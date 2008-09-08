@@ -62,7 +62,6 @@ class AkUnitTest extends UnitTestCase
     {
         $this->skip = !$this->_checkIfEnabled();
         $this->_loadFixtures();
-        
     }
     
     function _checkIfEnabled($file = null)

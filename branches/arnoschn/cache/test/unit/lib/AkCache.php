@@ -6,7 +6,7 @@ require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
 require_once(AK_LIB_DIR.DS.'AkCache.php');
 
-defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.'lib'.DS.'unit'.DS.'suites'.DS.'config'.DS.'memcached');
+defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.DS.'unit'.DS.'config'.DS.'memcached');
 
 
 class AkCache_TestCase extends  AkUnitTest 

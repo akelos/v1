@@ -5,7 +5,7 @@ require_once(dirname(__FILE__).'/../../fixtures/config/config.php');
 
 
 require_once(AK_LIB_DIR.DS.'AkSession.php');
-
+defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.DS.'unit'.DS.'config'.DS.'memcached');
 /**
 * In order to test sessions we have created a help script that we will use for checking and setting session params
 */
@@ -32,7 +32,11 @@ class Test_of_AkSession_Class extends  WebTestCase
     }
     function test_all_session_handlers()
     {
-        $cacheHandlers = array('file'=>1,'akadodbcache'=>2,'akmemcache'=>3);
+        $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2);
+        $memcacheEnabled = $this->_checkIfEnabled(AK_TEST_MEMCACHED_CHECKFILE);
+        if ($memcacheEnabled) {
+            $cacheHandlers['akmemcache'] = 3;
+        }
         $unitTests = array('_Test_open','_Test_read_write','_Test_destroy', '_Test_gc');
         
         

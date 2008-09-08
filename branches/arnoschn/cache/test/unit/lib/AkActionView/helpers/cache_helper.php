@@ -8,7 +8,7 @@ require_once(AK_LIB_DIR.DS.'AkRequest.php');
 
 ak_generate_mock('AkRequest');
 
-
+defined('AK_TEST_MEMCACHED_CHECKFILE')? null: define('AK_TEST_MEMCACHED_CHECKFILE',AK_TEST_DIR.DS.DS.'unit'.DS.'config'.DS.'memcached');
 class CacheHelperTests extends HelpersUnitTester 
 {
     var $fragment_key;
@@ -36,7 +36,11 @@ class CacheHelperTests extends HelpersUnitTester
     
     function test_all_caches()
     {
-        $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2,'akmemcache'=>3);
+        $cacheHandlers = array('cache_lite'=>1,'akadodbcache'=>2);
+        $memcacheEnabled = $this->_checkIfEnabled(AK_TEST_MEMCACHED_CHECKFILE);
+        if ($memcacheEnabled) {
+            $cacheHandlers['akmemcache'] = 3;
+        }
         $unitTests = array('_test_cache_with_string_key','_test_cache_with_string_key_cached');
         
         if(is_a($this->controller->_CacheHandler,'AkCacheHandler')) {

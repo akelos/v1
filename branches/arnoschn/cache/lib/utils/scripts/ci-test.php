@@ -57,8 +57,11 @@ class CI_Tests
         foreach ($this->configured as $type=>$ok) {
             switch($type) {
                 case 'environments':
+                    if (!is_array($ok)) {
+                        $ok = array('mysql'=>false,'postgres'=>false,'sqlite'=>false);
+                    }
                     foreach ($ok as $env=>$res) {
-                        if (!$ok) {
+                        if (!$res) {
                             $this->_createDbConfig($env);
                         }
                     }
@@ -140,6 +143,7 @@ class CI_Tests
             $this->loadSettings();
             // check if the ci-test installation is there
             if (!$this->_checkTestInstallation()) {
+                $this->error('Check of test installation failed');
                 return false;
             }
             if (isset($this->settings['test-installation'])) {
@@ -147,10 +151,12 @@ class CI_Tests
             }
             // check if php executables are runnable and if they are really php4 and php5
             if (!$this->_checkExecutables()) {
+                $this->error('Check of executables failed');
                 return false;
             }
             
             if (!$this->_checkMemcacheInstallation()) {
+                $this->error('Check of memcached installation failed');
                 return false;
             }
             
@@ -478,6 +484,7 @@ class CI_Tests
     {
         if ($socket == null) {
             $socket = $this->settings['memcached-socket'];
+            if (empty($socket)) return true;
         }
         require_once(AK_BASE_DIR.DS.'lib'.DS.'AkCache'.DS.'AkMemcache.php');
         $memcache = new AkMemcache();
