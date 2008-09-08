@@ -72,7 +72,7 @@ class AkUnitTest extends UnitTestCase
         }
         if ($file!=null && file_exists($file)) {
             $val = file_get_contents($file);
-            if ($val == 0) {
+            if ($val == '0') {
                 return false;
             }
         }

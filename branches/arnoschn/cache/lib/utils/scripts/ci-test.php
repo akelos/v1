@@ -480,16 +480,16 @@ class CI_Tests
         }
         require_once(AK_BASE_DIR.DS.'lib'.DS.'AkCache'.DS.'AkMemcache.php');
         $memcache = new AkMemcache();
-        return @$memcached->init(array('servers'=>array($socket)));
+        return @$memcache->init(array('servers'=>array($socket)));
     }
     function _configureMemcache()
     {
         require_once(AK_BASE_DIR.DS.'lib'.DS.'AkCache'.DS.'AkMemcache.php');
         $memcache = new AkMemcache();
-        while (($socket = $this->promptUserVar('Please provide the socket memcached is running on',array('default'=>'localhost:11211')) && !$this->_checkMemcacheInstallation($socket))) {
+        while ((($socket = $this->promptUserVar('Please provide the socket memcached is running on',array('default'=>'localhost:11211'))) && !$this->_checkMemcacheInstallation($socket))) {
             $this->error('Could not connect to memcached at socket: '.$socket);
             $tryAgain = $this->promptUserVar('Want to try again configuring memcached support?',array('default'=>'Yes'));
-            if (!in_array(strtolower($memcachedInstalled),array('y','yes','si','ja','1'))) {
+            if (!in_array(strtolower($tryAgain),array('y','yes','si','ja','1'))) {
                 return false;
             }
         }
