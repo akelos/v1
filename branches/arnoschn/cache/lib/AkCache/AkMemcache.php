@@ -1,5 +1,6 @@
 <?php
 require_once(AK_VENDOR_DIR.DS.'phpmemcached'.DS.'class_MemCachedClient.php');
+require_once(AK_LIB_DIR.DS.'AkObject.php');
 
 class AkMemcache extends AkObject
 {
