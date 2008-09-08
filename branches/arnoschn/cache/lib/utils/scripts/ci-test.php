@@ -382,6 +382,9 @@ class CI_Tests
         If you are running apache on localhost, the testing url would be:
         
         http://localhost/akelos-ci-tests/test/fixtures/public
+        
+        You need to restart your webserver after making the change and before confirming
+        the testing url.
         ")) && !$this->_checkWebServer($testingUrl,$test_installation))) {
             $this->error('Could not verify the testing url. Please make sure a webserver is running and handling that request.');
         }
