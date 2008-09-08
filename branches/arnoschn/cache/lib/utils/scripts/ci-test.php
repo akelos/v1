@@ -410,6 +410,11 @@ class CI_Tests
             exec($command,$out,$ret);
         }
         
+        $routing = copy(AK_BASE_DIR.DS.'config'.DS.'DEFAULT-routes.php',$testDir.DS.'config'.DS.'routes.php');
+        
+        if (!$routing) {
+            $this->error('Could not copy routing file to '.$testDir.DS.'config'.DS.'routes.php',true);
+        }
         
         if ($ret!=0) {
             $this->error('Could not install akelos testing app in: '.$testDir,true);
