@@ -742,11 +742,12 @@ class AkRequest extends AkObject
             $this->_format = $this->_request['format'];
         } elseif (preg_match('/^([^\.]+)\.(.+)$/', @$this->_request['ak'], $matches)) {
             $this->_format = isset($matches[2])?strtolower($matches[2]):null;
+            $orgformat = $this->_format;
             if ($this->_format == 'htm') {
                 $this->_format = 'html';
             }
             $this->_request['format'] = $this->_format;
-            $this->_request['ak'] = preg_replace('/^(.*)\.'.$this->_format.'$/','\1',$this->_request['ak']);
+            $this->_request['ak'] = preg_replace('/^(.*)\.'.$orgformat.'$/','\1',$this->_request['ak']);
         } else if ($this->isGet() || $this->isDelete()) {
             $this->_format = $this->_bestMimeType();
         } else if ($this->isPost() || $this->isPut()) {
