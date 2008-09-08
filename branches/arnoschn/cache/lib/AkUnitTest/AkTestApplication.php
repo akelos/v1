@@ -39,7 +39,7 @@ class AkTestApplication extends AkUnitTest
                 $parts = split(': ', $ch);
                 if ($parts[0] == $header) {
                     if ($content != null) {
-                        $this->assertEqual($content, $parts[1],'1 Header content does not match: '.$parts[1].':'.var_export($this->_cacheHeaders,true));
+                        $this->assertEqual($content, $parts[1],'1 Header content does not match: '.$parts[1].'!='.$content.':'.var_export($this->_cacheHeaders,true)."\n".var_export($this->Dispatcher->Request->_format,true));
                         return;
                     } else {
                         $this->assertTrue(true);
@@ -52,7 +52,7 @@ class AkTestApplication extends AkUnitTest
             $value = $this->Dispatcher->Response->getHeader($header);
             $this->assertTrue($value!=false,'Header "'.$header.'" not found');
             if ($content != null) {
-                $this->assertEqual($value, $content,'2 Header content does not match: '.$content.':'.var_export($this->Dispatcher->Response->_headers,true).':'.var_export($this->Dispatcher->Response->_headers_sent,true));;
+                $this->assertEqual($value, $content,'2 Header content does not match: '.$content.'!='.$value.':'.var_export($this->Dispatcher->Response->_headers,true).':'.var_export($this->Dispatcher->Response->_headers_sent,true)."\n".var_export($this->Dispatcher->Request->_format,true));;
             }
         } else {
             $this->assertTrue(false,'Header "'.$header.'" not found');

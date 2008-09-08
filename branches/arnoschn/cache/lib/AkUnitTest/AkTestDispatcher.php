@@ -77,8 +77,8 @@ class AkTestDispatcher extends AkDispatcher
 
     function dispatch()
     {
-        $this->Request =new AkTestRequest();
-        $this->Response =new AkTestResponse();
+        $this->Request = &new AkTestRequest();
+        $this->Response = &new AkTestResponse();
         $controller = & $this->Request->recognize();
         if ($controller === false) {
             return false;
@@ -89,7 +89,7 @@ class AkTestDispatcher extends AkDispatcher
                     $this->Controller->$key = $value;
                 }
             }
-            $this->Controller->process($this->Request, $this->Response);
+            $this->Controller->process(&$this->Request, &$this->Response);
 
         }
         return true;
