@@ -64,14 +64,9 @@ class AkResponse extends AkObject
     }
     function setContentTypeForFormat($format)
     {
-        static $mime_types;
         if (!empty($format)) {
-            $parts = preg_split('/\./',$format);
-            if (empty($mime_types)) {
-                require_once(AK_LIB_DIR.DS.'utils'.DS.'mime_types.php');
-            }
-            if (isset($mime_types[$parts[count($parts)-1]])) {
-                $mime_type = $mime_types[$parts[count($parts)-1]];
+            $mime_type = Ak::mime_content_type('file.'.$format);
+            if (!empty($mime_type)) {
                 $this->addHeader('Content-Type', $mime_type);
             }
         }
