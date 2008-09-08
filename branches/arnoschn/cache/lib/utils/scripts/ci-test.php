@@ -96,7 +96,9 @@ class CI_Tests
         $type = $env;
         $this->info('Creating environment configuration for:'.$env);
         $dbConfig = $this->_promptForDbConfig($env);
-        $dbConfig['type'] = $type;
+        $configType = $type;
+        if($type=='postgres')$configType='pgsql';
+        $dbConfig['type'] = $configType;
         while (!($res = $this->_checkDbConfig($type,$dbConfig))) {
             
             $this->info('Try again:');
