@@ -23,13 +23,13 @@ class AkTestApplication extends AkUnitTest
     function assertText($text, $message = '%s') {
             return $this->assert(
                     new TextExpectation($text),
-                    strip_tags($text),
+                    strip_tags($this->_response),
                     $message);
     }
     function assertNoText($text, $message = '%s') {
         return $this->assert(
                 new NoTextExpectation($text),
-                strip_tags($text),
+                strip_tags($this->_response),
                 $message);
     }
     function assertHeader($header, $content = null)

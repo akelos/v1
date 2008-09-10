@@ -29,7 +29,7 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
         $this->setIp('212.121.121.121');
         $this->get('http://www.example.com/page_caching/ok');
 
-        $this->assertText('/^\s*$/');
+        $this->assertWantedPattern('/^\s*$/');
         $this->assertResponse(200);
         $this->assertTrue($this->_assertPageCached('/page_caching/ok'));
 
