@@ -407,8 +407,11 @@ class AkCacheHandler extends AkObject
     {
         $configuration_object = &$this->_controller;
         $configuration_options = array('caches_page'=>'_setCachesPage',
+                                       'cachesPage'=>'_setCachesPage',
                                        'caches_action'=>'_setCachesAction',
+                                       'cachesAction'=>'_setCachesAction',
                                        'cache_sweeper'=>'_setCacheSweeper',
+                                       'cacheSweeper'=>'_setCacheSweeper',
                                        'page_cache_extension'=>'_setPageCacheExtension');
         /**
          * Load the configured cache store,
