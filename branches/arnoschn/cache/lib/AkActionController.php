@@ -2923,22 +2923,28 @@ class AkActionController extends AkObject
     function _ensureActionExists()
     {
         if(!method_exists($this, $this->_action_name)){
-            if(AK_ENVIRONMENT == 'development'){
-                AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->error('Action '.$this->_action_name.' not found on '.$this->getControllerName()) : null;
-                trigger_error(Ak::t('Controller <i>%controller_name</i> can\'t handle action %action_name',
-                array(
-                '%controller_name' => $this->getControllerName(),
-                '%action_name' => $this->_action_name,
-                )), E_USER_ERROR);
-            }elseif(@include(AK_PUBLIC_DIR.DS.'405.php')){
-                return false;
-            }else{
-                $this->Response->addHeader('Status',405);//("HTTP/1.1 405 Method Not Allowed");
-                $this->renderText('405 Method Not Allowed');
-                return false;
-            }
+            return $this->_renderActionNotExists();
         }
         return true;
+    }
+    
+    function _renderActionNotExists()
+    {
+        if(AK_ENVIRONMENT == 'development'){
+            AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->error('Action '.$this->_action_name.' not found on '.$this->getControllerName()) : null;
+            trigger_error(Ak::t('Controller <i>%controller_name</i> can\'t handle action %action_name',
+            array(
+            '%controller_name' => $this->getControllerName(),
+            '%action_name' => $this->_action_name,
+            )), E_USER_ERROR);
+            return true;
+        }elseif(@include(AK_PUBLIC_DIR.DS.'405.php')){
+            return false;
+        }else{
+            $this->Response->addHeader('Status',405);//("HTTP/1.1 405 Method Not Allowed");
+            $this->renderText('405 Method Not Allowed');
+            return false;
+        }
     }
     
     /**
