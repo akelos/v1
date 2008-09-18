@@ -235,7 +235,7 @@ class AkelosInstaller
      */
     function _getDestinationPath($path)
     {
-        return str_replace($this->options['source'], $this->options['directory'], $path);
+        return str_replace($this->options['source'].DS, $this->options['directory'].DS, $path);
     }
 
     /**
