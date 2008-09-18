@@ -93,13 +93,12 @@ class CI_Tests
     {
         $file = AK_BASE_DIR.DS.'config'.DS.$env.'.yml';
         $templateFile = AK_BASE_DIR.DS.'script'.DS.'extras'.DS.'TPL-database.yml';
-        $type = $env;
+        if (in_array($env,array('postgres','postgresql','postgressql'))) {
+        	$env = 'pgsql';
+        }
         $this->info('Creating environment configuration for:'.$env);
         $dbConfig = $this->_promptForDbConfig($env);
-        $configType = $type;
-        if($type=='postgres')$configType='pgsql';
-        $dbConfig['type'] = $configType;
-        while (!($res = $this->_checkDbConfig($type,$dbConfig))) {
+        while (!($res = $this->_checkDbConfig($env,$dbConfig))) {
             
             $this->info('Try again:');
             $dbConfig = $this->_promptForDbConfig($env);
@@ -415,6 +414,8 @@ class CI_Tests
                 $this->error('Directory '.$testDir.' is not writable');
             }
         }
+        $testDir = rtrim($testDir,DS).DS;
+        $this->debug('Chosen directory '.$testDir);
         $out = array();
         $command = AK_BASE_DIR.DS.'akelos -d '.$testDir.' -deps --force';
         $this->debug('Installing akelos testing app: '.$command);
