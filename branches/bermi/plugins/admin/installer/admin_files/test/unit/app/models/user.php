@@ -69,15 +69,34 @@ class UserTestCase extends AkUnitTest
         $this->assertNotEqual($Alicia->get('password'), $pass);
     }
 
-    function test_should_emit_and_and_validate_password_recovery_token()
+    function test_should_emit_and_and_validate_single_use_login_token()
+    {
+        $Alicia =& $this->User->findFirstBy('login', 'alicia');
+        $token = $Alicia->getToken(array('single_use'=> true));
+        $this->assertTrue($User = User::authenticateWithToken($token));
+        $this->assertEqual($Alicia->get('login'), $User->get('login'));
+        $this->assertFalse($User = User::authenticateWithToken($token));
+    }
+
+    function test_should_emit_and_and_validate_login_token()
     {
         $Alicia =& $this->User->findFirstBy('login', 'alicia');
         $token = $Alicia->getToken();
-        $this->assertTrue($token, $Alicia->sha1($Alicia->sha1($Alicia->get('updated_at').$Alicia->get('login')).$Alicia->get('password')));
-        $this->assertEqual(40, strlen($token));
-
-        $this->assertTrue($Alicia->isTokenValid($token));
-        $this->assertFalse($Alicia->isTokenValid('125dsfsdjghksjhrjkhjkdak'));
+        $this->assertTrue($User = User::authenticateWithToken($token));        
+        $this->assertEqual($Alicia->get('login'), $User->get('login'));
+        $this->assertTrue($User = User::authenticateWithToken($token));
+    }
+    
+    function test_should_issue_expiring_tokens()
+    {
+        
+        $Alicia =& $this->User->findFirstBy('login', 'alicia');
+        $token = $Alicia->getToken(array('expires'=>1));
+        $this->assertTrue($User = User::authenticateWithToken($token));        
+        $this->assertTrue($User = User::authenticateWithToken($token));        
+        $this->assertEqual($Alicia->get('login'), $User->get('login'));
+        sleep(1);
+        $this->assertFalse($User = User::authenticateWithToken($token));
     }
 
     function test_should_detect_if_given_password_is_valid()

@@ -57,6 +57,26 @@ class Sentinel
         }
         return $result;
     }
+    
+    function authenticateWithToken($token)
+    {
+        $options = User::_decodeToken($token);
+        
+        if(!empty($options) && !empty($options['hash']) && !empty($options['id'])){
+            $User = new User();
+            $User = $User->find($options['id']);
+            if(!empty($options['expires']) && $options['expires'] < Ak::getTimestamp()){
+                return false;
+            }
+            if($options['hash'] == $User->_getTokenHash($options)){
+
+                $User->updateAttribute('last_login_at', Ak::getDate());
+
+                return $User;
+            }
+        }
+        return false;
+    }
 
 
     function saveOriginalRequest($force = false)
@@ -157,6 +177,30 @@ class Sentinel
     }
 
 
+    function getCredentialsRenewalUrl($User)
+    {
+        if($User){
+            return $this->Controller->urlFor(array(
+            'controller' => 'account',
+            'action' => 'reset_password',
+            'token' => $User->getToken(array('single_use' => true, 'expires' => 86400)),
+            ));
+        }
+
+        return false;
+    }
+
+    function sendPasswordReminder($User)
+    {
+        if($password_reset_url = $this->getCredentialsRenewalUrl($User)){
+            Ak::import_mailer('account_mailer');
+            $Mailer =& new AccountMailer();
+            $Mailer->setPasswordResetUrl($password_reset_url);
+            $Mailer->deliver('password_reminder', $User->get('email'));
+            return true;
+        }
+        return false;
+    }
 
 }
 
