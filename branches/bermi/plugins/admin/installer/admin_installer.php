@@ -9,9 +9,6 @@ class AdminInstaller extends AkInstaller
         $this->files = Ak::dir(AK_ADMIN_PLUGIN_FILES_DIR, array('recurse'=> true));
         empty($this->options['force']) ? $this->checkForCollisions($this->files) : null;
         $this->copyAdminFiles();
-        
-        return;
-
         echo "\nWe need some details for setting up the admin.\n\n ";
         $this->modifyRoutes();
         $this->relativizeStylesheetPaths();
