@@ -4,6 +4,7 @@ class Admin_DashboardController extends AdminController
 {
     function index()
     {
+        $this->renderAction('blank_slate');
     }
 
     function action_privileges_error()
