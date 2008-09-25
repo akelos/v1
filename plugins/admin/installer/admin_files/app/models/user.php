@@ -318,7 +318,8 @@ class User extends ActiveRecord
 
     function can($task, $extension = null, $force_reload = false)
     {
-        if(!isset($this->_activeRecordHasBeenInstantiated)){
+        if(!isset($this->_activeRecordHasBeenInstantiated) || 
+            $this->getModelName() != 'User'){
             if (User::isLoaded()) {
                 $User =& User::getCurrentUser();
                 return $User->can($task, $extension, $force_reload);
