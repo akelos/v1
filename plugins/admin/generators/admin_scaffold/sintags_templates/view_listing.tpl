@@ -4,17 +4,17 @@ $CamelCasePlural = AkInflector::camelize($plural_name);
 ?>
 <div id="content_menu">
     <ul class="menu">
-        <li class="primary"><?php  echo '<%='?> link_to _('Create new <?php  echo AkInflector::humanize($singular_name)?>'), :action => 'add' %></li>
-        <li class="active"><?php  echo '<%='?> link_to _('Listing <?php  echo AkInflector::humanize($plural_name)?>'), :action => 'listing' %></li>
+        <li class="primary"><?php  echo '<%='?> link_to _('Create new <?php  echo AkInflector::titleize($singular_name)?>'), :action => 'add' %></li>
+        <li class="active"><?php  echo '<%='?> link_to _('Listing <?php  echo AkInflector::titleize($plural_name)?>'), :action => 'listing' %></li>
     </ul>
     <p class="information">{_controller_information}</p>
 </div>
 
 <div class="content">
 {?<?php  echo $CamelCasePlural?>}
-<h1>_{Listing available <?php  echo AkInflector::humanize($plural_name)?>}</h1>
+<h1>_{Listing available <?php  echo AkInflector::titleize($plural_name)?>}</h1>
   <div class="listing">
-  <table cellspacing="0" summary="_{Listing available <?php  echo AkInflector::humanize($plural_name)?>}">
+  <table cellspacing="0" summary="_{Listing available <?php  echo AkInflector::titleize($plural_name)?>}">
   
   <tr>
     <?php  echo '<?php  '?>$content_columns = array_keys($<?php  echo $model_name?>->getContentColumns()); ?>
@@ -46,9 +46,9 @@ $CamelCasePlural = AkInflector::camelize($plural_name);
   
   {else}
   
-  <h1>_{No <?php  echo AkInflector::humanize($plural_name)?> available yet.}</h1>
+  <h1>_{No <?php  echo AkInflector::titleize($plural_name)?> available yet.}</h1>
   
-  <p><?php  echo '<%='?> link_to _('Click here to create the first <?php  echo AkInflector::humanize($singular_name)?>'), :action => 'add' %></p>
+  <p><?php  echo '<%='?> link_to _('Click here to create the first <?php  echo AkInflector::titleize($singular_name)?>'), :action => 'add' %></p>
   
   {end} 
   

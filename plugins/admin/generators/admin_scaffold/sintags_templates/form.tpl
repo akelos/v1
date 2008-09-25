@@ -10,7 +10,7 @@
             echo "
     <fieldset>
         <label for=\"{$singular_name}_{$column}\">_{".
-            AkInflector::humanize($details['name']).
+            AkInflector::titleize($details['name']).
             "}</label> 
         <%= input '$model_name', '$column' %>
     </fieldset>
