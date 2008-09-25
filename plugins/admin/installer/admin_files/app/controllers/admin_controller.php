@@ -22,26 +22,25 @@ class AdminController extends ApplicationController
     
     function __construct()
     {
-        $this->beforeFilter('authenticate');
-        !empty($this->protected_actions) ? $this->beforeFilter('_protectAction') : null;
-        !empty($this->protect_all_actions) ? $this->beforeFilter(array('_protectAllActions' => array('except'=>'action_privileges_error'))) : null;
+        $this->beforeFilter('load_settings');
+        $this->beforeFilter('authenticate', array('except' => 'login'));
+        !empty($this->protected_actions) ? $this->beforeFilter('_protectAction', array('except' => 'login')) : null;
+        !empty($this->protect_all_actions) ? $this->beforeFilter(array('_protectAllActions' => array('except'=>array('action_privileges_error', 'login')))) : null;
+    }
+
+    function load_settings()
+    {
+        $this->admin_settings = Ak::getSettings('admin');
+        return true;
     }
 
     function authenticate()
     {
-        if(empty($_SESSION['__CurrentUser'])){
-            if($this->CurrentUser =& $this->_authenticateOrRequestWithHttpBasic($this->t('Application Administration'), new User())){
-                $_SESSION['__CurrentUser'] = serialize($this->CurrentUser);
-            }
-        }else{
-            $this->CurrentUser = unserialize($_SESSION['__CurrentUser']);
-        }
-        if($result = !empty($_SESSION['__CurrentUser'])){
-            User::_setCurrentUser($this->CurrentUser);
-        }
-        return $result;
+        Ak::import('sentinel');
+        $Sentinel =& new Sentinel();
+        $Sentinel->init($this);
+        return $Sentinel->authenticate();
     }
-
 
     function access_denied()
     {

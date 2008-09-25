@@ -1,5 +1,6 @@
 <?php
 
+
 defined('AK_DEFAULT_USER_ROLE') ? null : define('AK_DEFAULT_USER_ROLE', 'Registered user');
 
 class User extends ActiveRecord
@@ -22,23 +23,67 @@ class User extends ActiveRecord
         return $this->init($attributes);
     }
 
-
     /**
      * Main authentication method
      * 
-     * @param string $login
+     * @param string $login user name or password
      * @param string $password
      * @return False if not found or not enabled, User instance if succedes
      */
     function authenticate($login, $password)
     {
         $UserInstance =& new User();
-        if($User =& $UserInstance->find('first', array('conditions'=>array('login = ? AND __owner.is_enabled = ? AND _roles.is_enabled = ?', $login, true, true), 'include'=>'role')) && $User->isValidPassword($password)){
+
+        $login_or_email = preg_match(AK_EMAIL_REGULAR_EXPRESSION, $login) ? 'email' : 'login';
+
+        if($User =& $UserInstance->find('first', array('conditions'=>array($login_or_email.' = ? AND __owner.is_enabled = ? AND _roles.is_enabled = ?', $login, true, true), 'include'=>'role')) && $User->isValidPassword($password)){
             $User->set('last_login_at', Ak::getDate());
             $User->save();
             return $User;
         }
         return false;
+    }
+
+    function signUp($user_details, $options = array())
+    {
+        $user_details['is_enabled'] = true;
+        $this->setAttributes($user_details);
+        if($this->save()){
+            $this->setDefaultRole();
+            $this->sendSignupMessage(array(
+            'login' => $user_details['login'],
+            'password' => $user_details['password'],
+            ));
+            return true;
+        }
+        return false;
+    }
+
+    function setDefaultRole()
+    {
+        $settings = Ak::getSettings('admin');
+        if(!empty($settings['account_settings']['default_role'])){
+            $this->role->load();
+            $Role = new Role();
+            if($DefaultRole = $Role->findFirstBy('name', $settings['account_settings']['default_role'])){
+                $this->role->set($DefaultRole);
+            }
+        }
+    }
+
+    function sendSignupMessage($options = array())
+    {
+        $default_options = array(
+        'signup_message' => 'registration_details'
+        );
+        $options = array_merge($default_options, $options);
+        if(!empty($options['signup_message'])){
+            Ak::import_mailer('account_mailer');
+            $Mailer =& new AccountMailer();
+            $Mailer->_login = $options['login'];
+            $Mailer->_password = $options['password'];
+            $Mailer->deliver($options['signup_message'], $this->get('email'));
+        }
     }
 
 
@@ -180,11 +225,6 @@ class User extends ActiveRecord
         return sha1($this->get('password_salt').$phrase.$login);
     }
 
-    function getToken()
-    {
-        return $this->sha1($this->sha1($this->get('updated_at').$this->get('login')).$this->get('password'));
-    }
-
     function isTokenValid($token)
     {
         return $this->getToken() == $token;
@@ -197,6 +237,68 @@ class User extends ActiveRecord
         }else{
             $this->set('password', $this->getPreviousValueForAttribute('password'));
         }
+    }
+
+
+
+
+    // User::getToken(), User::loadFromToken()
+    /**
+     * Returns a one time use token for accesing an account.
+     * 
+     * This might be used for retrieving lost passwords.
+     * 
+     * Tokens can be validated using the Sentinel::isValidLoginTokenForUser method
+     */
+    function getToken($options = array())
+    {
+        $default_options = array(
+        'id' => (int)$this->get('id'),
+        'single_use' => !empty($options['single_use'])
+        );
+        $options = array_merge($default_options, $options);
+
+        $options['expires'] = empty($options['expires']) ? 0 : Ak::getTimestamp()+((empty($options['expires']) ? '0' : ($options['expires'] == true ? 86400 : $options['expires'])));
+        $options['single_use'] = $options['single_use'] ? 1 : 0;
+
+        $options['hash'] = $this->_getTokenHash($options);
+
+        return $this->_encodeToken($options);
+    }
+
+    function _getTokenHash($options)
+    {
+        return md5($this->get('id').
+        $this->get('email').
+        $this->get('login').
+        $this->get('password').
+        $this->get('password_salt').
+        (!empty($options['single_use'])?$this->get('last_login_at'):'').
+        $this->get('is_enabled').
+        (isset($options['expires'])?$options['expires']:''));
+    }
+
+    /**
+     * Given an array of options it will return an encrypted url string
+     *
+     * @param array $options token options
+     * @return string Url ready authentication Token
+     */
+    function _encodeToken($options)
+    {
+        return base64_encode(Ak::blowfishEncrypt(Ak::toJson($options), Ak::getSetting('admin', 'token_key')));
+    }
+
+    /**
+     * Decodes a token generated with encodeToken and returns an array of options
+     * 
+     * @param string $token token options
+     * @param bool $url_decode should it URL decode the token true by default
+     * @return array Array of options for the authentication token
+     */
+    function _decodeToken($token)
+    {
+        return (array)Ak::fromJson(Ak::blowfishDecrypt(base64_decode($token), Ak::getSetting('admin', 'token_key')));
     }
 
 
@@ -217,8 +319,12 @@ class User extends ActiveRecord
     function can($task, $extension = null, $force_reload = false)
     {
         if(!isset($this->_activeRecordHasBeenInstantiated)){
-            $User =& User::getCurrentUser();
-            return $User->can($task, $extension, $force_reload);
+            if (User::isLoaded()) {
+                $User =& User::getCurrentUser();
+                return $User->can($task, $extension, $force_reload);
+            } else {
+                return false;
+            }
         }
 
         static $Permissions;
@@ -251,7 +357,7 @@ class User extends ActiveRecord
         }
         return false;
     }
-    
+
     function &getRoles($force_reload = false)
     {
         if((!isset($this->LoadedRoles) || $force_reload) && $this->role->load()){
@@ -302,22 +408,46 @@ class User extends ActiveRecord
         return $extension;
     }
 
+
+    /**
+     * Returns the current user if it is set, otherwise throws an error
+     * 
+     * @see isLoaded() to check before and not throw an error
+     * @return User
+     */
     function getCurrentUser()
     {
-        return User::_setCurrentUser(false);
-    }
-
-    function _setCurrentUser($CurrentUser)
-    {
-        static $_cached;
-        if(!empty($CurrentUser)){
-            $_cached = $CurrentUser;
-        }elseif (empty($_cached)){
+        $User =& Ak::getStaticVar('CurrentUser');
+        if (empty($User)) {
             trigger_error(Ak::t('Current user has not been set yet.'), E_USER_ERROR);
         }
-        return $_cached;
+        return $User;
+    }
+    /**
+     * Checks if the user is set
+     *
+     * @return boolean
+     */
+    function isLoaded()
+    {
+        return Ak::getStaticVar('CurrentUser') != null;
     }
 
+    /**
+     * Sets the current user
+     *
+     * @param User $CurrentUser
+     */
+    function setCurrentUser($CurrentUser)
+    {
+        Ak::_staticVar('CurrentUser', $CurrentUser);
+    }
+
+
+    function unsetCurrentUser()
+    {
+        User::setCurrentUser(null);
+    }
 }
 
 

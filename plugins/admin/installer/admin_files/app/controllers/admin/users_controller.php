@@ -102,8 +102,6 @@ class Admin_UsersController extends AdminController
                 $this->flash['success'] = $this->t('User was successfully '.($this->getActionName()=='add'?'created':'updated'));
                 $this->redirectTo(empty($this->params['continue_editing']) ?
                 array('action' => 'show', 'id' => $this->User->getId()) : array('action' => 'edit', 'id' => $this->User->getId()));
-            }else{
-
             }
         }
     }

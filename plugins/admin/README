@@ -26,6 +26,14 @@ After installing you can visit http://yourhost.com/admin (by default admin)
 
 
 
+Admin preferences
+--------------------------------
+
+Your admin preferences are located at:
+
+    ./config/admin.yml
+
+
 Admin Scaffold generator
 --------------------------------
 

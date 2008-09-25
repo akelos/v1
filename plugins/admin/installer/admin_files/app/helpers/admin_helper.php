@@ -16,6 +16,17 @@ class AdminHelper extends AkActionViewHelper
     {
         return $this->_render_menu('controller');
     }
+    
+    function user_menu()
+    {
+        $controller =& $this->_controller;
+        if(!empty($controller->CurrentUser)){
+            $logout_url = @$controller->admin_settings['logout_url'];
+            $User =& $controller->CurrentUser;
+            return $this->t('logged in as <strong>%user_name</strong>', array('%user_name' => $User->login)).
+            (empty($logout_url)?'':' – '.$controller->url_helper->link_to($this->t('logout'), $logout_url));
+        }
+    }
 
     function _render_menu($type)
     {
