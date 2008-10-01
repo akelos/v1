@@ -47,15 +47,33 @@ class AkConfig
                 return true;
                 break;
             default:
-                return false;
+                return true;
             
         }
     }
+    
+    function _checkCacheValidity($namespace,$environment)
+    {
+    	$cacheFilename = $this->_generateCacheFileName($namespace,$environment);
+    	$configFilename = $this->_generateConfigFileName($namespace,$environment);
+
+    	$cacheMtime = file_exists($cacheFilename) ? filemtime($cacheFilename): 1;
+    	$configMtime = file_exists($cacheFilename) ? filemtime($configFilename) : 2;
+    	return $cacheMtime == $configMtime;
+    }
+    
+    function _setCacheValidity($namespace, $environment)
+    {
+    	$cacheFilename = $this->_generateCacheFileName($namespace,$environment);
+    	$configFilename = $this->_generateConfigFileName($namespace,$environment);
+    	touch($cacheFilename,filemtime($configFilename));
+    }
+    
     function _readCache($namespace, $environment = AK_ENVIRONMENT, $force = false)
     {
         if (!$force && !$this->_useReadCache($environment)) return false;
         $cacheFileName = $this->_generateCacheFileName($namespace,$environment);
-        if (file_exists($cacheFileName)) {
+        if ($this->_checkCacheValidity($namespace, $environment)) {
             $config = include $cacheFileName;
         } else {
             $config = false;
@@ -78,6 +96,7 @@ return \$config;
 CACHE;
         $cacheFileName = $this->_generateCacheFileName($namespace,$environment);
         $cacheDir = dirname($cacheFileName);
+        
         if (!file_exists($cacheDir)) {
             $oldumask = umask();
             umask(0);
@@ -95,7 +114,7 @@ CACHE;
         } else {
             trigger_error(Ak::t('Could not create config cache file %file',array('%file'=>$cacheFileName)),E_USER_ERROR);
         }
-        
+        $this->_setCacheValidity($namespace,$environment);
     }
     function _generateConfigFileName($namespace,$environment = AK_ENVIRONMENT)
     {

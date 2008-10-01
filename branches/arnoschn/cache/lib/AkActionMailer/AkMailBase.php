@@ -439,8 +439,9 @@ class AkMailBase extends Mail
                 return 1;
             }
         }
-        $a_ct = strtolower(isset($a->content_type)?$a->content_type:'');
-        $b_ct = strtolower(isset($b->content_type)?$b->content_type:'');
+        
+        $a_ct = strtolower($a->content_type);
+        $b_ct = strtolower($b->content_type);
         $a_in = in_array($a_ct, $this->_parts_order);
         $b_in = in_array($b_ct, $this->_parts_order);
         if($a_in && $b_in){

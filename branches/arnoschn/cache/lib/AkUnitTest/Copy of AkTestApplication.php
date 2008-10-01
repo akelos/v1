@@ -58,62 +58,31 @@ class AkTestApplication extends AkUnitTest
             $this->assertTrue(false,'Header "'.$header.'" not found');
         }
     }
-    
-    function _testXPath($xpath_expression)
-    {
-        if (!class_exists('DOMDocument') || !class_exists('DOMXPath')) {
-            if (function_exists('domxml_open_mem')) {
-                $dom = domxml_open_mem($this->_response);
-                if (!$dom) {
-                    $this->fail('Error parsing doc');
-                    return false;
-                }
-                var_dump($dom);
-                $xpath = $dom->xpath_init();
-                var_dump($xpath);
-                $ctx = $dom->xpath_new_context(); 
-                var_dump($xpath_expression);
-                $result = $ctx->xpath_eval($xpath_expression);
-                var_dump($result);
-                $return = new stdClass();
-                $return->length = count($result->nodeset);
-                return $return;
-            }
-            $this->fail('No xpath support built in');
-            return false;
-        } else if (extension_loaded('domxml')) {
-            $this->fail('Please disable the domxml extension. Only php5 builtin domxml is supported');
-            return false;
-        }
-       
-        $dom = new DOMDocument();
-        $dom->loadHtml($this->_response);
-        $xpath = new DOMXPath($dom);
-        $node = $xpath->query($xpath_expression);
-        return $node;
-    }
-    
     function assertXPath($xpath_expression, $message = null)
     {
-        $node = $this->_testXPath($xpath_expression);
-        if ($node->length<1) {
-            $message = empty($message)?'Element not found using xpath: %xpath':$message;
-            $message = str_replace('%xpath',$xpath_expression,$message);
-            $this->fail($message);
-        } else {
-            $message = empty($message)?'Element found using xpath: %xpath':$message;
-            $this->pass($message);
+        if (!function_exists('xpath_new_context')) {
+            $this->fail('No xpath support built in');
+            return;
         }
-    }
-    function assertNoXPath($xpath_expression, $message = null)
-    {
-        $node = $this->_testXPath($xpath_expression);
-        if ($node->length>0) {
-            $message = empty($message)?'Element found using xpath: %xpath':$message;
+        if (!function_exists('domxml_open_mem') && !class_exists('DomDocument')) {
+            $this->fail('No dom support built in');
+            return;
+        } else if (class_exists('DomDocument')) {
+            $dom = new DomDocument();
+            $dom->loadHTML($this->_response);
+            
+        } else if (function_exists('domxml_open_mem')) {
+            $dom = domxml_open_mem($this->_response);
+        }
+        
+        $xpath = xpath_new_context($dom);
+        $node = xpath_eval_expression($xpath, $xpath_expression);
+        if (!$node) {
+            $message = empty($message)?'Element not found using xpath: %xpath':$message;
             $message = str_replace('%xpath',$xpath_expression,$message);
             $this->fail($message);
         } else {
-            $message = empty($message)?'Element not found using xpath: %xpath':$message;
+            $message = empty($message)?'Element found using xpath: %xpath':$message;
             $this->pass($message);
         }
     }
@@ -123,10 +92,11 @@ class AkTestApplication extends AkUnitTest
         $response = $this->_response;
         $validator = new AkXhtmlValidator();
         $valid = $validator->validate($response);
-
+        
+        
         if (!$valid) {
             $message = empty($message)?'Non valid Xhtml: %errors':$message;
-            $message = str_replace('%errors',strip_tags(join("\n- ",$validator->getErrors())),$message);
+            $message = str_replace('%errors',join("\n- ",$validator->getErrors()),$message);
             $this->fail($message);
         } else {
             $message = empty($message)?'XHtml valid':$message;

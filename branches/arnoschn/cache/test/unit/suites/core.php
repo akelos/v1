@@ -6,6 +6,7 @@ class CoreTestSuite extends AkUnitTestSuite {
         'Ak',
         'AkConfig',
         'AkUnitTest',
+        'AkTestApplication',
         'AkSession',
         'AkRouter',
         'AkLocaleManager',

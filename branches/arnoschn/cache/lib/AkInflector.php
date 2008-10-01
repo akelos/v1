@@ -25,9 +25,12 @@
 * create frameworks based on naming conventions rather than
 * configurations.
 * 
-* It was ported to PHP for the Akelos Framework, a
-* multilingual Ruby on Rails like framework for PHP that will
-* be launched soon.
+* You can find the inflector rules in config/inflector.yml
+* To add your own inflector rules, please do so in config/inflector/mydictionary.yml
+* 
+* Using it:
+* 
+* AkInflector::pluralize('inglés',null,'es'); // ingleses, see config/inflector/es.yml
 * 
 * @author Bermi Ferrer Martinez <bermi a.t akelos c.om>
 * @copyright Copyright (c) 2002-2006, Akelos Media, S.L. http://www.akelos.org
@@ -400,14 +403,14 @@ class AkInflector
     function unaccent($text)
     {
         $map = array(
-        'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C',
-        'È'=>'E', 'É'=>'E', 'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I',
-        'Ð'=>'D', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O',
-        'Ù'=>'U', 'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'T', 'ß'=>'s', 'à'=>'a',
-        'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c', 'è'=>'e',
-        'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'e',
-        'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u',
-        'ú'=>'u', 'û'=>'u', 'ü'=>'u', 'ý'=>'y', 'þ'=>'t', 'ÿ'=>'y');
+        '√Ä'=>'A', '√Å'=>'A', '√Ç'=>'A', '√É'=>'A', '√Ñ'=>'A', '√Ö'=>'A', '√Ü'=>'A', '√á'=>'C',
+        '√à'=>'E', '√â'=>'E', '√ä'=>'E', '√ã'=>'E', '√å'=>'I', '√ç'=>'I', '√é'=>'I', '√è'=>'I',
+        '√ê'=>'D', '√ë'=>'N', '√í'=>'O', '√ì'=>'O', '√î'=>'O', '√ï'=>'O', '√ñ'=>'O', '√ò'=>'O',
+        '√ô'=>'U', '√ö'=>'U', '√õ'=>'U', '√ú'=>'U', '√ù'=>'Y', '√û'=>'T', '√ü'=>'s', '√†'=>'a',
+        '√°'=>'a', '√¢'=>'a', '√£'=>'a', '√§'=>'a', '√•'=>'a', '√¶'=>'a', '√ß'=>'c', '√®'=>'e',
+        '√©'=>'e', '√™'=>'e', '√´'=>'e', '√¨'=>'i', '√≠'=>'i', '√Æ'=>'i', '√Ø'=>'i', '√∞'=>'e',
+        '√±'=>'n', '√≤'=>'o', '√≥'=>'o', '√¥'=>'o', '√µ'=>'o', '√∂'=>'o', '√∏'=>'o', '√π'=>'u',
+        '√∫'=>'u', '√ª'=>'u', '√º'=>'u', '√Ω'=>'y', '√æ'=>'t', '√ø'=>'y');
         return str_replace(array_keys($map), array_values($map), $text);
     }
 

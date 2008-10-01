@@ -1141,8 +1141,9 @@ class Ak
     }
 
 
-    function encrypt($data, $key = 'Ak3los-m3D1a')
+    function encrypt($data, $key = null)
     {
+    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         srand((double)microtime() *1000000);
         $k2 = md5(rand(0, 32000));
         $c = 0;
@@ -1166,8 +1167,9 @@ class Ak
         return base64_encode($m);
     }
 
-    function decrypt($encrypted_data, $key = 'Ak3los-m3D1a')
+    function decrypt($encrypted_data, $key = null)
     {
+    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         $t = base64_decode($encrypted_data);
         $k = md5($key);
         $c = 0;
@@ -1188,8 +1190,9 @@ class Ak
     }
 
 
-    function blowfishEncrypt($data, $key = 'Ak3los-m3D1a')
+    function blowfishEncrypt($data, $key = null)
     {
+    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         $key = substr($key,0,56);
         require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Crypt'.DS.'Blowfish.php');
         $Blowfish =& Ak::singleton('Crypt_Blowfish', $key);
@@ -1197,8 +1200,9 @@ class Ak
         return $Blowfish->encrypt(base64_encode($data));
     }
 
-    function blowfishDecrypt($encrypted_data, $key = 'Ak3los-m3D1a')
+    function blowfishDecrypt($encrypted_data, $key = null)
     {
+    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         $key = substr($key,0,56);
         require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Crypt'.DS.'Blowfish.php');
         $Blowfish =& Ak::singleton('Crypt_Blowfish', $key);
@@ -1974,6 +1978,14 @@ class Ak
             $_config = new AkConfig();
         }
         return $_config->get($namespace,$environment,$raise_error_if_config_file_not_found);
+    }
+    
+	function getSetting($namespace, $variable, $default_value = null)
+    {
+        if($settings = Ak::getSettings($namespace)){
+            return isset($settings[$variable]) ? $settings[$variable] : $default_value;
+         }
+        return $default_value;
     }
     
     function _parseSettingsConstants($settingsStr)
