@@ -2829,7 +2829,7 @@ class AkActionController extends AkObject
 
     function _ensureActionExists()
     {
-    	if(!method_exists($this, $this->getActionName()) || $this->_isActionForbidden()){
+        if(!method_exists($this, $this->getActionName()) || $this->_isActionForbidden()){
             return $this->_renderActionNotExists();
         }
         return true;
@@ -2853,9 +2853,9 @@ class AkActionController extends AkObject
             return false;
         }
     }
-	function _isActionForbidden()
+    function _isActionForbidden()
     {
-    	$methods = get_class_methods('AkActionController');
+        $methods = get_class_methods('AkActionController');
         $action = $this->getActionName();
         return empty($action) || in_array($action , $methods) || $action != AkInflector::underscore($action) || $action[0] == '_';
     }

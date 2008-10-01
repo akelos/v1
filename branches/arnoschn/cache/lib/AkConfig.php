@@ -54,19 +54,19 @@ class AkConfig
     
     function _checkCacheValidity($namespace,$environment)
     {
-    	$cacheFilename = $this->_generateCacheFileName($namespace,$environment);
-    	$configFilename = $this->_generateConfigFileName($namespace,$environment);
+        $cacheFilename = $this->_generateCacheFileName($namespace,$environment);
+        $configFilename = $this->_generateConfigFileName($namespace,$environment);
 
-    	$cacheMtime = file_exists($cacheFilename) ? filemtime($cacheFilename): 1;
-    	$configMtime = file_exists($cacheFilename) ? filemtime($configFilename) : 2;
-    	return $cacheMtime == $configMtime;
+        $cacheMtime = file_exists($cacheFilename) ? filemtime($cacheFilename): 1;
+        $configMtime = file_exists($cacheFilename) ? filemtime($configFilename) : 2;
+        return $cacheMtime == $configMtime;
     }
     
     function _setCacheValidity($namespace, $environment)
     {
-    	$cacheFilename = $this->_generateCacheFileName($namespace,$environment);
-    	$configFilename = $this->_generateConfigFileName($namespace,$environment);
-    	touch($cacheFilename,filemtime($configFilename));
+        $cacheFilename = $this->_generateCacheFileName($namespace,$environment);
+        $configFilename = $this->_generateConfigFileName($namespace,$environment);
+        touch($cacheFilename,filemtime($configFilename));
     }
     
     function _readCache($namespace, $environment = AK_ENVIRONMENT, $force = false)

@@ -841,11 +841,11 @@ class Ak
     }
 
     /**
-	* Return formatted date.
-	* 
-	* You can supply a format as defined at http://php.net/date
-	* 
-	* Default date is in ISO format 
+    * Return formatted date.
+    * 
+    * You can supply a format as defined at http://php.net/date
+    * 
+    * Default date is in ISO format 
     */
     function getDate($timestamp = null, $format = null)
     {
@@ -971,8 +971,8 @@ class Ak
 
 
     /**
-	* @todo move this out of here and use Pear Benchmark instead
-	*/
+    * @todo move this out of here and use Pear Benchmark instead
+    */
     function profile($message = '')
     {
         static $profiler;
@@ -1143,7 +1143,7 @@ class Ak
 
     function encrypt($data, $key = null)
     {
-    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
+        $key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         srand((double)microtime() *1000000);
         $k2 = md5(rand(0, 32000));
         $c = 0;
@@ -1169,7 +1169,7 @@ class Ak
 
     function decrypt($encrypted_data, $key = null)
     {
-    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
+        $key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         $t = base64_decode($encrypted_data);
         $k = md5($key);
         $c = 0;
@@ -1192,7 +1192,7 @@ class Ak
 
     function blowfishEncrypt($data, $key = null)
     {
-    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
+        $key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         $key = substr($key,0,56);
         require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Crypt'.DS.'Blowfish.php');
         $Blowfish =& Ak::singleton('Crypt_Blowfish', $key);
@@ -1202,7 +1202,7 @@ class Ak
 
     function blowfishDecrypt($encrypted_data, $key = null)
     {
-    	$key = empty($key) ? md5(AK_SESSION_NAME) : $key;
+        $key = empty($key) ? md5(AK_SESSION_NAME) : $key;
         $key = substr($key,0,56);
         require_once(AK_CONTRIB_DIR.DS.'pear'.DS.'Crypt'.DS.'Blowfish.php');
         $Blowfish =& Ak::singleton('Crypt_Blowfish', $key);
@@ -1980,7 +1980,7 @@ class Ak
         return $_config->get($namespace,$environment,$raise_error_if_config_file_not_found);
     }
     
-	function getSetting($namespace, $variable, $default_value = null)
+    function getSetting($namespace, $variable, $default_value = null)
     {
         if($settings = Ak::getSettings($namespace)){
             return isset($settings[$variable]) ? $settings[$variable] : $default_value;
