@@ -235,7 +235,7 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
     function _assertPageNotCached($path, $message = '%s')
     {
         $cachedPage = $this->_getCachedPage($path);
-        $this->assertTrue($cachedPage==false,$message);
+        $this->assertTrue($cachedPage==false,sprintf($message,$path));
         return $cachedPage==false;
     }
     function test_last_modified()
