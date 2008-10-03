@@ -689,8 +689,9 @@ class AkCacheHandler extends AkObject
              *  Caching unzipped content
              */
             $this->cachePage($this->_stripCacheSkipSections($contents),array(),null,false,true, strlen($contents));
-            $contents = $this->_gzipCache($contents);
-            echo $contents;
+            $org_contents = $this->_gzipCache($contents);
+            echo $org_contents;
+            $contents = $this->_gzipCache($this->_stripCacheSkipSections($contents));
         } else {
             $this->_controller->handleResponse();
             $contents = ob_get_clean();
@@ -700,8 +701,9 @@ class AkCacheHandler extends AkObject
             $gzippedContents = $this->_gzipCache($this->_stripCacheSkipSections($contents));
             $this->cachePage($gzippedContents,array(),null,true,true, strlen($contents));
             echo $contents;
+            $contents = $this->_stripCacheSkipSections($contents);
         }
-        $this->cachePage($this->_stripCacheSkipSections($contents),array(),null,$gzip, false, strlen($contents));
+        $this->cachePage($contents,array(),null,$gzip, false, strlen($contents));
         return true;
     }
 
