@@ -573,7 +573,9 @@ class AkCacheHandler extends AkObject
     {
         $default_options = array('only'=>array(),
                                  'except'=>array());
-
+        if (is_string($options)) {
+            $options = Ak::toArray($options);
+        }
         Ak::parseOptions($options, $default_options,array(),true);
 
         foreach ($options as $sweeper => $params) {
@@ -609,7 +611,9 @@ class AkCacheHandler extends AkObject
     function _setCachesPage($options)
     {
         if (!$this->_perform_caching) return;
-
+        if (is_string($options)) {
+            $options = Ak::toArray($options);
+        }
         $default_options = array('include_get_parameters'=>array(),
                                  'headers'=> array('X-Cached-By'=>'Akelos'));
         Ak::parseOptions($options, $default_options,array(),true);
@@ -856,6 +860,7 @@ class AkCacheHandler extends AkObject
         if (!$this->cacheConfigured()) return false;
 
         $key = $this->fragmentCachekey($key, $options);
+
         return $this->_cache_store->get($key, isset($options['host'])?
         $options['host']:$this->_buildCacheGroup());
     }
@@ -863,6 +868,7 @@ class AkCacheHandler extends AkObject
     function expireFragment($key, $options = array())
     {
         if (!$this->cacheConfigured()) return;
+        
         if (is_array($key) && isset($key['lang']) && $key['lang'] == '*') {
             $langs = AkLocaleManager::getPublicLocales();
             $res = true;
@@ -873,6 +879,7 @@ class AkCacheHandler extends AkObject
             return $res;
         }
         $key = $this->fragmentCachekey($key, $options);
+
         return $this->_cache_store->remove($key, isset($options['host'])?
         $options['host']:$this->_buildCacheGroup());
     }
@@ -939,7 +946,9 @@ class AkCacheHandler extends AkObject
     function _setCachesAction($options)
     {
         if (!$this->_perform_caching) return;
-
+        if (is_string($options)) {
+            $options = Ak::toArray($options);
+        }
 
         $default_options = array('include_get_parameters'=>array(),
                                  'cache_path'=>'');
@@ -1011,6 +1020,19 @@ class AkCacheHandler extends AkObject
     function _pathFor($options = array(), $normalize = true)
     {
         $options = empty($options)?$this->_controller->params:$options;
+        $options['controller'] = !isset($options['controller']) ? (isset($this->_controller->params['controller']) ? 
+                                                                         $this->_controller->params['controller']:null):
+                                                                 $options['controller'];
+        $options['action'] = !isset($options['action']) ? (isset($this->_controller->params['action']) ? 
+                                                                 $this->_controller->params['action']:null):
+                                                          $options['action'];
+        $options['id'] = !isset($options['id']) ? (isset($this->_controller->params['id']) ? 
+                                                         $this->_controller->params['id']:null):
+                                                  $options['id'];
+        $options['lang'] = !isset($options['lang']) ? (isset($this->_controller->params['lang']) ? 
+                                                         $this->_controller->params['lang']:Ak::lang()):
+                                                      $options['lang'];
+
         $options['skip_relative_url_root']=true;
         $url = $this->_controller->urlFor($options);
         $parts = parse_url($url);
@@ -1022,6 +1044,7 @@ class AkCacheHandler extends AkObject
             $path = implode('/', $parts);
         }
         $path = rtrim($path,'/');
+
         return $path;
     }
 

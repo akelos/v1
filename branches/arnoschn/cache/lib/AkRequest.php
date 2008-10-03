@@ -85,7 +85,8 @@ class AkRequest extends AkObject
                 'application/rss+xml'      => 'rss', 
                 'application/atom+xml'     => 'atom', 
                 '*/*'                      => 'html', 
-                'application/x-www-form-urlencoded' => 'www-form', 
+                //'application/x-www-form-urlencoded' => 'www-form', 
+                //'application/x-www-form-urlencoded' => 'www-form',
                 'default'                  => 'html', 
             );
             
