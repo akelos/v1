@@ -7,6 +7,7 @@ class ActionCachingController extends ApplicationController
                                'forbidden',
                                'show'=>array('cache_path'=>'http://test.host/custom/show'),
                                'edit'=>array('cache_path'=>'http://test.host/edit'),
+                               'skip'
                                );
     function _initActionCache()
     {
@@ -35,10 +36,18 @@ class ActionCachingController extends ApplicationController
     {
         $this->renderText('Forbidden',403);
     }
-    
+    function skip()
+    {
+        $this->renderText('Hello<!--CACHE-SKIP-START-->
+        
+        You wont see me after the cache is rendered.
+        
+        <!--CACHE-SKIP-END-->');
+    }
     function expire()
     {
         $this->expireAction(array('controller'=>'action_caching','action'=>'index','lang'=>Ak::lang()));
+        $this->expireAction(array('controller'=>'action_caching','action'=>'skip'));
         $this->renderNothing(200);
     }
     

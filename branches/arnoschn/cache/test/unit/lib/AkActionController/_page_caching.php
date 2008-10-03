@@ -318,6 +318,20 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
         $this->_assertPageNotCached('/es/page_caching/index.html');
         
     }
+    
+    function test_cache_skip()
+    {
+        $this->_flushCache('www.example.com');
+        $this->get('http://www.example.com/page_caching/skip',array(),array());
+        $this->assertTextMatch('Hello<!--CACHE-SKIP-START-->
+        
+        You wont see me after the cache is rendered.
+        
+        <!--CACHE-SKIP-END-->');
+        $this->get('http://www.example.com/page_caching/skip',array(),array());
+        $this->assertTextMatch('Hello');
+    }
+    
     function test_expiry_of_alllocale_based_normalized_urls()
     {
         $this->assertTrue(true, 'Need to test that expirePage(array("action"=>"index","controller"=>"page","lang"=>"*")) on expires cache http://mydomain.com/**/page and http://mydomain.com/**/page/index');

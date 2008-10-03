@@ -3,7 +3,8 @@
 class PageCachingController extends ApplicationController
 {
 
-    var $caches_page = array('index','ok','no_content','found','not_found','simple', 'priority');
+    var $caches_page = array('index','ok','no_content','found','not_found','simple', 'priority',
+                               'skip');
 
     var $caches_action = array('priority');
     
@@ -28,6 +29,16 @@ class PageCachingController extends ApplicationController
         $this->renderText('Simple Text');
         
     }
+    
+    function skip()
+    {
+        $this->renderText('Hello<!--CACHE-SKIP-START-->
+        
+        You wont see me after the cache is rendered.
+        
+        <!--CACHE-SKIP-END-->');
+    }
+    
     function no_content()
     {
         $this->renderNothing(204);

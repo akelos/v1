@@ -64,7 +64,18 @@ class Test_AkActionControllerCachingActions extends AkTestApplication
         $this->get('http://www.example.com/action_caching/edit/1',array(),array('cache_this'=>$cache_this));
         $this->_assertCacheExists('/1;edit', array('host'=>'test.host'));
     }
-    
+    function test_cache_skip()
+    {
+        $this->_flushCache('www.example.com');
+        $this->get('http://www.example.com/action_caching/skip',array(),array());
+        $this->assertTextMatch('Hello<!--CACHE-SKIP-START-->
+        
+        You wont see me after the cache is rendered.
+        
+        <!--CACHE-SKIP-END-->');
+        $this->get('http://www.example.com/action_caching/skip',array(),array());
+        $this->assertTextMatch('Hello');
+    }
     function test_cache_expiration()
     {
         $this->_flushCache('www.example.com');

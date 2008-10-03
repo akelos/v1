@@ -229,6 +229,8 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  */
 class AkCacheHandler extends AkObject
 {
+    var $cache_strip = '<!--CACHE-SKIP-START-->.*?<!--CACHE-SKIP-END-->';
+    
     /**
      * @var AkCache
      */
@@ -548,9 +550,28 @@ class AkCacheHandler extends AkObject
         return $res;
 
     }
+    
+    function _stripCacheSkipSections($content)
+    {
+        if (isset($this->_controller->cache_strip)) {
+            $cache_strip = is_array($this->_controller->cache_strip)?$this->_controller->cache_strip:array($this->_controller->cache_strip);
+        } else {
+            $cache_strip = array();
+        }
+        $cache_strip = array_merge(array($this->cache_strip), $cache_strip);
+
+        foreach ($cache_strip as $strip) {
+            $content = @preg_replace('/('.$strip.')/sm','',$content);
+            if ($content===false) {
+                trigger_error(Ak::t('AkCacheHandler: cache_strip expression: %expr is not working as expected', array('%expr'=>$strip)), E_USER_ERROR);
+                return false;
+            }
+        }
+         return $content;
+    }
+    
     function _modifyCacheContent($content,$addHeaders = array(), $removeHeaders = array())
     {
-
         $headers = $this->_controller->Response->_headers_sent;
         $finalHeaders = array();
         foreach ($headers as $header) {
@@ -652,6 +673,7 @@ class AkCacheHandler extends AkObject
         $xgzip = false;
         $gzip = false;
         $this->_controller->Response->addHeader('Cache-Control','private, max-age=0, must-revalidate');
+
         if (($gzip=in_array('gzip',$encodings)) || ($xgzip=in_array('x-gzip',$encodings))) {
             $this->_controller->Response->addHeader('Content-Encoding',$xgzip?'x-gzip':'gzip');
             $gzip = $gzip || $xgzip;
@@ -660,7 +682,7 @@ class AkCacheHandler extends AkObject
             /**
              *  Caching unzipped content
              */
-            $this->cachePage($contents,array(),null,false,true);
+            $this->cachePage($this->_stripCacheSkipSections($contents),array(),null,false,true);
             $contents = $this->_gzipCache($contents);
             echo $contents;
         } else {
@@ -669,7 +691,7 @@ class AkCacheHandler extends AkObject
             /**
              *  Caching gzipped content
              */
-            $gzippedContents = $this->_gzipCache($contents);
+            $gzippedContents = $this->_gzipCache($this->_stripCacheSkipSections($contents));
             $this->cachePage($gzippedContents,array(),null,true,true);
             echo $contents;
         }
@@ -853,7 +875,6 @@ class AkCacheHandler extends AkObject
     function writeFragment($key, $content, $options = array())
     {
         if (!$this->cacheConfigured()) return;
-
         $key = $this->fragmentCachekey($key, $options);
 
         return $this->_cache_store->save($content, $key, isset($options['host'])?
@@ -934,8 +955,10 @@ class AkCacheHandler extends AkObject
     function afterActionCache()
     {
         if (!$this->_cachingAllowed() || $this->_rendered_action_cache === true) return;
+
         $this->_controller->handleResponse();
         $contents = ob_get_flush();
+        $contents = $this->_stripCacheSkipSections($contents);
         $options = array();
         if (!empty($this->_action_cache_host)) {
             $options['host'] = $this->_action_cache_host;
