@@ -418,7 +418,7 @@ CONFIG;
     }
     function writeDatabaseConfigurationFile($configuration_details)
     {
-        if($this->canWriteConfigurationFile()){
+        if($this->canWriteDbConfigurationFile()){
             return Ak::file_put_contents(AK_CONFIG_DIR.DS.'database.yml', $configuration_details);
         }
         return false;
