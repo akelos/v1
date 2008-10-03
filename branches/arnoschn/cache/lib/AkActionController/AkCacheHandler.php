@@ -511,14 +511,18 @@ class AkCacheHandler extends AkObject
 
         return ($notGzippedRes || $gzippedRes);
     }
-    function cachePage($content, $path = null, $language = null, $gzipped=false, $sendETag = false)
+    function cachePage($content, $path = null, $language = null, $gzipped=false, $sendETag = false, $orgStrlen = null)
     {
         static $ETag;
+        
         if (!($this->_cachingAllowed() && $this->_perform_caching)) return;
-        //var_dump($_SERVER['REQUEST_URI']);
-        $cacheId = $this->_buildCacheId($path, $language);
 
+        $cacheId = $this->_buildCacheId($path, $language);
+        $skipEtagSending = false;
+        if ($orgStrlen != strlen($content)) $skipEtagSending = true;
         $notNormalizedCacheId = $this->_buildCacheId($path, $language,false);
+        
+
         $removeHeaders = array();
         $addHeaders = array();
         if ($gzipped) {
@@ -535,7 +539,9 @@ class AkCacheHandler extends AkObject
             $ETag = Ak::uuid();
             $etagHeader = 'ETag: '.$ETag;
             $this->_controller->Response->addSentHeader($etagHeader);
-            header($etagHeader);
+            if(!$skipEtagSending) {
+                header($etagHeader);
+            }
         }
         //$addHeaders['ETag'] = $ETag;
 
@@ -682,7 +688,7 @@ class AkCacheHandler extends AkObject
             /**
              *  Caching unzipped content
              */
-            $this->cachePage($this->_stripCacheSkipSections($contents),array(),null,false,true);
+            $this->cachePage($this->_stripCacheSkipSections($contents),array(),null,false,true, strlen($contents));
             $contents = $this->_gzipCache($contents);
             echo $contents;
         } else {
@@ -692,10 +698,10 @@ class AkCacheHandler extends AkObject
              *  Caching gzipped content
              */
             $gzippedContents = $this->_gzipCache($this->_stripCacheSkipSections($contents));
-            $this->cachePage($gzippedContents,array(),null,true,true);
+            $this->cachePage($gzippedContents,array(),null,true,true, strlen($contents));
             echo $contents;
         }
-        $this->cachePage($contents,array(),null,$gzip);
+        $this->cachePage($this->_stripCacheSkipSections($contents),array(),null,$gzip, false, strlen($contents));
         return true;
     }
 

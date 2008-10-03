@@ -29,6 +29,11 @@ class PageCachingController extends ApplicationController
         $this->renderText('Simple Text');
         
     }
+    function expire()
+    {
+        $this->expirePage(array('controller'=>'page_caching','action'=>'skip'));
+        $this->renderNothing(200);
+    }
     
     function skip()
     {
