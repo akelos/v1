@@ -603,13 +603,14 @@ class AkCacheHandler extends AkObject
 
     function _setCacheSweeper($options)
     {
+        require_once(AK_LIB_DIR.DS.'AkActionController'.DS.'AkCacheSweeper.php');
         $default_options = array('only'=>array(),
                                  'except'=>array());
         if (is_string($options)) {
             $options = Ak::toArray($options);
         }
         Ak::parseOptions($options, $default_options,array(),true);
-
+    
         foreach ($options as $sweeper => $params) {
             if (is_int($sweeper)) {
                 $sweeper = $params;

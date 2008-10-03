@@ -15,7 +15,7 @@
  * @author Arno Schneider
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
-
+require_once(AK_APP_DIR . DS . 'shared_model.php');
 require_once(AK_LIB_DIR . DS . 'AkActiveRecord' . DS . 'AkObserver.php');
 
 /**
@@ -27,6 +27,7 @@ require_once(AK_LIB_DIR . DS . 'AkActiveRecord' . DS . 'AkObserver.php');
  * They do this by being half-observers, half-filters and implementing callbacks for both roles. A Sweeper example:
  *
  *   class ListSweeper extends AkCacheSweeper
+ *   {
  *     var $observe = array("List", "Item");
  *
  *     function afterSave(&$record) {
@@ -43,7 +44,7 @@ require_once(AK_LIB_DIR . DS . 'AkActiveRecord' . DS . 'AkObserver.php');
  *
  *   class ListsController extends ApplicationController {
  *     var $caches_action = array("index", "show", "public", "feed");
- *     var $cache_sweeper = array("list_sweeper", "only" => array("edit", "destroy", "share"));
+ *     var $cache_sweeper = array("list_sweeper" => array("only" => array("edit", "destroy", "share")));
  *     ....
  *   }
  *
