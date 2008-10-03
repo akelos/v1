@@ -1029,9 +1029,6 @@ class AkCacheHandler extends AkObject
         $options['id'] = !isset($options['id']) ? (isset($this->_controller->params['id']) ? 
                                                          $this->_controller->params['id']:null):
                                                   $options['id'];
-        $options['lang'] = !isset($options['lang']) ? (isset($this->_controller->params['lang']) ? 
-                                                         $this->_controller->params['lang']:Ak::lang()):
-                                                      $options['lang'];
 
         $options['skip_relative_url_root']=true;
         $url = $this->_controller->urlFor($options);
