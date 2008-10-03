@@ -478,6 +478,11 @@ class AkCacheHandler extends AkObject
     function expirePage($path = null, $language=null)
     {
         if (!$this->_perform_caching || !$this->_cache_store) return;
+        
+        if ($language == null && is_array($path) && !isset($path['lang'])) {
+            $language = '*';
+        }
+        
         if ((is_array($path) && isset($path['lang']) && $path['lang'] == '*') || $language == '*') {
             $langs = $this->_getPublicLocales();
             $res = true;
@@ -996,6 +1001,9 @@ class AkCacheHandler extends AkObject
 
     function expireAction($options, $params = array())
     {
+        if (is_array($options) && !isset($options['lang'])) {
+            $options['lang'] = '*';
+        }
         $params['namespace'] = 'actions';
         return $this->expireFragment($options, $params);
     }
@@ -1029,7 +1037,7 @@ class AkCacheHandler extends AkObject
         $options['id'] = !isset($options['id']) ? (isset($this->_controller->params['id']) ? 
                                                          $this->_controller->params['id']:null):
                                                   $options['id'];
-
+        
         $options['skip_relative_url_root']=true;
         $url = $this->_controller->urlFor($options);
         $parts = parse_url($url);
