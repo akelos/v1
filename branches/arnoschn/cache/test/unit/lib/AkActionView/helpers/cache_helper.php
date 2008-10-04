@@ -23,11 +23,17 @@ class CacheHelperTests extends HelpersUnitTester
 
         $this->cache_helper =& $this->controller->cache_helper;
         
-        $this->assertIsA($this->cache_helper,'CacheHelper');
+        
 
         
         
     }
+    
+    function test_helper_instance()
+    {
+        $this->assertIsA($this->cache_helper,'CacheHelper');
+    }
+    
     function _test_init()
     {
         $this->fragment_key = 'key_'.time().microtime(true).'_'.rand(0,1000000);
