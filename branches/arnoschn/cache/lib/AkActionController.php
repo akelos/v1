@@ -162,7 +162,7 @@ class AkActionController extends AkObject
             $this->handleResponse();
             return false;
         }
-        $this->_initExtensions();
+        
         Ak::t('Akelos'); // We need to get locales ready
 
         if($this->_high_load_mode !== true){
@@ -183,6 +183,8 @@ class AkActionController extends AkObject
 
         // After filters
         $this->afterFilter('_handleFlashAttribute');
+
+        $this->_initExtensions();
 
         $this->_loadActionView();
 
@@ -588,7 +590,9 @@ class AkActionController extends AkObject
             $this->_doubleRenderError(Ak::t("Can only render or redirect once per action"));
             return false;
         }
-
+        /**
+         * need to check this with the caching!!!
+         */
         $this->_flash_handled ? null : $this->_handleFlashAttribute();
 
         if(!is_array($options)){

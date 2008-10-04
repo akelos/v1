@@ -541,6 +541,8 @@ class AkCacheHandler extends AkObject
             $this->_controller->Response->addSentHeader($etagHeader);
             if(!$skipEtagSending) {
                 header($etagHeader);
+            } else {
+                header('Expires: '.gmdate('D, d M Y H:i:s',0));
             }
         }
         //$addHeaders['ETag'] = $ETag;
@@ -967,7 +969,17 @@ class AkCacheHandler extends AkObject
 
         $this->_controller->handleResponse();
         $contents = ob_get_flush();
+        $strlenBefore = strlen($contents);
         $contents = $this->_stripCacheSkipSections($contents);
+        $strlenAfter = strlen($contents);
+        
+        if ($strlenAfter != $strlenBefore) {
+            /**
+             * We dont want the flash message to be cached in the browser
+             */
+            $this->_controller->Response->addHeader('Expires', gmdate('D, d M Y H:i:s',0));
+        }
+        
         $options = array();
         if (!empty($this->_action_cache_host)) {
             $options['host'] = $this->_action_cache_host;
