@@ -18,6 +18,86 @@
  * @license GNU Lesser General Public License <http://www.gnu.org/copyleft/lesser.html>
  */
 
+/**
+ * Config Reader
+ * 
+ * Provides access to config files stored in:
+ * 
+ * AK_APP_DIR/config/*.yml
+ *
+ * = Structure of a config file
+ * 
+ * A config file contains configuration directives for all
+ * configured environments (development,testing,production).
+ * 
+ * A config file can have a default configuration section, which will 
+ * be the base for all other environments. That means if a default configuration
+ * directive is not overwritten in an environment, the default directive is active.
+ * 
+ * Example:
+ * 
+ * <code>
+ * default:
+ *          log:
+ *              file:   /tmp/debug.log
+ *              level:  verbose
+ * 
+ * development:
+ *          log:
+ *              file:   /tmp/development.log
+ * 
+ * testing:
+ *          log:
+ *              file:   /tmp/testing.log
+ * 
+ * production:
+ *          log:
+ *              file:   /tmp/production.log
+ *              level:  error
+ * </code>
+ * 
+ * The above example sets a log level of "verbose" as the default.
+ * The default log file is in "/tmp/debug.log".
+ * 
+ * The environments development and testing overwrite the default log file.
+ * 
+ * The production environment overwrites as well the log file and the log level.
+ * 
+ * The Log level for development will be "verbose" (inherited from default).
+ * The log level for testing will be "verbose" (inherited from default).
+ * The log level for production will be "error" (overwritten the default level).
+ * 
+ * 
+ * = Accessing configuration files
+ * 
+ * The format of the config files is YAML.
+ * The convention is that a yaml file in:
+ * 
+ * AK_APP_DIR/config/myconfig.yml
+ * 
+ * can be accessed via:
+ * 
+ * <code>
+ * AkConfig::get('myconfig'); // loads myconfig.yml and section "AK_ENVIRONMENT"
+ * </code>
+ * 
+ * By default the configuration for the environment defined in AK_ENVIRONMENT will be loaded.
+ * 
+ * By providing the desired environment in the get call you can change that:
+ * 
+ * <code>
+ * AkConfig::get('myconfig','production'); // loads myconfig.yml and section production
+ * </code>
+ *
+ * = Config caching
+ * 
+ * The AkConfig class caches php representations of the yaml files inside:
+ * 
+ * AK_APP_DIR/config/cache/$environment/$config.yml
+ * 
+ * As soon as the modification time of a yaml-config file changes, the cache is invalidated
+ * and will be regenerated.
+ */
 class AkConfig
 {
     function _generateCacheFileName($namespace, $environment = AK_ENVIRONMENT)
