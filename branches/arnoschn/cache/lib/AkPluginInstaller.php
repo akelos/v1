@@ -96,26 +96,27 @@ class AkPluginInstaller extends AkInstaller
         $basePath = AK_APP_PLUGINS_DIR.DS.$this->plugin_name.DS.$installer_dir.DS.$source_dir;
         $this->files = Ak::dir($basePath, array('recurse'=> true));
         empty($this->options['force']) ? $this->_checkForCollisions($this->files,$basePath) : null;
-        $this->_copyFiles($this->files, $basePath);
+        $this->_copyFiles($this->files, $basePath, $basePath);
     }
     
-    function _copyFiles($directory_structure, $base_path = null)
+    function _copyFiles($directory_structure, $base_path = null, $src_path = null)
     {
+        
         foreach ($directory_structure as $k=>$node){
             $path = $base_path.DS.$node;
             if(is_dir($path)){
                 echo 'Creating dir '.$path."\n";
-                $this->_makeDir($path, $base_path);
+                $this->_makeDir($path, $src_path);
             }elseif(is_file($path)){
                 echo 'Creating file '.$path."\n";
-                $this->_copyFile($path, $base_path);
+                $this->_copyFile($path, $src_path);
             }elseif(is_array($node)){
                 foreach ($node as $dir=>$items){
                     $path = $base_path.DS.$dir;
                     if(is_dir($path)){
                         echo 'Creating dir '.$path."\n";
-                        $this->_makeDir($path, $base_path);
-                        $this->_copyFiles($items, $path);
+                        $this->_makeDir($path, $src_path);
+                        $this->_copyFiles($items, $path, $src_path);
                     }
                 }
             }
