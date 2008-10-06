@@ -2,10 +2,12 @@
 
 class AkDbSchemaCache
 {
-    function doRefresh($set = false)
+    function doRefresh($set = null)
     {
         static $refresh = false;
-        if ($set === true) {
+        if ($set === false) {
+            $refresh = false;
+        } else if ($set === true) {
             $refresh = true;
         }
         return $refresh;

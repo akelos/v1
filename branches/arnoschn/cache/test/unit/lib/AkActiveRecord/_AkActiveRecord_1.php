@@ -132,7 +132,9 @@ class test_AkActiveRecord extends  AkUnitTest
         $AkTestField = new AkTestField();
         $AkTestField->loadColumnsSettings();
         // Testing database settings cache on session (this might be changed in a future
+        AkDbSchemaCache::doRefresh(false);
         $this->assertEqual($AkTestField->_columnsSettings,AkDbSchemaCache::getModelColumnSettings('AkTestField'));
+        AkDbSchemaCache::doRefresh(true);
     }
 
     function Test_of_initiateColumnsToNull()
