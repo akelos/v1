@@ -1135,9 +1135,7 @@ EOF;
         $options['action'] = !isset($options['action']) ? (isset($this->_controller->params['action']) ? 
                                                                  $this->_controller->params['action']:null):
                                                           $options['action'];
-        $options['id'] = !isset($options['id']) ? (isset($this->_controller->params['id']) ? 
-                                                         $this->_controller->params['id']:null):
-                                                  $options['id'];
+        $options['id'] = isset($options['id']) ? $options['id']: false;
         
         $options['skip_relative_url_root']=true;
         $url = $this->_controller->urlFor($options);
