@@ -202,11 +202,11 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  * The caching is doing using the cache helper available in the Action View.
  * A template with caching might look something like:
  *
- *   <b>Hello {name}</b>
- *   <?php if (!$this->cache_helper->begin()) { ?>
- *     All the topics in the system:
- *     <?php $this->renderPartial("topic", $Topic->findAll()); ?>
- *   <?php $this->cache_helper->end();} ?>
+*   <b>Hello {name}</b>
+*   <?php if (!$cache_helper->begin()) { ?>
+*     All the topics in the system:
+*     <?= $controller->renderPartial("topic", $Topic->findAll()); ?>
+*   <?= $cache_helper->end();} ?>
  *
  * This cache by default will bind to the action it was called from,
  * so if this code was part of the view for the topics/list action, you would
@@ -938,6 +938,7 @@ EOF;
             $contents = ob_get_clean();
             $this->writeFragment($key, $contents, $options);
         }
+        return $contents;
     }
 
     function writeFragment($key, $content, $options = array())

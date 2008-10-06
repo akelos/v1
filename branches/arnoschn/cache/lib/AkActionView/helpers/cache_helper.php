@@ -23,10 +23,10 @@
 * == Caching a block into a fragment
 *
 *   <b>Hello {name}</b>
-*   <?php if (!$this->cache_helper->begin()) { ?>
+*   <?php if (!$cache_helper->begin()) { ?>
 *     All the topics in the system:
-*     <?php $this->renderPartial("topic", $Topic->findAll()); ?>
-*   <?php $this->cache_helper->end();} ?>
+*     <?= $controller->renderPartial("topic", $Topic->findAll()); ?>
+*   <?= $cache_helper->end();} ?>
 *  
 *
 *
@@ -38,12 +38,12 @@ require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkActionViewHelper.php');
 class CacheHelper extends AkActionViewHelper 
 {
     
-    function begin($key, $options = array())
+    function begin($key = array(), $options = array())
     {
         return $this->_controller->cacheTplFragmentStart($key, $options);
     }
 
-    function end($key, $options = array())
+    function end($key = array(), $options = array())
     {
         return $this->_controller->cacheTplFragmentEnd($key, $options);
     }
