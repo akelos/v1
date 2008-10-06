@@ -43,7 +43,7 @@ class Test_of_AkTestApplication extends  AkUnitTest
 
     }
     
-    function test_assert_xpath()
+    function x_test_assert_xpath()
     {
         $test_app = new MockTestApplication();
         $test_app->_response = file_get_contents(AK_TEST_DIR.DS.'fixtures'.DS.'data'.DS.'valid_xhtml.html');

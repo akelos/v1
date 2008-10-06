@@ -2428,9 +2428,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 if(!isset($this->_db)){
                     $this->setConnection();
                 }
-                if (!AK_ACTIVE_RECORD_ENABLE_PERSISTENCE || ($available_tables = AkDbSchemaCache::getAvailableTables()) === false) {
+                if (!AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA || ($available_tables = AkDbSchemaCache::getAvailableTables()) === false) {
                     $available_tables = $this->_db->availableTables();
-                    if (AK_ACTIVE_RECORD_ENABLE_PERSISTENCE) {
+                    if (AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA) {
                         AkDbSchemaCache::setAvailableTables($available_tables);
                     }
                 }
@@ -2534,11 +2534,11 @@ class AkActiveRecord extends AkAssociatedActiveRecord
      */
     function _databaseTableInternals($table)
     {
-        if (!AK_ACTIVE_RECORD_ENABLE_PERSISTENCE || ($cache = AkDbSchemaCache::getDbTableInternals($table))===false) {
+        if (!AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA || ($cache = AkDbSchemaCache::getDbTableInternals($table))===false) {
             $cache = $this->_db->getColumnDetails($table);
-            //if (AK_ACTIVE_RECORD_ENABLE_PERSISTENCE) {
-            AkDbSchemaCache::setDbTableInternals($table,$cache);
-            //}
+            if (AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA) {
+                AkDbSchemaCache::setDbTableInternals($table,$cache);
+            }
         }
         return $cache;
     }
@@ -2630,7 +2630,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                     $this->setColumnSettings($column_objects[$k]->name, $column_objects[$k]);
                 }
             }
-            if(!empty($this->_columnsSettings)){
+            if(!empty($this->_columnsSettings) && AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA){
                 $this->_persistTableColumnSettings();
             }
         }
