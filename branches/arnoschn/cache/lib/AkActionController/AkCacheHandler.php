@@ -1142,7 +1142,7 @@ EOF;
         $options['skip_relative_url_root']=true;
         $url = $this->_controller->urlFor($options);
         $parts = parse_url($url);
-        $path = $parts['path'];
+        $path = isset($parts['path'])?$parts['path']:'';
         if ($normalize && (!isset($options['action']) || (isset($options['action']) && $options['action']==AK_DEFAULT_ACTION && !strstr($path,'/'.AK_DEFAULT_ACTION)))) {
             $path = rtrim($path,'/');
             $parts = preg_split('/\/+/',$path);
