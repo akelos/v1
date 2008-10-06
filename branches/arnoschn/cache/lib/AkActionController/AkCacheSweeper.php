@@ -40,7 +40,7 @@ require_once(AK_LIB_DIR . DS . 'AkActiveRecord' . DS . 'AkObserver.php');
  *     }
  *   }
  *
- * The sweeper is assigned in the controllers that wish to have its job performed using the <tt>cache_sweeper</tt> class method:
+ * The sweeper is assigned in the controllers that wish to have its job performed using the <tt>$cache_sweeper</tt> class attribute:
  *
  *   class ListsController extends ApplicationController {
  *     var $caches_action = array("index", "show", "public", "feed");

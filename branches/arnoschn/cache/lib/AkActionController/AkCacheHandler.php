@@ -229,7 +229,7 @@ require_once(AK_LIB_DIR.DS.'AkCache.php');
  */
 class AkCacheHandler extends AkObject
 {
-    var $cache_strip = '<!--CACHE-SKIP-START-->.*?<!--CACHE-SKIP-END-->';
+    var $cache_strip = array('<!--CACHE-SKIP-START-->.*?<!--CACHE-SKIP-END-->','<div class=\"flash_[a-z]+\">.*?<\/div>');
     
     /**
      * @var AkCache
@@ -577,7 +577,7 @@ class AkCacheHandler extends AkObject
         } else {
             $cache_strip = array();
         }
-        $cache_strip = array_merge(array($this->cache_strip), $cache_strip);
+        $cache_strip = array_merge($this->cache_strip, $cache_strip);
 
         foreach ($cache_strip as $strip) {
             $content = @preg_replace('/('.$strip.')/sm','',$content);
