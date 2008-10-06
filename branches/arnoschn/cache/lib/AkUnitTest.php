@@ -136,9 +136,7 @@ class AkUnitTest extends UnitTestCase
         $installer = new FrameworkInstaller();
         $installer->uninstall();
         $installer->install();
-        if(isset($_SESSION['__activeRecordColumnsSettingsCache'])){
-            unset($_SESSION['__activeRecordColumnsSettingsCache']);
-        }
+        AkDbSchemaCache::clearAll();
     }
 
     /**
@@ -177,9 +175,6 @@ class AkUnitTest extends UnitTestCase
             if($this->instantiate_models || !empty($options['instantiate'])){
                 $this->instantiateModel($model);
             }
-        }
-        if(isset($_SESSION['__activeRecordColumnsSettingsCache'])){
-            unset($_SESSION['__activeRecordColumnsSettingsCache']);
         }
     }
 

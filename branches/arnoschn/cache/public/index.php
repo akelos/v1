@@ -32,15 +32,18 @@ if(!defined('AK_CONFIG_INCLUDED')){
 /**
  * Check cache here, render cache with headers
 */
-require_once(AK_LIB_DIR.DS.'Ak.php');
-$cache_settings = Ak::getSettings('caching', false);
-if ($cache_settings['enabled']) {
-    require_once(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');
+$cache_settings = @include AK_CONFIG_DIR.DS.'cache'.DS.AK_ENVIRONMENT.DS.'caching.php';
+if ($cache_settings!==false && $cache_settings['enabled']) {
+    require(AK_LIB_DIR . DS . 'AkActionController'.DS.'AkCacheHandler.php');
     $null = null;
-    $pageCache = &Ak::singleton('AkCacheHandler', $null);
+    $pageCache = new AkCacheHandler();
     $pageCache->init($null,$cache_settings);
     if (($cachedPage = $pageCache->getCachedPage())!==false) {
-        $cachedPage->render();
+        global $sendHeaders, $returnHeaders, $exit;
+        $sendHeaders = true;
+        $returnHeaders = false; 
+        $exit = true;
+        include $cachedPage;
     }
 }
 require_once(AK_LIB_DIR . DS . 'AkDispatcher.php');

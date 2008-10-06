@@ -548,17 +548,28 @@ class AkCacheHandler extends AkObject
         //$addHeaders['ETag'] = $ETag;
 
 
-
+        $cacheTimestamp = time();
         $content = $this->_modifyCacheContent($content,$addHeaders, $removeHeaders);
-        $res = $this->_cache_store->save($content,$cacheId,$cacheGroup);
+        $filename = $this->_storePageCache($content,$cacheId,$cacheGroup);
+        $res = $this->_cache_store->save($filename,$cacheId,$cacheGroup);
         if ($notNormalizedCacheId != $cacheId) {
             // Store the not normalized cacheid
-            $this->_cache_store->save($content,$notNormalizedCacheId,$cacheGroup);
+            $filename = $this->_storePageCache($content,$cacheId,$cacheGroup);
+            $this->_cache_store->save($filename,$notNormalizedCacheId,$cacheGroup);
         }
         return $res;
 
     }
-    
+    function _storePageCache($content, $cacheId,$cacheGroup)
+    {
+        $filename = AK_TMP_DIR.DS.'cache'.DS.$cacheGroup.DS.$cacheId.'.php';
+        if (!file_exists(dirname($filename))) {
+            $res = mkdir(dirname($filename),0755,true);
+        }
+        file_put_contents($filename, $content);
+
+        return $filename;
+    }
     function _stripCacheSkipSections($content)
     {
         if (isset($this->_controller->cache_strip)) {
@@ -578,7 +589,7 @@ class AkCacheHandler extends AkObject
          return $content;
     }
     
-    function _modifyCacheContent($content,$addHeaders = array(), $removeHeaders = array())
+    function x_modifyCacheContent($content,$addHeaders = array(), $removeHeaders = array())
     {
         $headers = $this->_controller->Response->_headers_sent;
         $finalHeaders = array();
@@ -602,7 +613,60 @@ class AkCacheHandler extends AkObject
         $content = $timestamp.$this->_header_separator.$headerString . $this->_header_separator . $content;
         return $content;
     }
+    function _modifyCacheContent($content,$addHeaders = array(), $removeHeaders = array())
+    {
+        $headers = $this->_controller->Response->_headers_sent;
+        $finalHeaders = array();
+        foreach ($headers as $header) {
+            $parts = split(': ',$header);
+            $type = $parts[0];
+            if (!in_array(strtolower($type),$removeHeaders)) {
+                if (isset($addHeaders[$type])) {
+                    $finalHeaders[] = $type.($addHeaders[$type]!==true?': '.$addHeaders[$type]:'');
+                    unset($addHeaders[$type]);
+                } else {
+                    $finalHeaders[] = $header;
+                }
+            }
+        }
+        foreach ($addHeaders as $type=>$val) {
+            $finalHeaders[] = $type.($val!==true?': '.$val:'');
+        }
+        $timestamp = time();
+        $headerString = var_export($finalHeaders,true);
+        //$functionStr = file_get_contents(dirname(__FILE__).DS.'cache_page_functions.txt');
+        $content = <<<EOF
+<?php
+global \$sendHeaders, \$returnHeaders, \$exit;
 
+\$modifiedTimestamp = $timestamp;
+\$headers = $headerString;
+
+\$etagHeaders = AkCacheHandler::_handleEtag(\$headers, \$sendHeaders,\$returnHeaders, \$exit);
+\$sentHeaders = array();
+\$sentHeaders=AkCacheHandler::_handleIfModifiedSince(\$modifiedTimestamp,\$exit, \$sendHeaders, \$returnHeaders);
+\$acceptedEncodings = AkCacheHandler::_getAcceptedEncodings();
+foreach(\$headers as \$header) {
+    header(AkCacheHandler::_handleEncodingAliases(\$header, \$acceptedEncodings));
+
+}
+\$addHeaders = AkCacheHandler::_sendAdditionalHeaders(\$sendHeaders, \$returnHeaders);
+if (is_array(\$addHeaders)) {
+    \$headers = array_merge(\$addHeaders, \$headers);
+}
+\$headers = array_merge(\$etagHeaders, \$headers);
+?>
+$content<?php
+if (\$exit) {
+    exit(0);
+}
+\$sentHeaders = is_array(\$sentHeaders)?array_merge(\$sentHeaders,\$headers):\$headers;
+return \$sentHeaders;
+?>
+EOF;
+
+        return $content;
+    }
     function _setCacheSweeper($options)
     {
         require_once(AK_LIB_DIR.DS.'AkActionController'.DS.'AkCacheSweeper.php');
@@ -735,7 +799,7 @@ class AkCacheHandler extends AkObject
             ;
         }
         $path = ltrim($path,'/');
-        if (preg_match('|^[a-z]{2,2}/.*$|', $path)) {
+        if (preg_match('@^([a-z]{2,2}|[a-z]{2,2}_[a-z]{2,2})/.*$@', $path)) {
             $parts = split('/',$path);
             $forcedLanguage = array_shift($parts);
             $path = implode('/',$parts);
@@ -766,12 +830,7 @@ class AkCacheHandler extends AkObject
         $this->_lastCacheId = preg_replace('|'.DS.'+|','/',$cacheId);
         return $this->_lastCacheId;
     }
-    function _getAcceptedEncodings()
-    {
-        $encodings = isset($_SERVER['HTTP_ACCEPT_ENCODING'])?$_SERVER['HTTP_ACCEPT_ENCODING']:'';
-        $encodings = preg_split('/\s*,\s*/',$encodings);
-        return $encodings;
-    }
+ 
     function &getCachedPage($path = null,$forcedLanguage = null)
     {
         $false = false;
@@ -788,11 +847,9 @@ class AkCacheHandler extends AkObject
             }
             $cacheGroup = $this->_buildCacheGroup();
             $cache = $this->_cache_store->get($cacheId, $cacheGroup);
+
             if ($cache != false) {
-                require_once(AK_LIB_DIR.DS.'AkCache'.DS.'AkCachedPage.php');
-                $page = &new AkCachedPage($cache, $this->_header_separator, array('use_if_modified_since'=>true,
-                                                                                'headers'=>array('X-Cached-By: Akelos')));
-                return $page;
+                return $cache;
             } else {
 
                 return $false;
@@ -1127,5 +1184,109 @@ class AkCacheHandler extends AkObject
         return $return;
     }
 
+    /**
+     * methods used statically from the pagecache files 
+     */
+    function _handleIfModifiedSince($modifiedTimestamp, $exit=true,$sendHeaders = true, $returnHeaders = false)
+    {
+        $headers = array();
+        $expiryTimestamp = time() + 60*60;
+        $time = null;
+        if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+            $time = $_SERVER['HTTP_IF_MODIFIED_SINCE'];
+            $ifModifiedSince = preg_replace('/;.*$/', '', $time);
+            $timestamp = strtotime($ifModifiedSince);
+        } else {
+            $timestamp = 0;
+        }
+        
+        
+        $gmTime = mktime(gmdate('H'), gmdate('i'), gmdate('s'), gmdate('m'), gmdate('d'), gmdate('Y'));
+        $time = time();
+        $diff = $time - $gmTime;
+        if ($modifiedTimestamp <= $timestamp) {
+            if ($sendHeaders) {
+                header('HTTP/1.1 304 Not Modified');
+            }
+            if ($returnHeaders) {
+                $headers[] = 'Status: 304';
+            }
+            $addHeaders = AkCacheHandler::_sendAdditionalHeaders($sendHeaders, $returnHeaders);
+            $headers = array_merge($addHeaders, $headers);
+            if ($exit) {
+                exit;
+            }
+            
+            if ($returnHeaders) {
+                
+                return $headers;
+            }
+        } else {
+            if ($sendHeaders) {
+                header('Last-Modified: '.gmdate('D, d M Y H:i:s', $modifiedTimestamp).' GMT');
+            } else if ($returnHeaders) {
+                $headers[]='Last-Modified: '.gmdate('D, d M Y H:i:s', $modifiedTimestamp).' GMT';
+            }
+        }
+        return $headers;
+    }
+    
+    function _handleEtag($headers,$sendHeaders, $returnHeaders, $exit)
+    {
+        $outHeaders = array();
+        if (isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
+            foreach ($headers as $header) {
+                if (stristr($header,'etag: '.$_SERVER['HTTP_IF_NONE_MATCH'])) {
+                    if ($sendHeaders) {
+                        header('HTTP/1.1 304 Not Modified');
+                    }
+                    if ($returnHeaders) {
+                        $outHeaders[] = 'Status: 304';
+                        
+                    }
+                    if ($exit) {
+                        exit;
+                    }
+                    break;
+                }
+            }
+        }
+        return $outHeaders;
+    }
+    
+
+    function _handleEncodingAliases($header, $acceptedEncodings)
+    {
+        $_encodingAliases = array('gzip','x-gzip', 'compress', 'x-compress');
+        $parts = split(': ',$header);
+        if (strtolower($parts[0])=='content-encoding' && 
+            isset($parts[1]) &&
+            in_array($parts[1],$_encodingAliases)) {
+            $acceptedEncodings = array_intersect($acceptedEncodings,$_encodingAliases);
+            if (isset($acceptedEncodings[0])) {
+                $header =$parts[0].': '.$acceptedEncodings[0];
+            }
+        }
+        return $header;
+    }
+    function _getAcceptedEncodings()
+    {
+        $encodings = isset($_SERVER['HTTP_ACCEPT_ENCODING'])?$_SERVER['HTTP_ACCEPT_ENCODING']:'';
+        $encodings = preg_split('/\s*,\s*/',$encodings);
+        return $encodings;
+    }
+
+    function _sendAdditionalHeaders($sendHeaders = true, $returnHeaders = false)
+    {
+        $additionalHeaders = array('X-Cached-By: Akelos');
+        if ($sendHeaders) {
+            foreach($additionalHeaders as $additionalHeader) {
+                header($additionalHeader);
+            }
+        }
+        if ($returnHeaders) {
+            return $additionalHeaders;
+        }
+    }
 
 }

@@ -20,7 +20,7 @@
 
 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkAssociatedActiveRecord.php');
 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbAdapter.php');
-
+require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkDbSchemaCache.php');
 /**#@+
 * Constants
 */
@@ -46,8 +46,8 @@ defined('AK_POST_CODE_REGULAR_EXPRESSION') ? null : define('AK_POST_CODE_REGULAR
 /**#@-*/
 
 // Forces loading database schema on every call
-if(AK_DEV_MODE && isset($_SESSION['__activeRecordColumnsSettingsCache'])){
-    unset($_SESSION['__activeRecordColumnsSettingsCache']);
+if(AK_DEV_MODE) {
+    AkDbSchemaCache::doRefresh(true);
 }
 
 ak_compat('array_combine');
@@ -272,8 +272,10 @@ class AkActiveRecord extends AkAssociatedActiveRecord
         if(!empty($this->table_name)){
             $this->setTableName($this->table_name);
         }
-
-        $this->_loadActAsBehaviours();
+        $this->act_as = !empty($this->acts_as) ? $this->acts_as : (empty($this->act_as) ? false : $this->act_as);
+        if (!empty($this->act_as)) {
+            $this->_loadActAsBehaviours();
+        }
 
         if(!empty($this->combined_attributes)){
             foreach ($this->combined_attributes as $combined_attribute){
@@ -306,7 +308,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
             $this->newRecord($attributes);
         }
 
-        $this->_buildFinders();
+        if($this->_dynamicMethods){
+            $this->_buildFinders();
+        }
         empty($avoid_loading_associations) ? $this->loadAssociations() : null;
     }
 
@@ -2424,11 +2428,12 @@ class AkActiveRecord extends AkAssociatedActiveRecord
                 if(!isset($this->_db)){
                     $this->setConnection();
                 }
-                if(empty($_SESSION['__activeRecordColumnsSettingsCache']['available_tables']) ||
-                !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
-                    $_SESSION['__activeRecordColumnsSettingsCache']['available_tables'] = $this->_db->availableTables();
+                if (!AK_ACTIVE_RECORD_ENABLE_PERSISTENCE || ($available_tables = AkDbSchemaCache::getAvailableTables()) === false) {
+                    $available_tables = $this->_db->availableTables();
+                    if (AK_ACTIVE_RECORD_ENABLE_PERSISTENCE) {
+                        AkDbSchemaCache::setAvailableTables($available_tables);
+                    }
                 }
-                $available_tables = $_SESSION['__activeRecordColumnsSettingsCache']['available_tables'];
             }
             if(!in_array($table_name,(array)$available_tables)){
                 if(!$check_mode){
@@ -2529,12 +2534,13 @@ class AkActiveRecord extends AkAssociatedActiveRecord
      */
     function _databaseTableInternals($table)
     {
-        if(empty($_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals']) || !AK_ACTIVE_RECORD_ENABLE_PERSISTENCE){
-            $_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals'] = $this->_db->getColumnDetails($table);
+        if (!AK_ACTIVE_RECORD_ENABLE_PERSISTENCE || ($cache = AkDbSchemaCache::getDbTableInternals($table))===false) {
+            $cache = $this->_db->getColumnDetails($table);
+            //if (AK_ACTIVE_RECORD_ENABLE_PERSISTENCE) {
+            AkDbSchemaCache::setDbTableInternals($table,$cache);
+            //}
         }
-        $cache[$table] = $_SESSION['__activeRecordColumnsSettingsCache']['database_table_'.$table.'_internals'];
-
-        return $cache[$table];
+        return $cache;
     }
 
     function getColumnsWithRegexBoundaries()
@@ -2673,9 +2679,6 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function resetColumnInformation()
     {
-        if(isset($_SESSION['__activeRecordColumnsSettingsCache'][$this->getModelName()])){
-            unset($_SESSION['__activeRecordColumnsSettingsCache'][$this->getModelName()]);
-        }
         $this->_clearPersitedColumnSettings();
         $this->_columnNames = $this->_columns = $this->_columnsSettings = $this->_contentColumns = array();
     }
@@ -2685,7 +2688,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _getColumnsSettings()
     {
-        return $_SESSION['__activeRecordColumnsSettingsCache'];
+        return AkDbSchemaCache::getColumnsSettings();
     }
 
     /**
@@ -2693,7 +2696,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _getModelColumnSettings()
     {
-        return $_SESSION['__activeRecordColumnsSettingsCache'][$this->getModelName()];
+        return AkDbSchemaCache::getModelColumnSettings($this->getModelName());
+        
     }
 
     /**
@@ -2701,7 +2705,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _persistTableColumnSettings()
     {
-        $_SESSION['__activeRecordColumnsSettingsCache'][$this->getModelName().'_column_settings'] = $this->_columnsSettings;
+        AkDbSchemaCache::setModelColumnSettings($this->getModelName(), $this->_columnsSettings);
     }
 
     /**
@@ -2709,12 +2713,8 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _getPersistedTableColumnSettings()
     {
-        $model_name = $this->getModelName();
-        if(AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA && !isset($_SESSION['__activeRecordColumnsSettingsCache']) && AK_CACHE_HANDLER > 0){
-            $this->_loadPersistedColumnSetings();
-        }
-        return isset($_SESSION['__activeRecordColumnsSettingsCache'][$model_name.'_column_settings']) ?
-        $_SESSION['__activeRecordColumnsSettingsCache'][$model_name.'_column_settings'] : false;
+        return AkDbSchemaCache::getModelColumnSettings($this->getModelName());
+        
     }
 
     /**
@@ -2722,43 +2722,9 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _clearPersitedColumnSettings()
     {
-        if(AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA && AK_CACHE_HANDLER > 0){
-            $Cache =& Ak::cache();
-            $Cache->init(AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA_LIFE);
-            $Cache->clean('AkActiveRecord');
-        }
+        AkDbSchemaCache::clear($this->getModelName());
     }
 
-    /**
-    * @access private
-    */
-    function _savePersitedColumnSettings()
-    {
-        if(isset($_SESSION['__activeRecordColumnsSettingsCache'])){
-            $Cache =& Ak::cache();
-            $Cache->init(AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA_LIFE);
-            $Cache->save(serialize($_SESSION['__activeRecordColumnsSettingsCache']), 'active_record_db_cache', 'AkActiveRecord');
-        }
-    }
-
-    /**
-    * @access private
-    */
-    function _loadPersistedColumnSetings()
-    {
-        if(!isset($_SESSION['__activeRecordColumnsSettingsCache'])){
-            $Cache =& Ak::cache();
-            $Cache->init(AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA_LIFE);
-            if($serialized_column_settings = $Cache->get('active_record_db_cache', 'AkActiveRecord') && !empty($serialized_column_settings)){
-                $_SESSION['__activeRecordColumnsSettingsCache'] = @unserialize($serialized_column_settings);
-
-            }elseif(AK_ACTIVE_RECORD_CACHE_DATABASE_SCHEMA){
-                register_shutdown_function(array($this,'_savePersitedColumnSettings'));
-            }
-        }else{
-            $_SESSION['__activeRecordColumnsSettingsCache'] = array();
-        }
-    }
 
 
     function initiateAttributeToNull($attribute)
@@ -4533,7 +4499,7 @@ class AkActiveRecord extends AkAssociatedActiveRecord
     */
     function _loadActAsBehaviours()
     {
-        $this->act_as = !empty($this->acts_as) ? $this->acts_as : (empty($this->act_as) ? false : $this->act_as);
+        //$this->act_as = !empty($this->acts_as) ? $this->acts_as : (empty($this->act_as) ? false : $this->act_as);
         if(!empty($this->act_as)){
             if(is_string($this->act_as)){
                 $this->act_as = array_unique(array_diff(array_map('trim',explode(',',$this->act_as.',')), array('')));

@@ -419,10 +419,10 @@ class AkActionController extends AkObject
     function instantiateModelClass($model_class_name, $finder_options = array())
     {
         $underscored_model_class_name = AkInflector::underscore($model_class_name);
-        $controller_name = $this->getControllerName();
+        $controller_name = isset($this->controller_name)?$this->controller_name:$this->getControllerName();
         $id = empty($this->params[$underscored_model_class_name]['id']) ?
         (empty($this->params['id']) ? false :
-        (($model_class_name == $controller_name || $model_class_name == AkInflector::singularize($controller_name)) ? $this->params['id'] : false)) :
+        (($model_class_name == $controller_name || $model_class_name == $this->singularized_controller_name) ? $this->params['id'] : false)) :
         $this->params[$underscored_model_class_name]['id'];
 
         if(class_exists($model_class_name)){
@@ -862,6 +862,7 @@ class AkActionController extends AkObject
             }
             $controller_name = substr($current_class_name,0,-10);
             $this->controller_name = $this->_removeModuleNameFromControllerName($controller_name);
+            $this->singularized_controller_name = AkInflector::singularize($this->controller_name);
         }
         return $this->controller_name;
     }

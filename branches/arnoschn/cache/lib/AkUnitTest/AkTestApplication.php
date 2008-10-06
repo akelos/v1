@@ -225,8 +225,14 @@ class AkTestApplication extends AkUnitTest
             
             $pageCache->init($null, $cache_settings);
             if ($cachedPage = $pageCache->getCachedPage()) {
+                static $_cachedHeaders = array();
                 ob_start();
-                $headers = $cachedPage->render(false,false,true);
+                global $sendHeaders, $returnHeaders, $exit;
+                $sendHeaders = false;
+                $returnHeaders = true; 
+                $exit = false;
+                $headers = include $cachedPage;
+                //$headers = $cachedPage->render(false,false,true);
                 $this->_response = ob_get_clean();
                 if (is_array($headers)) {
                     $this->_cacheHeaders = $headers;
