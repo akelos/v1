@@ -25,7 +25,7 @@ class AkActiveRecord_connection_handling_TestCase extends  AkUnitTest
         
         $this->assertFalse($Model->establishConnection('not_specified_profile'));
         $this->assertError("The environment not_specified_profile is not allowed. Allowed environments: setup,testing,development,production");
-        $this->assertError("Could not find the database profile 'not_specified_profile' in config/config.php.");
+        $this->assertError("Could not find the database profile 'not_specified_profile' in config/database.yml.");
         
         $check_default_connection =& AkDbAdapter::getInstance();
         $this->assertReference($default_connection,$check_default_connection);

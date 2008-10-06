@@ -102,7 +102,17 @@ class AkDbAdapter extends AkObject
                     $database_specifications = AkDbAdapter::_getDbSettingsFromDsn($database_specifications);
                     $settings_hash = AK_ENVIRONMENT;
                 } else {
-                    trigger_error(Ak::t("Could not find the database profile '%profile_name' in config/config.php.",array('%profile_name'=>$database_specifications)),E_USER_ERROR);
+                    global $database_settings;
+                    if (isset($database_settings) && !file_exists(AK_CONFIG_DIR.DS.'database.yml')) {
+                        trigger_error(Ak::t("You are still using the old config/config.php database configuration. Please upgrade to use the config/database.yml configuration."), E_USER_NOTICE);
+                    } 
+                    if (!file_exists(AK_CONFIG_DIR.DS.'database.yml')) {
+                        trigger_error(Ak::t("Could not find the database configuration file in %dbconfig.",array('%dbconfig'=>AK_CONFIG_DIR.DS.'database.yml')),E_USER_ERROR);
+                    } else {
+                        trigger_error(Ak::t("Could not find the database profile '%profile_name' in config/database.yml.",array('%profile_name'=>$database_specifications)),E_USER_ERROR);
+                    }
+                    
+                    
                     $return = false;
                     return $return;
                 }
