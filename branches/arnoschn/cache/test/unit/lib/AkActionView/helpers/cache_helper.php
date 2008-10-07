@@ -65,15 +65,18 @@ class CacheHelperTests extends HelpersUnitTester
     
     function _test_cache_with_string_key($class)
     {
+        ob_start();
         if (!$this->cache_helper->begin($this->fragment_key)) {
             $this->assertTrue(true);
             echo $this->fragment_text;
-            $this->cache_helper->end($this->fragment_key);
+            echo $this->cache_helper->end($this->fragment_key);
         } else {
             $this->assertFalse(true,'Should not have been cached: ' . $class);
         }
+        $contents = ob_get_clean();
         $fragment = $this->controller->readFragment($this->fragment_key);
         $this->assertEqual($this->fragment_text, $fragment);
+        $this->assertEqual($this->fragment_text, $contents);
     }
 
     function _test_cache_with_string_key_cached($class)
@@ -82,7 +85,7 @@ class CacheHelperTests extends HelpersUnitTester
         if (!$this->cache_helper->begin($this->fragment_key)) {
             $this->assertFalse(true,'Should have been cached: ' . $class);
             echo $this->fragment_text;
-            $this->cache_helper->end($this->fragment_key);
+            echo $this->cache_helper->end($this->fragment_key);
         } else {
             $this->assertTrue(true);
         }
