@@ -902,9 +902,11 @@ EOF;
 
         return $key;
     }
-    function _cacheTplRendered($key)
+    function _cacheTplRendered($key, $options)
     {
         static $_cached;
+
+		$key = $this->fragmentCachekey($key, $options);
         if (empty($_cached)) {
             $_cached = array();
         }
@@ -924,7 +926,7 @@ EOF;
         $read = $this->readFragment($key, $options);
         if ($read !== false) {
             echo $read;
-            $this->_cacheTplRendered($key);
+            $this->_cacheTplRendered($key, $options);
             return true;
         } else {
             ob_start();
@@ -934,7 +936,7 @@ EOF;
 
     function cacheTplFragmentEnd($key = array(), $options = array())
     {
-        if (!$this->_cacheTplRendered($key)) {
+        if (!$this->_cacheTplRendered($key, $options)) {
             $contents = ob_get_clean();
             $this->writeFragment($key, $contents, $options);
         }
