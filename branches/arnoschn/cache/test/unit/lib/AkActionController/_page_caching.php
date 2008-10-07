@@ -387,4 +387,51 @@ class Test_AkActionControllerCachingPages extends AkTestApplication
         $this->_flushCache('www.example.com');
 
     }
+    
+    function test_format_caching()
+    {
+        $this->_flushCache('www.example.com');
+        $this->get('http://www.example.com/page_caching/format');
+        $this->assertHeader('Content-Type','text/html');
+        $this->assertTextMatch('<h1>hello business</h1>');
+        
+        $this->_assertPageCached('/page_caching/format');
+        $this->_assertPageCached('/page_caching/format.html');
+        $this->_assertPageNotCached('/page_caching/format.xml');
+        $this->_assertPageNotCached('/page_caching/format.csv');
+        
+        $this->get('http://www.example.com/page_caching/format');
+        $this->assertHeader('Content-Type','text/html');
+        $this->assertHeader('X-Cached-By','Akelos');
+        $this->assertTextMatch('<h1>hello business</h1>');
+        
+        $this->get('http://www.example.com/page_caching/format.xml');
+        $this->assertHeader('Content-Type','application/xml');
+        $this->assertTextMatch('<hello>business</hello>');
+        
+        $this->_assertPageCached('/page_caching/format');
+        $this->_assertPageCached('/page_caching/format.html');
+        $this->_assertPageCached('/page_caching/format.xml');
+        $this->_assertPageNotCached('/page_caching/format.csv');
+        
+        $this->get('http://www.example.com/page_caching/format.xml');
+        $this->assertHeader('Content-Type','application/xml');
+        $this->assertTextMatch('<hello>business</hello>');
+        $this->assertHeader('X-Cached-By','Akelos');
+        
+        $this->get('http://www.example.com/page_caching/format.csv');
+        $this->assertHeader('Content-Type','text/csv');
+        $this->assertTextMatch('hello,business');
+        
+        $this->_assertPageCached('/page_caching/format');
+        $this->_assertPageCached('/page_caching/format.html');
+        $this->_assertPageCached('/page_caching/format.xml');
+        $this->_assertPageCached('/page_caching/format.csv');
+        
+        $this->get('http://www.example.com/page_caching/format.csv');
+        $this->assertHeader('Content-Type','text/csv');
+        $this->assertTextMatch('hello,business');
+        $this->assertHeader('X-Cached-By','Akelos');
+
+    }
 }

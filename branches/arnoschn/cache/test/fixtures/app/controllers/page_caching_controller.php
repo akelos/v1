@@ -3,7 +3,7 @@
 class PageCachingController extends ApplicationController
 {
 
-    var $caches_page = array('index','ok','no_content','found','not_found','simple', 'priority',
+    var $caches_page = array('format','index','ok','no_content','found','not_found','simple', 'priority',
                                'skip');
 
     var $caches_action = array('priority');
@@ -14,6 +14,24 @@ class PageCachingController extends ApplicationController
         $this->renderNothing(200);
         
     }
+    
+    function format()
+    {
+        if (!$this->respondToFormat()) {
+            $this->renderText('<h1>hello business</h1>');
+        }
+    }
+    
+    function _handleFormatAsXml()
+    {
+        $this->renderText('<hello>business</hello>');
+    }
+    
+    function _handleFormatAsCsv()
+    {
+        $this->renderText('hello,business');
+    }
+    
     function index()
     {
         $this->renderText('index');

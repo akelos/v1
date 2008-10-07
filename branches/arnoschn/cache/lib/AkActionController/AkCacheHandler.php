@@ -807,9 +807,14 @@ EOF;
         $cacheId = preg_replace('|'.DS.'+|','/',$path);
         $cacheId = rtrim($cacheId,'/');
         $parts = split('/',$cacheId);
+
         $hasExtension = preg_match('/.+\..{3,4}/',$parts[count($parts)-1]);
         if (!$hasExtension) {
-            $cacheId.= $this->_page_cache_extension;
+            if (isset($this->_controller)) {
+                $cacheId.= '.'.$this->_controller->Request->getFormat();
+            } else {
+                $cacheId.= $this->_page_cache_extension;
+            }
         }
         
         $getParameters = $_GET;
@@ -826,7 +831,6 @@ EOF;
         }
         $cacheId=strlen($cacheId)>$this->_max_url_length?md5($cacheId):$cacheId;
         $cacheId = ($forcedLanguage!=null?$forcedLanguage:$this->_getDefaultLanguageForUser()).DS. $cacheId;
-        //var_dump($cacheId);
         $this->_lastCacheId = preg_replace('|'.DS.'+|','/',$cacheId);
         return $this->_lastCacheId;
     }

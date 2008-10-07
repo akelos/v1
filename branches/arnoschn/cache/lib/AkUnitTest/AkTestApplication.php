@@ -17,7 +17,7 @@ class AkTestApplication extends AkUnitTest
      */
     function assertTextMatch($text, $message = '%s')
     {
-        $this->assertWantedPattern('/^'.preg_quote($text).'$/', $message);
+        $this->assertWantedPattern('|^'.$text.'$|', $message);
     }
     
     function assertText($text, $message = '%s') {
