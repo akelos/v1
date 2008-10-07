@@ -92,6 +92,7 @@ class Test_AkActionControllerSweeper extends AkTestApplication
          */
         $this->post('http://www.example.com/cache_sweeper/delete/'.$this->userId,array('first_name'=>'Max Schmidt'));
         $this->assertResponse(200);
+        $this->get('http://www.example.com/page_caching/');
         $this->_assertCacheExists('/'.Ak::lang().'/cache_sweeper/show/'.$this->userId,array('host'=>'www.example.com'));
         
     }
@@ -115,6 +116,7 @@ class Test_AkActionControllerSweeper extends AkTestApplication
          * delete does not call the sweeper, so cache should still exist
          */
         $this->post('http://www.example.com/cache_sweeper2/delete/'.$this->userId);
+        $this->get('http://www.example.com/page_caching/');
         $this->_assertCacheExists('/'.Ak::lang().'/cache_sweeper2/show/'.$this->userId,array('host'=>'www.example.com'));
         /**
          * but user does not exist anymore

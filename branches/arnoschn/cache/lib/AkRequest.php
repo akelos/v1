@@ -30,7 +30,7 @@ defined('AK_AUTOMATIC_SESSION_START') ? null : define('AK_AUTOMATIC_SESSION_STAR
 // IIS does not provide a valid REQUEST_URI so we need to guess it from the script name + query string
 $_SERVER['REQUEST_URI'] = (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $_SERVER['SCRIPT_NAME'].(( isset($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '')));
 
-
+require_once(AK_LIB_DIR.DS.'AkRequestMimeType.php');
 /**
 * Class that handles incoming request.
 * 
@@ -737,83 +737,25 @@ class AkRequest extends AkObject
     
     function getFormat()
     {
+
+        
         if (isset($this->_format)) {
             return $this->_format;
         } else if (isset($this->_request['format'])) {
             $this->_format = $this->_request['format'];
-        } elseif (preg_match('/^([^\.]+)\.(.+)$/', @$this->_request['ak'], $matches)) {
-            $this->_format = isset($matches[2])?strtolower($matches[2]):null;
-            $orgformat = $this->_format;
-            if ($this->_format == 'htm') {
-                $this->_format = 'html';
+        } else {
+            list($format, $requestPath) = AkRequestMimeType::getFormat(@$this->_request['ak']);
+            
+            $this->_format = $format;
+            $this->_request['format'] = $format;
+            if ($requestPath!=null) {
+                $this->_request['ak'] = $requestPath;
             }
-            $this->_request['format'] = $this->_format;
-            $this->_request['ak'] = preg_replace('/^(.*)\.'.$orgformat.'$/','\1',$this->_request['ak']);
-        } else if ($this->isGet() || $this->isDelete()) {
-            $this->_format = $this->_bestMimeType();
-        } else if ($this->isPost() || $this->isPut()) {
-            $this->_format = $this->_lookupMimeType($this->getContentType());
-        }
-        
-        if (empty($this->_format)) {
-            $this->_format = $this->mime_types['default'];
         }
         return $this->_format;
     }
     
-    function _sortAcceptHeader($a,$b) 
-    { 
-         //preserve the original order if q is equal 
-        return $a['q'] == $b['q'] ? ($a['i'] > $b['i']) : ($a['q'] < $b['q']); 
-    } 
-    function _parseMimeType($mime_type) 
-    { 
-        @list($type,$parameter_string) = explode(';',$mime_type); 
-        $mime_type_struct = array(); 
-        if ($parameter_string){ 
-            parse_str($parameter_string,$mime_type_struct); 
-        } 
-        $mime_type_struct['type'] = trim($type); 
-        return $mime_type_struct; 
-    }
-    function _getMimeType($acceptables)
-    { 
-        // we group by 'quality' 
-        $grouped_acceptables = array(); 
-        foreach ($acceptables as $acceptable){ 
-            $grouped_acceptables[$acceptable['q']][] = $acceptable['type']; 
-        } 
-         
-         
-        foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){ 
-            foreach ($this->mime_types as $mime_type=>$our_mime_type){ 
-                foreach ($array_with_acceptables_of_same_quality as $acceptable){ 
-                    if ($mime_type == $acceptable){ 
-                        return $our_mime_type; 
-                    } 
-                } 
-            } 
-        } 
-        return $this->mime_types['default']; 
-    } 
-    function getContentType() 
-    { 
-        if (empty($this->env['CONTENT_TYPE'])) return false; 
-        $mime_type_struct = $this->_parseMimeType($this->env['CONTENT_TYPE']); 
-        return $mime_type_struct['type']; 
-    } 
-    function _lookupMimeType($mime_type) 
-    { 
-        if (!isset($this->mime_types[$mime_type])) {
-            //trigger_error(Ak::t('Unsupported mime %mime',array('%mime'=>$mime_type)), E_USER_WARNING);
-            return null;
-        }
-        return $this->mime_types[$mime_type]; 
-    }
-    function _bestMimeType() 
-    { 
-        return $this->_getMimeType($this->getAccepts()); 
-    } 
+
     // {{{ recognize()
 
     /**

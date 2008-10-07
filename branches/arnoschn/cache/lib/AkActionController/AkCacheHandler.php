@@ -18,7 +18,7 @@
  */
 
 require_once(AK_LIB_DIR.DS.'AkCache.php');
-
+require_once(AK_LIB_DIR.DS.'AkRequestMimeType.php');
 /**
  *
  * 
@@ -635,6 +635,7 @@ class AkCacheHandler extends AkObject
         $timestamp = time();
         $headerString = var_export($finalHeaders,true);
         //$functionStr = file_get_contents(dirname(__FILE__).DS.'cache_page_functions.txt');
+        $content = preg_replace('/(<\?|<\?php|\?>)/','<?php echo "\1";?>', $content);
         $content = <<<EOF
 <?php
 global \$sendHeaders, \$returnHeaders, \$exit;
@@ -676,11 +677,17 @@ EOF;
             $options = Ak::toArray($options);
         }
         Ak::parseOptions($options, $default_options,array(),true);
-    
+        
         foreach ($options as $sweeper => $params) {
             if (is_int($sweeper)) {
                 $sweeper = $params;
                 $params = array();
+            }
+            if (isset($params['only']) && is_string($params['only'])) {
+                $params['only'] = array($params['only']);
+            }
+            if (isset($params['except']) && is_string($params['except'])) {
+                $params['except'] = array($params['except']);
             }
             $this->_initSweeper($sweeper, $params);
         }
@@ -688,8 +695,8 @@ EOF;
 
     function _initSweeper($sweeper, $options = array())
     {
-        if (!empty($only) && !in_array($this->_controller->getActionName(), $options['only'])) return;
-        if (!empty($except) && !in_array($this->_controller->getActionName(), $options['except'])) return;
+        if (isset($options['only']) && !in_array($this->_controller->getActionName(), $options['only'])) return;
+        if (isset($options['except']) && !in_array($this->_controller->getActionName(), $options['except'])) return;
 
         $sweeper_class = AkInflector::classify($sweeper);
 
@@ -813,7 +820,9 @@ EOF;
             if (isset($this->_controller)) {
                 $cacheId.= '.'.$this->_controller->Request->getFormat();
             } else {
-                $cacheId.= $this->_page_cache_extension;
+                
+                list($format, $requestPath) = AkRequestMimeType::getFormat($path);
+                $cacheId.= '.'.$format;
             }
         }
         
@@ -910,7 +919,7 @@ EOF;
     {
         static $_cached;
 
-		$key = $this->fragmentCachekey($key, $options);
+        $key = $this->fragmentCachekey($key, $options);
         if (empty($_cached)) {
             $_cached = array();
         }
@@ -959,9 +968,11 @@ EOF;
     function readFragment($key, $options = array())
     {
         if (!$this->cacheConfigured()) return false;
-
+        
+        $orgkey = $key;
+        
         $key = $this->fragmentCachekey($key, $options);
-
+        
         return $this->_cache_store->get($key, isset($options['host'])?
         $options['host']:$this->_buildCacheGroup());
     }
