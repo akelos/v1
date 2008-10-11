@@ -75,6 +75,22 @@ class CalendarHelperTestCase extends AkUnitTest
         $this->assertTrue(!strstr($this->_calendarForThisMonth(array('show_today' => false)), 'today'));
     }
 
+    function test_custom_first_day_on_moday_and_day_one_on_sunday()
+    {
+        $options = array ('year' => '2008', 'month' => 6, 'day' => 1,
+        'first_day_of_week' => 1);
+        $calendar = $this->_calendar($options);
+        $this->assertPattern('/<td class="otherMonth">26<\/td>/', $calendar);
+    }
+    
+    function test_custom_first_day_on_saturday_and_day_one_on_thursday()
+    {
+        $options = array ('year' => '2008', 'month' => 5, 'day' => 1,
+        'first_day_of_week' => 6);
+        $calendar = $this->_calendar($options);
+        $this->assertNoPattern('/<td class="otherMonth">22<\/td>/', $calendar);
+    }
+
     function _calendar($options = array())
     {
         return $this->calendar_helper->calendar($options);

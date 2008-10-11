@@ -9,7 +9,7 @@ The "calendar" and "day_months" methods will be automatically available to your 
 Installation
 --------------------------------
 
-    ./script/plugin install http://svn.akelos.org/plugins/calendar_helper
+    ./script/plugin install calendar_helper
 
 Using the calendar helper
 --------------------------------
@@ -47,5 +47,7 @@ Generating the default stylesheets for the calendar
 
     ./script/generate calendar_styles
 
-CSS will be copied to subdirectories of public/stylesheets/calendar.
+CSS will be copied to subdirectories of public/stylesheets/calendar and you can
+include them in your layout by calling
 
+    <%= stylesheet_link_tag 'calendar/grey/style' %>

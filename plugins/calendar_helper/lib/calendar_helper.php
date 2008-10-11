@@ -238,10 +238,16 @@ class CalendarHelper extends AkActionViewHelper
 
     function _getPreviousMonthDaysInCalendar(&$block)
     {
-        if($block->Month->starts_on > $block->_options['first_day_of_week']){
+        $diff = $block->Month->starts_on - $block->_options['first_day_of_week'];
+        if($diff != 0){
             $previous_month = ($block->Month->month == 1 ? 12 : $block->Month->month-1);
             $PreviousMonth =& $this->_loadMonthAndDays(array_merge($block->_options, array('month' => $previous_month, 'year' => $block->Month->year - ($previous_month == 12 ? 1 : 0))));
-            for($i = $PreviousMonth->number_of_days-$block->Month->starts_on+1+$block->_options['first_day_of_week']; $i <= $PreviousMonth->number_of_days; $i++){
+            $diff_adjustment = $diff+$block->_options['first_day_of_week']+7;
+            $first_day_to_show = $PreviousMonth->number_of_days - 
+            $block->Month->starts_on + 1 + $block->_options['first_day_of_week'] -
+            ($diff < 0 ? ($diff_adjustment>7?7:$diff_adjustment) : 0);
+
+            for($i = $first_day_to_show; $i <= $PreviousMonth->number_of_days; $i++){
                 $block->output .= $this->_renderOtherMonthDayCell($PreviousMonth->days[$i], $block->_options, $block->_options['show_previous_month_days']).$this->_indentNext(0);
             }
         }
