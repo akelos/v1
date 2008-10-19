@@ -15,8 +15,8 @@ Description:
     or under_score and should not be suffixed with 'Model' or 'Controller'.
     
 Example:
-    generate scaffold Account Bank debit credit
+    generate admin_scaffold Account Bank debit credit
 
     This will generate an Account model and BankController with a full test
     suite and a basic user interface.  Now create the accounts table in your
-    database and browse to http://localhost/bank/ -- voila.
+    database and browse to http://localhost/admin/bank/ -- voila.
