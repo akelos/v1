@@ -5,7 +5,7 @@ defined('AK_DEFAULT_USER_ROLE') ? null : define('AK_DEFAULT_USER_ROLE', 'Registe
 
 class User extends ActiveRecord
 {
-    var $habtm = array('roles' => array('unique'=>true));
+    var $habtm = array('roles' => array('unique'=>true, 'foreign_key'=>'user_id'));
 
     /**
      * @access private
