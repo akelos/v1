@@ -61,7 +61,7 @@ class Makelos
 }
 
 $Makelos = new Makelos();
-$Makelos->connectToDatabase($database_settings);
+$Makelos->connectToDatabase(@$database_settings);
 $Makelos->$task(@$argv);
 
 

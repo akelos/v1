@@ -2,6 +2,7 @@
 
 
 defined('AK_DEFAULT_USER_ROLE') ? null : define('AK_DEFAULT_USER_ROLE', 'Registered user');
+defined('AK_DEFAULT_ADMIN_SETTINGS') ? null : define('AK_DEFAULT_ADMIN_SETTINGS', 'admin');
 
 class User extends ActiveRecord
 {
@@ -61,7 +62,7 @@ class User extends ActiveRecord
 
     function setDefaultRole()
     {
-        $settings = Ak::getSettings('admin');
+        $settings = Ak::getSettings(AK_DEFAULT_ADMIN_SETTINGS);
         if(!empty($settings['account_settings']['default_role'])){
             $this->role->load();
             $Role = new Role();
@@ -258,7 +259,7 @@ class User extends ActiveRecord
         );
         $options = array_merge($default_options, $options);
 
-        $options['expires'] = empty($options['expires']) ? 0 : Ak::getTimestamp()+((empty($options['expires']) ? '0' : ($options['expires'] == true ? 86400 : $options['expires'])));
+        $options['expires'] = empty($options['expires']) ? 0 : Ak::getTimestamp()+((empty($options['expires']) ? '0' : ($options['expires'] === true ? 86400 : $options['expires'])));
         $options['single_use'] = $options['single_use'] ? 1 : 0;
 
         $options['hash'] = $this->_getTokenHash($options);
@@ -286,7 +287,7 @@ class User extends ActiveRecord
      */
     function _encodeToken($options)
     {
-        return base64_encode(Ak::blowfishEncrypt(Ak::toJson($options), Ak::getSetting('admin', 'token_key')));
+        return base64_encode(Ak::blowfishEncrypt(Ak::toJson($options), Ak::getSetting(AK_DEFAULT_ADMIN_SETTINGS, 'token_key')));
     }
 
     /**
@@ -298,7 +299,7 @@ class User extends ActiveRecord
      */
     function _decodeToken($token)
     {
-        return (array)Ak::fromJson(Ak::blowfishDecrypt(base64_decode($token), Ak::getSetting('admin', 'token_key')));
+        return (array)Ak::fromJson(Ak::blowfishDecrypt(base64_decode($token), Ak::getSetting(AK_DEFAULT_ADMIN_SETTINGS, 'token_key')));
     }
 
 
@@ -319,7 +320,7 @@ class User extends ActiveRecord
     function can($task, $extension = null, $force_reload = false)
     {
         if(!isset($this->_activeRecordHasBeenInstantiated) || 
-            $this->getModelName() != 'User'){
+            !in_array('User', array($this->getModelName(), $this->getParentModelName()))){
             if (User::isLoaded()) {
                 $User =& User::getCurrentUser();
                 return $User->can($task, $extension, $force_reload);

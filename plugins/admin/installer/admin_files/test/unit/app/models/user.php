@@ -9,7 +9,7 @@ class UserTestCase extends AkUnitTest
     function test_setup()
     {
         $this->uninstallAndInstallMigration('AdminPlugin');
-        $this->includeAndInstatiateModels('User', 'Role', 'Permission');
+        $this->includeAndInstatiateModels('User', 'Sentinel', 'Role', 'Permission');
     }
 
     function test_should_request_valid_password()
@@ -73,18 +73,18 @@ class UserTestCase extends AkUnitTest
     {
         $Alicia =& $this->User->findFirstBy('login', 'alicia');
         $token = $Alicia->getToken(array('single_use'=> true));
-        $this->assertTrue($User = User::authenticateWithToken($token));
+        $this->assertTrue($User = Sentinel::authenticateWithToken($token));
         $this->assertEqual($Alicia->get('login'), $User->get('login'));
-        $this->assertFalse($User = User::authenticateWithToken($token));
+        $this->assertFalse($User = Sentinel::authenticateWithToken($token));
     }
 
     function test_should_emit_and_and_validate_login_token()
     {
         $Alicia =& $this->User->findFirstBy('login', 'alicia');
         $token = $Alicia->getToken();
-        $this->assertTrue($User = User::authenticateWithToken($token));        
+        $this->assertTrue($User = Sentinel::authenticateWithToken($token));        
         $this->assertEqual($Alicia->get('login'), $User->get('login'));
-        $this->assertTrue($User = User::authenticateWithToken($token));
+        $this->assertTrue($User = Sentinel::authenticateWithToken($token));
     }
     
     function test_should_issue_expiring_tokens()
@@ -92,11 +92,11 @@ class UserTestCase extends AkUnitTest
         
         $Alicia =& $this->User->findFirstBy('login', 'alicia');
         $token = $Alicia->getToken(array('expires'=>1));
-        $this->assertTrue($User = User::authenticateWithToken($token));        
-        $this->assertTrue($User = User::authenticateWithToken($token));        
+        $this->assertTrue($User = Sentinel::authenticateWithToken($token));        
+        $this->assertTrue($User = Sentinel::authenticateWithToken($token));        
         $this->assertEqual($Alicia->get('login'), $User->get('login'));
         sleep(1);
-        $this->assertFalse($User = User::authenticateWithToken($token));
+        $this->assertFalse($User = Sentinel::authenticateWithToken($token));
     }
 
     function test_should_detect_if_given_password_is_valid()
