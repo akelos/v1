@@ -57,7 +57,7 @@ class Sentinel
         }
         return $result;
     }
-    
+
     function authenticateWithToken($token)
     {
         $options = User::_decodeToken($token);
@@ -109,25 +109,34 @@ class Sentinel
 
     function hasUserOnSession()
     {
-        return !empty($this->Session['__CurrentUser']);
+        return !empty($this->Session['__current_user_id']);
     }
 
     function getUserFromSession()
     {
-        return $this->hasUserOnSession() ? unserialize($this->Session['__CurrentUser']) : false;
+        if ($this->hasUserOnSession()) {
+            $model = isset($this->Session['__CurrentUserType'])?$this->Session['__CurrentUserType']:'User';
+            Ak::import($model);
+            $UserInstance =& new $model();
+            return $UserInstance->find($this->Session['__current_user_id'], array('include'=>'roles'));
+        }
+        return false;
     }
 
     function setCurrentUserOnSession($User, $force = false)
     {
         if(!$this->hasUserOnSession() || $force){
-            $this->Session['__CurrentUser'] = serialize($User);
+            $this->Session['__current_user_id'] = $User->getId();
+            $this->Session['__CurrentUserType'] = get_class($User);
         }
+
     }
 
     function removeCurrentUserFromSession()
     {
         if($this->hasUserOnSession()){
-            $this->Session['__CurrentUser'] = null;
+            $this->Session['__CurrentUserType'] = null;
+            $this->Session['__current_user_id'] = null;
         }
     }
 
