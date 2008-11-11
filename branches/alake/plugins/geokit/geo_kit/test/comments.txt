@@ -1,0 +1,18 @@
+My goal in translating GeoKit from Ruby to PHP is to make my code pass the same tests that the Ruby version passed.  Where I have thought that I could not or should not do this, I have documented the fact in this document so that myjudgment might be questioned.  I've written line numbers, but they may be a bit off by code added during testing.
+
+Script: mappable.php, Classes: LatLng, which extends Mappable
+
+A LatLng object may be instantiated (line 243) by including float values as parameters to initialize the latitudeand longitude.  Mappable::end_point (line 100) calculates a latitude and longitude from its parameters.  In latlng_test.php, lines139-155, we see that a computed negative value is not within an allowable 
+tolerance (as specified in the Ruby code) compared to the hard value specified to initialize LatLng.
+
+I don't have a solution to this problem, but I think that it's in the formula.  I've tried to round intermediate calculations and to keep intermediate values positive, but to no avail.
+
+
+Script: mappable.php, Class: GeoLoc
+
+In the Ruby version, a test assigns a string to the class variable $this->full_address.  This appears to be a bug,because it allows a data conflict between the contents of $this->full_address and its component parts: $this->street_address, $this->city, $this->state, $this->zip and $this->country.  To deal with this, I made$this->full_address private, then wrote a new function: GeoLoc::set_full_address() at line 525.  The test executes this instead of assigning a value to $this->full_address.  The function parses the parts of the full address parameter,assigns the parts to the individual fields, then uses the existing GeoLoc::to_geocodable_s() function to create $this->full_address.  If the parameter has 5 parts, it is assumed to have a street address; otherwise not.
+
+Here is the caveat that may need to be addressed: It assumes that the parameter contains at least a city, state,zip and country.  If it doesn't, data may get   assigned to the wrong fields.  We could check for fewer than 4 parts in the parameter, but then we'd have to make assumptions as to what those parts contain.
+
+We could also, of course, require that an associative array be used.
+

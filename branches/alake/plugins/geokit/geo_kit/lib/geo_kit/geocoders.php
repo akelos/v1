@@ -39,9 +39,11 @@ class Geocoders
 
 class GeocodeError
 {
-    function __construct()
+    function __construct($msg='')
     {
         error_reporting(E_ALL);
+        Geocode::logger('error',$msg);
+        throw new Exception($msg);
     }    
 }
 
@@ -60,7 +62,7 @@ class Geocoder
     function geocode($address)
     {    
         $res = $this->do_geocode($address);
-        return $res['success'] ? $res : new GeoLoc;
+        return $res->success ? $res : new GeoLoc;
     }
   
 # Call the geocoder service using the timeout if configured.
@@ -116,7 +118,7 @@ class Geocoder
     
     # Adds subclass' geocode method making it conveniently available through 
     # the base class.
-    private function inherited(clazz)
+    private function inherited($clazz)
     {
 #        class_name = clazz.name.split('::').last
 #        src = <<-END_SRC
@@ -142,7 +144,7 @@ class Geocoder
 class CaGeocoder extends Geocoder
 {
     # Template method which does the geocode lookup.
-    private function do_geocode($address)
+    protected function do_geocode($address)
     {
         if(!($address instanceof GeoLoc)) {
             $msg = "Caught an error during Geocoder.ca geocoding call: ";
@@ -209,7 +211,7 @@ class CaGeocoder extends Geocoder
 class GoogleGeocoder extends Geocoder
 {
   # Template method which does the geocode lookup.
-    private function do_geocode($address)
+    protected function do_geocode($address)
     {
         if($this->geocoders->google == 'REPLACE_WITH_YOUR_GOOGLE_KEY') {
             $msg = "Caught an error during Google geocoding call: ";
@@ -229,7 +231,7 @@ class GoogleGeocoder extends Geocoder
             return new GeoLoc;
         }
         $xml = $result['body'];
-        $msg = "Google geocoding. Address: "
+        $msg = "Google geocoding. Address: ";
         $msg .= $address instanceof GeoLoc ? $address->full_address : $address_str;
         $msg .= ". Result: ".$xml;
         Geocoder::logger('debug',$msg);
@@ -294,7 +296,7 @@ class IpGeocoder extends Geocoder
     # longitude, city, and country code.  
     # Sets the success attribute to false if the ip parameter does not 
     # match an ip address.  
-    private function do_geocode($ip)
+    protected function do_geocode($ip)
     {
         if(!ereg('/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})?$/',$ip)) {
             $msg = "Caught an error during HostIp geocoding call: ";
@@ -358,7 +360,7 @@ class UsGeocoder extends Geocoder
 
 # For now, the geocoder_method will only geocode full addresses
 #  -- not zips or cities in isolation
-    private function do_geocode($address)
+    protected function do_geocode($address)
     {
         $address_str = $address instanceof GeoLoc ? 
             $address->to_geocodable_s : $address;
@@ -374,8 +376,8 @@ class UsGeocoder extends Geocoder
         }
 
         $data = $result['body'];
-        $msg = "Geocoder.us geocoding. Address: ".$address_str.". Result: $data";
-        Geocoder::logger('debug', $msg;
+        $msg = 'Geocoder.us geocoding. Address: '.$address_str.'. Result: '.$data;
+        Geocoder::logger('debug', $msg);
         $data = trim($data);
         $parts = explode(',',$data);
         if(count($parts) == 6) {
@@ -403,7 +405,7 @@ class UsGeocoder extends Geocoder
 class YahooGeocoder extends Geocoder
 {
     # Template method which does the geocode lookup.
-    private function do_geocode($address)
+    protected function do_geocode($address)
     {
         $address_str = $address instanceof GeoLoc ? 
             $address->to_geocodable_s : $address;
@@ -417,7 +419,7 @@ class YahooGeocoder extends Geocoder
             return new GeoLoc;
         }
         $xml = $result['body'];
-        $msg = "Yahoo geocoding. Address: "
+        $msg = "Yahoo geocoding. Address: ";
         $msg .= $address instanceof GeoLoc ? $address->full_address : $address_str;
         $msg .= ". Result: ".$xml;
         Geocoder::logger('debug',$msg);
@@ -478,7 +480,7 @@ class MultiGeocoder extends Geocoder
     # 
     # The failover approach is crucial for production-grade apps, but is rarely used.
     # 98% of your geocoding calls will be successful with the first call  
-    private function do_geocode($address)
+    protected function do_geocode($address)
     {
         # Valid strings are 'google', 'yahoo', 'us', and 'ca'.
         foreach($this->geocoders->provider_order as $provider) {

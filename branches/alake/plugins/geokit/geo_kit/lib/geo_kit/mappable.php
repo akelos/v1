@@ -12,6 +12,14 @@
 require_once 'defaults.php';
 require_once(AK_LIB_DIR.DS.'AkActiveRecord'.DS.'AkObserver.php');
 
+define("PI_DIV_RAD", 0.0174);
+define("KMS_PER_MILE", 1.609);
+define("EARTH_RADIUS_IN_MILES", 3963.19);
+define("EARTH_RADIUS_IN_KMS", EARTH_RADIUS_IN_MILES * KMS_PER_MILE);
+define("MILES_PER_LATITUDE_DEGREE", 69.1);
+define("KMS_PER_LATITUDE_DEGREE", MILES_PER_LATITUDE_DEGREE * KMS_PER_MILE);
+define("LATITUDE_DEGREES", EARTH_RADIUS_IN_MILES / MILES_PER_LATITUDE_DEGREE);
+
 class Mappable extends AkObserver
 {
     var $_ActiveRecordInstance; 
@@ -19,13 +27,6 @@ class Mappable extends AkObserver
     
     function __construct(&$ActiveRecordInstance) {
         $this->_ActiveRecordInstance =& $ActiveRecordInstance;    
-        PI_DIV_RAD = 0.0174;
-        KMS_PER_MILE = 1.609;
-        EARTH_RADIUS_IN_MILES = 3963.19;
-        EARTH_RADIUS_IN_KMS = EARTH_RADIUS_IN_MILES * KMS_PER_MILE;
-        MILES_PER_LATITUDE_DEGREE = 69.1;
-        KMS_PER_LATITUDE_DEGREE = MILES_PER_LATITUDE_DEGREE * KMS_PER_MILE;
-        LATITUDE_DEGREES = EARTH_RADIUS_IN_MILES / MILES_PER_LATITUDE_DEGREE;
     }
 
     function init($options = array())
@@ -58,19 +59,22 @@ class Mappable extends AkObserver
         $to   = LatLng::normalize($to);
         $units = array_key_exists('units',$options) ? 
             $options['units'] : GEOKIT_DEFAULT_UNITS;
-        $formula = array_key_exists('formula') ?
+        $formula = array_key_exists('formula',$options) ?
             $options['formula'] : GEOKIT_DEFAULT_FORMULA;
         switch ($formula) {
         case 'sphere':
             return self::units_sphere_multiplier($units) * 
-                acos(sin(self::deg2rad($from->lat)) * sin(self::deg2rad($to->lat)) + 
-                cos(self::deg2rad($from->lat))      * cos(self::deg2rad($to>lat))  * 
-                cos(self::deg2rad($to->lng) - self::deg2rad($from->lng)));
+                acos(sin(deg2rad($from->get('lat'))) * 
+                     sin(deg2rad($to->get('lat'))) + 
+                     cos(deg2rad($from->get('lat'))) * 
+                     cos(deg2rad($to->get('lat'))) * 
+                     cos(deg2rad($to->get('lng')) - deg2rad($from->get('lng'))));
         case 'flat':
-            return sqrt((self::units_per_latitude_degree($units) * 
-                ($from->lat - $to->lat))**2 + 
-                (self::units_per_longitude_degree($from->lat, $units) * 
-                ($from->lng - $to->lng))**2);
+            return sqrt(
+                pow((self::units_per_latitude_degree($units) * 
+                    ($from->get('lat') - $to->get('lat'))),2) + 
+                pow((self::units_per_longitude_degree($from->get('lat'), $units) * 
+                ($from->get('lng') - $to->get('lng'))),2));
         }
      } // function distance_between
 
@@ -81,9 +85,9 @@ class Mappable extends AkObserver
     {
         $from     = LatLng::normalize($from);
         $to       = LatLng::normalize($to);
-        $d_lng    = self::deg2rad($to->lng - $from->lng);
-        $from_lat = self::deg2rad($from->lat);
-        $to_lat   = self::deg2rad($to->lat);
+        $d_lng    = deg2rad($to->get('lng') - $from->get('lng'));
+        $from_lat = deg2rad($from->get('lat'));
+        $to_lat   = deg2rad($to->get('lat'));
         $y        = sin($d_lng) * cos($to_lat);
         $x        = cos($from_lat) * sin($to_lat) - 
                     sin($from_lat) * cos($to_lat) * cos($d_lng);
@@ -91,24 +95,26 @@ class Mappable extends AkObserver
     } // function heading_between
 
     # Given a start point, distance, and heading (in degrees), provides
-    # an endpoint. Returns a LatLng instance. Typically, the instance method
-    # will be used instead of this method.
-    public static function endpoint($start, $heading, $distance, $options=array())
+    # an end point. Returns a LatLng instance. Typically, the instance method
+    # endpoint will be used instead of this method.
+    public static function end_point($start, $heading, $distance, $options=array())
     {
         $units    = array_key_exists('units',$options) ? 
             $options['units'] : GEOKIT_DEFAULT_UNITS;
-        $radius   = units == 'miles' ? EARTH_RADIUS_IN_MILES : EARTH_RADIUS_IN_KMS;
+        $radius   = $units == 'miles' ? EARTH_RADIUS_IN_MILES : EARTH_RADIUS_IN_KMS;
         $start    = LatLng::normalize($start);
-        $lat      = self::deg2rad($start->lat);
-        $lng      = self::deg2rad($start->lng);
-        $heading  = self::deg2rad($heading);
+        $lat      = deg2rad($start->get('lat'));
+        $lng      = deg2rad($start->get('lng'));
+        $heading  = deg2rad($heading);
         $distance = (float)$distance;
         $end_lat  = asin(sin($lat) * cos($distance/$radius) +
                     cos($lat) * sin($distance/$radius) * cos($heading));
         $end_lng  = $lng + atan2(sin($heading) * sin($distance/$radius) * 
                     ($lat), cos($distance/$radius) - sin($lat) * sin($end_lat));
-        return new LatLng(self::rad2deg($end_lat),self::rad2deg($end_lng));
-    } // function endpoint
+        $lat      = round(rad2deg($end_lat),6);
+        $lng      = round(rad2deg($end_lng),6);
+        return new LatLng($lat,$lng);
+    } // function end_point
 
     # Returns the midpoint, given two points. Returns a LatLng. 
     # Typically, the instance method will be used instead of this method.
@@ -117,8 +123,8 @@ class Mappable extends AkObserver
     #             (GEOKIT_DEFAULT_UNITS in config/config.php is the default)
     public static function midpoint_between($from,$to,$options=array())
     {
-        $from     = LatLng->normalize($from);
-        $to       = Latlng->normalize($to);  // added by alake
+        $from     = LatLng::normalize($from);
+        $to       = Latlng::normalize($to);  // added by alake
         $units    = array_key_exists('units',$options) ?
             $options['units'] : GEOKIT_DEFAULT_UNITS;
         $heading  = $from->heading_to($to);
@@ -129,7 +135,7 @@ class Mappable extends AkObserver
     # Geocodes a location using the multi geocoder.
     public static function geocode($location)
     {
-        $result = Geocoders::MultiGeocoder->geocode($location);
+        $result = MultiGeocoder::geocode($location);
         if($result->success) {
             return $result;
         }
@@ -137,20 +143,10 @@ class Mappable extends AkObserver
         Geocoder::logger('error',$msg);
         return new GeoLoc;
     } // function geocode
-   
-    protected static function deg2rad($degrees)
-    {
-        return floatval($degrees) / 180.0 * pi();
-    }
-      
-    protected static function rad2deg($radians) 
-    {
-        return floatval($radians) * 180.0 / pi();
-    }
-      
+             
     protected static function to_heading($radians)
     {
-        return (self::rad2deg($radians) + 360) % 360;
+        return (rad2deg($radians) + 360) % 360;
     }
 
     # Returns the multiplier used to obtain the correct distance units.
@@ -185,8 +181,8 @@ class Mappable extends AkObserver
             return $this;
         }
         if($this instanceof ActsAsMappable) {
-            return new LatLng(get_class($this)::lat_column_name,
-                              get_class($this)::lng_column_name);
+            return new LatLng(ActsAsMappable::lat_column_name,
+                              ActsAsMappable::lng_column_name);
         }
         return null;
     }
@@ -199,19 +195,19 @@ class Mappable extends AkObserver
     #           The default is GEOKIT_DEFAULT_FORMULA in config/config.php.
     public function distance_to($other, $options=array())
     {
-        return get_class($this)::distance_between($this, $other, $options);
+        return self::distance_between($this, $other, $options);
     }
 
     public function distance_from($other, $options=array())
     {
-        return get_class($this)::distance_between($this, $other, $options);
+        return self::distance_between($this, $other, $options);
     }
 
     # Returns heading in degrees (0 is north, 90 is east, 180 is south, etc)
     # TO the given point. The given point can be a LatLng or a string to be Geocoded 
     public function heading_to($other)
     {
-        return get_class($this)::heading_between($this,$other);
+        return self::heading_between($this,$other);
     }
 
     # Returns heading in degrees (0 is north, 90 is east, 180 is south, etc)
@@ -219,15 +215,15 @@ class Mappable extends AkObserver
     # to be Geocoded 
     public function heading_from($other)
     {
-        return get_class($this)::heading_between($other,$this);
+        return self::heading_between($other,$this);
     }
  
-    # Returns the endpoint, given a heading (in degrees) and distance.  
-    # Valid option is 'units' - valid values are 'miles' or 'kms'.
-    # The default is GEOKIT_DEFAULT_UNITS in config/config.php.
+    # Returns the $endpoint, a LatLng instance.  Given is a start point, heading 
+    # (in degrees) and distance.  The valid option is 'units' - valid values are
+    # 'miles' or 'kms'.  The default is GEOKIT_DEFAULT_UNITS in config/config.php.
     public function endpoint($heading,$distance,$options=array())
     {
-        return get_class($this)::endpoint($this,$heading,$distance,$options);
+        return self::end_point($this,$heading,$distance,$options);
     }
 
     # Returns the midpoint, given another point on the map.  
@@ -235,11 +231,11 @@ class Mappable extends AkObserver
     # The default is GEOKIT_DEFAULT_UNITS in config/config.php.
     public function midpoint_to($other, $options=array())
     {
-        return get_class($this)::midpoint_between($this,$other,$options);
+        return self::midpoint_between($this,$other,$options);
     }
 } // class Mappable
 
-class LatLng 
+class LatLng extends Mappable
 {
     private $lat;
     private $lng;
@@ -248,10 +244,10 @@ class LatLng
     # if lat and lng are not provided. Converted to floats if provided
     function __construct($lat = null, $lng = null)
     {
-        if $lat && is_numeric($lat) {
+        if($lat && is_numeric($lat)) {
             $lat = floatval($lat);
         }
-        if $lng && is_numeric($lng) {
+        if($lng && is_numeric($lng)) {
             $lng = floatval($lng);
         }
         $this->lat = $lat;
@@ -263,8 +259,8 @@ class LatLng
         $result = false;
         $vars = array_keys(get_class_vars(get_class($this)));
 
-        foreach ($vars as $var) {   
-            if ($what == $var) {
+        foreach($vars as $var) {   
+            if($what == $var) {
                 eval('$result = $this->'.$var.';');
                 return $result;
             }
@@ -333,10 +329,22 @@ class LatLng
         }
         if(is_string($thing)) {
             $thing = trim($thing);
-            if(preg_match(/(\-?\d+\.?\d*)[, ] ?(\-?\d+\.?\d*)$/,$thing) > 0) {
-                return new LatLng($thing[1],$thing[2]);
+            $pattern_nbr = '(\-?[0-9]{1,3}\.?[0-9]{0,6})';
+            $pattern = $pattern_nbr.'[,| ] ?'.$pattern_nbr.'$';
+            if(ereg($pattern,$thing) > 0) {
+                if(strpos($thing,',') > 0) {
+                    $thing = explode(',',$thing);
+                }else{
+                    $pos = strpos($thing,' ');
+                    if($pos > 0) {
+                    $thing = array(trim(substr($thing,0,$pos)),
+                                   trim(substr($thing,$pos,strlen($thing))));
+                    }
+                }   
+                return new LatLng($thing[0],$thing[1]);
             }else{
-                $result = MultiGeocoder->geocode($thing);
+                $multi_geocoder = new MultiGeocoder;
+                $result = $multi_geocoder->geocode($thing);
                 if($result->success) {
                     return $result;
                 }
@@ -351,7 +359,8 @@ class LatLng
         }elseif($thing instanceof ActsAsMappable) {
             return $thing->to_lat_lng;
         }
-        $msg = 'An object of '.get_class($thing).' cannot be normalized ';
+        $msg = 'Mappable::normalize: ';
+        $msg .= 'An object of '.get_class($thing).' cannot be normalized ';
         $msg .= 'to a LatLng. We tried interpreting it as an array, string, ';
         $msg .= 'Mappable, etc., but no dice.';
         Geocoder::logger('warning',$msg);
@@ -368,13 +377,13 @@ class GeoLoc extends LatLng
 {
 # Location attributes.  Full address is a concatenation of all values.  
 # For example:100 Spear St, San Francisco, CA, 94101, US
-# attr_accessor :street_address, :city, :state, :zip, :country_code, :full_address
+# attr_accessor $street_address, $city, $state, $zip, $country_code, $full_address
 # Attributes set upon return from geocoding.  Success will be true for successful
 # geocode lookups.  The provider will be set to the name of the providing geocoder.
 # Finally, precision is an indicator of the accuracy of the geocoding.
-# attr_accessor :success, :provider, :precision
+# attr_accessor $success, $provider, $precision
 # Street number and street name are extracted from the street address attribute.
-# attr_reader :street_number, :street_name
+# attr_reader $street_number, $street_name
 
     private $street_number;
     private $street_name;
@@ -386,11 +395,12 @@ class GeoLoc extends LatLng
     public $provider;
     public $success = false;
     public $precision = 'unknown';
-    public $full_address;
+    private $full_address;
 
     # Constructor expects an associated array of attributes.
     function __construct($h=array())
     {
+        parent::__construct();
         if(array_key_exists('street_number',$h)) {
             $this->street_number = $h['street_number'];
         }
@@ -399,6 +409,12 @@ class GeoLoc extends LatLng
         }
         if(array_key_exists('street_address',$h)) {
             $this->street_address = $h['street_address'];
+            if(!isset($this->street_number)) {
+                $this->street_number = $this->street_number();
+            }
+            if(!isset($this->street_name)) {
+                $this->street_name = $this->street_name();
+            }
         }else{
 #attr_reader :street_number, :street_name
             if(strlen($this->street_number) > 0) {
@@ -508,13 +524,26 @@ class GeoLoc extends LatLng
         return $this->full_address ? $this->full_address : $this->to_geocodeable_s();
     }
 
+    public function set_full_address($full_address)
+    {
+        $fa = explode(',',$full_address);
+        $this->street_address = count($fa) == 5 ? trim(array_shift($fa)) : '';
+        $this->street_number  = $this->street_number();
+        $this->street_name    = $this->street_name();
+        $this->set_city(trim(array_shift($fa)));
+        $this->state = trim(array_shift($fa));
+        $this->zip = trim(array_shift($fa));
+        $this->country_code = trim(array_shift($fa));
+        $this->full_address = $this->to_geocodeable_s();        
+    }
+
     # Extracts the street number from the street address if the street address
     # has a value.
     public function street_number()
     {
         $nbr = '';
-        if(isset($street_address)){
-            foreach(explode(' ',$street_address) as $element) {
+        if(isset($this->street_address) && strlen($this->street_address) > 0){
+            foreach(explode(' ',$this->street_address) as $element) {
                 if(is_numeric($element[0])) {
                     $limit = strlen($element);
                     for($ix=0;$ix<$limit;$ix++) {
@@ -535,8 +564,8 @@ class GeoLoc extends LatLng
     public function street_name()
     {
         $street = '';
-        if(isset($street_address)){
-            foreach(explode(' ',$street_address) as $element) {
+        if(isset($this->street_address) && strlen($this->street_address) > 0){
+            foreach(explode(' ',$this->street_address) as $element) {
                 if(!is_numeric($element[0])) {
                     $street = strlen($street) > 0 ? $street.' '.$element : $element;
                 }
@@ -546,28 +575,27 @@ class GeoLoc extends LatLng
     } // function street_name
 
     # gives you all the important fields as key-value pairs
-    public function hash()
+    public function to_array()
     {
         $result = array();
-        $result['success']        = $this->success;
-        $result['lat']            = $this->lat;
-        $result['lng']            = $this->lng;
-        $result['country_code']   = $this->country_code;
+        $result['street_number']  = $this->street_number();
+        $result['street_name']    = $this->street_name();
+        $result['street_address'] = $this->street_address;
         $result['city']           = $this->city;
         $result['state']          = $this->state;
         $result['zip']            = $this->zip;
-        $result['street_address'] = $this->$this->street_address;
+        $result['country_code']   = $this->country_code;
         $result['provider']       = $this->provider;
-        $result['full_address']   = $this->full_address;
-        $result['is_us']          = $this->is_us();
-        $result['ll']             = $this->ll();
+        $result['success']        = $this->success;
         $result['precision']      = $this->precision;
+        $result['full_address']   = $this->full_address;
+        if(isset($this->lat)) {
+            $result['lat']        = isset($this->lat);
+        }
+        if(isset($this->lng)) {
+            $result['lng']        = isset($this->lng);
+        }
         return $result;
-    }
-
-    public function to_hash()
-    {
-        return hash();
     }
 
     # Sets the city after capitalizing each word within the city name.
@@ -603,28 +631,28 @@ class GeoLoc extends LatLng
     public function to_geocodeable_s()
     {
         $result = '';
-        if(!is_null($this->street_address) && strlen($this->street_address) > 0) {
+        if(isset($this->street_address) && strlen($this->street_address) > 0) {
             $result = $this->street_address;
         }
-        if(!is_null($this->city) && strlen($this->city) > 0) {
+        if(isset($this->city) && strlen($this->city) > 0) {
             if(strlen($result) > 0) {
                 $result .= ', ';
             }
             $result .= $this->city;
         }
-        if(!is_null($this->state) && strlen($this->state) > 0) {
+        if(isset($this->state) && strlen($this->state) > 0) {
             if(strlen($result) > 0) {
                 $result .= ', ';
             }
             $result .= $this->state;
         }
-        if(!is_null($this->zip) && strlen($this->zip) > 0) {
+        if(isset($this->zip) && strlen($this->zip) > 0) {
             if(strlen($result) > 0) {
                 $result .= ', ';
             }
             $result .= $this->zip;
         }
-        if(!is_null($this->country_code) && strlen($this->country_code) > 0) {
+        if(isset($this->country_code) && strlen($this->country_code) > 0) {
             if(strlen($result) > 0) {
                 $result .= ', ';
             }
@@ -658,7 +686,7 @@ class Bounds
     # provide sw and ne to instantiate a new Bounds instance
     function __construct($sw,$ne)
     {
-        if(!($sw instanceof LatLng && $ne instanceof LatLng)) (
+        if(!($sw instanceof LatLng && $ne instanceof LatLng)) {
             $msg = 'The parameters to a Bounds class object must be LatLng. ';
             $msg .= 'The first parameter is a '.get_class($sw).'.  The second ';
             $msg .= 'is a '.get_class($ne).'.';
@@ -694,19 +722,22 @@ class Bounds
     public function contains($point)
     {
         $point = LatLng::normalize($point);
-        $result = $point->lat > $this->sw->lat && $point->lat < $this->ne->lat;
-        if crosses_meridian() {
-          $result &= $point->lng < $this->ne->lng || $point->lng > $this->sw->lng;
+        $result = $point->get('lat') > $this->sw->get('lat') && 
+                  $point->get('lat') < $this->ne->get('lat');
+        if($this->crosses_meridian()) {
+          $result &= $point->get('lng') < $this->ne->get('lng') || 
+                     $point->get('lng') > $this->sw->get('lng');
         }else{
-          $result &= $point->lng < $this->ne->lng && $point->lng > $this->sw->lng;
+          $result &= $point->get('lng') < $this->ne->get('lng') && 
+                     $point->get('lng') > $this->sw->get('lng');
         }
         return $result;
     }
 
     # returns true if the bounds crosses the international dateline
-    public functon crosses_meridian()
+    public function crosses_meridian()
     {
-        return $this->sw->lng > $this->ne->lng;
+        return $this->sw->get('lng') > $this->ne->get('lng');
     }
 
     # Returns true if the candidate object is logically equal.  Logical equivalence
@@ -725,8 +756,8 @@ class Bounds
         $p90   = $point->endpoint(90,$radius,$options);
         $p180  = $point->endpoint(180,$radius,$options);
         $p270  = $point->endpoint(270,$radius,$options);
-        $sw    = new LatLng($p180->lat,$p270->lng);
-        $ne    = new LatLng($p0->lat,$p90->lng);
+        $sw    = new LatLng($p180->get('lat'),$p270->get('lng'));
+        $ne    = new LatLng($p0->get('lat'),$p90->get('lng'));
         return new Bounds($sw,$ne);
     }
 
