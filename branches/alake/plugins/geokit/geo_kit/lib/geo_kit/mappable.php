@@ -109,8 +109,8 @@ class Mappable extends AkObserver
         $distance = (float)$distance;
         $end_lat  = asin(sin($lat) * cos($distance/$radius) +
                     cos($lat) * sin($distance/$radius) * cos($heading));
-        $end_lng  = $lng + atan2(sin($heading) * sin($distance/$radius) * 
-                    ($lat), cos($distance/$radius) - sin($lat) * sin($end_lat));
+        $end_lng  = $lng + atan2(sin($heading) * sin($distance/$radius) * cos($lat),
+                                 cos($distance/$radius) - sin($lat) * sin($end_lat));
         $lat      = round(rad2deg($end_lat),6);
         $lng      = round(rad2deg($end_lng),6);
         return new LatLng($lat,$lng);
@@ -775,9 +775,10 @@ class Bounds
         }
         # If there's no $other, $thing had better be a two-element array        
         if(!$other && is_array($thing) && count($thing) == 2) {
-#            thing,other=thing 
-            return $thing;
+            $other = $thing[1];
+            $thing = $thing[0];
         }
+
         # Now that we're set with a thing and another thing, 
         # let LatLng do the heavy lifting.
         # Exceptions may be thrown
