@@ -370,6 +370,8 @@ class User extends ActiveRecord
                     $this->LoadedRoles[$Role->getId()] = $Role;
                 }
             }
+        }
+        if(isset($this->LoadedRoles)){
             return $this->LoadedRoles;
         }
         $result = array();
