@@ -1,7 +1,0 @@
-mysql:
-  adapter: mysql
-  host: localhost
-  username: root
-  password:
-  database: geokit_plugin_test
-
