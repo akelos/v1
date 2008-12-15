@@ -98,10 +98,7 @@ class BoundsTestCase extends AkUnitTest
     {
 
         $latlng = $this->bounds->center();
-echo "latlng: ";print_r($latlng);echo"\n";
-#        $this->assertWithinMargin(32.939828,$latlng->get('lat'),0.00005);
-        $this->assertWithinMargin(32.939829,$latlng->get('lat'),0.00005);
-
+        $this->assertWithinMargin(32.939828,$latlng->get('lat'),0.00005);
         $this->assertWithinMargin(-96.9511763,$latlng->get('lng'),0.00005);
     }
 

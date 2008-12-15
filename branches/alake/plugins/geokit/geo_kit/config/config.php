@@ -64,7 +64,7 @@ defined('AK_PUBLIC_LOCALES') ? null : define('AK_PUBLIC_LOCALES', 'en');
 // If that is the case, you should uncomment the next line line for better performance. 
 defined('AK_URL_REWRITE_ENABLED') ? null : define('AK_URL_REWRITE_ENABLED', true);
 
-defined('AK_FRAMEWORK_DIR') ? null : define('AK_FRAMEWORK_DIR', '/home/alan/develop/Software/akelos');
+defined('AK_FRAMEWORK_DIR') ? null : define('AK_FRAMEWORK_DIR', '/home/alan/develop/php/akelos');
 
 include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'boot.php');
 

@@ -38,7 +38,7 @@ $database_settings = array(
     )
 );
 
-define('AK_SESSION_HANDLER', 1);
+defined('AK_SESSION_HANDLER') ? null : define('AK_SESSION_HANDLER', 1);
 
 // If you want to write/delete/create files or directories using ftp instead of local file
 // access, you can set an ftp connection string like:
@@ -52,18 +52,19 @@ defined('AK_ENVIRONMENT') ? null : define('AK_ENVIRONMENT', 'testing');
 // Locale settings ( you must create a file at /config/locales/ using en.php as departure point)
 // Please be aware that your charset needs to be UTF-8 in order to edit the locales files
 // auto will enable all the locales at config/locales/ dir
-define('AK_AVAILABLE_LOCALES', 'en');
+defined('AK_AVAILABLE_LOCALES') ? null : define('AK_AVAILABLE_LOCALES', 'en');
 
 // Use this in order to allow only these locales on web requests
-define('AK_ACTIVE_RECORD_DEFAULT_LOCALES', 'en');
-define('AK_APP_LOCALES', 'en');
-define('AK_PUBLIC_LOCALES', 'en');
+defined('AK_ACTIVE_RECORD_DEFAULT_LOCALES') ? 
+    null : define('AK_ACTIVE_RECORD_DEFAULT_LOCALES', 'en');
+defined('AK_APP_LOCALES') ? null : define('AK_APP_LOCALES', 'en');
+defined('AK_PUBLIC_LOCALES') ? null : define('AK_PUBLIC_LOCALES', 'en');
 
 // The web configuration wizard could not detect if you have mod_rewrite enabled. 
 // If that is the case, you should uncomment the next line line for better performance. 
 defined('AK_URL_REWRITE_ENABLED') ? null : define('AK_URL_REWRITE_ENABLED', true);
 
-defined('AK_FRAMEWORK_DIR') ? null : define('AK_FRAMEWORK_DIR', '/home/alan/develop/Software/akelos');
+defined('AK_FRAMEWORK_DIR') ? null : define('AK_FRAMEWORK_DIR', '/home/alan/develop/php/akelos');
 
 include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'boot.php');
 

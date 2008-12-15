@@ -63,19 +63,22 @@ class Mappable extends AkObserver
             $options['formula'] : GEOKIT_DEFAULT_FORMULA;
         switch ($formula) {
         case 'sphere':
-            return self::units_sphere_multiplier($units) * 
+            $result = self::units_sphere_multiplier($units) * 
                 acos(sin(deg2rad($from->get('lat'))) * 
                      sin(deg2rad($to->get('lat'))) + 
                      cos(deg2rad($from->get('lat'))) * 
                      cos(deg2rad($to->get('lat'))) * 
                      cos(deg2rad($to->get('lng')) - deg2rad($from->get('lng'))));
+            break;
         case 'flat':
-            return sqrt(
+            $result = sqrt(
                 pow((self::units_per_latitude_degree($units) * 
                     ($from->get('lat') - $to->get('lat'))),2) + 
                 pow((self::units_per_longitude_degree($from->get('lat'), $units) * 
                 ($from->get('lng') - $to->get('lng'))),2));
+            break;
         }
+        return $result;
      } // function distance_between
 
     # Returns heading in degrees (0 is north, 90 is east, 180 is south, etc)
@@ -91,7 +94,8 @@ class Mappable extends AkObserver
         $y        = sin($d_lng) * cos($to_lat);
         $x        = cos($from_lat) * sin($to_lat) - 
                     sin($from_lat) * cos($to_lat) * cos($d_lng);
-        return self::to_heading(atan2($y,$x));
+        $result   = self::to_heading(atan2($y,$x));
+        return $result;
     } // function heading_between
 
     # Given a start point, distance, and heading (in degrees), provides
@@ -111,8 +115,8 @@ class Mappable extends AkObserver
                     cos($lat) * sin($distance/$radius) * cos($heading));
         $end_lng  = $lng + atan2(sin($heading) * sin($distance/$radius) * cos($lat),
                                  cos($distance/$radius) - sin($lat) * sin($end_lat));
-        $lat      = round(rad2deg($end_lat),6);
-        $lng      = round(rad2deg($end_lng),6);
+        $lat      = rad2deg($end_lat);
+        $lng      = rad2deg($end_lng);
         return new LatLng($lat,$lng);
     } // function end_point
 
@@ -129,7 +133,8 @@ class Mappable extends AkObserver
             $options['units'] : GEOKIT_DEFAULT_UNITS;
         $heading  = $from->heading_to($to);
         $distance = $from->distance_to($to,$options);
-        return $from->endpoint($heading,$distance/2,$options);
+        $midpoint = $from->endpoint($heading,$distance/2,$options);
+        return $midpoint;
     } // function midpoint_between
   
     # Geocodes a location using the multi geocoder.
@@ -146,7 +151,7 @@ class Mappable extends AkObserver
              
     protected static function to_heading($radians)
     {
-        return (rad2deg($radians) + 360) % 360;
+        return self::modulo((rad2deg($radians) + 360.0),360.0);
     }
 
     # Returns the multiplier used to obtain the correct distance units.
@@ -173,6 +178,12 @@ class Mappable extends AkObserver
     # -----------------------------------------------------------------------------------------------
     # Instance methods below here
     # -----------------------------------------------------------------------------------------------
+
+    public function modulo($a, $n)
+    {
+        $n = abs($n);
+        return $n === 0 ? null : $a-$n*floor($a/$n);
+    } 
   
     # Extracts a LatLng instance. Use with models that are acts_as_mappable
     public function to_lat_lng()
@@ -195,7 +206,8 @@ class Mappable extends AkObserver
     #           The default is GEOKIT_DEFAULT_FORMULA in config/config.php.
     public function distance_to($other, $options=array())
     {
-        return self::distance_between($this, $other, $options);
+        $result = self::distance_between($this, $other, $options);
+        return $result;
     }
 
     public function distance_from($other, $options=array())
@@ -237,8 +249,8 @@ class Mappable extends AkObserver
 
 class LatLng extends Mappable
 {
-    private $lat;
-    private $lng;
+    public $lat;
+    public $lng;
 
     # Accepts latitude and longitude or instantiates an empty instance
     # if lat and lng are not provided. Converted to floats if provided
@@ -395,7 +407,7 @@ class GeoLoc extends LatLng
     public $provider;
     public $success = false;
     public $precision = 'unknown';
-    private $full_address;
+    public $full_address;
 
     # Constructor expects an associated array of attributes.
     function __construct($h=array())
@@ -466,7 +478,7 @@ class GeoLoc extends LatLng
         }else{
 # attr_accessor :street_address, :city, :state, :zip, :country_code, :full_address
             if(strlen($this->street_address) > 0) {
-                $this->full_address = $street_address;
+                $this->full_address = $this->street_address;
             }
             if(strlen($this->city) > 0) {
                 if(strlen($this->full_address) > 0) {
@@ -565,9 +577,11 @@ class GeoLoc extends LatLng
     {
         $street = '';
         if(isset($this->street_address) && strlen($this->street_address) > 0){
+            $street_nbr = $this->street_number();
             foreach(explode(' ',$this->street_address) as $element) {
-                if(!is_numeric($element[0])) {
-                    $street = strlen($street) > 0 ? $street.' '.$element : $element;
+                if($element != $street_nbr) {
+                   $street = strlen($street) > 0 ? 
+                        $street.' '.$element : $element;               
                 }
             }
         }
@@ -624,6 +638,8 @@ class GeoLoc extends LatLng
             $result = trim($result);
         }
         $this->street_address = $result;
+        $this->street_number  = $this->street_number();
+        $this->street_name    = $this->street_name();
     }  
 
     # Returns a comma-delimited string consisting of the street address, city, state,
