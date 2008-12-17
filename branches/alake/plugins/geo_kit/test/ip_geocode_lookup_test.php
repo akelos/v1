@@ -73,15 +73,23 @@ class IpGeocodeLookupTestCase extends AkUnitTest
 
     function test_no_location_in_cookie_or_session()
     {
-#        $ip_geocoder = new IpGeocoder;
-#        $location = $ip_geocoder->geocode('12.215.42.19');
-        $this->request->remote_ip = "good ip";
-#        $this->assertEqual($response['body'],$this->success);
 #  GeoKit::Geocoders::IpGeocoder.expects(:geocode).with("good ip").returns(@success)
-        get :index
-        $this->verify();
+#  @request.remote_ip = "good ip"
+#  get :index
+#  verify
+
+        $good_ip = "12.215.42.19";
+        $ip_geocoder = new IpGeocoder;
+        $address = $ip_geocoder->geocode($good_ip);
+        $this->request->remote_ip = $good_ip;
+
+#        $response = $this->request->get('body');
+#print_r($response);
+#        $this->assertEqual($response['body'],$this->success);
+#        $this->verify();
     }
   
+/*
     function test_location_in_cookie()
     {
         @request.remote_ip = "good ip"
@@ -114,6 +122,7 @@ class IpGeocodeLookupTestCase extends AkUnitTest
         assert_not_nil cookies['geo_location']
         assert_equal @success, YAML.load(cookies['geo_location'].join)
     }  
+*/
 } // class IpGeocodeLookupTestCase
 
 $use_sessions = true;
