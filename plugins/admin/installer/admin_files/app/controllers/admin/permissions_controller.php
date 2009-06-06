@@ -21,7 +21,7 @@ class Admin_PermissionsController extends AdminController
             $this->_updatePermissions();
         }
         $this->Roles =& $this->Role->findAllBy('name:<>', 'Application owner');
-        $this->Extensions =& $this->Extension->find('all', array('include'=>'permissions', 'sort'=>'__owner.name ASC, _permissions.name ASC'));
+        $this->Extensions =& $this->Extension->find('all', array('include'=>array('permissions' => array('order'=> 'name ASC'))));
     }
 
     function destroy()
