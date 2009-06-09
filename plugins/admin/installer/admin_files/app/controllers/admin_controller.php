@@ -6,20 +6,9 @@ class AdminController extends ApplicationController
     var $protect_all_actions = true;
     //var $protected_actions = 'index,show,edit,delete'; // You can protect individual actions
 
-    var $_admin_menu_options = array(
-    'Dashboard'   => array('id' => 'dashboard', 'url'=>array('controller'=>'dashboard'), 'link_options'=>array(
-            'accesskey'=>'h',
-            'title' => 'general status and information'
-    )),
-    'Manage Users'   => array('id' => 'users', 'url'=>array('controller'=>'users'), 'link_options'=>array(
-            'accesskey' => 'u',
-            'title' => 'add user, change password, manage user settings'
-    ))
-    );
-    
     var $admin_menu_options = array();
     var $controller_menu_options = array();
-    
+
     function __construct()
     {
         $this->beforeFilter('load_settings');
