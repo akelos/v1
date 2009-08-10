@@ -1,0 +1,65 @@
+Acts as Sluggable Plugin
+===================================
+
+This plugin is inspired by:
+http://code.dunae.ca/acts_as_slugable
+
+Generates a URL slug based on a specific fields (e.g. title).
+
+A url slug is a string derived from a specific field which can the be used in a URL.  For instance, a page with the title <tt>My page</tt> would have a URL slug of <tt>my-page</tt>.
+
+The slug is generated on save actions.
+
+URL slugs are unique within the specified scope (or all records if no scope is defined).  If the slug already exists within the scope, <tt>-n</tt> is added (e.g. <tt>my-page-0</tt>, <tt>my-page-1</tt>, etc...
+
+
+
+Usage Examples
+----------------
+
+class MyModel extends ActiveRecord
+{
+    var $acts_as = array('sluggable'=>array('slug_source'=>'name','slug_target'=>'slug'));
+}
+
+Will take the value of $myModel->name and generate $myModel->slug.
+The ActiveRecord must of course have the column defined in "slug_target"
+
+class MyModel extends ActiveRecord
+{
+    var $acts_as = array('sluggable'=>array('slug_source'=>'getSlugName','slug_target'=>'slug'));
+    
+    function getSlugName()
+    {
+        return $this->name.' '.$this->number;
+    }
+}
+
+Will call $myModel->getSlugName() to get the source value and generate $myModel->slug.
+
+Installation
+--------------------------------
+
+    ./script/plugin install acts_as_sluggable
+
+
+How acts_as_sluggable works
+----------------------------
+
+1. Stripping of all accented
+2. Replacement of special chars with word representatives (@ becomes -at- etc.)
+3. Remove double "-" dashes from the slug
+4. Lookup the db for duplicate slugs and add increasing number "-0" at the end until its unique
+5. set $record->{$slug_target} column with the generate value
+
+
+Credits
+-------
+
+Inspired by: http://code.dunae.ca/acts_as_slugable
+
+Future
+--------
+
+See TODO file to know what will be implemented into future versions of this plugin.
+
