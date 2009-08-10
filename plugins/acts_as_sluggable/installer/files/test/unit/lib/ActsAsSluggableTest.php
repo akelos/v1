@@ -1,5 +1,5 @@
 <?php
-require_once(AK_BASE_DIR.DS.'app'.DS.'vendor'.DS.'plugins'.DS.'acts_as_taggable'.DS.'lib'.DS.'ActsAsTaggable.php');
+require_once(AK_BASE_DIR.DS.'app'.DS.'vendor'.DS.'plugins'.DS.'acts_as_sluggable'.DS.'lib'.DS.'ActsAsSluggable.php');
 
 class ActsAsSluggableTest extends AkUnitTest
 {
