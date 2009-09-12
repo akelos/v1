@@ -130,6 +130,12 @@ class AkActionController extends AkObject
 
     var $_request_id = -1;
 
+    protected
+
+    $_dynamic_attributes = array(),
+    $_dynamic_methods = array();
+
+
     /**
      * Old fashioned way of dispatching requests. Please use AkDispatcher or roll your own.
      *
@@ -326,7 +332,7 @@ class AkActionController extends AkObject
         if(empty($this->Template)){
             require_once(AK_LIB_DIR.DS.'AkActionView.php');
             require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkPhpTemplateHandler.php');
-            $this->Template =& new AkActionView($this->_getTemplateBasePath(),
+            $this->Template = new AkActionView($this->_getTemplateBasePath(),
             $this->Request->getParameters(),$this->Request->getController());
 
             $this->Template->_controllerInstance =& $this;
@@ -350,10 +356,46 @@ class AkActionController extends AkObject
      */
     function instantiateHelpers()
     {
+        Ak::setStaticVar('AkHelperLoader', $this->getHelperLoader());
+        return ;
+
         require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkHelperLoader.php');
         $HelperLoader = new AkHelperLoader();
         $HelperLoader->setController(&$this);
         $HelperLoader->instantiateHelpers();
+        Ak::setStaticVar('AkHelperLoader', $HelperLoader);
+    }
+
+    public function __get($attribute)
+    {
+        if(preg_match('/^(.+)_helper$/', $attribute, $matches)){
+            $this->getHelperLoader()->instantiateHelperAsHandlerAttribute($matches[1], $matches[0]);
+            if(isset($this->$attribute)){
+                //Ak::getLogger('magic_helpers')->message('Helper '.$attribute.' loaded');
+                return $this->$attribute;
+            }
+        }
+        if(!isset($this->_dynamic_attributes[$attribute])){
+            $this->_dynamic_attributes[$attribute] = null;
+        }
+        return $this->_dynamic_attributes[$attribute];
+    }
+
+    public function __set($attribute, $value)
+    {
+        $this->_dynamic_attributes[$attribute] = $value;
+        $this->$attribute = $value;
+    }
+
+
+    function &getHelperLoader()
+    {
+        if(empty($this->_HelperLoader)){
+            require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkHelperLoader.php');
+            $this->_HelperLoader = new AkHelperLoader();
+            $this->_HelperLoader->setController(&$this);
+        }
+        return $this->_HelperLoader;
     }
 
     function getCurrentControllerHelper()
@@ -370,11 +412,11 @@ class AkActionController extends AkObject
 
     function getModuleHelper()
     {
-        $this->getControllerName(); // module name is set when we first retrieve the controller name
-        if(!empty($this->module_name)){
-            $helper_file_name = AK_HELPERS_DIR.DS.AkInflector::underscore($this->module_name).'_helper.php';
+        $module_name = $this->getModuleName();
+        if(!empty($module_name)){
+            $helper_file_name = AK_HELPERS_DIR.DS.AkInflector::underscore($module_name).'_helper.php';
             if(file_exists($helper_file_name)){
-                return array($helper_file_name => $this->module_name);
+                return array($helper_file_name => $module_name);
             }
         }
         return array();
@@ -457,10 +499,10 @@ class AkActionController extends AkObject
                     $model =& new $model_class_name();
                 }
                 if(!isset($this->$model_class_name)){
-                    $this->$model_class_name =& $model;
+                    $this->$model_class_name = $model;
                 }
                 if(!isset($this->$underscored_model_class_name)){
-                    $this->$underscored_model_class_name =& $model;
+                    $this->$underscored_model_class_name = $model;
                 }
             }
         }
@@ -897,6 +939,9 @@ class AkActionController extends AkObject
 
     function getModuleName()
     {
+        if(empty($this->module_name)){
+            $this->getControllerName(); // module name is set when we first retrieve the controller name
+        }
         return $this->module_name;
     }
 
@@ -2908,7 +2953,7 @@ class AkActionController extends AkObject
         if ($cache_settings['enabled']) {
             $null = null;
             require_once(AK_LIB_DIR . DS . 'AkActionController' . DS . 'AkCacheHandler.php');
-            $this->_CacheHandler =& Ak::singleton('AkCacheHandler', $null);
+            $this->_CacheHandler = Ak::singleton('AkCacheHandler', $null);
             $this->_CacheHandler->init(&$this);
         }
     }
@@ -2994,6 +3039,8 @@ class AkActionController extends AkObject
      * #
      * ########################################################################
      */
+
+
 }
 
 

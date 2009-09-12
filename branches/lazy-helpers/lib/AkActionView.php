@@ -371,7 +371,7 @@ class AkActionView extends AkObject
         $path = $this->_partialPathPiece($partial_path);
         $partial_name = $this->_partialPathName($partial_path);
 
-        $object =& $this->_extractingObject($partial_name, $local_assigns);
+        $object = $this->_extractingObject($partial_name, $local_assigns);
         $local_assigns = array_merge((array)@$this->_controllerInstance->_assigns, (array)$local_assigns);
         $this->_addObjectToLocalAssigns_($partial_name, $local_assigns, $object);
         return $this->renderFile((empty($path) ? '' : $path.DS).'_'.$partial_name, true, $local_assigns);
@@ -433,7 +433,7 @@ class AkActionView extends AkObject
         return array_pop(explode('/',$partial_name)).'_counter';
     }
 
-    function &_extractingObject($partial_name, &$deprecated_local_assigns)
+    function _extractingObject($partial_name, &$deprecated_local_assigns)
     {
         if(is_array($deprecated_local_assigns)){
             return $this->controller->$partial_name;

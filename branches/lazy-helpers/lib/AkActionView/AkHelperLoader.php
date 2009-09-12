@@ -5,7 +5,7 @@ require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkActionViewHelper.php');
 /**
  * Helpers are normally loaded in the context of a controller call, but some
  * times they might be useful in Mailers, Comand line tools or for unit testing
- * 
+ *
  * Some helpers might require information available only on a conroller context
  * such as current URL, Request and Response information among others.
  */
@@ -28,7 +28,7 @@ class AkHelperLoader extends AkObject
 
     /**
      * $HandlerInstance is the object where all the helpers will be instantiated as attributes.
-     * 
+     *
      * Like setController but for Mailers and Testing
      */
     function setHandler(&$HandlerInstance)
@@ -38,13 +38,13 @@ class AkHelperLoader extends AkObject
 
     /**
      * Creates an instance of each available helper and links it into into current handler.
-     * 
-     * For example, if a helper TextHelper is located into the file text_helper.php. 
+     *
+     * For example, if a helper TextHelper is located into the file text_helper.php.
      * An instance is created on current controller
      * at $this->text_helper. This instance is also available on the view by calling $text_helper.
-     * 
+     *
      * Helpers can be found at lib/AkActionView/helpers (this might change in a future)
-     * 
+     *
      * Retuns an array with helper_name => HerlperInstace
      */
     function &instantiateHelpers()
@@ -68,10 +68,10 @@ class AkHelperLoader extends AkObject
             if(is_file($file_path)){
                 include_once($file_path);
             }
-            
+
             if(class_exists($helper_class_name)){
                 $attribute_name = $full_path ? $helper_file_name : substr($file,0,-4);
-                $this->_Handler->$attribute_name =& new $helper_class_name(&$this->_Handler);
+                $this->_Handler->$attribute_name = new $helper_class_name(&$this->_Handler);
                 if(method_exists($this->_Handler->$attribute_name,'setController')){
                     $this->_Handler->$attribute_name->setController(&$this->_Handler);
                 }elseif(method_exists($this->_Handler->$attribute_name,'setMailer')){
@@ -85,9 +85,84 @@ class AkHelperLoader extends AkObject
         }
     }
 
+
+
+
+
+    ////
+
+    function getHelperFileName($file_name)
+    {
+        if(is_file($file_name)){
+            return $file_name;
+        }
+        $file_name = AkInflector::underscore($file_name);
+        if(!strstr($file_name, '.php')){
+            $file_name = $file_name.'.php';
+        }
+        foreach ($this->getHeperBasePaths() as $base_path){
+            if(!strstr($file_name, $base_path)){
+                if(is_file($base_path.DS.$file_name)){
+                    return $base_path.DS.$file_name;
+                }
+            }
+        }
+        return false;
+    }
+
+    function getHeperBasePaths()
+    {
+        $paths = array(
+        AK_HELPERS_DIR,
+        AK_LIB_DIR.DS.'AkActionView'.DS.'helpers'
+        );
+        if(!empty($this->_Controller)){
+            $module_name = $this->_Controller->getModuleName();
+            if(!empty($module_name)){
+                $paths[] = AK_HELPERS_DIR.DS.AkInflector::underscore($module_name);
+            }
+        }
+
+        return $paths;
+    }
+
+
+    function instantiateHelperAsHandlerAttribute($helper, $file)
+    {
+        $helper_class_name = AkInflector::camelize(strstr($helper, 'Helper') ? $helper : $helper.'Helper');
+
+
+        if(!$file_path = $this->getHelperFileName($file)){
+            return false;
+        }
+
+        include_once($file_path);
+        if(class_exists($helper_class_name)){
+            $attribute_name = array_pop(explode(DS, substr($file_path,0,-4)));
+            $this->_Handler->$attribute_name = new $helper_class_name(&$this->_Handler);
+            if(method_exists($this->_Handler->$attribute_name,'setController')){
+                $this->_Handler->$attribute_name->setController($this->_Handler);
+            }elseif(method_exists($this->_Handler->$attribute_name,'setMailer')){
+                $this->_Handler->$attribute_name->setMailer($this->_Handler);
+            }
+            if(method_exists($this->_Handler->$attribute_name,'init')){
+                $this->_Handler->$attribute_name->init();
+            }
+            $this->_HelperInstances[$attribute_name] =& $this->_Handler->$attribute_name;
+        }
+    }
+
+
+    ////
+
+
+
+
+
+
     /**
      * Creates an instance of each available helper and links it into into current mailer.
-     * 
+     *
      * Mailer helpers work as Controller helpers but without the Request context
      */
     function getHelpersForMailer()
@@ -109,7 +184,7 @@ class AkHelperLoader extends AkObject
 
     /**
      * Returns an array of helper names like:
-     * 
+     *
      *  array('url_helper', 'prototype_helper')
      */
     function getInstantiatedHelperNames()

@@ -2093,10 +2093,22 @@ class Ak
      */
     public static function get($model_name, $attributes = array())
     {
-        Ak::import($model_name);
-        return new $model_name($attributes);
+        $model_name = array_shift(Ak::import($model_name));
+        if(!empty($model_name)){
+            return new $model_name($attributes);
+        }
     }
 
+}
+
+
+require_once AK_LIB_DIR.DS.'AkInflector.php';
+function __autoload($class_name){
+    if(strstr($class_name, 'Mailer')){
+        Ak::import_mailer($class_name);
+    }else{
+        Ak::import($class_name);
+    }
 }
 
 AK_ENABLE_PROFILER &&  Ak::profile();
