@@ -56,7 +56,7 @@ class AkPhpTemplateHandler
             if($____code === false){
                 if(AK_PRODUCTION_MODE){
                     trigger_error(join("\n",$TemplateEngine->getErrors()), E_USER_ERROR);
-                    return false;                    
+                    return false;
                 }else{
                     trigger_error("Could not compile ".$this->_options['file_path']."\n\n".join("\n",$TemplateEngine->getErrors()), E_USER_ERROR);
                     echo highlight_string($TemplateEngine->getParsedCode(), true);
@@ -170,13 +170,13 @@ class AkPhpTemplateHandler
         }
         Ak::file_put_contents($this->_getCompiledTemplatePath(), $this->_options['code'], $options);
     }
-    
+
 
     function _getHelpersChecksum()
     {
         if(!isset($this->_helpers_checksum)){
             require_once(AK_LIB_DIR.DS.'AkActionView'.DS.'AkHelperLoader.php');
-            $this->_helpers_checksum = md5(serialize(AkHelperLoader::getInstantiatedHelperNames()));            
+            $this->_helpers_checksum = md5('v1'.serialize(AkHelperLoader::getInstantiatedHelperNames()));
         }
         return $this->_helpers_checksum;
     }

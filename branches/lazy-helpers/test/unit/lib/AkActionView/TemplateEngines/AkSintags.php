@@ -16,12 +16,12 @@ class Test_of_AkSintags extends  UnitTestCase
     {
         $this->_run_from_file('sintags_helpers_data.txt');
     }
-    
+
     public function test_sintags_blocks()
     {
         $this->_run_from_file('sintags_blocks_data.txt');
     }
-    
+
     public function _run_from_file($file_name, $all_in_one_test = true)
     {
         $multiple_expected_php = $multiple_sintags = '';
