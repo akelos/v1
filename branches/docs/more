@@ -1,0 +1,19 @@
+MakelosComandLineArguments Object
+(
+    [arguments] => 
+    [flags] => Array
+        (
+            [flag] => name
+        )
+
+    [tasks] => Array
+        (
+            [documentation:generate:task] => {name=bermi}
+            [:one] => 
+        )
+
+    [constants] => Array
+        (
+        )
+
+)
