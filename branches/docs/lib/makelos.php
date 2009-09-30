@@ -141,7 +141,14 @@ class Makelos
         $this->Test = new AkUnitTest();
 
         !defined('AK_TASKS_DIR') && define('AK_TASKS_DIR', AK_BASE_DIR.DS.'lib'.DS.'tasks');
-        $this->task_files = array_merge(glob(AK_TASKS_DIR.DS.'*.task.*'), glob(AK_TASKS_DIR.DS.'*/*.task.*'));
+        $this->makefiles = array_merge(array_merge(array_merge(glob(AK_TASKS_DIR.DS.'makefile.php'), glob(AK_TASKS_DIR.DS.'*/makefile.php')), glob(AK_TASKS_DIR.DS.'*/*/makefile.php')), array('makefile.php'));
+    }
+
+    public function loadMakefiles()
+    {
+        foreach ($this->makefiles as $makefile){
+            include($makefile);
+        }
     }
 
     public function runTasks()
@@ -160,13 +167,35 @@ class Makelos
     {
         $this->current_task = $task_name;
         if(!isset($this->tasks[$task_name])){
-            $this->error("\nInvalid task $task_name, use \n\n   $ ./makelos -T\n\nto show available tasks.\n");
+            if(!$this->showBaseTaskDocumentation($task_name)){
+                $this->error("\nInvalid task $task_name, use \n\n   $ ./makelos -T\n\nto show available tasks.\n");
+            }
         }else{
-            $this->message(@$this->tasks[$task_name]['description']);
-            $parameters = $this->getParameters(@$this->tasks[$task_name]['parameters'], $options['attributes']);
-            return $this->runTaskCode(@$this->tasks[$task_name]['run'], $parameters);
+            //$this->message(@$this->tasks[$task_name]['description']);
+            $parameters = $this->getParameters(@$this->tasks[$task_name]['parameters'], @(array)$options['attributes']);
+            $this->runTaskFiles($task_name, $parameters);
+            $this->runTaskCode(@$this->tasks[$task_name]['run'], $parameters);
         }
     }
+
+    public function showBaseTaskDocumentation($task_name)
+    {
+        $success = false;
+        $this->message(' ');
+        foreach ($this->tasks as $task => $details){
+            if(preg_match("/^$task_name/", $task)){
+                $this->showTaskDocumentation($task);
+                $success = true;
+            }
+        }
+        return $success;
+    }
+
+    public function showTaskDocumentation($task)
+    {
+        $this->message(sprintf("%-30s",$task).'  '.@$this->tasks[$task]['description']);
+    }
+
     public function run($task_name, $options = array())
     {
         return $this->runTask($task_name, $options);
@@ -174,7 +203,7 @@ class Makelos
 
     public function runTaskCode($code_snippets = array(), $options = array())
     {
-        foreach ($code_snippets as $language => $code_snippets){
+        foreach (@(array)$code_snippets as $language => $code_snippets){
             $code_snippets = is_array($code_snippets) ? $code_snippets : array($code_snippets);
             $language_method = AkInflector::camelize('run_'.$language.'_snippet');
 
@@ -187,7 +216,20 @@ class Makelos
             }
         }
     }
-    
+
+    public function runTaskFiles($task_name, $options = array())
+    {
+        $task_name = str_replace(':', DS, $task_name);
+        foreach (glob(AK_TASKS_DIR.DS.$task_name.'*.task.*') as $file){
+            $pathinfo = @pathinfo($file);
+            if(@$pathinfo['extension'] == 'php'){
+                include($file);
+            }else{
+                echo `$file`;
+            }
+        }
+    }
+
     public function getParameters($parameters_settings, $request_parameters)
     {
         $parameters_settings = Ak::toArray($parameters_settings);
@@ -274,124 +316,62 @@ function makelos_setting($settings = array()){
     Ak::getStaticVar('Makelos')->addSettings($settings);
 }
 
-include('makefile.php');
-
-makelos_task('T,tasks', array(
-'description' => 'Shows available tasks',
-'run' => array(
-'php' => <<<PHP
-    \$Makelos->displayAvailableTasks();
-PHP
-
-)
-));
-
 
 /**
- * Rake 
+ * @todo 
+ *  
  *  Task
  *      prequisites
  *      actions
  *      expected parameters
  * 
  *  
- *  Directory functions?!?!
+ *  Directory functions
  *  Parallel tasks
  * 
- * 
- rake db:fixtures:load          # Load fixtures into the current environment&#8217;s database. 
-                               # Load specific fixtures using FIXTURES=x,y
-rake db:migrate                # Migrate the database through scripts in db/migrate. Target 
-                               # specific version with VERSION=x
-rake db:schema:dump            # Create a db/schema.rb file that can be portably used against 
-                               # any DB supported by AR
-rake db:schema:load            # Load a schema.rb file into the database
-rake db:sessions:clear         # Clear the sessions table
-rake db:sessions:create        # Creates a sessions table for use with 
-                               # CGI::Session::ActiveRecordStore
-rake db:structure:dump         # Dump the database structure to a SQL file
-rake db:test:clone             # Recreate the test database from the current environment&#8217;s 
-                               # database schema
-rake db:test:clone_structure   # Recreate the test databases from the development structure
-rake db:test:prepare           # Prepare the test database and load the schema
-rake db:test:purge             # Empty the test database
 
-rake doc:app                   # Build the app HTML Files
-rake doc:clobber_app           # Remove rdoc products
-rake doc:clobber_plugins       # Remove plugin documentation
-rake doc:clobber_rails         # Remove rdoc products
-rake doc:plugins               # Generate documation for all installed plugins
-rake doc:rails                 # Build the rails HTML Files
-rake doc:reapp                 # Force a rebuild of the RDOC files
-rake doc:rerails               # Force a rebuild of the RDOC files
+ ./makelos db:fixtures:load         # Load fixtures into the current environment&#8217;s database. 
+                                    # Load specific fixtures using FIXTURES=x,y
+./makelos db:migrate                # Migrate the database through scripts in db/migrate. Target 
+                                    # specific version with VERSION=x
+./makelos db:structure:dump         # Dump the database structure to a SQL file
+./makelos db:test:clone             # Recreate the test database from the current environment&#8217;s 
+                                    # database schema
+./makelos db:test:clone_structure   # Recreate the test databases from the development structure
+./makelos db:test:prepare           # Prepare the test database and load the schema
+./makelos db:test:purge             # Empty the test database
 
-rake log:clear                 # Truncates all *.log files in log/ to zero bytes
+./makelos doc:app                   # Build the app HTML Files
+./makelos doc:app:remove            # Remove app documentation
+./makelos doc:plugins:remove        # Remove plugin documentation
+./makelos doc:akelos:remove         # Remove akelos documentation
+./makelos doc:plugins               # Generate documation for all installed plugins
+./makelos doc:akelos                # Build the akelos HTML Files
 
-rake rails:freeze:edge         # Lock this application to latest Edge Rails. Lock a specific 
-                               # revision with REVISION=X
-rake rails:freeze:gems         # Lock this application to the current gems (by unpacking them 
-                               # into vendor/rails)
-rake rails:unfreeze            # Unlock this application from freeze of gems or edge and return 
-                               # to a fluid use of system gems
-rake rails:update              # Update both scripts and public/javascripts from Rails
-rake rails:update:javascripts  # Update your javascripts from your current rails install
-rake rails:update:scripts      # Add new scripts to the application script/ directory
+./makelos log:clear                 # Truncates all *.log files in log/ to zero bytes
 
-rake stats                     # Report code statistics (KLOCs, etc) from the application
+./makelos akelos:update             # Update both scripts and public/javascripts from Akelos
+./makelos akelos:update:javascripts # Update your javascripts from your current akelos install
+./makelos akelos:update:scripts     # Add new scripts to the application script/ directory
 
-rake test                      # Test all units and functionals
-rake test:functionals          # Run tests for functionalsdb:test:prepare
-rake test:integration          # Run tests for integrationdb:test:prepare
-rake test:plugins              # Run tests for pluginsenvironment
-rake test:recent               # Run tests for recentdb:test:prepare
-rake test:uncommitted          # Run tests for uncommitteddb:test:prepare
-rake test:units                # Run tests for unitsdb:test:prepare
+./makelos stats                     # Report code statistics (KLOCs, etc) from the application
 
-rake tmp:cache:clear           # Clears all files and directories in tmp/cache
-rake tmp:clear                 # Clear session, cache, and socket files from tmp/
-rake tmp:create                # Creates tmp directories for sessions, cache, and sockets
-rake tmp:sessions:clear        # Clears all files in tmp/sessions
-rake tmp:sockets:clear         # Clears all ruby_sess.* files in tmp/sessions
+./makelos test                      # Test all units and functionals
+./makelos test:functionals          # Run tests for functionalsdb:test:prepare
+./makelos test:integration          # Run tests for integrationdb:test:prepare
+./makelos test:plugins              # Run tests for pluginsenvironment
+./makelos test:recent               # Run tests for recentdb:test:prepare
+./makelos test:uncommitted          # Run tests for uncommitteddb:test:prepare
+./makelos test:units                # Run tests for unitsdb:test:prepare
 
-
-
-
-script/about            # Information about environenment
-script/breakpointer     # starts the breakpoint server
-script/console          # interactive Rails Console
-script/destroy          # deletes files created by generators
-script/generate         # -> generators
-script/plugin           # -> Plugins
-script/runner           # executes a task in the rails context
-script/server           # launches the development server
-                        # http://localhost:3000
-
-script/performance/profiler     # profile an expensive method
-script/performance/benchmarker  # benchmark different methods
-
-script/process/reaper
-script/process/spawner
-
-
-
-
-
-ruby script/generate model ModellName
-ruby script/generate controller ListController show edit
-ruby script/generate scaffold ModelName ControllerName 
-ruby script/generate migration AddNewTable
-ruby script/generate plugin PluginName
-ruby script/generate mailer Notification lost_password signup
-ruby script/generate web_service ServiceName api_one api_two
-ruby script/generate integration_test TestName
-ruby script/generate session_migration
-
-
-
-
-rake test:units
+./makelos tmp:cache:clear           # Clears all files and directories in tmp/cache
+./makelos tmp:clear                 # Clear session, cache, and socket files from tmp/
+./makelos tmp:create                # Creates tmp directories for sessions, cache, and sockets
+./makelos tmp:sessions:clear        # Clears all files in tmp/sessions
+./makelos tmp:sockets:clear         # Clears all ruby_sess.* files in tmp/sessions
  */
 
+Ak::getStaticVar('Makelos')->loadMakefiles();
 Ak::getStaticVar('Makelos')->runTasks();
 echo "\n";
 

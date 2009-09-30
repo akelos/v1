@@ -1,6 +1,6 @@
 <?php
 
-class ClassController extends ApplicationController
+class AkelosDoc_ClassController extends AkelosDocController
 {
     var $models = 'akelos_class,method,component';
     

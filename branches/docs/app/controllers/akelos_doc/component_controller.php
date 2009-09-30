@@ -1,13 +1,13 @@
 <?php
 
-class ComponentController extends ApplicationController
+class AkelosDoc_ComponentController extends AkelosDocController
 {
     var $models = 'component,akelos_class';
     var $app_helpers = 'layout';
     
     function index ()
     {
-        $this->renderAction('listing');
+        $this->redirectToAction('listing');
     }
 
     function listing()

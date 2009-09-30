@@ -80,15 +80,6 @@ class ApiInstaller extends AkInstaller
         name
         ');
         
-
-        $this->createTable('element_details', "
-            id,
-            key,
-            value,
-            owner_id,
-            owner_type
-            ");
-
             
         $this->createTable('examples', "
             id,
@@ -119,7 +110,7 @@ class ApiInstaller extends AkInstaller
     function down_1()
     {
         /**/
-            $this->dropTables('components,files,methods,akelos_classes,parameters,examples,comments,categories,related_categories,element_details,data_types');
+            $this->dropTables('components,files,methods,akelos_classes,parameters,examples,comments,categories,related_categories,data_types');
         /**/
     }
 

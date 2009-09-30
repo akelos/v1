@@ -7,11 +7,6 @@ makelos_setting(array(
     )
 ));
 
-makelos_task('documentation:generate', array(
-    'description' => 'Generates Akelos docuementation',
-    'before' => array('documentation:parse'),
-    'after' => array('documentation:pack'))
-);
 
 makelos_task('expects', array(
     'parameters' => 'one,two',
