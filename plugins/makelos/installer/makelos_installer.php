@@ -1,6 +1,6 @@
 <?php
 
-class MakelosInstaller extends AkInstaller
+class MakelosInstaller extends AkPluginInstaller
 {
     public function up_1()
     {    
