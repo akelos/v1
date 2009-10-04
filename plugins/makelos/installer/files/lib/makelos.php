@@ -1,7 +1,7 @@
 <?php
 
-
 !defined('MAKELOS_BASE_DIR') && define('MAKELOS_BASE_DIR', dirname(__FILE__));
+!defined('MAKELOS_RUN') && define('MAKELOS_RUN', $_SERVER['PHP_SELF'] == './makelos');
 
 class MakelosRequest
 {
@@ -102,26 +102,27 @@ class MakelosRequest
     }
 }
 
-
-// Setting constants from arguments before including configurations
 $MakelosRequest = new MakelosRequest();
-$MakelosRequest->defineConstants();
+
+if(MAKELOS_RUN){
+    // Setting constants from arguments before including configurations
+    $MakelosRequest->defineConstants();
 
 
-include(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
-require_once(AK_LIB_DIR.DS.'Ak.php');
-require_once(AK_LIB_DIR.DS.'AkObject.php');
-require_once(AK_LIB_DIR.DS.'AkInflector.php');
-defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? ($dsn='') : Ak::db(&$dsn);
-defined('AK_RECODE_UTF8_ON_CONSOLE_TO') ? null : define('AK_RECODE_UTF8_ON_CONSOLE_TO', false);
-require_once(AK_LIB_DIR.DS.'AkActiveRecord.php');
-require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
-require_once(AK_APP_DIR.DS.'shared_model.php');
-require_once(AK_LIB_DIR.DS.'AkInstaller.php');
-require_once(AK_LIB_DIR.DS.'AkUnitTest.php');
+    include(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
+    require_once(AK_LIB_DIR.DS.'Ak.php');
+    require_once(AK_LIB_DIR.DS.'AkObject.php');
+    require_once(AK_LIB_DIR.DS.'AkInflector.php');
+    defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? ($dsn='') : Ak::db(&$dsn);
+    defined('AK_RECODE_UTF8_ON_CONSOLE_TO') ? null : define('AK_RECODE_UTF8_ON_CONSOLE_TO', false);
+    require_once(AK_LIB_DIR.DS.'AkActiveRecord.php');
+    require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
+    require_once(AK_APP_DIR.DS.'shared_model.php');
+    require_once(AK_LIB_DIR.DS.'AkInstaller.php');
+    require_once(AK_LIB_DIR.DS.'AkUnitTest.php');
 
-
-error_reporting(E_ALL);
+    error_reporting(E_ALL);
+}
 
 class Makelos
 {
@@ -222,6 +223,7 @@ class Makelos
     public function runTaskFiles($task_name, $options = array())
     {
         $task_name = str_replace(':', DS, $task_name);
+        $Makelos = $this;
         foreach (glob(AK_TASKS_DIR.DS.$task_name.'*.task.*') as $file){
             $pathinfo = @pathinfo($file);
             if(@$pathinfo['extension'] == 'php'){
@@ -380,8 +382,10 @@ function makelos_setting($settings = array()){
 ./makelos tmp:sockets:clear         # Clears all ruby_sess.* files in tmp/sessions
  */
 
-Ak::getStaticVar('Makelos')->loadMakefiles();
-Ak::getStaticVar('Makelos')->runTasks();
-echo "\n";
+if(MAKELOS_RUN){
+    Ak::getStaticVar('Makelos')->loadMakefiles();
+    Ak::getStaticVar('Makelos')->runTasks();
+    echo "\n";
+}
 
 ?>
