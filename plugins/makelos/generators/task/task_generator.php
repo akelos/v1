@@ -22,7 +22,7 @@ class TaskGenerator extends  AkelosGenerator
             $task_levels = array_map(array('AkInflector','underscore'), array_diff(explode(':', $task.':'), array('')));
             $task = join(':', $task_levels);
             $last_level = array_pop($task_levels);
-            $makefile = AK_BASE_DIR.DS.'lib'.DS.'tasks'.str_replace(DS.DS, DS, DS.join(DS, (array)@$task_levels).DS).'makelos.php';
+            $makefile = AK_BASE_DIR.DS.'lib'.DS.'tasks'.str_replace(DS.DS, DS, DS.join(DS, (array)@$task_levels).DS).'makefile.php';
             array_push($task_levels, $last_level);
             $task_file = AK_BASE_DIR.DS.'lib'.DS.'tasks'.DS.join(DS, $task_levels).'.task.php';
             $this->make_files[$makefile][$task_file] = $task;
