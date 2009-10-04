@@ -290,7 +290,14 @@ class Makelos
 
     public function displayAvailableTasks()
     {
-        print_r($this->task_files);
+        $this->message("\nShowing tasks avalable at ".AK_TASKS_DIR.":\n");
+        foreach ($this->tasks as $task => $details){
+            $this->showTaskDocumentation($task);
+        }
+        $this->message("\nYou can perform taks by running:\n");
+        $this->message("    ./makelos task:name");
+        $this->message("\nOptionally you can define contants or pass attributes to the tasks:\n");
+        $this->message("    ./makelos task:name ENVIROMENT=production parameter=value -flag --param=value");
     }
 
     public function error($message, $fatal = false)
