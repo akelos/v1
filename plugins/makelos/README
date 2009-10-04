@@ -1,0 +1,33 @@
+Makelos Plugin
+===================================
+
+This plugin contains Makelos, a simple PHP build program with
+capabilities similar to make and rake.
+
+Makelos has the following features:
+
+* makefiles.php (makelos's version of Rakefiles/Makefiles) are completely defined in
+  standard PHP syntax.  No XML files to edit.  No quirky Makefile
+  syntax to worry about (is that a tab or a space?)
+
+* Makelos supports rule patterns to synthesize implicit tasks.
+
+* A library of prepackaged tasks to make building makefiles.php easier.
+
+
+Installation
+--------------------------------
+
+    ./script/plugin install makelos
+
+
+Usage
+--------------------------------
+
+Run
+
+    ./makelos -T
+
+to see available tasks
+
+You can see example makelos.php task declarations on ./lib/tasks/db/
