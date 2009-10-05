@@ -26,6 +26,7 @@ class MakelosRequest
 
     public function parse($arguments)
     {
+        $task_set = false;
         while(!empty($arguments)){
             $argument = array_shift($arguments);
             /**
@@ -35,7 +36,7 @@ class MakelosRequest
                 $argument .= $arguments[0];
                 array_shift($arguments);
             }
-            if(preg_match('/^(-{0,2})([\w\d-_:]+ ?)(=?)( ?.*)/', $argument, $matches)){
+            if(preg_match('/^(-{0,2})((?![\w\d-_:]+\/\/)[\w\d-_:]+ ?)(=?)( ?.*)/', $argument, $matches)){
                 $constant_or_attribute = ((strtoupper($matches[2]) === $matches[2]) ? 'constants' : 'attributes');
                 $is_constant = $constant_or_attribute == 'constants';
                 if(($matches[3] == '=' || ($matches[3] == '' && $matches[4] != ''))){
@@ -45,14 +46,19 @@ class MakelosRequest
                     }else{
                         $this->{$constant_or_attribute}[trim($matches[2], ' :')] = trim($matches[4], ' :');
                     }
-                }elseif(empty($matches[1]) || $matches[1] != '-'){
+                }elseif(!$task_set && (empty($matches[1]) || $matches[1] != '-')){
                     $task = trim($matches[2], ' :');
                     $this->tasks[$task] = array();
-                }else{
+                    $task_set = true;
+                }elseif($matches[1] == '-'){
                     foreach (str_split($matches[2]) as $k){
                         $this->flags[$k] = true;
                     }
+                }elseif($task_set){
+                    $this->tasks[$task]['attributes'][trim($matches[0], ' :')] = $this->_castValue(trim($matches[0], ' :'));
                 }
+            }elseif ($task_set) {
+                $this->tasks[$task]['attributes'][trim($argument, ' :')] = $this->_castValue(trim($argument, ' :'));
             }
         }
     }
@@ -108,7 +114,6 @@ if(MAKELOS_RUN){
     // Setting constants from arguments before including configurations
     $MakelosRequest->defineConstants();
 
-
     include(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
     require_once(AK_LIB_DIR.DS.'Ak.php');
     require_once(AK_LIB_DIR.DS.'AkObject.php');
@@ -121,7 +126,9 @@ if(MAKELOS_RUN){
     require_once(AK_LIB_DIR.DS.'AkInstaller.php');
     require_once(AK_LIB_DIR.DS.'AkUnitTest.php');
 
-    error_reporting(E_ALL);
+    @ini_set('memory_limit', -1);
+    set_time_limit(0);
+    //error_reporting(E_ALL);
 }
 
 class Makelos
