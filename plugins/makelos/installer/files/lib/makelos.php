@@ -44,7 +44,7 @@ class MakelosRequest
                     if(!empty($task) && !$is_constant){
                         $this->tasks[$task]['attributes'][trim($matches[2], ' :')] = $this->_castValue(trim($matches[4], ' :'));
                     }else{
-                        $this->{$constant_or_attribute}[trim($matches[2], ' :')] = trim($matches[4], ' :');
+                        $this->{$constant_or_attribute}[trim($matches[2], ' :')] = $this->_castValue(trim($matches[4], ' :'));
                     }
                 }elseif(!$task_set && (empty($matches[1]) || $matches[1] != '-')){
                     $task = trim($matches[2], ' :');
