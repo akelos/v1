@@ -55,7 +55,11 @@ class MakelosRequest
                         $this->flags[$k] = true;
                     }
                 }elseif($task_set){
-                    $this->tasks[$task]['attributes'][trim($matches[0], ' :')] = $this->_castValue(trim($matches[0], ' :'));
+                    if($matches[1] == '--'){
+                        $this->tasks[$task]['attributes'][trim($matches[2], ' :')] = true;
+                    }else{
+                        $this->tasks[$task]['attributes'][trim($matches[0], ' :')] = $this->_castValue(trim($matches[0], ' :'));
+                    }
                 }
             }elseif ($task_set) {
                 $this->tasks[$task]['attributes'][trim($argument, ' :')] = $this->_castValue(trim($argument, ' :'));
@@ -175,6 +179,11 @@ class Makelos
 
     public function runTask($task_name, $options = array())
     {
+        if(!empty($options['attributes']['daemon'])){
+            unset($options['attributes']['daemon']);
+            $this->runTaskAsDaemon($task_name, $options);
+            return;
+        }
         $this->current_task = $task_name;
         if(!isset($this->tasks[$task_name])){
             if(!$this->showBaseTaskDocumentation($task_name)){
@@ -231,6 +240,7 @@ class Makelos
     {
         $task_name = str_replace(':', DS, $task_name);
         $Makelos = $this;
+        $Logger = Ak::getLogger('makelos'.DS.AkInflector::underscore($task_name));
         foreach (glob(AK_TASKS_DIR.DS.$task_name.'*.task.*') as $file){
             $pathinfo = @pathinfo($file);
             if(@$pathinfo['extension'] == 'php'){
@@ -299,14 +309,16 @@ class Makelos
 
     public function displayAvailableTasks()
     {
+
+        $this->message("\nYou can perform taks by running:\n");
+        $this->message("    ./makelos task:name");
+        $this->message("\nOptionally you can define contants or pass attributes to the tasks:\n");
+        $this->message("    ./makelos task:name ENVIROMENT=production parameter=value param -abc --param=value");
+
         $this->message("\nShowing tasks avalable at ".AK_TASKS_DIR.":\n");
         foreach ($this->tasks as $task => $details){
             $this->showTaskDocumentation($task);
         }
-        $this->message("\nYou can perform taks by running:\n");
-        $this->message("    ./makelos task:name");
-        $this->message("\nOptionally you can define contants or pass attributes to the tasks:\n");
-        $this->message("    ./makelos task:name ENVIROMENT=production parameter=value -flag --param=value");
     }
 
     public function error($message, $fatal = false)
@@ -321,6 +333,61 @@ class Makelos
         if(!empty($message)){
             echo $message."\n";
         }
+    }
+
+    public function runTaskAsDaemon($task_name, $options = array())
+    {
+        if(!function_exists('posix_geteuid')){
+            trigger_error('POSIX functions not available. Please compile PHP with --enable-posix', E_USER_ERROR);
+        }elseif(!function_exists('pcntl_fork')){
+            trigger_error('pcntl functions not available. Please compile PHP with --enable-pcntl', E_USER_ERROR);
+        }
+
+        require_once 'System/Daemon.php';
+
+        $app_name = AkInflector::underscore($task_name);
+        $pid_file = AK_BASE_DIR.DS.'run'.DS.$app_name.DS.$app_name.'.pid';
+        $log_file = AK_LOG_DIR.DS.'daemons'.DS.$app_name.'.log';
+
+        if(!file_exists($pid_file)){
+            Ak::file_put_contents($pid_file, '');
+            Ak::file_delete($pid_file);
+        }else{
+            $pid = (int)file_get_contents($pid_file);
+            if($pid > 0){
+                if(!empty($options['attributes']['kill'])){
+                    $this->message("Killing process $pid");
+                    $this->message(`kill $pid`);
+                    die();
+                }elseif(!empty($options['attributes']['restart'])){
+                    $this->message("Restarting $task_name.");
+                    $this->message(`kill $pid`);
+                }else{
+                    $this->error("Daemon for $task_name still running ($pid_file).\nTask aborted.", true);
+                }
+
+            }
+        }
+
+        if(!empty($options['attributes']['kill']) && empty($pid)){
+            $this->error("No daemon running for task $task_name", true);
+        }
+        unset($options['attributes']['restart']);
+
+        if(!file_exists($log_file)){
+            Ak::file_put_contents($log_file, '');
+        }
+
+        System_Daemon::setOption('appName', $app_name);
+        System_Daemon::setOption('appDir', AK_BASE_DIR);
+        System_Daemon::setOption('logLocation', $log_file);
+        System_Daemon::setOption('appRunAsUID', posix_geteuid());
+        System_Daemon::setOption('appRunAsGID', posix_getgid());
+        System_Daemon::setOption('appPidLocation', $pid_file);
+        $this->message("Staring daemon. ($log_file)");
+        System_Daemon::start();
+        $this->runTask($task_name, $options);
+        System_Daemon::stop();
     }
 }
 
