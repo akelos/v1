@@ -122,6 +122,7 @@ if(MAKELOS_RUN){
     require_once(AK_LIB_DIR.DS.'Ak.php');
     require_once(AK_LIB_DIR.DS.'AkObject.php');
     require_once(AK_LIB_DIR.DS.'AkInflector.php');
+    Ak::setStaticVar('dsn', $dsn);
     defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? ($dsn='') : Ak::db(&$dsn);
     defined('AK_RECODE_UTF8_ON_CONSOLE_TO') ? null : define('AK_RECODE_UTF8_ON_CONSOLE_TO', false);
     require_once(AK_LIB_DIR.DS.'AkActiveRecord.php');
@@ -179,9 +180,17 @@ class Makelos
 
     public function runTask($task_name, $options = array())
     {
+        if(!empty($this->tasks[$task_name]['with_defaults'])){
+            $options['attributes'] = array_merge((array)$this->tasks[$task_name]['with_defaults'], (array)@$options['attributes']);
+            unset($this->tasks[$task_name]['with_defaults']);
+        }
         if(!empty($options['attributes']['daemon'])){
             unset($options['attributes']['daemon']);
             $this->runTaskAsDaemon($task_name, $options);
+            return;
+        }elseif(!empty($options['attributes']['background'])){
+            unset($options['attributes']['background']);
+            $this->runTaskInBackground($task_name, $options);
             return;
         }
         $this->current_task = $task_name;
@@ -335,13 +344,25 @@ class Makelos
         }
     }
 
+    public function runTaskInBackground($task_name, $options = array())
+    {
+        $this->_ensurePosixAndPcntlAreAvailable();
+        $pid = pcntl_fork();
+        if($pid == -1){
+            $this->error("Could not run background task.\n Call with --background=false to avoid backgrounding.", true);
+        }elseif($pid == 0){
+            $dsn = Ak::getStaticVar('dsn');
+            defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? null : Ak::db(&$dsn);
+            $this->runTask($task_name, $options);
+            exit;
+        }else{
+            $this->message("\nRunning background task $task_name with pid $pid");
+        }
+    }
+
     public function runTaskAsDaemon($task_name, $options = array())
     {
-        if(!function_exists('posix_geteuid')){
-            trigger_error('POSIX functions not available. Please compile PHP with --enable-posix', E_USER_ERROR);
-        }elseif(!function_exists('pcntl_fork')){
-            trigger_error('pcntl functions not available. Please compile PHP with --enable-pcntl', E_USER_ERROR);
-        }
+        $this->_ensurePosixAndPcntlAreAvailable();
 
         require_once 'System/Daemon.php';
 
@@ -350,14 +371,19 @@ class Makelos
         $log_file = AK_LOG_DIR.DS.'daemons'.DS.$app_name.'.log';
 
         if(!file_exists($pid_file)){
-            Ak::file_put_contents($pid_file, '');
-            Ak::file_delete($pid_file);
+            if(empty($options['attributes']['kill'])){
+                Ak::file_put_contents($pid_file, '');
+                Ak::file_delete($pid_file);
+            }else{
+                $this->error("Could not kill process for $task_name", true);
+            }
         }else{
             $pid = (int)file_get_contents($pid_file);
             if($pid > 0){
                 if(!empty($options['attributes']['kill'])){
                     $this->message("Killing process $pid");
-                    $this->message(`kill $pid`);
+                    `kill $pid`;
+                    Ak::file_delete($pid_file);
                     die();
                 }elseif(!empty($options['attributes']['restart'])){
                     $this->message("Restarting $task_name.");
@@ -365,7 +391,6 @@ class Makelos
                 }else{
                     $this->error("Daemon for $task_name still running ($pid_file).\nTask aborted.", true);
                 }
-
             }
         }
 
@@ -386,8 +411,22 @@ class Makelos
         System_Daemon::setOption('appPidLocation', $pid_file);
         $this->message("Staring daemon. ($log_file)");
         System_Daemon::start();
+        $dsn = Ak::getStaticVar('dsn');
+        defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? null : Ak::db(&$dsn);
         $this->runTask($task_name, $options);
         System_Daemon::stop();
+        Ak::file_delete($pid_file);
+        die();
+    }
+
+
+    private function _ensurePosixAndPcntlAreAvailable()
+    {
+        if(!function_exists('posix_geteuid')){
+            trigger_error('POSIX functions not available. Please compile PHP with --enable-posix', E_USER_ERROR);
+        }elseif(!function_exists('pcntl_fork')){
+            trigger_error('pcntl functions not available. Please compile PHP with --enable-pcntl', E_USER_ERROR);
+        }
     }
 }
 
