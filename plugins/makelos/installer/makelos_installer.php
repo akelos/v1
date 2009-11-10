@@ -11,5 +11,3 @@ class MakelosInstaller extends AkPluginInstaller
     {
     }
 }
-
-?>

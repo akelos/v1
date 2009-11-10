@@ -1,7 +1,9 @@
 <?php
 
 !defined('MAKELOS_BASE_DIR') && define('MAKELOS_BASE_DIR', dirname(__FILE__));
-!defined('MAKELOS_RUN') && define('MAKELOS_RUN', $_SERVER['PHP_SELF'] == './makelos');
+!defined('MAKELOS_RUN') && define('MAKELOS_RUN', preg_match('/makelos$/', $_SERVER['PHP_SELF']));
+
+error_reporting(E_STRICT);
 
 class MakelosRequest
 {
@@ -27,6 +29,7 @@ class MakelosRequest
     public function parse($arguments)
     {
         $task_set = false;
+
         while(!empty($arguments)){
             $argument = array_shift($arguments);
             /**
@@ -36,7 +39,8 @@ class MakelosRequest
                 $argument .= $arguments[0];
                 array_shift($arguments);
             }
-            if(preg_match('/^(-{0,2})((?![\w\d-_:]+\/\/)[\w\d-_:]+ ?)(=?)( ?.*)/', $argument, $matches)){
+
+            if(preg_match('/^(-{0,2})((?![\w\d-_:\/\\\]+\/\/)[\w\d-_:\/\\\]+ ?)(=?)( ?.*)/', $argument, $matches)){
                 $constant_or_attribute = ((strtoupper($matches[2]) === $matches[2]) ? 'constants' : 'attributes');
                 $is_constant = $constant_or_attribute == 'constants';
                 if(($matches[3] == '=' || ($matches[3] == '' && $matches[4] != ''))){
@@ -77,20 +81,23 @@ class MakelosRequest
             }
         }
     }
+
     public function flag($name)
     {
         return $this->get($name, __FUNCTION__);
     }
+
     public function constant($name)
     {
         return $this->get($name, __FUNCTION__);
     }
+
     public function attribute($name)
     {
         return $this->get($name, __FUNCTION__);
     }
 
-    function defineConstants()
+    public function defineConstants()
     {
         foreach ($this->constants as $constant => $value){
             if(!preg_match('/^AK_/', $constant)){
@@ -118,18 +125,16 @@ if(MAKELOS_RUN){
     // Setting constants from arguments before including configurations
     $MakelosRequest->defineConstants();
 
-    include(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php');
-    require_once(AK_LIB_DIR.DS.'Ak.php');
-    require_once(AK_LIB_DIR.DS.'AkObject.php');
-    require_once(AK_LIB_DIR.DS.'AkInflector.php');
+    $_config_file = dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'config.php';
+
+    if(!@include $_config_file){
+        defined('AK_ENVIRONMENT') ? null : define('AK_ENVIRONMENT', 'testing');
+        defined('AK_BASE_DIR') ? null : define('AK_BASE_DIR', MAKELOS_BASE_DIR);
+        include_once(MAKELOS_BASE_DIR.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'boot.php');
+    }
+
     Ak::setStaticVar('dsn', $dsn);
-    defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? ($dsn='') : Ak::db(&$dsn);
     defined('AK_RECODE_UTF8_ON_CONSOLE_TO') ? null : define('AK_RECODE_UTF8_ON_CONSOLE_TO', false);
-    require_once(AK_LIB_DIR.DS.'AkActiveRecord.php');
-    require_once(AK_LIB_DIR.DS.'AkActionMailer.php');
-    require_once(AK_APP_DIR.DS.'shared_model.php');
-    require_once(AK_LIB_DIR.DS.'AkInstaller.php');
-    require_once(AK_LIB_DIR.DS.'AkUnitTest.php');
 
     @ini_set('memory_limit', -1);
     set_time_limit(0);
@@ -151,8 +156,6 @@ class Makelos
     {
         $this->Request = $Request;
         $this->Installer = new AkInstaller();
-        $this->Test = new AkUnitTest();
-
         !defined('AK_TASKS_DIR') && define('AK_TASKS_DIR', AK_BASE_DIR.DS.'lib'.DS.'tasks');
         $this->makefiles = array_merge(array_merge(array_merge(array_merge(array_merge(glob(AK_TASKS_DIR.DS.'makefile.php'), glob(AK_TASKS_DIR.DS.'*/makefile.php')), glob(AK_TASKS_DIR.DS.'*/*/makefile.php')), array(AK_BASE_DIR.DS.'*/*/*/makefile.php')),  array(AK_BASE_DIR.DS.'*/*/*/*/makefile.php')), array(AK_BASE_DIR.DS.'makefile.php'));
     }
@@ -168,6 +171,10 @@ class Makelos
 
     public function runTasks()
     {
+        if(isset($this->Request->tasks['makelos:autocomplete'])){
+            $this->runTask('makelos:autocomplete', $this->Request->tasks['makelos:autocomplete'], false);
+            return;
+        }
         $this->message('(in '.MAKELOS_BASE_DIR.')');
         if(!empty($this->Request->tasks)){
             foreach ($this->Request->tasks as $task => $arguments){
@@ -178,8 +185,9 @@ class Makelos
         }
     }
 
-    public function runTask($task_name, $options = array())
+    public function runTask($task_name, $options = array(), $only_registered_tasks = true)
     {
+        $this->removeAutocompletionOptions($task_name);
         if(!empty($this->tasks[$task_name]['with_defaults'])){
             $options['attributes'] = array_merge((array)$this->tasks[$task_name]['with_defaults'], (array)@$options['attributes']);
             unset($this->tasks[$task_name]['with_defaults']);
@@ -194,7 +202,7 @@ class Makelos
             return;
         }
         $this->current_task = $task_name;
-        if(!isset($this->tasks[$task_name])){
+        if($only_registered_tasks && !isset($this->tasks[$task_name])){
             if(!$this->showBaseTaskDocumentation($task_name)){
                 $this->error("\nInvalid task $task_name, use \n\n   $ ./makelos -T\n\nto show available tasks.\n");
             }
@@ -205,6 +213,8 @@ class Makelos
             $this->runTaskCode(@$this->tasks[$task_name]['run'], $parameters);
         }
     }
+
+
 
     public function showBaseTaskDocumentation($task_name)
     {
@@ -304,6 +314,7 @@ class Makelos
         $task_names = strstr($task_name, ',') ? array_map('trim', explode(',', $task_name)) : array($task_name);
         foreach ($task_names as $task_name) {
             $task_files = glob(AK_TASKS_DIR.DS.str_replace(':',DS, $task_name.'.task*.*'));
+
             if(empty($options['run']) && empty($task_files)){
                 $this->error("No task file found for $task_name in ".AK_TASKS_DIR, true);
             }
@@ -330,6 +341,7 @@ class Makelos
         }
     }
 
+
     public function error($message, $fatal = false)
     {
         $this->message($message);
@@ -347,19 +359,20 @@ class Makelos
     public function runTaskInBackground($task_name, $options = array())
     {
         $this->_ensurePosixAndPcntlAreAvailable();
-        $pid = pcntl_fork();
+        $pid = Ak::pcntl_fork();
         if($pid == -1){
             $this->error("Could not run background task.\n Call with --background=false to avoid backgrounding.", true);
         }elseif($pid == 0){
             $dsn = Ak::getStaticVar('dsn');
-            defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? null : Ak::db(&$dsn);
+            defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? null : Ak::db($dsn);
             $this->runTask($task_name, $options);
-            exit;
+            posix_kill(getmypid(),9);
         }else{
             $this->message("\nRunning background task $task_name with pid $pid");
         }
     }
 
+    
     public function runTaskAsDaemon($task_name, $options = array())
     {
         $this->_ensurePosixAndPcntlAreAvailable();
@@ -412,13 +425,64 @@ class Makelos
         $this->message("Staring daemon. ($log_file)");
         System_Daemon::start();
         $dsn = Ak::getStaticVar('dsn');
-        defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? null : Ak::db(&$dsn);
+        defined('AK_SKIP_DB_CONNECTION') && AK_SKIP_DB_CONNECTION ? null : Ak::db($dsn);
         $this->runTask($task_name, $options);
         System_Daemon::stop();
         Ak::file_delete($pid_file);
         die();
     }
 
+    
+    
+    // Autocompletion handling
+
+    public function getAvailableTasksForAutocompletion()
+    {
+        return array_keys($this->tasks);
+    }
+
+    public function getAutocompletionOptionsForTask($task, $options = array(), $level = 1)
+    {
+        $task_name = str_replace(':', DS, $task);
+        $Makelos = $this;
+        $autocompletion_options = array();
+        $autocomplete_accessor = 'autocompletion'.($level === 1 ? '' : '_'.$level);
+        $autocompletion_executables = glob(AK_TASKS_DIR.DS.$task_name.'*.'.$autocomplete_accessor.'.*');
+        if(!empty($autocompletion_executables)){
+            ob_start();
+            foreach ($autocompletion_executables as $file){
+                $pathinfo = @pathinfo($file);
+                if(@$pathinfo['extension'] == 'php'){
+                    include($file);
+                }else{
+                    echo `$file`;
+                }
+            }
+            echo "\n";
+            $autocompletion_options = array_diff(explode("\n", ob_get_clean()), array(''));
+        }
+        $autocomplete_accessor = 'autocompletion'.($level === 1 ? '' : '_'.$level);
+        if(isset($this->tasks[$task][$autocomplete_accessor])){
+            $autocompletion_options = array_merge(Ak::toArray($this->tasks[$task][$autocomplete_accessor]), $autocompletion_options);
+        }
+        array_unique($autocompletion_options);
+        $autocompletion_options = array_diff($autocompletion_options, array_merge(array($task), $options));
+        return $autocompletion_options;
+    }
+
+    public function removeAutocompletionOptions($task_name)
+    {
+        if (!empty($this->tasks[$task_name])) {
+            foreach ($this->tasks[$task_name] as $k => $v){
+                if(preg_match('/^autocompletion/', $k)){
+                    unset($this->tasks[$task_name][$k]);
+                }
+            }
+        }
+    }
+    
+    
+    
 
     private function _ensurePosixAndPcntlAreAvailable()
     {
@@ -500,5 +564,3 @@ if(MAKELOS_RUN){
     Ak::getStaticVar('Makelos')->runTasks();
     echo "\n";
 }
-
-?>
