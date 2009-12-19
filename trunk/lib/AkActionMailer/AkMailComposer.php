@@ -1,5 +1,12 @@
 <?php
 
+defined('AK_ACTION_MAILER_LEGAL_HEADER') ||
+define('AK_ACTION_MAILER_LEGAL_ATTRIBUTE_SETTERS', 
+        '/^(from|delivered-to|to|subject|recipients|'.
+        'content-type|content-transfer-encoding|authentication-results|'.
+        'received|date|return-path|references|in-reply-to|x-[\w\d-]+|'.
+        'received[\w\d-]*|mime-version|message-id|[\w\d-]*-spf)/i');
+
 
 class AkMailComposer extends AkObject
 {
@@ -11,6 +18,7 @@ class AkMailComposer extends AkObject
     public $_boundary_stack = array();
     public $boundary = '';
 
+    protected $_legal_attribute_setters = AK_ACTION_MAILER_LEGAL_ATTRIBUTE_SETTERS;
 
     public function init(&$ActionMailer)
     {
@@ -143,7 +151,7 @@ class AkMailComposer extends AkObject
         if(empty($this->ActionMailer->_setter_has_been_called)){
             $attributes = array();
             foreach ((array)$this->ActionMailer as $k=>$v){
-                if(gettype($v) != 'object' && $k[0] != '_'){
+                if(gettype($v) != 'object' && $k[0] != '_' && preg_match($this->legal_attribute_setters, $k)){
                     $attributes[$k] = $v;
                 }
             }
