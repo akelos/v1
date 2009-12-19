@@ -1,0 +1,211 @@
+[1441] Fixing a serious security bug wich under certain circumstances propagates information about your mailer objects on the email headers.
+
+This only affected the PHP Mail driver when setting mail fileds directly as  Mailer attribute instances like:
+
+    $this->recipients   = $recipient;
+    $this->body         = 'This is the body';
+    $this->subject      = 'The subject';
+    $this->from         = array('Akelos' => 'akelos@example.com');
+
+If you used the setter methods you will not be affected by this issue.
+
+[1438] Added a array to csv converter
+
+[1437] Adding Akelos version of pcntl_fork for preventing forked processes from killing the database connection.
+
+See http://dev.mysql.com/doc/refman/5.0/en/gone-away.html
+
+This is done by closing the connection before forking and reconnecting on the child & parent process.
+
+Returns the same as pcntl_fork (PID of the children to the parent, 0 to the children process and -1 if fails).
+
+[1434] Adding new constant for checking if the app can fork processes, if so it will scope static vars from Ak::s/getStaticVar to the process id.
+
+[1428] Adding support for _'' calls in sintags helpers and arrays
+
+[1411] Fixing a bug the prevented underscored_module_names from working properly.
+
+Module class name was misleading, as module_name was casted to Module_Name when it should be ModelName 
+
+
+[1409] Adding modulo method to Ak. Ak::modulo will always return whole numbers, unlike PHP modulo (3%4) wich might return negative numbers as in C++
+
+[1407] Adding cookie and redirection support for Ak::get_url_contents()
+
+Disabling the DEV debugger on the CLI.
+
+Removing compression cache files to prevent trashing the tmp folder.
+
+[1406] Added translate and untranslate methods for a quick acces to the dictionaries in both directions
+
+[1400] Fixed default order for the date helper. Now using the value for long_date_format as defined on config/locale/
+
+[1399]  When loading associations using load(), it will always return false is no associates are found.
+
+[1394] Added language descriptions for ISO languages.
+
+[1391] Adding helper script to convert files from PHP4 to PHP5
+
+[1390] Porting most ActiveRecord tests to PHP5
+
+[1389] fixing encoding of multibyte charsets as in russian, splitting encoding over multiple lines in the header
+
+[1388] Avoiding storing referer on ajax calls
+
+[1385] Ak::collect() will not require input array to be passed by reference any more
+
+[1381] Adding the possibility of skiping down version methods on migrations.
+
+Until now if you had an installer with 8 versions you needed down_1 to down_8 methods to be declared. Now you can skip down version declarations.
+
+[1378] Fixing url_helper->modify_current_url. Now works as expected.
+
+It gets the original url-params retrieved via the routing, for example:
+
+/page/index/1
+
+$params=array('controller'=>'page','action'=>'index','id'=>1);
+
+$url_helper->modify_current_url(array('id'=>2));
+// => /page/index/2/
+
+
+[1377] - Passing tests on PHP4 (for be the last time :) ) AkLocaleManager was already using self::
+
+- Added some named variable binding tests.
+
+- Added automatic escaping for params variables on i18n sintags blocks, and manual escaping by using %\varname
+
+{{{
+_{Signed up using %params-email address}
+}}}
+
+will compile into 
+ 
+{{{
+<?php echo $text_helper->translate('Signed up using %params-email address', array('%params-email' => $text_helper->h(@$params['email']))); ?>
+}}}
+
+and 
+
+{{{
+_{Signed up using %\email address}
+}}}
+
+will compile into
+
+{{{
+<?php echo $text_helper->translate('Signed up using %\email address', array('%\email' => $text_helper->h(@$email))); ?>
+}}}
+
+[1376] Adding new AkRequest::getReferer() method and using it for url_for('back') calls
+
+[1373] Adding option to skip loading acts_as when instantiating new Active Records.
+
+{{{
+new ModelName(array('load_acts'=> false));
+}}}
+
+[1372] Preventing files in models without the right naming to be included automatically by script/console
+
+[1368] Refactored AkLocaleManager updateLocaleFiles and added the possibility to define a classname in AK_LOCALE_MANAGER constant, which handles the AkLocaleManager task
+
+[1363] Adding a centralized method AkCacheHandler::_addParametersToPath for handling cache parameters.
+
+Attaching the action cache filter before controller filters. Otherwise controller beforeFilters are never executed.
+
+Making it possible to setup cache options using a method name for current controller.
+
+[1361] Allowing load_acts and load_associations on findBy() calls. Making findBy options more permissive
+
+[1360] Preventing duplicated messages when reporting errors
+
+[1359] Capture helper now concatenates $content_for_ variables
+
+[1358] Adding automatic format views.
+
+If the action person/show.xml is called the view person/show.xml.tpl will be rendered automatically if exists.
+
+This is useful for creating restful applications.
+
+[1356] Adding simple AkInflector::slugize method. This method should be replaced/merged with the acts_as_slugable plugin 
+
+[1354] Improving format detection and urlFor behaviour for urls with format like '.xml' etc.
+
+Fixing caching sweeper behaviour only/exclude actions
+
+[1353] Adding constant
+
+{{{
+AK_CALLED_FROM_LOCALHOST
+}}} 
+
+for knowing if the request was generated by localhost
+
+Adding new debug strategy for rendered html views.
+
+If you define 
+{{{
+define('AK_ENCLOSE_RENDERS_WITH_DEBUG_SPANS', true);
+}}}
+
+every view or partial will be enclosed by a span with information about the file being used on the title. This is specially useful for apps which use partials heavily or to discover esoteric developer naming schemes.
+
+[1352] Fixing link_to_unless and link_to_if, returning the $name now if conditions are not met, before it was returning an empty string.
+
+
+[1351] Fixing data type casting when retrieving associated records via find(array('include'=>'model')).
+
+Values were not type casted before nor was the var $serialize taken into account.
+
+[1350] Adding new method getTextPlainPart() for getting the text version of a given Mail or Mail part.
+
+Allowing layout.tpl as a default tpl for mail views.
+
+[1349] Logging witch language was used prior a language change so we can react upon it
+
+[1348] Preventing the path // to be passed to the router
+
+This bug prevented routes such as /es /locale to be captured properly when a rule like
+
+{{{
+$Map->connect('/', ....);
+}}}
+
+existed
+
+[1346] Fixing logging of AkRequest params. Logging now happens after resolving the right controller params. Before it always reported page controller being used.
+
+Fixing format detection by restricting the possible file-extension characters.
+
+[1343] Adding the possibility of keeping all view and helper translations into a single namespace if the constant 
+
+    AK_DEFAULT_LOCALE_NAMESPACE
+
+is defined
+
+
+[1341] Adding support for finding within collections on finders.
+
+Now you can use on your finders
+
+{{{
+$Tag->find(array('conditions'=> array('name IN (?)', array('Tag 1', 'Tag 2'))));
+}}}
+
+And it will escape, quote and bind the attributes properly generating this SQL
+
+{{{
+SELECT * FROM tags WHERE name IN ('Tag 1', 'Tag 2')
+}}}
+
+You can also pass a collection of Active Record elements like those returned on by a finder.
+ 
+{{{
+$Tag->find(array('conditions'=> array('name IN (?)', $PopularTags->find())));
+}}}
+
+[1257] Sice rev.1247 until rev.1257 indexes where not added automatically by convention on migrations and installers. 
+
+Please verify your databases to make sure necessary indexes are in place.
+
