@@ -261,7 +261,8 @@ CACHE;
         
         unset($config['default']);
         $environments = array_keys($config);
-        $default_environments = array('testing','development','production');
+        $default_environments = array('testing','development','production','setup');
+        
         $environments = array_merge($default_environments, $environments);
         
         foreach($environments as $env) {

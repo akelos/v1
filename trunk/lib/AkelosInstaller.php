@@ -378,6 +378,7 @@ class AkelosInstaller
             $this->options['directory'].DS.'config'.DS.'locales',
             $this->options['directory'].DS.'app'.DS.'locales',
             ) as $dir){
+                @`mkdir -p $dir`;
                 @`chmod -R 777 $dir`;
         }
     }

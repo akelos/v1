@@ -363,7 +363,7 @@ class Ak
         }elseif(is_dir($path)){
             if ($id_dir = opendir($path)){
                 while (false !== ($file = readdir($id_dir))){
-                    if ($file != "." && $file != ".." && $file != '.svn'){
+                    if ($file != "." && $file != ".." && $file != '.svn' && $file != '.git'){
                         if(!empty($options['files']) && !is_dir($path.DS.$file)){
                             $result[] = $file;
                         }elseif(!empty($options['dirs'])){
