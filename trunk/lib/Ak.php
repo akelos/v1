@@ -1123,7 +1123,7 @@ class Ak
     */
     public static function profile($message = '')
     {
-        if(AK_ENABLE_PROFILER){
+        if(defined('AK_ENABLE_PROFILER') && AK_ENABLE_PROFILER){
             if(!$ProfileTimer = $Timer = Ak::getStaticVar('ProfileTimer')){
                 require_once 'Benchmark/Timer.php';
                 $ProfileTimer = new Benchmark_Timer();
@@ -2195,6 +2195,5 @@ class Ak
 
 }
 
-AK_ENABLE_PROFILER &&  Ak::profile();
 
 ?>

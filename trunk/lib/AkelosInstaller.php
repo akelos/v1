@@ -79,6 +79,8 @@ class AkelosInstaller
             $this->runEvironmentSpecificTasks();
 
             $this->_linkPublicHtmlFolder();
+            
+            $this->_fixPermissions();
 
         }else{
             $this->addError('Installation directory is not empty. Add --force if you want to override existing files');
@@ -365,6 +367,18 @@ class AkelosInstaller
             $shell->Run('C:\xampp\mysql\bin\mysqladmin --user=pma --password= shutdown', 0, false);
             $shell = new COM('WScript.Shell');
             $shell->Run('C:\xampp\mysql\bin\mysqld --defaults-file=C:\xampp\mysql\bin\my.cnf --standalone --console', 0, false);
+        }
+    }
+    
+    function _fixPermissions(){
+        foreach(array(
+            $this->options['directory'].DS.'cache',
+            $this->options['directory'].DS.'tmp',
+            $this->options['directory'].DS.'config'.DS.'cache',
+            $this->options['directory'].DS.'config'.DS.'locales',
+            $this->options['directory'].DS.'app'.DS.'locales',
+            ) as $dir){
+                @`chmod -R 777 $dir`;
         }
     }
 
