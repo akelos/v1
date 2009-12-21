@@ -151,7 +151,7 @@ class AkMailComposer extends AkObject
         if(empty($this->ActionMailer->_setter_has_been_called)){
             $attributes = array();
             foreach ((array)$this->ActionMailer as $k=>$v){
-                if(gettype($v) != 'object' && $k[0] != '_' && preg_match($this->legal_attribute_setters, $k)){
+                if(gettype($v) != 'object' && $k[0] != '_' && preg_match($this->_legal_attribute_setters, $k)){
                     $attributes[$k] = $v;
                 }
             }
