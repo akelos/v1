@@ -101,21 +101,19 @@ class AkMemcache extends AkObject
         if ($return === false) {
             return false;
         }
-        
-        @list($type,$data) = @split('@#!',$return,2);
-        if (isset($data)) {
-            settype($data,$type);
-        } else {
-            if (is_string($return) && substr($return,0,15) == '@____join____@:') {
-                @list($start,$parts) = @split(':',$return,2);
-                $return = '';
-                for($i=0;$i<(int)$parts;$i++) {
-                    $return.=$this->_memcache->get($key.'_'.$i);
-                }
-            }
-            $data = &$return;
+        if (is_string($return) && strstr($return, '@#!')) {
+            $parts = explode('@#!', $return, 2); // 0 type, 1 data
+            settype($parts[1], $parts[0]);
+            return $parts[1];
         }
-        return $data;
+        if (is_string($return) && substr($return,0,15) == '@____join____@:') {
+            list($start, $parts) = explode(':', $return, 2);
+            $return = '';
+            for($i=0;$i<(int)$parts;$i++) {
+                $return.=$this->_memcache->get($key.'_'.$i);
+            }
+        }
+        return $return;
     }
     
     function save($data, $id = null, $group = null)
