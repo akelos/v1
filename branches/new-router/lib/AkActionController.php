@@ -128,6 +128,8 @@ class AkActionController extends AkObject
 
     var $module_name;
     var $_module_path;
+    
+    const DEFAULT_RENDER_STATUS_CODE = '***l';
 
     /**
      * Old fashioned way of dispatching requests. Please use AkDispatcher or roll your own.
@@ -147,10 +149,7 @@ class AkActionController extends AkObject
     {
         AK_LOG_EVENTS && empty($this->_Logger) ? ($this->_Logger =& Ak::getLogger()) : null;
 
-        $this->Request =& $Request;
-        $this->Response =& $Response;
-        $this->params = $this->Request->getParams();
-        $this->_action_name = $this->Request->getAction();
+        $this->setRequestAndResponse($Request,$Response);
 
         $this->_ensureActionExists();
 
@@ -166,8 +165,6 @@ class AkActionController extends AkObject
             if(!empty($this->helpers)){
                 $this->instantiateHelpers();
             }
-        }else{
-            $this->_enableLayoutOnRender = false;
         }
 
         $this->_ensureProperProtocol();
@@ -185,7 +182,7 @@ class AkActionController extends AkObject
         $this->performActionWithFilters($this->_action_name);
 
         if (!$this->_hasPerformed()){
-            $this->_enableLayoutOnRender ? $this->renderWithLayout() : $this->renderWithoutLayout();
+            $this->defaultRender();
         }
 
         if(!empty($this->validate_output)){
@@ -194,12 +191,18 @@ class AkActionController extends AkObject
 
         $this->Response->outputResults();
     }
+    
+    function setRequestAndResponse($Request,$Response)
+    {
+        $this->Request  = $Request;
+        $this->Response = $Response;
+        $this->params   = $this->Request->getParams();
+        $this->_action_name = $this->Request->getAction();
+    }
 
     function _loadActionView()
     {
         empty($this->_assigns) ? ($this->_assigns = array()) : null;
-        empty($this->_default_render_status_code) ? ($this->_default_render_status_code = 200) : null;
-        $this->_enableLayoutOnRender = !isset($this->_enableLayoutOnRender) ? true : $this->_enableLayoutOnRender;
         $this->passed_args = !isset($this->Request->pass)? array() : $this->Request->pass;
         empty($this->cookies) && isset($_COOKIE) ? ($this->cookies =& $_COOKIE) : null;
 
@@ -211,6 +214,9 @@ class AkActionController extends AkObject
 
             $this->Template->_controllerInstance =& $this;
             $this->Template->_registerTemplateHandler('tpl','AkPhpTemplateHandler');
+            //we register a handler for the '.html.tpl' extension, so its optional to 
+            //use the html-extension in template filenames. use index.tpl <=or=> index.html.tpl
+            $this->Template->_registerTemplateHandler('html.tpl','AkPhpTemplateHandler');            
         }
     }
 
@@ -643,7 +649,7 @@ class AkActionController extends AkObject
             $this->_assertExistanceOfTemplateFile($template_path);
         }
 
-        AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->message("Rendering $this->full_template_path" . (!empty($status) ? " ($status)":'')) : null;
+        AK_LOG_EVENTS && !empty($this->_Logger) ? $this->_Logger->message("Rendering {$this->getControllerName()}::$template_path " . (!empty($status) ? " ($status)":'')) : null;
         return $this->renderText($this->Template->renderFile($template_path, $use_full_path, $locals), $status);
     }
 
@@ -654,10 +660,10 @@ class AkActionController extends AkObject
         return $this->renderText($this->Template->renderTemplate($type, $template, null, $local_assigns), $status);
     }
 
-    function renderText($text = null, $status = null)
+    function renderText($text = null, $status = self::DEFAULT_RENDER_STATUS_CODE)
     {
         $this->performed_render = true;
-        $this->Response->_headers['Status'] = !empty($status) ? $status : $this->_default_render_status_code;
+        $this->Response->_headers['Status'] = !empty($status) ? $status : self::DEFAULT_RENDER_STATUS_CODE;
         $this->Response->body = $text;
         return $text;
     }
@@ -690,6 +696,11 @@ class AkActionController extends AkObject
         $this->performed_render = false;
 
         return $result;
+    }
+    
+    function defaultRender()
+    {
+        return $this->_high_load_mode ? $this->renderWithoutLayout() : $this->renderWithLayout();
     }
 
     function renderWithLayout($template_name = null, $status = null, $layout = null)
@@ -1074,20 +1085,25 @@ class AkActionController extends AkObject
 
     function _assertExistanceOfTemplateFile($template_name)
     {
-        $extension = $this->Template->delegateTemplateExists($template_name);
-        $this->full_template_path = $this->Template->getFullTemplatePath($template_name, $extension ? $extension : 'tpl');
-        if(!$this->_hasTemplate($this->full_template_path)){
+        if($this->Template->delegateTemplateExists($template_name) === false){
             if(!empty($this->_ignore_missing_templates) && $this->_ignore_missing_templates === true){
                 return;
             }
+            $template_name = $template_name.'.tpl';
             $template_type = strstr($template_name,'layouts') ? 'layout' : 'template';
-            trigger_error(Ak::t('Missing %template_type %full_template_path',array('%template_type'=>$template_type, '%full_template_path'=>$this->full_template_path)), E_USER_WARNING);
+            trigger_error(Ak::t('Missing %template_type %controller_name::%template_name',array('%template_type'=>$template_type, '%template_name'=>$template_name,'%controller_name'=>$this->getControllerName())), E_USER_WARNING);
         }
+    }
+    
+    protected function respondTo()
+    {
+        return $this->Request->getFormat();
     }
 
     function getDefaultTemplateName($default_action_name = null)
     {
-        return empty($default_action_name) ? (empty($this->_default_template_name) ? $this->_action_name : $this->_default_template_name) : $default_action_name;
+        $template_name = empty($default_action_name) ? (empty($this->_default_template_name) ? $this->_action_name : $this->_default_template_name) : $default_action_name;
+        return $template_name.'.'.$this->respondTo();
     }
 
     function setDefaultTemplateName($template_name)
@@ -1327,16 +1343,17 @@ class AkActionController extends AkObject
             $layout =& $passed_layout;
         }
         if(is_array($layout) &&  is_object($layout[0]) && method_exists($layout[0], $layout[1])){
-            $this->active_layout = $layout[0]->{$layout[1]}();
+            $active_layout = $layout[0]->{$layout[1]}();
         }elseif(method_exists($this,$layout) &&  strtolower(get_class($this)) !== strtolower($layout)){
-            $this->active_layout = $this->$layout();
+            $active_layout = $this->$layout();
         }else{
-            $this->active_layout = $layout;
+            $active_layout = $layout;
         }
 
-        if(!empty($this->active_layout)){
-            return strstr($this->active_layout,DS) ? $this->active_layout : 'layouts'.DS.$this->active_layout;
+        if(!empty($active_layout)){
+            return strstr($active_layout,'/') ? str_replace('/',DS,$active_layout) : 'layouts'.DS.$active_layout;
         }
+        return false;
     }
 
 
@@ -1359,7 +1376,7 @@ class AkActionController extends AkObject
 
             return $this->renderText($this->Template->renderFile($layout, true, &$this->_assigns), $status);
         }else{
-            return $this->render($options, $status, &$this->_assigns);
+            return $this->render($options, $status, &$this->_assigns);  //render doesn't take a thord argument
         }
     }
 
@@ -1383,13 +1400,12 @@ class AkActionController extends AkObject
             $layout = $this->_doesActionHasLayout() ? $this->getActiveLayout() : false;
         }
         if(!empty($layout)){
-
             $layout = strstr($layout,'/') || strstr($layout,DS) ? $layout : 'layouts'.DS.$layout;
             $layout = preg_replace('/\.tpl$/', '', $layout);
 
-            $layout = substr($layout,0,7) === 'layouts' ?
-            (empty($this->_module_path) || !empty($this->layout) ? AK_VIEWS_DIR.DS.$layout.'.tpl' : AK_VIEWS_DIR.DS.'layouts'.DS.trim($this->_module_path, DS).'.tpl') :
-            $layout.'.tpl';
+            $layout = empty($this->_module_path) || !empty($this->layout) 
+                    ? AK_VIEWS_DIR.DS.$layout.'.tpl' 
+                    : AK_VIEWS_DIR.DS.'layouts'.DS.trim($this->_module_path, DS).'.tpl'; 
 
             if (file_exists($layout)) {
                 return $layout;

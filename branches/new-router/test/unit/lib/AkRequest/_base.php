@@ -18,7 +18,7 @@ class AkRequestTestCase extends  AkUnitTest
     function setUp()
     {
         $sess_request = isset($_SESSION['request']) ? $_SESSION['request'] : null;
-        $this->_original_values = array($sess_request, $_COOKIE, $_POST, $_GET, $_REQUEST);
+        $this->_original_values = array($sess_request, $_COOKIE, $_POST, $_GET, $_REQUEST, $_SERVER);
 
         $_SESSION['request'] = array(
         'session_param'=>'session',
@@ -58,7 +58,7 @@ class AkRequestTestCase extends  AkUnitTest
         'general_param'=>'cmd'
         );
 
-
+        $_SERVER['REQUEST_METHOD'] = 'get';
 
         $this->_testRequestInstance =& new AkRequest();
         $this->_testRequestInstance->init();
@@ -75,13 +75,36 @@ class AkRequestTestCase extends  AkUnitTest
         $_POST = $this->_original_values[2];
         $_GET = $this->_original_values[3];
         $_REQUEST = $this->_original_values[4];
+        $_SERVER = $this->_original_values[5];
     }
 
 
-    function Test_mergeRequest()
+    function Test_mergeRequest_OnGetRequest()
     {
+        $_SERVER['REQUEST_METHOD'] = 'get';
+        $Request = new AkRequest();
+        
         $gpc_param = get_magic_quotes_gpc() ? "Isn't it ironic" : 'Isn\\\'t it ironic';
+        $expected = array(
+        'cmd_param'=>'cmd',
+        'get_param'=>'get',
+        'post_param'=>'get',
+        'cookie_param'=>'cookie',
+        'session_param'=>'session',
+        'general_param'=>'session',
+        'ak'=>'/session_controller/session_action',
+        'gpc_param'=>$gpc_param,
+        );
 
+        $this->assertEqual($Request->_request,$expected,'Comparing request precedence');
+    }
+
+    function Test_mergeRequest_OnPostRequest()
+    {
+        $_SERVER['REQUEST_METHOD'] = 'post';
+        $Request = new AkRequest();
+        
+        $gpc_param = get_magic_quotes_gpc() ? "Isn't it ironic" : 'Isn\\\'t it ironic';
         $expected = array(
         'cmd_param'=>'cmd',
         'get_param'=>'get',
@@ -93,9 +116,7 @@ class AkRequestTestCase extends  AkUnitTest
         'gpc_param'=>$gpc_param,
         );
 
-        $this->_testRequestInstance->_mergeRequest();
-
-        $this->assertEqual($this->_testRequestInstance->_request,$expected,'Comparing request precedence');
+        $this->assertEqual($Request->_request,$expected,'Comparing request precedence');
     }
 
 

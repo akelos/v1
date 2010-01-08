@@ -33,6 +33,12 @@ $_SERVER['REQUEST_URI'] = (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_UR
 class DispatchException extends Exception 
 { }
 
+class NotAcceptableException extends Exception 
+{ }
+
+class BadRequestException extends Exception 
+{ }
+
 /**
 * Class that handles incoming request.
 * 
@@ -290,6 +296,139 @@ class AkRequest extends AkObject
             return $locale;
         }
         return '';
+    }
+    
+    function getAcceptHeader()
+    {
+        $accept_header = $this->env['HTTP_ACCEPT'];
+
+        $accepts = array();
+        foreach (explode(',',$accept_header) as $index=>$acceptable){
+            $mime_struct = $this->parseMimeType($acceptable);
+            if (empty($mime_struct['q'])) $mime_struct['q'] = '1.0';
+            
+            //we need the original index inside this structure 
+            //because usort happily rearranges the array on equality
+            //therefore we first compare the 'q' and then 'i'
+            $mime_struct['i'] = $index;
+            $accepts[] = $mime_struct;
+        }
+        usort($accepts,array($this,'sortAcceptHeader'));
+        
+        //we throw away the old index
+        foreach ($accepts as &$array){
+            unset($array['i']);
+        }
+        return $accepts;
+    }
+    
+    private function sortAcceptHeader($a,$b)
+    {
+        //preserve the original order if q is equal
+        return $a['q'] == $b['q'] ? ($a['i'] > $b['i']) : ($a['q'] < $b['q']);
+    }
+    
+    private function parseMimeType($mime_type)
+    {
+        @list($type,$parameter_string) = explode(';',$mime_type,2);
+        $mime_type_struct = array();
+        if ($parameter_string){
+            foreach (explode(';',$parameter_string) as $parameter){
+                if (strstr($parameter,'=')){
+                    list($key,$value) = explode('=',$parameter);
+                    $mime_type_struct[$key] = $value;
+                }else{
+                    $mime_type_struct[] = $parameter;
+                }
+            }
+        }
+        $mime_type_struct['type'] = trim($type);
+        return $mime_type_struct;
+    }
+    
+    function getBestAcceptType()
+    {
+        if (!isset($this->env['HTTP_ACCEPT'])) return false;
+        $acceptables = $this->getAcceptHeader();
+        
+        // we group by 'quality'
+        $grouped_acceptables = array();
+        foreach ($acceptables as $acceptable){
+            $grouped_acceptables[$acceptable['q']][] = $acceptable['type'];
+        }
+        
+        $mime_types = $this->registeredMimeTypes();
+        
+        foreach ($grouped_acceptables as $q=>$array_with_acceptables_of_same_quality){
+            foreach ($mime_types as $mime_type=>$our_mime_type){
+                foreach ($array_with_acceptables_of_same_quality as $acceptable){
+                    if ($mime_type == $acceptable){
+                        return $mime_type;
+                    }
+                }
+            }
+        }
+        return $mime_types['default'];
+    }
+
+    function getContentType()
+    {
+        if (empty($this->env['CONTENT_TYPE'])) return false;
+        $mime_type_struct = $this->parseMimeType($this->env['CONTENT_TYPE']);
+        return $mime_type_struct['type'];
+    }
+    
+    /**
+     * @return string Their mime_type, f.i. 'application/xml'
+     */
+    function getMimeType()
+    {
+        if ($this->isPost() || $this->isPut()) return $this->getContentType();
+        return $this->getBestAcceptType();
+    }
+    
+    /**
+     * @return string Our mime_type, f.i. 'xml'
+     */
+    function getFormat()
+    {
+        if (isset($this->_request['format'])) return $this->_request['format'];
+        return $this->lookupMimeType($this->getMimeType()); 
+    }
+    
+    static $mime_types;
+    
+    function registeredMimeTypes()
+    {
+        // we register a dictionary: mime_type => our_type
+        // this is an ordered list, the first entry has top priority
+        // say a client accepts different mime_types with the same 'q'uality-factor
+        // we then won't just pop his first one, but our best match within this group  
+        $mime_types = array(
+            'text/html'                => 'html',
+            'application/xhtml+xml'    => 'html',
+            'application/xml'          => 'xml',
+            'text/xml'                 => 'xml',
+            'text/javascript'          => 'js',
+            'application/javascript'   => 'js',
+            'application/x-javascript' => 'js',
+            'application/json'         => 'json', 
+            'text/x-json'              => 'json',
+            'application/rss+xml'      => 'rss',
+            'application/atom+xml'     => 'atom',
+            '*/*'                      => 'html',
+            'application/x-www-form-urlencoded' => 'html',
+            'multipart/form-data'      => 'html',
+            'default'                  => 'html',
+        );
+        return AkRequest::$mime_types = $mime_types;
+    }
+    
+    function lookupMimeType($mime_type)
+    {
+        $this->registeredMimeTypes();
+        if (!isset(self::$mime_types[$mime_type])) throw new NotAcceptableException();
+        return self::$mime_types[$mime_type];
     }
 
     /**
@@ -561,7 +700,7 @@ class AkRequest extends AkObject
         $session_params = isset($_SESSION['request']) ? $_SESSION['request'] : null;
         $command_line_params = !empty($_REQUEST)  ? $_REQUEST : null;
 
-        $requests = array($command_line_params, $_GET, array_merge_recursive($_POST, $this->getPutParams(), $this->_getNormalizedFilesArray()), $_COOKIE, $session_params);
+        $requests = array($command_line_params, $_GET, array_merge_recursive($this->getPostParams(), $this->getPutParams(), $this->_getNormalizedFilesArray()), $_COOKIE, $session_params);
 
         foreach ($requests as $request){
             $this->_request = (!is_null($request) && is_array($request)) ?
@@ -815,26 +954,57 @@ class AkRequest extends AkObject
             }
         }
     }
-
+    
     function getPutParams()
     {
-        if(!isset($this->put) && $this->isPut() && $data = $this->getPutRequestData()){
-            $this->put = array();
-            parse_str(urldecode($data), $this->put);
-        }
-        return isset($this->put) ? $this->put : array();
+        if (!$this->isPut()) return array();
+        return $this->parseMessageBody($this->getMessageBody());
     }
-
-    function getPutRequestData()
+    
+    function getPostParams()
     {
+        if (!$this->isPost()) return array();
+        //PHP automatically parses the input on the standard content_types 'application/x-www-form-urlencoded' etc
+        if (!empty($_POST)) return $_POST;
+        
+        return $_POST = $this->parseMessageBody($this->getMessageBody());
+    }
+    
+    private function parseMessageBody($data)
+    {
+        if (empty($data)) return array();
+
+        $content_type = $this->getContentType();
+        switch ($this->lookupMimeType($content_type)){
+            case 'html':
+                $as_array = array();
+                parse_str($data,$as_array);
+                return $as_array;
+            case 'xml':
+                require_once AK_LIB_DIR.DS.'AkConverters'.DS.'AkXmlToParamsArray.php';
+                return AkXmlToParamsArray::convertToArray($data);
+                break;
+            case 'json':
+                return json_decode($data,true);
+            default:
+                return array('put_body'=>$data);
+                break;
+        }
+    }
+    
+    private $message_body;
+
+    function getMessageBody()
+    {
+        if ($this->message_body) return $this->message_body;
+        
+        $result = '';
         if(!empty($_SERVER['CONTENT_LENGTH'])){
             $putdata = fopen('php://input', 'r');
             $result = fread($putdata, $_SERVER['CONTENT_LENGTH']);
             fclose($putdata);
-            return $result;
-        }else{
-            return false;
         }
+        return $this->message_body = $result;
     }
     
     static $singleton;

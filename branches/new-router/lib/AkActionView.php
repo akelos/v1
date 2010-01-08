@@ -252,6 +252,12 @@ class AkActionView extends AkObject
 
     function getFullTemplatePath($template_path, $extension)
     {
+        //the '.html'-extension is handled by a special ExtensionHandler, so we remove this here
+        //that is of course a hack, basically to allow that you can use either index.tpl or index.html.tpl
+        //as your template-filename
+        if(substr($template_path,-5)=='.html'){
+            $template_path = substr($template_path,0,-5);
+        }
         $template_path = substr($template_path,-1*strlen($extension)) == $extension ? $template_path : $template_path.'.'.$extension;
         return substr($template_path,0,strlen(AK_VIEWS_DIR)) == AK_VIEWS_DIR ? $template_path : $this->base_path.DS.$template_path;
     }
