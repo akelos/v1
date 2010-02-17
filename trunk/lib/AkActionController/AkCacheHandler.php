@@ -792,7 +792,7 @@ EOF;
 
     function beforePageCache()
     {
-        $this->_page_cache_params=$this->_controller->params;//@$_REQUEST['ak'];
+        $this->_page_cache_params=@$_REQUEST['ak'];
         ob_start();
 
         return true;
