@@ -125,6 +125,11 @@ class AkSession extends AkObject
                 $res = $this->_driverInstance->init($options);
                 $this->sessions_enabled = $res;
                 break;
+            case 4:
+                require_once(AK_LIB_DIR.'/AkCookieStore.php');
+                $this->_driverInstance = new AkCookieStore();
+                $this->_driverInstance->init($options);
+                return true;
             default:
                 $this->sessions_enabled = false;
                 break;
@@ -139,7 +144,7 @@ class AkSession extends AkObject
              array(&$this, '_destroy'),
              array(&$this, '_gc')
              );
-
+            session_start();
         }
     }
     /**

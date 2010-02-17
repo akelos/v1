@@ -880,7 +880,6 @@ class AkRequest extends AkObject
             if(!isset($_SESSION)){
                 require_once(AK_LIB_DIR.DS.'AkSession.php');
                 $SessionHandler = &AkSession::initHandler();
-                @session_start();
             }
         }
     }
