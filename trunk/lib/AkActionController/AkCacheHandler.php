@@ -645,7 +645,9 @@ class AkCacheHandler extends AkObject
             }
         }
         foreach ($addHeaders as $type=>$val) {
-            $finalHeaders[] = $type.($val!==true?': '.$val:'');
+            if(strtolower($type)!='set-cookie') {
+                $finalHeaders[] = $type.($val!==true?': '.$val:'');
+            }
         }
         $timestamp = time();
         $headerString = var_export($finalHeaders,true);
@@ -1129,16 +1131,18 @@ EOF;
             $format = $this->_controller->Request->getFormat();
             $this->_controller->Response->addHeader('X-Cached-By','Akelos-Action-Cache');
             $this->_controller->Response->setContentTypeForFormat($format);
-        } else {
+        } else if(empty($_SESSION['__flash']) && empty($this->_controller->flash_now)){
             ob_start();
             $this->_rendered_action_cache = false;
+        } else {
+            $this->_dont_action_cache=true;
         }
         return true;
     }
 
     function afterActionCache()
     {
-        if (!$this->_cachingAllowed() || $this->_rendered_action_cache === true) return;
+        if (!$this->_cachingAllowed() || $this->_rendered_action_cache === true || !empty($this->_dont_action_cache)) return;
 
         $this->_controller->handleResponse();
         $contents = ob_get_flush();
