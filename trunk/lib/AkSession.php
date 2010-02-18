@@ -112,6 +112,8 @@ class AkSession extends AkObject
                 if(isset($options['save_path'])) {
                     session_save_path($options['save_path']);
                 }
+                session_start();
+                return true;
                 break;
             case 2:
                 require_once(AK_LIB_DIR.'/AkCache/AkAdodbCache.php');
