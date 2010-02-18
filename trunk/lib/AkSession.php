@@ -129,6 +129,7 @@ class AkSession extends AkObject
                 require_once(AK_LIB_DIR.'/AkCookieStore.php');
                 $this->_driverInstance = new AkCookieStore();
                 $this->_driverInstance->init($options);
+                $this->sessions_enabled=true;
                 return true;
             default:
                 $this->sessions_enabled = false;

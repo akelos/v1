@@ -971,6 +971,12 @@ EOF;
             $cache = $this->_cache_store->get($cacheId, $cacheGroup);
 
             if (file_exists($cache)) {
+                if(!empty($_SESSION)) {
+                    /**
+                     * needed for AkCookieStore to work, the write_close on destruct cannot setcookie()
+                     */
+                    @session_write_close();
+                }
                 return $cache;
             } else {
 

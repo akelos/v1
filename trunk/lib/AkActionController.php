@@ -311,6 +311,12 @@ class AkActionController extends AkObject
             if (!isset($this->Response->_headers['Status']) && !empty($this->_default_render_status_code)) {
                 $this->Response->_headers['Status'] = $this->_default_render_status_code;
             }
+            if(!empty($_SESSION)) {
+                /**
+                 * needed for AkCookieStore to work, the write_close on destruct cannot setcookie()
+                 */
+                @session_write_close();
+            }
             $this->Response->outputResults();
             $handled[$this->_request_id]=true;
         }
