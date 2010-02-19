@@ -83,14 +83,120 @@ $GLOBALS["errormessages"] = array(
 	ERR_COMMAND_ERROR		=> "Server did not understand command",
 );
 
+class AkHashRing
+{
+private $_sorted_keys = array();
+private $_weights = array();
+private $_nodes = array();
+private $_ring = array();
+public function __construct(array $servers = array(),array $weights = array())
+{
+    $this->_nodes = $servers;
+    $this->_weights = $weights;
+    $this->_generateCircle();
+}
+private function _generateCircle()
+{
+    $total_weight=0;
+    foreach($this->_nodes as $idx=> $node) {
+        $total_weight+=(empty($this->_weights[$idx])?1:$this->_weights[$idx]);
+    }
+    foreach($this->_nodes as $idx => $node)
+    {
+        $weight=(empty($this->_weights[$idx])?1:$this->_weights[$idx]);
+        $factor = floor((40*count($this->_nodes)*$weight)/$total_weight);
+        foreach(range(0,intval($factor)) as $j) {
+            
+            $b_key=$this->_hashDigest($this->_nodes[$idx].'-'.$j);
+            
+            for($i=0;$i<=3;$i++) {
+                $key=$this->_hashVal($b_key,$i);
+                $this->_ring[$key] = $node;
+                $this->_sorted_keys[]=$key;
+            }
+        }
+        sort($this->_sorted_keys);
+    }
+}
+private function _la($val,$i)
+{
+    return $val+$i*4;
+}
+private function _genKey($key)
+{
+    $b_key = $this->_hashDigest($key);
+    
+    
+    $return=$this->_hashValB($b_key);
+    return $return;
+}
+function getNode($string_key)
+{
+    $pos = $this->_getNodePos($string_key);
+
+    if($pos == null) return null;
+    return $this->_ring[$this->_sorted_keys[$pos]];
+}
+private function _getNodePos($string_key)
+{
+    if(empty($this->_ring)) return null;
+    $key = $this->_genKey($string_key);
+    $nodes = $this->_sorted_keys;
+    $diff = false;
+    $pos = false;
+    foreach($nodes as $idx => $node) {
+        if($diff === false || abs($key - $node) < $diff) {
+            $diff = abs($key - $node);
+            $pos = $idx;
+        } else {
+            break;
+        }
+    }
+    
+    if($pos==count($nodes) || $pos===false) {
+        return 0;
+    } else {
+        return $pos;
+    }
+}
+private function _hashValB($b_key)
+{
+    return (( $b_key[3] << 24)
+            |($b_key[2] << 16)
+            |($b_key[1] << 8)
+            | $b_key[0] );
+}
+private function _hashVal($b_key,$i)
+{
+    return (( $b_key[$this->_la(3,$i)] << 24)
+            |($b_key[$this->_la(2,$i)] << 16)
+            |($b_key[$this->_la(1,$i)] << 8)
+            | $b_key[$this->_la(0,$i)] );
+}
+private function _hashDigest($key)
+{
+    $ret=array();
+    $string=md5($key);
+
+    for($i=0;$i<strlen($string);$i++) {
+        $ret[]=ord($string{$i});
+    }
+    return $ret;
+}
+}
 class MemCachedClient {
 	
     var $errno = null;
     var $socketdebug = false;
-	function MemCachedClient($hosts) {
+    var $_consistent_hashing = false;
+    var $_ring;
+	function MemCachedClient($hosts,$consistent_hashing = false) {
 		
 		$this->hosts = &$hosts;
-
+        $this->_consistent_hashing=$consistent_hashing;
+        if($this->_consistent_hashing) {
+            $this->_ring = new AkHashRing($this->hosts);
+        }
 		$this->sockets = array();
 		foreach ($this->hosts as $k=>$host) {
 			$this->sockets[$host] = false;
@@ -483,9 +589,13 @@ class MemCachedClient {
 	}
 
 	function _get_socket_recursive($hash,&$sockets) {
-		$keys = array_keys($sockets);
-		$host = $keys[$hash % count($keys)];
-		
+	    if($this->_consistent_hashing) {
+	        $host=$this->_ring->getNode($hash);
+	    } else {
+    		$keys = array_keys($sockets);
+    		$host = $keys[$hash % count($keys)];
+	    }
+    		
 		$socket = &$sockets[$host];
 		if (is_array($socket)) {
 			return $this->_get_socket_recursive($hash,&$socket);
@@ -494,6 +604,7 @@ class MemCachedClient {
 			$this->_last_host = $host;
 			return array($host,$socket);
 		}
+	    
 	}
 			
 	function _get_socket($key,$forcehost=false,$attempts=0) {
