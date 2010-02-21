@@ -2949,10 +2949,10 @@ class AkActionController extends AkObject
         return $this->_CacheHandler->getCachedPage($path, $lang);
     }
 
-    function expirePage($options)
+    function expirePage($options, $forcedLanguage = null)
     {
         if (!isset($this->_CacheHandler)) return false;
-        return $this->_CacheHandler->expirePage($options);
+        return $this->_CacheHandler->expirePage($options, $forcedLanguage);
     }
     function fragmentCacheKey($key)
     {
