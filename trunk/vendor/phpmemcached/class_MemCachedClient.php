@@ -134,8 +134,9 @@ function getNode($string_key)
 {
     $pos = $this->_getNodePos($string_key);
 
-    if($pos == null) return null;
-    return $this->_ring[$this->_sorted_keys[$pos]];
+    if($pos === null) return null;
+    
+    return isset($this->_ring[$this->_sorted_keys[$pos]])?$this->_ring[$this->_sorted_keys[$pos]]:key($this->_ring);
 }
 private function _getNodePos($string_key)
 {
