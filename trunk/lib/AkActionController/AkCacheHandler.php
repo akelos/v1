@@ -441,7 +441,7 @@ class AkCacheHandler extends AkObject
                 }
             }
         }
-        if (!$caches) {
+        if (!$caches && empty($this->_controller->disable_gzip)) {
             $this->_enableGzippedOutput();
         }
     }
