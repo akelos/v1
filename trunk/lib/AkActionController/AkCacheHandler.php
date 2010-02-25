@@ -538,7 +538,8 @@ class AkCacheHandler extends AkObject
         if ($gzipped) {
             $cacheId = $this->_scopeWithGzip($cacheId);
             $notNormalizedCacheId = $this->_scopeWithGzip($notNormalizedCacheId);
-            $addHeaders = array('Content-Encoding'=>'gzip');
+            $addHeaders = array('Content-Encoding'=>'gzip','Content-Length'=>strlen($content));
+            $removeHeaders = array('content-length');
         } else {
             $removeHeaders = array('content-encoding');
         }
