@@ -819,6 +819,10 @@ EOF;
     {
 
         $this->_controller->handleResponse();
+        if($this->_gzipped_output_enabled){
+            
+            header('Content-Length: ');
+        }
         ob_end_flush();
 
         return true;
