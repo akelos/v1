@@ -1451,6 +1451,8 @@ class AkActionController extends AkObject
 
         if(!empty($this->active_layout)){
             return strstr($this->active_layout,DS) ? $this->active_layout : 'layouts'.DS.$this->active_layout;
+        } else {
+            return false;
         }
     }
 
