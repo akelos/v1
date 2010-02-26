@@ -261,9 +261,10 @@ CACHE;
         
         unset($config['default']);
         $environments = array_keys($config);
-        $default_environments = array('testing','development','production','setup');
+        $default_environments = Ak::toArray(AK_AVAILABLE_ENVIRONMENTS);
         
         $environments = array_merge($default_environments, $environments);
+        $environments = array_unique($environments);
         
         foreach($environments as $env) {
             $envConfig = $this->_merge($default, isset($config[$env])?$config[$env]:array());

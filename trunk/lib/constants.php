@@ -63,7 +63,7 @@ defined('AK_REQUEST_URI') ? null : define('AK_REQUEST_URI', isset($_SERVER['REQU
 $_SERVER['REQUEST_URI'] :
 $_SERVER['PHP_SELF'] .'?'.(isset($_SERVER['argv']) ? $_SERVER['argv'][0] : $_SERVER['QUERY_STRING']));
 
-defined('AK_DEBUG') ? null : define('AK_DEBUG', AK_ENVIRONMENT == 'production' ? 0 : 1);
+defined('AK_DEBUG') ? null : define('AK_DEBUG', AK_ENVIRONMENT == 'production' || AK_ENVIRONMENT == 'production_failover'? 0 : 1);
 
 if(!defined('AK_ERROR_REPORTING')){
     if(AK_PHP6){
