@@ -520,6 +520,7 @@ class AkCacheHandler extends AkObject
     }
     function cachePage($content, $path = null, $language = null, $gzipped=false, $sendETag = false, $orgStrlen = null)
     {
+        global $_ENV;
         static $ETag;
 
         $cacheIds = array();
@@ -561,17 +562,18 @@ class AkCacheHandler extends AkObject
         $cacheIds[] = $notNormalizedCacheId;
         $cacheTimestamp = time();
         $content = $this->_modifyCacheContent($content,$addHeaders, $removeHeaders,$cacheIds,$cacheGroup);
-        $filename = $this->_storePageCache($content,$cacheId,$cacheGroup);
-        $res = $this->_cache_store->save($filename,$cacheId,$cacheGroup);
+        //Ak::getLogger('caching')->message('Got timestamp from ENV:'.$_ENV['_page_cache_timestamp']);
+        $cached_params = $this->_storePageCache($content,$cacheId,$cacheGroup,!empty($_ENV['_page_cache_timestamp'])?$_ENV['_page_cache_timestamp']:null);
+        $res = $this->_cache_store->save($cached_params,$cacheId,$cacheGroup);
         if ($notNormalizedCacheId != $cacheId) {
             // Store the not normalized cacheid
-            $filename = $this->_storePageCache($content,$cacheId,$cacheGroup);
-            $this->_cache_store->save($filename,$notNormalizedCacheId,$cacheGroup);
+            $cached_params = $this->_storePageCache($content,$cacheId,$cacheGroup);
+            $this->_cache_store->save($cached_params,$notNormalizedCacheId,$cacheGroup);
         }
         return $res;
 
     }
-    function _storePageCache($content, $cacheId,$cacheGroup)
+    function _storePageCache($content, $cacheId,$cacheGroup, $timestamp = null)
     {
         $filename = AK_TMP_DIR.DS.'cache'.DS.$cacheGroup.DS.$cacheId.'.php';
         if (!file_exists(dirname($filename))) {
@@ -583,8 +585,11 @@ class AkCacheHandler extends AkObject
 
         }
         file_put_contents($filename, $content);
-
-        return $filename;
+        if($timestamp == null) {
+            $timestamp=time();
+        }
+        touch($filename,$timestamp);
+        return array($filename,$timestamp);
     }
     function _stripCacheSkipSections($content)
     {
@@ -958,6 +963,7 @@ EOF;
 
     function &getCachedPage($path = null,$forcedLanguage = null)
     {
+        global $_ENV;
         $false = false;
         if (!$this->_cachingAllowed()) {
             return $false;
@@ -973,9 +979,16 @@ EOF;
                 $cacheId = $this->_scopeWithGzip($cacheId);
             }
             $cacheGroup = $this->_buildCacheGroup();
-            $cache = $this->_cache_store->get($cacheId, $cacheGroup);
-
-            if (file_exists($cache)) {
+            $cached_params = $this->_cache_store->get($cacheId, $cacheGroup);
+            $timestamp=false;
+            if(is_array($cached_params)) {
+                $cache = $cached_params[0];
+                $timestamp = $cached_params[1];
+            } else {
+                $cache = $cached_params;
+            }
+            //Ak::getLogger('caching')->message(var_export($cached_params,true).'mtime:'.filemtime($cache));
+            if (file_exists($cache) && ($timestamp!==false && filemtime($cache)==$timestamp)) {
                 if(!empty($_SESSION)) {
                     /**
                      * needed for AkCookieStore to work, the write_close on destruct cannot setcookie()
@@ -984,7 +997,12 @@ EOF;
                 }
                 return $cache;
             } else {
-
+                if($timestamp!==false) {
+                    /**
+                     * storing timestamp for later cache saving
+                     */
+                    $_ENV['_page_cache_timestamp'] = $timestamp;
+                }
                 return $false;
             }
         } else {
