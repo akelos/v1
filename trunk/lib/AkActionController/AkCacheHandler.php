@@ -1294,7 +1294,7 @@ EOF;
 
     function _pathFor($options = array(), $normalize = true)
     {
-        $options = empty($options)?$this->_controller->params:$options;
+        $options = empty($options)?$this->_controller->Request->_route_params:$options;
         $options['controller'] = !isset($options['controller']) ? (isset($this->_controller->params['controller']) ?
         $this->_controller->params['controller']:null):
         $options['controller'];
