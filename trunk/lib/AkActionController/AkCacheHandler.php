@@ -567,7 +567,7 @@ class AkCacheHandler extends AkObject
         $res = $this->_cache_store->save($cached_params,$cacheId,$cacheGroup);
         if ($notNormalizedCacheId != $cacheId) {
             // Store the not normalized cacheid
-            $cached_params = $this->_storePageCache($content,$cacheId,$cacheGroup);
+            $cached_params = $this->_storePageCache($content,$cacheId,$cacheGroup,!empty($_ENV['_page_cache_timestamp'])?$_ENV['_page_cache_timestamp']:null);
             $this->_cache_store->save($cached_params,$notNormalizedCacheId,$cacheGroup);
         }
         return $res;
