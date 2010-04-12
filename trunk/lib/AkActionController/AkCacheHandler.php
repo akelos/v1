@@ -1302,7 +1302,7 @@ EOF;
             (isset($this->_controller->params['action']) ? $this->_controller->params['action'] : null ) :
             $options['action'];
         $options['id'] = isset($options['id']) ? $options['id']: false;
-	$options['lang'] = isset($options['lang']) ? $options['lang'] : Ak::lang();
+		$options['lang'] = isset($options['lang']) ? $options['lang'] : Ak::lang();
         $options['skip_relative_url_root']=true;
         $url = $this->_controller->rewrite($this->_controller->rewriteOptions($options));
 
@@ -1319,7 +1319,9 @@ EOF;
             $path = implode('/', $parts);
         }
         $path = rtrim($path,'/');
-
+		if(!empty($options['module'])) {
+			$path.='?module='.$options['module'];
+		}
 
         return $path;
     }
