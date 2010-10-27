@@ -433,7 +433,9 @@ class AkActionController extends AkObject
                 $this->finder_options[$model] = $this->_getFinderOptions($model);
                 $custom_find=true;
             }
-            $this->instantiateModelClass($model, (empty($this->finder_options[$model])?array():$this->finder_options[$model]),$custom_find);
+            if (!isset($this->_auto_instantiate_controller) || $this->_auto_instantiate_controller) {
+                $this->instantiateModelClass($model, (empty($this->finder_options[$model])?array():$this->finder_options[$model]),$custom_find);
+            }
         }
     }
 

@@ -66,6 +66,7 @@ class AkPhpCodeSanitizer
         }
 
         if(!empty($this->_errors)){
+            var_dump($this->_errors);
             if($raise_if_insecure){
                 $this->raiseError();
             }
